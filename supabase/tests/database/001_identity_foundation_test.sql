@@ -188,18 +188,18 @@ set local role anon;
 select set_config('request.jwt.claim.sub', '', true);
 
 select throws_ok(
-    $select * from public.profiles$,
+    $$select * from public.profiles$$,
     '42501',
     'permission denied for table profiles',
-    $$select * from public.profiles$$,
+    'Anonymous client is denied access to profiles'
 );
 
 select throws_ok(
-    $
     $$
+    insert into public.profiles (id, display_name)
     values ('00000000-0000-0000-0000-000000000003', 'Anonymous')
-    $,
     $$,
+    '42501',
     'permission denied for table profiles',
     'Anonymous client cannot insert profiles'
 );
