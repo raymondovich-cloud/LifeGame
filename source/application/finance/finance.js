@@ -40,7 +40,7 @@ const FINANCE_OPERATIONS = Object.freeze({
     "actual-earnings": {
         list: listActualEarnings,
         add: addActualEarning,
-        remove: removeLiquidFund
+        remove: removeActualEarning
     },
     "financial-burden": {
         list: listFinancialBurden,
