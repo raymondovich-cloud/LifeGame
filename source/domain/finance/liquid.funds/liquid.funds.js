@@ -1,10 +1,27 @@
-// liquid.funds.js — Version 1.1
+// liquid.funds.js — Version 1.2
+
+import { publish } from "../../../core/events/event.bus.js";
 
 const entries = [];
 let nextId = 1;
 
 function listLiquidFunds() {
     return entries.map((entry) => ({ ...entry }));
+}
+
+function calculateLiquidFundsTotal() {
+    return entries.reduce((total, entry) => total + entry.amount, 0);
+}
+
+function publishStateChanged() {
+    publish({
+        type: "finance.liquid-funds.state.changed",
+        occurredAt: Date.now(),
+        payload: {
+            total: calculateLiquidFundsTotal(),
+            entries: listLiquidFunds()
+        }
+    });
 }
 
 function addLiquidFund(label, amount) {
@@ -26,6 +43,8 @@ function addLiquidFund(label, amount) {
     };
 
     entries.push(entry);
+    publishStateChanged();
+
     return { ...entry };
 }
 
@@ -35,7 +54,14 @@ function removeLiquidFund(id) {
     if (index === -1) return false;
 
     entries.splice(index, 1);
+    publishStateChanged();
+
     return true;
 }
 
-export { listLiquidFunds, addLiquidFund, removeLiquidFund };
+export {
+    listLiquidFunds,
+    calculateLiquidFundsTotal,
+    addLiquidFund,
+    removeLiquidFund
+};
