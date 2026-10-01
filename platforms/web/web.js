@@ -184,7 +184,9 @@ function startWeb() {
                 '<span class="preview-subblock-action">OPEN</span>';
 
             row.addEventListener("click", () => {
-                openRegistrationModal();
+                if (publicMode) {
+                    openRegistrationModal();
+                }
             });
 
             list.appendChild(row);
