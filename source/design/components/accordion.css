@@ -1,4 +1,4 @@
-/* accordion.css — Version 1.4 */
+/* accordion.css — Version 1.5 */
 
 .accordion-list { display:grid; gap:var(--component-gap); overflow-anchor:none; }
 
