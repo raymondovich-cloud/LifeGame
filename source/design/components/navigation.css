@@ -1,3 +1,9 @@
-/* navigation.css — Version 1.0 */
+/* navigation.css — Version 1.1 */
 
-/* Визуальные правила навигации. */
+.app-navigation { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-2); margin-top:var(--space-10); padding-top:var(--space-3); border-top:var(--border-subtle); }
+.navigation-item { position:relative; display:flex; align-items:center; justify-content:center; gap:var(--space-2); min-height:3rem; padding:var(--space-3) var(--space-2); color:var(--color-gray); border-radius:var(--radius-control); transition:color var(--motion-duration-normal) var(--motion-ease-standard),background var(--motion-duration-normal) var(--motion-ease-standard); }
+.navigation-item:hover { color:var(--color-white-soft); background:var(--color-accent-soft); }
+.navigation-item.is-active { color:var(--color-white); background:var(--color-surface-highlight); }
+.navigation-index { color:var(--color-gray-dark); font-family:var(--font-family-mono); font-size:var(--font-size-2xs); letter-spacing:var(--letter-spacing-wide); }
+.navigation-item.is-active .navigation-index { color:var(--color-gray); }
+.navigation-label { font-size:var(--font-size-sm); font-weight:var(--font-weight-medium); }
