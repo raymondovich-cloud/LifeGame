@@ -30,6 +30,7 @@
 @import "./patterns/dashboard.css";
 @import "./patterns/forms.css";
 @import "./patterns/public-entry.css";
+@import "./patterns/preview.css";
 @import "./patterns/statistics.css";
 
 @import "./themes/dark.css";
