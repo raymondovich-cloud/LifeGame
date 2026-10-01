@@ -1,30 +1,28 @@
 /*
+ * LifeGame
+ * Web Platform Entry Point
+ *
+ * Responsibility:
+ * - Start the Web platform.
+ * - Verify the application mount point.
+ *
+ * This file contains no business logic, domain logic,
+ * memory logic, user data, or index calculations.
+ */
 
-* LifeGame
-* Web Platform Entry Point
-* Responsibility:
-* ●	Start the Web platform.
-* ●	Provide the initial application mount point.
-* This file must NOT contain:
-* ●	business logic
-* ●	domain logic
-* ●	memory logic
-* ●	user data
-* ●	index calculations
-        */
-
-const APP_ROOT_ID = “app”;
+const APP_ROOT_ID = "app";
 
 function startWeb() {
-const appRoot = document.getElementById(APP_ROOT_ID);
+    const appRoot = document.getElementById(APP_ROOT_ID);
 
-if (!appRoot) {
-    throw new Error(
-        `LifeGame Web: application root "#${APP_ROOT_ID}" was not found.`
-    );
-}
-appRoot.textContent = "LifeGame";
+    if (!appRoot) {
+        throw new Error(
+            `LifeGame Web: application root "#${APP_ROOT_ID}" was not found.`
+        );
+    }
 
+    // The HTML entry point owns the initial presentation shell.
+    // The Web platform only verifies that the mount point exists.
 }
 
 startWeb();
