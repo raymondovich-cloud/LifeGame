@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 1.2
+// platforms/web/web.js — Version 1.3
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
@@ -38,7 +38,7 @@ function startWeb() {
         renderModule(window.location.hash.slice(1));
     });
 
-    renderModule(window.location.hash.slice(1) || "development");
+    renderModule(window.location.hash.slice(1) || "finance");
 }
 
 startWeb();
