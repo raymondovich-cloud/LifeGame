@@ -27,6 +27,9 @@ jobs:
       - name: Run Identity application tests
         run: node --test source/application/identity/registration.test.mjs
 
+      - name: Run Identity Infrastructure tests
+        run: node --test source/infrastructure/identity/supabase.identity.mapper.test.mjs source/infrastructure/identity/supabase.identity.adapter.test.mjs
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
