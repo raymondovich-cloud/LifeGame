@@ -1,4 +1,4 @@
-/* navigation.css — Version 1.4 */
+/* navigation.css — Version 1.5 */
 
 .app-navigation {
     display:grid;
@@ -17,7 +17,7 @@
     justify-content:center;
     gap:clamp(.2rem,.6vw,var(--space-1));
     min-width:0;
-    min-height:2.5rem;
+    min-height:2.75rem;
     padding:var(--space-2) clamp(.2rem,.8vw,var(--space-2));
     color:var(--color-gray);
     border-radius:var(--radius-control);
@@ -53,4 +53,23 @@
     font-size:clamp(.62rem,.8vw,.8125rem);
     font-weight:var(--font-weight-medium);
     text-overflow:ellipsis;
+}
+
+@media (max-width:30rem) {
+    .app-navigation {
+        gap:0;
+    }
+
+    .navigation-item {
+        min-height:3rem;
+        padding-inline:.15rem;
+    }
+
+    .navigation-index {
+        display:none;
+    }
+
+    .navigation-label {
+        font-size:clamp(.62rem,2.6vw,.75rem);
+    }
 }
