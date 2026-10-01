@@ -1,9 +1,10 @@
 // LifeGame 3.0 — Security Boundary
 // Version: 1.0
-// Responsibility: define the infrastructure entry point for security
-// services without implementing cryptography here.
+// Responsibility: define provider-independent security data classification.
 //
 // No keys, secrets, tokens, or cryptographic algorithms belong in this file.
+// Concrete encryption/key-management implementations will live behind
+// Infrastructure ports in later security work.
 
 export const SECURITY_DATA_CLASS = Object.freeze({
     IDENTITY: 'A',
@@ -11,13 +12,3 @@ export const SECURITY_DATA_CLASS = Object.freeze({
     PRIVATE_USER_DATA: 'C',
     SECURITY_SYSTEM_DATA: 'D'
 });
-
-export function assertSensitiveDataNotLoggable(value) {
-    if (value === undefined || value === null) {
-        return;
-    }
-
-    throw new Error(
-        'Sensitive security data must not be passed to generic logging.'
-    );
-}
