@@ -1,3 +1,6 @@
-/* header.css — Version 1.0 */
+/* header.css — Version 1.1 */
 
-/* Визуальные правила шапки интерфейса. */
+.app-header { display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); min-height:2.5rem; }
+.brand-name { color:var(--color-white); font-size:var(--font-size-sm); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-system); line-height:1; white-space:nowrap; }
+.system-status { display:inline-flex; align-items:center; gap:var(--space-2); color:var(--color-gray); font-family:var(--font-family-mono); font-size:var(--font-size-2xs); font-weight:var(--font-weight-medium); letter-spacing:var(--letter-spacing-system); line-height:1; text-transform:uppercase; white-space:nowrap; }
+.status-dot { width:.375rem; height:.375rem; border-radius:var(--radius-pill); background:var(--color-white); box-shadow:0 0 .75rem rgba(255,255,255,.32); }
