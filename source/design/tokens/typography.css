@@ -1,3 +1,26 @@
-/* typography.css — Version 1.0 */
+/* typography.css — Version 1.1 */
 
-/* Токены типографики Design System. */
+:root {
+    --font-family-system: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+        "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    --font-family-mono: "SFMono-Regular", Menlo, Monaco, Consolas,
+        "Liberation Mono", monospace;
+    --font-size-2xs: 0.625rem;
+    --font-size-xs: 0.6875rem;
+    --font-size-sm: 0.8125rem;
+    --font-size-md: 0.9375rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: clamp(2.25rem, 9vw, 4rem);
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --line-height-tight: 1.05;
+    --line-height-snug: 1.25;
+    --line-height-normal: 1.5;
+    --letter-spacing-tight: -0.04em;
+    --letter-spacing-normal: 0;
+    --letter-spacing-wide: 0.08em;
+    --letter-spacing-system: 0.14em;
+}
