@@ -244,7 +244,7 @@ function createLiquidFundsSummary(root) {
 
     const statisticsButton = document.createElement("button");
     statisticsButton.type = "button";
-    statisticsButton.className = "button-control liquid-funds-statistics-trigger";
+    statisticsButton.className = "button-control button-control--accent liquid-funds-statistics-trigger";
     statisticsButton.setAttribute("aria-expanded", String(liquidFundsStatisticsOpen));
     statisticsButton.innerHTML =
         '<span>Статистика</span><span aria-hidden="true">›</span>';
