@@ -71,33 +71,27 @@ test('does not expose provider error details', () => {
 });
 
 test('maps provider rate limiting to a stable application error', () => {
-    assert.throws(
-        () => mapSupabaseError(
-            { status: 429, message: 'provider detail' },
-            IDENTITY_ERROR_CODE.REGISTRATION_FAILED,
-            'Registration could not be completed.'
-        ),
-        error => {
-            assert.ok(error instanceof IdentityApplicationError);
-            assert.equal(error.code, IDENTITY_ERROR_CODE.RATE_LIMITED);
-            assert.equal(error.message, 'Too many requests. Please try again later.');
-            return true;
-        }
+    const result = mapSupabaseError(
+        { status: 429, message: 'provider detail' },
+        IDENTITY_ERROR_CODE.REGISTRATION_FAILED,
+        'Registration could not be completed.'
     );
+
+    assert.ok(result instanceof IdentityApplicationError);
+    assert.equal(result.code, IDENTITY_ERROR_CODE.RATE_LIMITED);
+    assert.equal(result.message, 'Too many requests. Please try again later.');
 });
 
 test('does not leak provider error objects', () => {
     const providerError = { message: 'private provider detail' };
 
-    try {
-        mapSupabaseError(
-            providerError,
-            IDENTITY_ERROR_CODE.REGISTRATION_FAILED,
-            'Registration could not be completed.'
-        );
-        assert.fail('Expected IdentityApplicationError.');
-    } catch (error) {
-        assert.notEqual(error, providerError);
-        assert.equal(error instanceof IdentityApplicationError, true);
-    }
+    const result = mapSupabaseError(
+        providerError,
+        IDENTITY_ERROR_CODE.REGISTRATION_FAILED,
+        'Registration could not be completed.'
+    );
+
+    assert.notEqual(result, providerError);
+    assert.equal(result instanceof IdentityApplicationError, true);
+    assert.equal(result.message, 'Registration could not be completed.');
 });
