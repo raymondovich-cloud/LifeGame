@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Public Entry Presentation
-// Version: 1.0
+// Version: 1.1
 // Responsibility: render the public three-module entry point and registration gate.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
