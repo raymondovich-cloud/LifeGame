@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.0
+// source/presentation/finance/finance.js — Version 1.1
 
 const FINANCE_SUBBLOCKS = Object.freeze([
     {
@@ -67,11 +67,23 @@ function createSubblock(subblock) {
     wrapper.append(button, content);
 
     button.addEventListener("click", () => {
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
         const isOpen = button.getAttribute("aria-expanded") === "true";
+
         button.setAttribute("aria-expanded", String(!isOpen));
         content.hidden = isOpen;
         wrapper.classList.toggle("is-open", !isOpen);
         button.querySelector(".accordion-icon").textContent = isOpen ? "+" : "−";
+
+        // Accordion expansion must never move the user's viewport.
+        window.scrollTo(scrollX, scrollY);
+        requestAnimationFrame(() => {
+            window.scrollTo(scrollX, scrollY);
+            requestAnimationFrame(() => {
+                window.scrollTo(scrollX, scrollY);
+            });
+        });
     });
 
     return wrapper;
