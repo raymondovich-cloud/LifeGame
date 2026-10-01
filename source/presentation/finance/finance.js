@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.3
+// source/presentation/finance/finance.js — Version 1.4
 
 import {
     listFinanceEntries,
