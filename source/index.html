@@ -2,40 +2,86 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-<meta
-    name="description"
-    content="LifeGame — a personal system for managing life."
->
-<meta
-    name="theme-color"
-    content="#000000"
->
-<title>LifeGame</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <meta
+        name="description"
+        content="LifeGame — a premium personal system for managing life."
+    >
+    <meta name="theme-color" content="#070707">
+    <meta name="color-scheme" content="dark">
+
+    <title>LifeGame</title>
+
+    <link rel="stylesheet" href="../design/design.css">
 </head>
+
 <body>
-<div id="app"></div>
-<!--
-    LifeGame
-    --------------------------------------------------
-    Web entry point.
-    Architecture:
-    source/
-    ├── domain/
-    ├── index/
-    ├── memory/
-    ├── users/
-    └── application/
-    Platform:
-    platforms/
-    └── web/
-    This file contains no business logic.
-    It only provides the entry point for the Web platform.
-    --------------------------------------------------
--->
-<script type="module" src="../platforms/web/web.js"></script>
+    <main id="app" aria-label="LifeGame application">
+        <section class="app-shell">
+            <header class="app-header">
+                <div class="brand">
+                    <span class="brand-mark" aria-hidden="true"></span>
+                    <span class="brand-name">LifeGame</span>
+                </div>
+
+                <div class="system-status" aria-label="System status">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <span>Private</span>
+                </div>
+            </header>
+
+            <section class="hero">
+                <p class="eyebrow">PERSONAL OPERATING SYSTEM</p>
+                <h1>Design your life.<br><span>Live it deliberately.</span></h1>
+                <p class="hero-copy">
+                    One private system for the parts of life that matter:
+                    Finance, Health and Development.
+                </p>
+            </section>
+
+            <section class="domain-grid" aria-label="Life domains">
+                <article class="domain-card">
+                    <span class="domain-index">01</span>
+                    <div>
+                        <h2>Finance</h2>
+                        <p>Money, stability and long-term control.</p>
+                    </div>
+                    <span class="domain-arrow" aria-hidden="true">↗</span>
+                </article>
+
+                <article class="domain-card">
+                    <span class="domain-index">02</span>
+                    <div>
+                        <h2>Health</h2>
+                        <p>Energy, body and sustainable performance.</p>
+                    </div>
+                    <span class="domain-arrow" aria-hidden="true">↗</span>
+                </article>
+
+                <article class="domain-card">
+                    <span class="domain-index">03</span>
+                    <div>
+                        <h2>Development</h2>
+                        <p>Skills, learning and personal growth.</p>
+                    </div>
+                    <span class="domain-arrow" aria-hidden="true">↗</span>
+                </article>
+            </section>
+
+            <footer class="app-footer">
+                <span>LifeGame</span>
+                <span>Private by design</span>
+            </footer>
+        </section>
+    </main>
+
+    <noscript>
+        <div class="noscript-message">
+            LifeGame requires JavaScript to run.
+        </div>
+    </noscript>
+
+    <script type="module" src="../platforms/web/web.js"></script>
 </body>
 </html>
