@@ -2,8 +2,6 @@
   <img src="admin.sistem/docs/52BD4129-4F9E-4E68-A1BC-9ECAB1F40606.png" alt="LifeGame" width="100%">
 </div>
 
-⸻
-
 <div align="center">
 
 ОДНА ЖИЗНЬ. ОДНА СИСТЕМА.
