@@ -1,0 +1,35 @@
+/* design.css — Version 1.0 */
+
+/* Единая точка входа Design System. */
+
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/radius.css";
+@import "./tokens/shadows.css";
+@import "./tokens/borders.css";
+@import "./tokens/gradients.css";
+@import "./tokens/motion.css";
+
+@import "./foundation/reset.css";
+@import "./foundation/base.css";
+@import "./foundation/layout.css";
+@import "./foundation/accessibility.css";
+
+@import "./components/button.css";
+@import "./components/card.css";
+@import "./components/input.css";
+@import "./components/modal.css";
+@import "./components/accordion.css";
+@import "./components/navigation.css";
+@import "./components/header.css";
+@import "./components/list.css";
+@import "./components/badge.css";
+@import "./components/progress.css";
+
+@import "./patterns/dashboard.css";
+@import "./patterns/forms.css";
+@import "./patterns/statistics.css";
+
+@import "./themes/dark.css";
+@import "./themes/light.css";
