@@ -1,39 +1,5 @@
 <div align="center">
-<br>
-<br>
-
-LIFE GAME
-
-УБЕРИ ЛИШНЕЕ · УМНОЖЬ ЖЕЛАЕМОЕ
-
-<br>
-<table>
-<tr>
-<td align="center">
-
-ФИНАНСЫ
-
-</td>
-<td width="30"></td>
-<td align="center">
-
-ЗДОРОВЬЕ
-
-</td>
-<td width="30"></td>
-<td align="center">
-
-РАЗВИТИЕ
-
-</td>
-</tr>
-</table>
-<br>
-
-TELEGRAM
-
-<br>
-<br>
+<img src="docs/lifegame-header.png" alt="LifeGame" width="100%">
 </div>
 
 ⸻
@@ -78,32 +44,15 @@ LifeGame выбирает другой путь:
 
 <div align="center">
 
-УВИДЕТЬ
+УВИДЕТЬ → ПОНЯТЬ → РЕШИТЬ → ДЕЙСТВОВАТЬ → РАСТИ
 
-↓
+<br>
 
-ПОНЯТЬ
-
-↓
-
-РЕШИТЬ
-
-↓
-
-ДЕЙСТВОВАТЬ
-
-↓
-
-РАСТИ
+Где я сейчас? · Что меняется? · Что требует внимания? · Куда я двигаюсь?
 
 </div>
 
-LifeGame помогает ответить на четыре вопроса:
-
-Где я сейчас?
-Что меняется?
-Что требует внимания?
-Куда я двигаюсь?
+LifeGame превращает данные о жизни в ясное понимание, решения и дальнейшее действие.
 
 ⸻
 
@@ -139,7 +88,6 @@ LifeGame начинается как единая система управле�
 
 ⸻
 
-<br>
 <div align="center">
 
 LIFE GAME
@@ -153,7 +101,7 @@ LIFE GAME
 
 <br>
 
-[@shkeltinsh]
+[@shkeltinsh|https://t.me/BillionsMone]
 
 LifeGame · 2026
 
