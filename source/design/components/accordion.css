@@ -1,4 +1,4 @@
-/* accordion.css — Version 1.1 */
+/* accordion.css — Version 1.2 */
 
 .accordion-list { display:grid; gap:var(--component-gap); }
 
@@ -16,8 +16,8 @@
     grid-template-columns:auto minmax(0,1fr) auto;
     align-items:center;
     width:100%;
-    gap:var(--space-4);
-    padding:var(--space-5);
+    gap:var(--space-3);
+    padding:var(--space-3) var(--space-4);
     color:var(--color-white);
     text-align:left;
     background:transparent;
@@ -33,11 +33,11 @@
 .accordion-index {
     display:grid;
     place-items:center;
-    width:2rem;
-    height:2rem;
+    width:1.75rem;
+    height:1.75rem;
     color:var(--color-gray);
     font-family:var(--font-family-mono);
-    font-size:var(--font-size-xs);
+    font-size:var(--font-size-2xs);
     letter-spacing:var(--letter-spacing-wide);
     border:var(--border-subtle);
     border-radius:var(--radius-sm);
@@ -46,37 +46,41 @@
 .accordion-title-group {
     display:grid;
     min-width:0;
-    gap:var(--space-1);
+    gap:2px;
 }
 
 .accordion-title {
     overflow:hidden;
-    font-size:var(--font-size-md);
+    font-size:var(--font-size-sm);
     font-weight:var(--font-weight-semibold);
+    line-height:1.2;
     text-overflow:ellipsis;
     white-space:nowrap;
 }
 
 .accordion-description {
+    overflow:hidden;
     color:var(--color-gray);
-    font-size:var(--font-size-xs);
-    line-height:var(--line-height-normal);
+    font-size:var(--font-size-2xs);
+    line-height:1.25;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
 .accordion-icon {
     display:grid;
     place-items:center;
-    width:2rem;
-    height:2rem;
+    width:1.75rem;
+    height:1.75rem;
     color:var(--color-gray);
-    font-size:var(--font-size-lg);
+    font-size:var(--font-size-md);
     font-weight:var(--font-weight-regular);
     border:var(--border-subtle);
     border-radius:var(--radius-pill);
 }
 
 .accordion-content {
-    padding:0 var(--space-5) var(--space-5);
+    padding:0 var(--space-4) var(--space-3);
 }
 
 .accordion-content[hidden] { display:none; }
@@ -85,11 +89,11 @@
     border-bottom:var(--border-subtle);
 }
 
-.module-subblocks { display:grid; gap:var(--space-5); }
+.module-subblocks { display:grid; gap:var(--space-4); }
 
 .module-subblocks-header {
     display:grid;
-    gap:var(--space-2);
+    gap:var(--space-1);
 }
 
 .module-subblocks-label {
@@ -102,6 +106,6 @@
 .module-subblocks-header p {
     margin:0;
     color:var(--color-white-soft);
-    font-size:var(--font-size-sm);
-    line-height:var(--line-height-normal);
+    font-size:var(--font-size-xs);
+    line-height:1.3;
 }
