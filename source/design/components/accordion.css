@@ -1,15 +1,17 @@
-/* accordion.css — Version 1.3 */
+/* accordion.css — Version 1.4 */
 
 .accordion-list { display:grid; gap:var(--component-gap); overflow-anchor:none; }
 
 .accordion-item {
     position:relative;
     overflow:hidden;
-    background:var(--gradient-surface),var(--color-surface);
-    border:var(--border-subtle);
+    background:var(--gradient-card-premium);
+    border:1px solid rgba(255,255,255,.10);
     border-radius:var(--radius-card);
-    box-shadow:var(--shadow-soft);
+    box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22);
 }
+
+.accordion-item::before { position:absolute; top:0; left:8%; right:8%; height:1px; pointer-events:none; content:""; background:var(--gradient-accent-line); opacity:.28; }
 
 .accordion-trigger {
     display:grid;
@@ -25,87 +27,16 @@
     cursor:pointer;
 }
 
-.accordion-trigger:focus-visible {
-    outline:2px solid var(--color-white-soft);
-    outline-offset:-2px;
-}
-
-.accordion-index {
-    display:grid;
-    place-items:center;
-    width:1.75rem;
-    height:1.75rem;
-    color:var(--color-gray);
-    font-family:var(--font-family-mono);
-    font-size:var(--font-size-2xs);
-    letter-spacing:var(--letter-spacing-wide);
-    border:var(--border-subtle);
-    border-radius:var(--radius-sm);
-}
-
-.accordion-title-group {
-    display:grid;
-    min-width:0;
-    gap:2px;
-}
-
-.accordion-title {
-    overflow:hidden;
-    font-size:var(--font-size-sm);
-    font-weight:var(--font-weight-semibold);
-    line-height:1.2;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-.accordion-description {
-    overflow:hidden;
-    color:var(--color-gray);
-    font-size:var(--font-size-2xs);
-    line-height:1.25;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-.accordion-icon {
-    display:grid;
-    place-items:center;
-    width:1.75rem;
-    height:1.75rem;
-    color:var(--color-gray);
-    font-size:var(--font-size-md);
-    font-weight:var(--font-weight-regular);
-    border:var(--border-subtle);
-    border-radius:var(--radius-pill);
-}
-
-.accordion-content {
-    padding:0 var(--space-4) var(--space-3);
-}
-
+.accordion-trigger:focus-visible { outline:2px solid var(--color-accent); outline-offset:-2px; }
+.accordion-index { display:grid; place-items:center; width:1.75rem; height:1.75rem; color:var(--color-gray); font-family:var(--font-family-mono); font-size:var(--font-size-2xs); letter-spacing:var(--letter-spacing-wide); border:var(--border-subtle); border-radius:var(--radius-sm); }
+.accordion-title-group { display:grid; min-width:0; gap:2px; }
+.accordion-title { overflow:hidden; font-size:var(--font-size-sm); font-weight:var(--font-weight-semibold); line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
+.accordion-description { overflow:hidden; color:var(--color-gray); font-size:var(--font-size-2xs); line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+.accordion-icon { display:grid; place-items:center; width:1.75rem; height:1.75rem; color:var(--color-gray); font-size:var(--font-size-md); font-weight:var(--font-weight-regular); border:var(--border-subtle); border-radius:var(--radius-pill); }
+.accordion-content { padding:0 var(--space-4) var(--space-3); }
 .accordion-content[hidden] { display:none; }
-
-.accordion-item.is-open .accordion-trigger {
-    border-bottom:var(--border-subtle);
-}
-
+.accordion-item.is-open .accordion-trigger { border-bottom:var(--border-subtle); }
 .module-subblocks { display:grid; gap:var(--space-4); }
-
-.module-subblocks-header {
-    display:grid;
-    gap:var(--space-1);
-}
-
-.module-subblocks-label {
-    color:var(--color-gray);
-    font-family:var(--font-family-mono);
-    font-size:var(--font-size-2xs);
-    letter-spacing:var(--letter-spacing-system);
-}
-
-.module-subblocks-header p {
-    margin:0;
-    color:var(--color-white-soft);
-    font-size:var(--font-size-xs);
-    line-height:1.3;
-}
+.module-subblocks-header { display:grid; gap:var(--space-1); }
+.module-subblocks-label { color:var(--color-gray); font-family:var(--font-family-mono); font-size:var(--font-size-2xs); letter-spacing:var(--letter-spacing-system); }
+.module-subblocks-header p { margin:0; color:var(--color-white-soft); font-size:var(--font-size-xs); line-height:1.3; }
