@@ -1,9 +1,9 @@
-/* layout.css — Version 1.4 */
+/* layout.css — Version 1.5 */
 
 #app { min-height:100vh; min-height:100dvh; }
 .app-shell { position:relative; display:flex; flex-direction:column; width:min(100%,56rem); min-height:100vh; min-height:100dvh; margin:0 auto; padding:var(--page-padding-block) var(--page-padding-inline) calc(var(--page-padding-block) + 4rem); overflow:hidden; }
 .app-shell::before { position:fixed; inset:0; z-index:-1; pointer-events:none; content:""; background:var(--gradient-ambient); }
-.module-intro { display:flex; flex-direction:column; gap:var(--space-3); margin-top:var(--space-4); }
+.module-intro { display:flex; flex-direction:column; gap:var(--space-3); margin-top:calc(var(--space-4) / 2); }
 .module-meta { display:flex; align-items:center; }
 .module-label { color:var(--color-gray); font-family:var(--font-family-mono); font-size:var(--font-size-2xs); font-weight:var(--font-weight-medium); letter-spacing:var(--letter-spacing-system); text-transform:uppercase; }
 .module-title-group { display:flex; flex-direction:column; gap:var(--space-1); }
