@@ -322,9 +322,9 @@ function createSubblock(root, subblock, isOpen) {
         '<span class="accordion-icon" aria-hidden="true">' + (isOpen ? "−" : "+") + "</span>";
 
     const content = document.createElement("div");
-    content.className = "accordion-content";
+    content.className = "accordion-content" + (isOpen ? " is-open" : "");
     content.id = subblock.id + "-content";
-    content.hidden = !isOpen;
+    content.hidden = false;
 
     const entries = listFinanceEntries(subblock.id);
 
