@@ -4,7 +4,7 @@
 
 ## Changed
 
-Created the first provider-independent Identity architecture boundary:
+Completed the first Identity infrastructure foundation and provider-independent boundary:
 
 - `source/domain/identity/identity.js`
 - `source/domain/identity/identity.policy.js`
@@ -13,6 +13,16 @@ Created the first provider-independent Identity architecture boundary:
 - `source/presentation/auth/auth.controller.js`
 - `source/infrastructure/identity/supabase.identity.adapter.js`
 - `source/infrastructure/security/security.boundary.js`
+
+## Database Foundation
+
+Added `supabase/migrations/0002_identity_profile_bootstrap.sql`.
+
+- Auth user creation automatically creates `public.profiles`.
+- Registration creates a minimal server-side `identity.user.registered` security event.
+- The trigger is `SECURITY DEFINER` with a restricted `search_path`.
+- Clients receive no direct access to `private.security_events`.
+- Database tests were extended to verify the bootstrap behavior.
 
 ## Architecture
 
@@ -31,6 +41,12 @@ The architectural files were committed to GitHub.
 
 Actual local Supabase runtime tests are still not executed in this environment because Docker/Supabase runtime is unavailable here.
 
+## Validation
+
+The database test suite now covers the profile bootstrap and registration security event in addition to the RLS isolation tests.
+
+Actual local Supabase runtime execution is still not available in this environment, so the suite is **not claimed as PASS** until GitHub Actions or a local Docker/Supabase run confirms it.
+
 ## Next step
 
-After local RLS tests pass, implement the first real Identity use case: Registration.
+Once the database tests are confirmed PASS, wire the real Registration use case through Presentation → Application → Identity Port → Supabase Adapter, followed by email verification and session handling.
