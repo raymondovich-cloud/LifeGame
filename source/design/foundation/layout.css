@@ -1,3 +1,8 @@
-/* layout.css — Version 1.0 */
+/* layout.css — Version 1.1 */
 
-/* Базовые правила сетки и layout. */
+#app { min-height:100vh; min-height:100dvh; }
+.app-shell { position:relative; display:flex; flex-direction:column; width:min(100%,56rem); min-height:100vh; min-height:100dvh; margin:0 auto; padding:var(--page-padding-block) var(--page-padding-inline) calc(var(--page-padding-block) + 5rem); overflow:hidden; }
+.app-shell::before { position:fixed; inset:0; z-index:-1; pointer-events:none; content:""; background:var(--gradient-ambient); }
+.module-intro { display:flex; flex-direction:column; gap:var(--space-5); margin-top:var(--section-gap); }
+.module-description { max-width:38rem; margin-top:var(--section-gap); }
+.module-indicator { display:flex; align-items:baseline; gap:var(--space-2); margin-top:auto; padding-top:var(--section-gap); }
