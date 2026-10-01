@@ -1,11 +1,11 @@
 // LifeGame 3.0 — Registration Presentation
-// Version: 1.0
+// Version: 1.1
 // Responsibility: render the registration interaction and call Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
 // encryption, or persistence.
 
-export function renderRegistration(container, authController) {
+export function renderRegistration(container, authController, onBack) {
     if (!container) {
         throw new Error("Registration container is required.");
     }
@@ -14,16 +14,27 @@ export function renderRegistration(container, authController) {
         throw new Error("Auth controller is required.");
     }
 
+    if (typeof onBack !== "function") {
+        throw new Error("Registration back action is required.");
+    }
+
     const wrapper = document.createElement("section");
     wrapper.className = "form";
     wrapper.setAttribute("aria-labelledby", "registration-title");
 
-    const title = document.createElement("h2");
+    const backButton = document.createElement("button");
+    backButton.className = "button-control";
+    backButton.type = "button";
+    backButton.textContent = "Back";
+    backButton.addEventListener("click", onBack);
+
+    const title = document.createElement("h1");
     title.id = "registration-title";
     title.textContent = "Create account";
 
     const description = document.createElement("p");
-    description.textContent = "Create your LifeGame account to protect and synchronize your private data.";
+    description.textContent =
+        "Create your LifeGame account to protect and synchronize your private data.";
 
     const form = document.createElement("form");
     form.className = "form";
@@ -74,7 +85,7 @@ export function renderRegistration(container, authController) {
     status.setAttribute("aria-live", "polite");
 
     form.append(emailField, passwordField, submit, status);
-    wrapper.append(title, description, form);
+    wrapper.append(backButton, title, description, form);
     container.append(wrapper);
 
     form.addEventListener("submit", async (event) => {
@@ -90,14 +101,16 @@ export function renderRegistration(container, authController) {
             });
 
             if (result.status === "PENDING_EMAIL_VERIFICATION") {
-                status.textContent = "Account created. Check your email to verify your address.";
+                status.textContent =
+                    "Account created. Check your email to verify your address.";
             } else {
                 status.textContent = "Account created successfully.";
             }
 
             form.reset();
         } catch (error) {
-            status.textContent = error?.message || "Registration could not be completed.";
+            status.textContent =
+                error?.message || "Registration could not be completed.";
         } finally {
             submit.disabled = false;
         }
