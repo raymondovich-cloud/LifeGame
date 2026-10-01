@@ -130,9 +130,9 @@ select lives_ok(
 
 set local role postgres;
 select results_eq(
-    $select count(*)::bigint from public.profiles
-      where id = '00000000-0000-0000-0000-000000000002'$,
-    $values (1::bigint)$,
+    $$select count(*)::bigint from public.profiles
+      where id = '00000000-0000-0000-0000-000000000002'$$,
+    $$values (1::bigint)$$,
     'User B profile remains unchanged after User A write attempts'
 );
 
@@ -144,11 +144,11 @@ select set_config(
 );
 
 select throws_ok(
-    $
+    $$
     update public.profiles
     set id = '00000000-0000-0000-0000-000000000002'
     where id = '00000000-0000-0000-0000-000000000001'
-    $,
+    $$,
     '42501',
     'new row violates row-level security policy for table "profiles"',
     'User A cannot transfer profile ownership to User B'
@@ -191,15 +191,15 @@ select throws_ok(
     $select * from public.profiles$,
     '42501',
     'permission denied for table profiles',
-    'Anonymous client is denied access to profiles'
+    $$select * from public.profiles$$,
 );
 
 select throws_ok(
     $
-    insert into public.profiles (id, display_name)
+    $$
     values ('00000000-0000-0000-0000-000000000003', 'Anonymous')
     $,
-    '42501',
+    $$,
     'permission denied for table profiles',
     'Anonymous client cannot insert profiles'
 );
