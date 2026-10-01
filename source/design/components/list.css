@@ -1,5 +1,5 @@
 
-/* list.css — Version 1.5 */
+/* list.css — Version 1.6 */
 
 .list-empty {
     display:grid;
@@ -22,6 +22,18 @@
 .list-empty p {
     margin:0;
     font-size:var(--font-size-xs);
+}
+
+.finance-entry-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-3);
+    min-height:3rem;
+    padding:var(--space-2) var(--space-3);
+    background:var(--gradient-surface);
+    border:var(--border-subtle);
+    border-radius:var(--radius-control);
 }
 
 .finance-entry-list {
@@ -88,6 +100,7 @@
     top:0;
     right:0;
     bottom:0;
+    z-index:0;
     width:6rem;
     color:var(--color-danger);
     font:inherit;
@@ -96,6 +109,11 @@
     background:transparent;
     border:0;
     cursor:pointer;
+    pointer-events:none;
+}
+
+.swipe-delete-item.is-delete-ready .swipe-delete-action {
+    pointer-events:auto;
 }
 
 .finance-entry-label {
