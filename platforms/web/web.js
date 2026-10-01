@@ -84,10 +84,13 @@ function startWeb() {
         if (modal) {
             modal.remove();
         }
+
+        authRoot.hidden = true;
     }
 
     function openRegistrationModal(pendingAction = null) {
         closeRegistrationModal();
+        authRoot.hidden = false;
 
         const modal = document.createElement("div");
         modal.className = "registration-modal";
