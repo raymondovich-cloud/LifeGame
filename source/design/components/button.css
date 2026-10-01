@@ -1,18 +1,43 @@
-/* button.css — Version 1.1 */
+/* button.css — Version 1.2 */
 
 .button-control {
     min-height:2.25rem;
     padding:var(--space-2) var(--space-3);
-    color:var(--color-black);
+    color:var(--color-white-soft);
     font:inherit;
     font-size:var(--font-size-xs);
     font-weight:var(--font-weight-semibold);
-    background:var(--color-white);
-    border:0;
+    background:var(--gradient-surface);
+    border:1px solid var(--color-border);
     border-radius:var(--radius-control);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
     cursor:pointer;
+    transition:color .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease,transform .12s ease;
+}
+
+.button-control:hover {
+    color:var(--color-white);
+    border-color:var(--color-border-strong);
+    background:var(--gradient-card-premium);
+}
+
+.button-control:focus-visible {
+    outline:2px solid var(--color-accent);
+    outline-offset:2px;
 }
 
 .button-control:active {
     transform:scale(.98);
+}
+
+.button-control--accent {
+    color:var(--color-white);
+    border-color:var(--color-accent-border);
+    background:linear-gradient(135deg,rgba(242,138,46,.16),rgba(242,138,46,.055));
+    box-shadow:0 0 24px rgba(242,138,46,.07),inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+.button-control--accent:hover {
+    border-color:var(--color-accent);
+    box-shadow:0 0 30px rgba(242,138,46,.11),inset 0 1px 0 rgba(255,255,255,.055);
 }
