@@ -1,1 +1,508 @@
-1
+/* =========================================================
+   LifeGame — Premium Design System
+   Version: 1.0
+   Responsibility: visual language only
+   ========================================================= */
+
+:root {
+    --lg-black: #050505;
+    --lg-surface: #0b0b0b;
+    --lg-surface-2: #111111;
+    --lg-surface-3: #171717;
+
+    --lg-white: #f5f4f0;
+    --lg-text: #d8d6d0;
+    --lg-muted: #77756f;
+    --lg-border: rgba(255, 255, 255, 0.09);
+    --lg-border-strong: rgba(255, 185, 55, 0.28);
+
+    --lg-gold: #f5a623;
+    --lg-gold-light: #ffd36a;
+    --lg-orange: #ff7a18;
+
+    --lg-radius-xl: 28px;
+    --lg-radius-lg: 20px;
+    --lg-radius-md: 14px;
+
+    --lg-shadow:
+        0 32px 90px rgba(0, 0, 0, 0.55),
+        0 0 80px rgba(245, 166, 35, 0.06);
+
+    --lg-font:
+        Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display",
+        "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+    background: var(--lg-black);
+    color-scheme: dark;
+}
+
+body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+
+    font-family: var(--lg-font);
+    color: var(--lg-white);
+    background:
+        radial-gradient(
+            900px 500px at 78% -8%,
+            rgba(245, 166, 35, 0.12),
+            transparent 62%
+        ),
+        radial-gradient(
+            700px 500px at -10% 75%,
+            rgba(255, 122, 24, 0.06),
+            transparent 64%
+        ),
+        linear-gradient(145deg, #050505 0%, #090909 52%, #050505 100%);
+
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+
+    opacity: 0.16;
+
+    background-image:
+        linear-gradient(
+            rgba(255, 255, 255, 0.025) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.025) 1px,
+            transparent 1px
+        );
+    background-size: 48px 48px;
+
+    mask-image: linear-gradient(
+        to bottom,
+        black,
+        transparent 85%
+    );
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+button {
+    color: inherit;
+}
+
+#app {
+    min-height: 100vh;
+}
+
+/* ---------------------------------------------------------
+   Application shell
+   --------------------------------------------------------- */
+
+.app-shell {
+    position: relative;
+
+    width: min(1180px, calc(100% - 32px));
+    min-height: calc(100vh - 32px);
+
+    margin: 16px auto;
+    padding: 28px;
+
+    overflow: hidden;
+
+    border: 1px solid var(--lg-border);
+    border-radius: var(--lg-radius-xl);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.045),
+            rgba(255, 255, 255, 0.012) 42%,
+            rgba(245, 166, 35, 0.018)
+        ),
+        rgba(7, 7, 7, 0.82);
+
+    box-shadow: var(--lg-shadow);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+.app-shell::before {
+    content: "";
+    position: absolute;
+
+    width: 360px;
+    height: 360px;
+
+    top: -180px;
+    right: -100px;
+
+    border-radius: 50%;
+
+    background: rgba(245, 166, 35, 0.08);
+    filter: blur(70px);
+    pointer-events: none;
+}
+
+/* ---------------------------------------------------------
+   Header
+   --------------------------------------------------------- */
+
+.app-header {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding-bottom: 26px;
+    border-bottom: 1px solid var(--lg-border);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.brand-mark {
+    position: relative;
+
+    width: 15px;
+    height: 15px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--lg-gold-light),
+            var(--lg-orange)
+        );
+
+    box-shadow:
+        0 0 22px rgba(245, 166, 35, 0.5),
+        inset 0 0 4px rgba(255, 255, 255, 0.45);
+}
+
+.brand-name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.system-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    color: var(--lg-muted);
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lg-gold);
+    box-shadow: 0 0 10px rgba(245, 166, 35, 0.8);
+}
+
+/* ---------------------------------------------------------
+   Hero
+   --------------------------------------------------------- */
+
+.hero {
+    position: relative;
+    z-index: 1;
+
+    max-width: 760px;
+    padding: clamp(72px, 12vh, 132px) 0 72px;
+}
+
+.eyebrow {
+    margin: 0 0 22px;
+
+    color: var(--lg-gold);
+
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+.hero h1 {
+    margin: 0;
+
+    font-size: clamp(42px, 7vw, 78px);
+    line-height: 0.98;
+    font-weight: 700;
+    letter-spacing: -0.055em;
+}
+
+.hero h1 span {
+    background:
+        linear-gradient(
+            100deg,
+            var(--lg-gold-light),
+            var(--lg-gold) 48%,
+            var(--lg-orange)
+        );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.hero-copy {
+    max-width: 560px;
+    margin: 28px 0 0;
+
+    color: var(--lg-muted);
+
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+/* ---------------------------------------------------------
+   Domain cards
+   --------------------------------------------------------- */
+
+.domain-grid {
+    position: relative;
+    z-index: 1;
+
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.domain-card {
+    position: relative;
+
+    min-height: 190px;
+    padding: 22px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    overflow: hidden;
+
+    border: 1px solid var(--lg-border);
+    border-radius: var(--lg-radius-lg);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.045),
+            rgba(255, 255, 255, 0.012)
+        );
+
+    transition:
+        transform 220ms ease,
+        border-color 220ms ease,
+        background 220ms ease;
+}
+
+.domain-card::after {
+    content: "";
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    right: -70px;
+    bottom: -70px;
+
+    border-radius: 50%;
+    background: rgba(245, 166, 35, 0.07);
+    filter: blur(25px);
+}
+
+.domain-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--lg-border-strong);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(245, 166, 35, 0.075),
+            rgba(255, 255, 255, 0.015)
+        );
+}
+
+.domain-index {
+    color: var(--lg-muted);
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.domain-card h2 {
+    margin: 0 0 8px;
+
+    font-size: 21px;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+}
+
+.domain-card p {
+    max-width: 230px;
+    margin: 0;
+
+    color: var(--lg-muted);
+
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.domain-arrow {
+    position: absolute;
+    top: 20px;
+    right: 22px;
+
+    color: var(--lg-gold);
+
+    font-size: 18px;
+    opacity: 0.85;
+}
+
+/* ---------------------------------------------------------
+   Footer
+   --------------------------------------------------------- */
+
+.app-footer {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    justify-content: space-between;
+
+    margin-top: 28px;
+    padding-top: 20px;
+
+    border-top: 1px solid var(--lg-border);
+
+    color: var(--lg-muted);
+
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------
+   Fallback state used when the platform layer mounts only
+   the application name.
+   --------------------------------------------------------- */
+
+#app:not(:has(.app-shell)) {
+    display: grid;
+    place-items: center;
+
+    min-height: 100vh;
+
+    color: var(--lg-white);
+
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+#app:not(:has(.app-shell))::before {
+    content: "";
+    position: absolute;
+
+    width: 18px;
+    height: 18px;
+    margin-top: -58px;
+
+    border-radius: 50%;
+
+    background: linear-gradient(
+        135deg,
+        var(--lg-gold-light),
+        var(--lg-orange)
+    );
+
+    box-shadow: 0 0 30px rgba(245, 166, 35, 0.55);
+}
+
+/* ---------------------------------------------------------
+   No JavaScript
+   --------------------------------------------------------- */
+
+.noscript-message {
+    position: fixed;
+    inset: auto 16px 16px;
+
+    z-index: 100;
+
+    padding: 14px 18px;
+
+    border: 1px solid var(--lg-border-strong);
+    border-radius: var(--lg-radius-md);
+
+    color: var(--lg-text);
+    background: var(--lg-surface-2);
+
+    font-size: 13px;
+    text-align: center;
+}
+
+/* ---------------------------------------------------------
+   Responsive
+   --------------------------------------------------------- */
+
+@media (max-width: 760px) {
+    .app-shell {
+        width: min(100% - 20px, 1180px);
+        min-height: calc(100vh - 20px);
+
+        margin: 10px auto;
+        padding: 20px;
+
+        border-radius: 22px;
+    }
+
+    .hero {
+        padding: 72px 0 52px;
+    }
+
+    .hero h1 {
+        font-size: clamp(42px, 13vw, 64px);
+    }
+
+    .domain-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .domain-card {
+        min-height: 145px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .domain-card {
+        transition: none;
+    }
+}
