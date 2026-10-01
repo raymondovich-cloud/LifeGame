@@ -24,6 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Run Identity application tests
+        run: node --test source/application/identity/registration.test.mjs
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
