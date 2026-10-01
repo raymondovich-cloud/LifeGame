@@ -1,3 +1,10 @@
-/* dashboard.css — Version 1.0 */
+/* dashboard.css — Version 1.1 */
 
-/* Визуальные паттерны dashboard. */
+.dashboard { display:grid; gap:var(--component-gap); }
+.dashboard-grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:var(--component-gap); }
+.dashboard-grid > * { grid-column:span 12; }
+@media (min-width:42rem) {
+    .dashboard-grid > .span-6 { grid-column:span 6; }
+    .dashboard-grid > .span-4 { grid-column:span 4; }
+    .dashboard-grid > .span-8 { grid-column:span 8; }
+}
