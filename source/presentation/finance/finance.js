@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.2
+// source/presentation/finance/finance.js — Version 1.3
 
 import {
     listFinanceEntries,
@@ -7,42 +7,15 @@ import {
 } from "../../application/finance/finance.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
-    {
-        id: "liquid-funds",
-        number: "01",
-        title: "Ликвидные средства",
-        description: "Деньги, которыми пользователь может распоряжаться сейчас."
-    },
-    {
-        id: "actual-earnings",
-        number: "02",
-        title: "Фактически заработанно",
-        description: "Фактически полученный доход за выбранный период."
-    },
-    {
-        id: "financial-burden",
-        number: "03",
-        title: "Финансовая нагрузка",
-        description: "Обязательства и финансовые нагрузки, влияющие на устойчивость."
-    },
-    {
-        id: "mandatory-expenses",
-        number: "04",
-        title: "Обязательные траты",
-        description: "Регулярные расходы, которые необходимо учитывать в первую очередь."
-    },
-    {
-        id: "financial-cushion",
-        number: "05",
-        title: "Финансовая подушка",
-        description: "Резерв, предназначенный для защиты финансовой устойчивости."
-    }
+    { id: "liquid-funds", number: "01", title: "Ликвидные средства", description: "Деньги, которыми пользователь может распоряжаться сейчас." },
+    { id: "actual-earnings", number: "02", title: "Фактически заработанно", description: "Фактически полученный доход за выбранный период." },
+    { id: "financial-burden", number: "03", title: "Финансовая нагрузка", description: "Обязательства и финансовые нагрузки, влияющие на устойчивость." },
+    { id: "mandatory-expenses", number: "04", title: "Обязательные траты", description: "Регулярные расходы, которые необходимо учитывать в первую очередь." },
+    { id: "financial-cushion", number: "05", title: "Финансовая подушка", description: "Резерв, предназначенный для защиты финансовой устойчивости." }
 ]);
 
 function formatAmount(amount) {
-    return new Intl.NumberFormat("ru-RU", {
-        maximumFractionDigits: 2
-    }).format(amount);
+    return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(amount);
 }
 
 function createEntryRow(root, subblock, entry) {
@@ -147,9 +120,7 @@ function attachSwipeDelete(root) {
         content.addEventListener("pointercancel", finishSwipe);
 
         content.addEventListener("click", () => {
-            if (item.classList.contains("is-delete-ready")) {
-                close();
-            }
+            if (item.classList.contains("is-delete-ready")) close();
         });
     });
 }
@@ -258,7 +229,7 @@ function createSubblock(root, subblock, isOpen) {
     return wrapper;
 }
 
-function renderFinance(root, openSubblockId = "liquid-funds") {
+function renderFinance(root, openSubblockId = null) {
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -279,9 +250,7 @@ function renderFinance(root, openSubblockId = "liquid-funds") {
     list.className = "accordion-list";
 
     FINANCE_SUBBLOCKS.forEach((subblock) => {
-        list.appendChild(
-            createSubblock(root, subblock, subblock.id === openSubblockId)
-        );
+        list.appendChild(createSubblock(root, subblock, subblock.id === openSubblockId));
     });
 
     section.append(heading, list);
