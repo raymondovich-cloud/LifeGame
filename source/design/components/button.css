@@ -1,3 +1,18 @@
-/* button.css — Version 1.0 */
+/* button.css — Version 1.1 */
 
-/* Визуальные правила кнопок. */
+.button-control {
+    min-height:2.25rem;
+    padding:var(--space-2) var(--space-3);
+    color:var(--color-black);
+    font:inherit;
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-semibold);
+    background:var(--color-white);
+    border:0;
+    border-radius:var(--radius-control);
+    cursor:pointer;
+}
+
+.button-control:active {
+    transform:scale(.98);
+}
