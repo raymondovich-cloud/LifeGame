@@ -1,3 +1,5 @@
-/* statistics.css — Version 1.0 */
+/* statistics.css — Version 1.1 */
 
-/* Визуальные паттерны статистики. */
+.statistics { display:grid; gap:var(--space-3); }
+.statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
+.statistics-meta { color:var(--color-gray); font-size:var(--font-size-xs); letter-spacing:var(--letter-spacing-wide); text-transform:uppercase; }
