@@ -1,3 +1,2 @@
-/* borders.css — Version 1.0 */
-
-/* Токены границ Design System. */
+/* borders.css — Version 1.1 */
+:root { --border-width-thin:1px; --border-style-solid:solid; --border-subtle:var(--border-width-thin) var(--border-style-solid) var(--color-border); --border-strong:var(--border-width-thin) var(--border-style-solid) var(--color-border-strong); }
