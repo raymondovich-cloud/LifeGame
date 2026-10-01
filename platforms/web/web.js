@@ -1,9 +1,8 @@
-// platforms/web/web.js — Version 2.0
+// platforms/web/web.js — Version 2.1
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
 import { renderRegistration } from "../../source/presentation/auth/register.js";
-import { renderPublicEntry } from "../../source/presentation/auth/public-entry.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureLiquidFundsMemory } from "../../source/application/finance/finance.js";
 import {
