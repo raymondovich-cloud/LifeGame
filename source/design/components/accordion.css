@@ -1,6 +1,6 @@
-/* accordion.css — Version 1.2 */
+/* accordion.css — Version 1.3 */
 
-.accordion-list { display:grid; gap:var(--component-gap); }
+.accordion-list { display:grid; gap:var(--component-gap); overflow-anchor:none; }
 
 .accordion-item {
     position:relative;
