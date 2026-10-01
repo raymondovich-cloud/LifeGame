@@ -57,40 +57,41 @@ function startWeb() {
     }
 
     let navigationInitialized = false;
+    let publicMode = true;
 
     function getRoute() {
         return window.location.hash.slice(1);
     }
 
-    function clearPublicRoute() {
-        if (window.location.hash) {
-            history.replaceState({}, "", window.location.pathname + window.location.search);
-        }
+    function isPublicModule(route) {
+        return route === "finance" ||
+            route === "health" ||
+            route === "development";
     }
 
-    function renderModule(moduleId) {
-        moduleContent.replaceChildren();
+    function getModuleRoute() {
+        const route = getRoute();
 
-        if (moduleId === "finance") {
-            renderFinance(moduleContent);
+        if (isPublicModule(route)) {
+            return route;
         }
 
-        // Other authenticated modules will be connected here.
+        return DEFAULT_APPLICATION_ROUTE;
     }
 
     function closeRegistrationModal() {
         const modal = authRoot.querySelector(".registration-modal");
+
         if (modal) {
             modal.remove();
         }
     }
 
-    function openRegistrationModal(moduleId) {
+    function openRegistrationModal(pendingAction = null) {
         closeRegistrationModal();
 
         const modal = document.createElement("div");
         modal.className = "registration-modal";
-        modal.setAttribute("role", "presentation");
 
         const dialog = document.createElement("div");
         dialog.className = "registration-modal__dialog";
@@ -98,22 +99,14 @@ function startWeb() {
         dialog.setAttribute("aria-modal", "true");
         dialog.setAttribute("aria-labelledby", "registration-title");
 
-        modal.append(dialog);
-        authRoot.append(modal);
+        const context = document.createElement("p");
+        context.className = "registration-modal__context";
+        context.textContent =
+            "Создайте аккаунт, чтобы сохранять изменения в LifeGame.";
 
-        const moduleNames = {
-            finance: "Финансы",
-            health: "Здоровье",
-            development: "Развитие"
-        };
-
-        const modalContext = document.createElement("p");
-        modalContext.className = "registration-modal__context";
-        modalContext.textContent =
-            "Чтобы изменять раздел «" +
-            (moduleNames[moduleId] || "LifeGame") +
-            "», необходимо создать аккаунт.";
-        dialog.append(modalContext);
+        dialog.appendChild(context);
+        modal.appendChild(dialog);
+        authRoot.appendChild(modal);
 
         renderRegistration(
             dialog,
@@ -121,6 +114,12 @@ function startWeb() {
             closeRegistrationModal,
             () => {
                 closeRegistrationModal();
+
+                if (typeof pendingAction === "function") {
+                    pendingAction();
+                    return;
+                }
+
                 window.location.hash = DEFAULT_APPLICATION_ROUTE;
             }
         );
@@ -132,11 +131,80 @@ function startWeb() {
         });
     }
 
-    function renderPublicRoute() {
-        applicationShell.hidden = true;
-        authRoot.hidden = false;
+    function renderPreviewModule(moduleId) {
+        const modules = {
+            health: {
+                label: "HEALTH SYSTEM",
+                description: "Энергия и физическое состояние.",
+                items: ["Сила", "Восстановление", "Привычки"]
+            },
+            development: {
+                label: "DEVELOPMENT SYSTEM",
+                description: "Знания и личный рост.",
+                items: ["Навыки", "Цели", "Прогресс"]
+            }
+        };
 
-        renderPublicEntry(authRoot, openRegistrationModal);
+        const module = modules[moduleId];
+
+        if (!module) {
+            renderFinance(
+                moduleContent,
+                null,
+                (action) => openRegistrationModal(action)
+            );
+            return;
+        }
+
+        moduleContent.replaceChildren();
+
+        const section = document.createElement("section");
+        section.className = "module-subblocks";
+
+        const heading = document.createElement("div");
+        heading.className = "module-subblocks-header";
+        heading.innerHTML =
+            '<span class="module-subblocks-label">' + module.label + "</span>" +
+            "<p>" + module.description + "</p>";
+
+        const list = document.createElement("div");
+        list.className = "preview-subblock-list";
+
+        module.items.forEach((item, index) => {
+            const row = document.createElement("button");
+            row.type = "button";
+            row.className = "preview-subblock";
+            row.innerHTML =
+                '<span class="preview-subblock-index">' +
+                String(index + 1).padStart(2, "0") +
+                "</span>" +
+                '<span class="preview-subblock-name">' +
+                item +
+                "</span>" +
+                '<span class="preview-subblock-action">OPEN</span>';
+
+            row.addEventListener("click", () => {
+                openRegistrationModal();
+            });
+
+            list.appendChild(row);
+        });
+
+        section.append(heading, list);
+        moduleContent.appendChild(section);
+    }
+
+    function renderModule(moduleId) {
+        if (moduleId === "finance") {
+            renderFinance(
+                moduleContent,
+                null,
+                publicMode ? (action) => openRegistrationModal(action) : null
+            );
+            return;
+        }
+
+        renderPreviewModule(moduleId);
     }
 
     function initializeApplicationShell() {
@@ -156,34 +224,45 @@ function startWeb() {
         });
     }
 
-    function renderApplicationRoute(route) {
+    function renderApplicationShell(route, isPublic) {
+        publicMode = isPublic;
+        appRoot.dataset.access = isPublic ? "public" : "authenticated";
+
         initializeApplicationShell();
 
         authRoot.hidden = true;
         applicationShell.hidden = false;
 
-        renderModule(route || DEFAULT_APPLICATION_ROUTE);
+        renderModule(route);
     }
 
     async function renderRoute() {
-        const route = getRoute();
+        const requestedRoute = getRoute();
 
         try {
             const sessionResult = await application.auth.getCurrentSession();
             const session = sessionResult?.data?.session ?? null;
 
             if (!session) {
-                clearPublicRoute();
-                renderPublicRoute();
+                renderApplicationShell(getModuleRoute(), true);
                 return;
             }
 
-            if (route === "auth" || route === "register" || route === "") {
+            if (
+                requestedRoute === "auth" ||
+                requestedRoute === "register" ||
+                requestedRoute === ""
+            ) {
                 window.location.hash = DEFAULT_APPLICATION_ROUTE;
                 return;
             }
 
-            renderApplicationRoute(route);
+            renderApplicationShell(
+                isPublicModule(requestedRoute)
+                    ? requestedRoute
+                    : DEFAULT_APPLICATION_ROUTE,
+                false
+            );
         } catch (error) {
             applicationShell.hidden = true;
             authRoot.hidden = false;
