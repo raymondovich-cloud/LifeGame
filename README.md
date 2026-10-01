@@ -98,7 +98,11 @@ LIFE GAME
 
 <br>
 
-[https://t.me/BillionsMone|@shkeltinsh]
+<div align="center">
+
+<a href="https://t.me/shkeltinsh">Telegram · @shkeltinsh</a>
+
+</div>
 
 LifeGame · 2026
 
