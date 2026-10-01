@@ -1,7 +1,13 @@
-// finance.js — Version 1.0
+// finance.js — Version 1.1
 
 function createFinanceScreen(appRoot) {
+    const shell = appRoot.querySelector(".app-shell");
+    const screen = appRoot.querySelector('[data-module-screen="finance"]');
     const sections = [...appRoot.querySelectorAll(".finance-section")];
+
+    if (!shell || !screen) {
+        throw new Error("LifeGame Finance: required screen elements were not found.");
+    }
 
     sections.forEach((section) => {
         const trigger = section.querySelector(".accordion-trigger");
@@ -16,6 +22,15 @@ function createFinanceScreen(appRoot) {
             section.classList.toggle("is-collapsed", isExpanded);
         });
     });
+
+    function syncScreen() {
+        screen.hidden = shell.dataset.module !== "finance";
+    }
+
+    const observer = new MutationObserver(syncScreen);
+    observer.observe(shell, { attributes: true, attributeFilter: ["data-module"] });
+
+    syncScreen();
 }
 
 export { createFinanceScreen };
