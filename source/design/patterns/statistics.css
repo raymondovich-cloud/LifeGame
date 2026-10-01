@@ -1,5 +1,38 @@
-/* statistics.css — Version 1.1 */
+/* statistics.css — Version 1.2 */
 
 .statistics { display:grid; gap:var(--space-3); }
 .statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
 .statistics-meta { color:var(--color-gray); font-size:var(--font-size-xs); letter-spacing:var(--letter-spacing-wide); text-transform:uppercase; }
+
+.liquid-funds-statistics {
+    display:grid;
+    gap:var(--space-3);
+    margin-bottom:var(--space-4);
+}
+
+.statistics-period-selector {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:var(--space-2);
+}
+
+.statistics-period-button {
+    min-width:0;
+    color:var(--color-gray);
+    background:var(--color-black-soft);
+}
+
+.statistics-period-button.is-active {
+    color:var(--color-white);
+    border-color:var(--color-border-strong);
+    background:var(--color-surface);
+}
+
+.statistics-period-result {
+    display:grid;
+    gap:var(--space-1);
+    padding:var(--space-3);
+    background:var(--color-black-soft);
+    border:var(--border-subtle);
+    border-radius:var(--radius-control);
+}
