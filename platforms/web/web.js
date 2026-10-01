@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 1.6
+// platforms/web/web.js — Version 1.7
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
@@ -46,7 +46,9 @@ function startWeb() {
         throw new Error("LifeGame Web: auth root was not found.");
     }
 
-    createNavigation(applicationShell);
+    // Navigation owns the application shell and expects the page root.
+    // Keep the existing navigation composition boundary unchanged.
+    createNavigation(appRoot);
 
     const moduleContent = applicationShell.querySelector("#module-content");
     const navigationItems = [
