@@ -110,10 +110,16 @@
     border:0;
     cursor:pointer;
     pointer-events:none;
+    visibility:hidden;
+    opacity:0;
+    transition:opacity var(--motion-duration-fast) var(--motion-ease-standard), visibility 0s linear var(--motion-duration-fast);
 }
 
 .swipe-delete-item.is-delete-ready .swipe-delete-action {
     pointer-events:auto;
+    visibility:visible;
+    opacity:1;
+    transition:opacity var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .finance-entry-label {
