@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Web Composition Root
-// Version: 1.0
+// Version: 1.1
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 //
 // This is the only Web entry point that knows which concrete provider is used.
@@ -13,7 +13,7 @@ import { createAuthController } from "../../../source/presentation/auth/auth.con
 
 export function createWebApplication() {
     const supabaseClient = createLifeGameSupabaseClient();
-    const identityPort = createSupabaseIdentityAdapter(supabaseClient);
+    const identityPort = createSupabaseIdentityAdapter(supabaseClient.auth);
     const identityApplication = createIdentityApplication(identityPort);
     const authController = createAuthController(identityApplication);
 
