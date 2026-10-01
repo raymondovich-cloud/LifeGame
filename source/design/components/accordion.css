@@ -1,3 +1,112 @@
-/* accordion.css — Version 1.0 */
+/* accordion.css — Version 1.1 */
 
-/* Визуальные правила аккордеонов. */
+.accordion {
+    overflow:hidden;
+    background:var(--gradient-surface),var(--color-surface);
+    border:var(--border-subtle);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-soft);
+}
+
+.accordion-trigger {
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    align-items:center;
+    width:100%;
+    gap:var(--space-4);
+    min-height:5rem;
+    padding:var(--space-5);
+    color:var(--color-white);
+    background:transparent;
+    text-align:left;
+    cursor:pointer;
+    transition:background var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.accordion-trigger:hover {
+    background:var(--color-accent-soft);
+}
+
+.accordion-index {
+    color:var(--color-gray-dark);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+    letter-spacing:var(--letter-spacing-wide);
+}
+
+.accordion-title-group {
+    display:flex;
+    min-width:0;
+    flex-direction:column;
+    gap:var(--space-2);
+}
+
+.accordion-title {
+    overflow:hidden;
+    font-size:var(--font-size-lg);
+    font-weight:var(--font-weight-medium);
+    letter-spacing:var(--letter-spacing-tight);
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.accordion-local-title {
+    color:var(--color-gray);
+    font-size:var(--font-size-xs);
+}
+
+.accordion-indicator {
+    position:relative;
+    width:.75rem;
+    height:.75rem;
+    border-right:1px solid var(--color-gray);
+    border-bottom:1px solid var(--color-gray);
+    transform:rotate(45deg) translateY(-.125rem);
+    transition:transform var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.accordion.is-collapsed .accordion-indicator {
+    transform:rotate(-45deg) translateY(.125rem);
+}
+
+.accordion-content {
+    display:grid;
+    grid-template-rows:1fr;
+    padding:0 var(--space-5) var(--space-5);
+    transition:grid-template-rows var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.accordion.is-collapsed .accordion-content {
+    grid-template-rows:0fr;
+    padding-bottom:0;
+}
+
+.accordion-content > * {
+    min-height:0;
+    overflow:hidden;
+}
+
+.accordion-placeholder {
+    padding-top:var(--space-4);
+    color:var(--color-gray-dark);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-xs);
+    letter-spacing:var(--letter-spacing-wide);
+    text-transform:uppercase;
+}
+
+@media (max-width:42rem) {
+    .accordion-trigger {
+        gap:var(--space-3);
+        min-height:4.5rem;
+        padding:var(--space-4);
+    }
+
+    .accordion-content {
+        padding-inline:var(--space-4);
+    }
+
+    .accordion-title {
+        font-size:var(--font-size-md);
+    }
+}
