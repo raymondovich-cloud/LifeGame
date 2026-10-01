@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 1.8
+// platforms/web/web.js — Version 1.9
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
@@ -13,6 +13,8 @@ import {
 import { subscribe } from "../../source/core/events/event.bus.js";
 
 const APP_ROOT_ID = "app";
+const DEFAULT_AUTH_ROUTE = "register";
+const DEFAULT_APPLICATION_ROUTE = "finance";
 
 function startWeb() {
     const application = createWebApplication();
@@ -47,17 +49,27 @@ function startWeb() {
         throw new Error("LifeGame Web: auth root was not found.");
     }
 
-    createNavigation(appRoot);
-
     const moduleContent = applicationShell.querySelector("#module-content");
-    const navigationItems = [
-        ...applicationShell.querySelectorAll(".navigation-item")
-    ];
 
     if (!moduleContent) {
         throw new Error(
             "LifeGame Web: module content container was not found."
         );
+    }
+
+    let navigationInitialized = false;
+
+    function getRoute() {
+        return window.location.hash.slice(1);
+    }
+
+    function redirectToAuth() {
+        if (getRoute() !== DEFAULT_AUTH_ROUTE) {
+            window.location.hash = DEFAULT_AUTH_ROUTE;
+            return;
+        }
+
+        renderAuthRoute(DEFAULT_AUTH_ROUTE);
     }
 
     function renderModule(moduleId) {
@@ -67,50 +79,97 @@ function startWeb() {
             renderFinance(moduleContent);
         }
 
-        // Profile is intentionally not connected to Registration.
-        // Its authenticated content will be implemented separately.
+        // Other authenticated modules will be connected here.
     }
 
     function renderAuthRoute(route) {
+        applicationShell.hidden = true;
+        authRoot.hidden = false;
         authRoot.replaceChildren();
 
         if (route === "auth") {
             renderAuthEntry(authRoot, () => {
-                window.location.hash = "register";
+                window.location.hash = DEFAULT_AUTH_ROUTE;
             });
             return;
         }
 
-        if (route === "register") {
-            renderRegistration(
-                authRoot,
-                application.auth,
-                () => {
-                    window.location.hash = "auth";
-                }
-            );
-        }
+        renderRegistration(
+            authRoot,
+            application.auth,
+            () => {
+                window.location.hash = "auth";
+            },
+            () => {
+                window.location.hash = DEFAULT_APPLICATION_ROUTE;
+            }
+        );
     }
 
-    function renderRoute() {
-        const route = window.location.hash.slice(1);
-
-        if (route === "auth" || route === "register") {
-            applicationShell.hidden = true;
-            authRoot.hidden = false;
-            renderAuthRoute(route);
+    function initializeApplicationShell() {
+        if (navigationInitialized) {
             return;
         }
+
+        createNavigation(appRoot);
+        navigationInitialized = true;
+
+        const navigationItems = [
+            ...applicationShell.querySelectorAll(".navigation-item")
+        ];
+
+        navigationItems.forEach((item) => {
+            item.addEventListener("click", renderRoute);
+        });
+    }
+
+    function renderApplicationRoute(route) {
+        initializeApplicationShell();
 
         authRoot.hidden = true;
         applicationShell.hidden = false;
 
-        renderModule(route || "finance");
+        renderModule(route || DEFAULT_APPLICATION_ROUTE);
     }
 
-    navigationItems.forEach((item) => {
-        item.addEventListener("click", renderRoute);
-    });
+    async function renderRoute() {
+        const route = getRoute();
+
+        try {
+            const sessionResult = await application.auth.getCurrentSession();
+            const session = sessionResult?.data?.session ?? null;
+
+            if (!session) {
+                redirectToAuth();
+                return;
+            }
+
+            if (route === "auth" || route === "register" || route === "") {
+                if (route === "auth" || route === "register") {
+                    window.location.hash = DEFAULT_APPLICATION_ROUTE;
+                    return;
+                }
+
+                renderApplicationRoute(DEFAULT_APPLICATION_ROUTE);
+                return;
+            }
+
+            renderApplicationRoute(route);
+        } catch (error) {
+            applicationShell.hidden = true;
+            authRoot.hidden = false;
+            authRoot.replaceChildren();
+
+            const message = document.createElement("p");
+            message.setAttribute("role", "alert");
+            message.textContent =
+                "Authentication state could not be verified. Please try again.";
+
+            authRoot.appendChild(message);
+
+            console.error("LifeGame Web: authentication check failed.", error);
+        }
+    }
 
     window.addEventListener("popstate", renderRoute);
     window.addEventListener("hashchange", renderRoute);
