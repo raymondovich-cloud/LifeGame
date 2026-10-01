@@ -1,3 +1,2 @@
-/* gradients.css — Version 1.0 */
-
-/* Токены градиентов Design System. */
+/* gradients.css — Version 1.1 */
+:root { --gradient-surface:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,0)); --gradient-ambient:radial-gradient(circle at 50% 0%,rgba(255,255,255,.045),transparent 48%); --gradient-fade-bottom:linear-gradient(to bottom,transparent,rgba(0,0,0,.72)); }
