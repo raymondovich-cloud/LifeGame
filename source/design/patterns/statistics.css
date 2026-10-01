@@ -1,4 +1,4 @@
-/* statistics.css — Version 1.4 */
+/* statistics.css — Version 1.5 */
 
 .statistics { display:grid; gap:var(--space-3); }
 .statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
@@ -46,7 +46,7 @@
 
 .statistics-period-button.is-active {
     color:var(--color-white);
-    border-color:rgba(242,138,46,.42);
+    border-color:var(--color-accent-border);
     background:var(--gradient-card-premium);
 }
 
@@ -54,7 +54,7 @@
     display:grid;
     gap:var(--space-1);
     padding:var(--space-3);
-    background:var(--color-black-soft);
+    background:var(--gradient-card-premium);
     border:var(--border-subtle);
     border-radius:var(--radius-control);
 }
