@@ -79,7 +79,7 @@ create index profiles_id_idx
 -- 3. Profiles timestamp maintenance
 -- ============================================================
 
-create or replace function public.set_updated_at()
+create or replace function private.set_updated_at()
 returns trigger
 language plpgsql
 security invoker
@@ -91,7 +91,7 @@ begin
 end;
 $$;
 
-comment on function public.set_updated_at() is
+comment on function private.set_updated_at() is
     'Generic timestamp helper for LifeGame tables. SECURITY INVOKER only.';
 
 drop trigger if exists profiles_set_updated_at on public.profiles;
@@ -99,12 +99,12 @@ drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at
 before update on public.profiles
 for each row
-execute function public.set_updated_at();
+execute function private.set_updated_at();
 
 -- The trigger function is not an API endpoint.
-revoke execute on function public.set_updated_at() from public;
-revoke execute on function public.set_updated_at() from anon;
-revoke execute on function public.set_updated_at() from authenticated;
+revoke execute on function private.set_updated_at() from public;
+revoke execute on function private.set_updated_at() from anon;
+revoke execute on function private.set_updated_at() from authenticated;
 
 -- ============================================================
 -- 4. Profiles grants
