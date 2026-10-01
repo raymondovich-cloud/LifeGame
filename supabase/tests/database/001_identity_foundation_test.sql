@@ -9,7 +9,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(21);
 
 -- Fixed test identities. The transaction is rolled back at the end.
 insert into auth.users (
@@ -32,10 +32,36 @@ values
     'not-a-real-password-hash', now(), now(), now()
 );
 
-insert into public.profiles (id, display_name)
-values
-    ('00000000-0000-0000-0000-000000000001', 'Test User A'),
-    ('00000000-0000-0000-0000-000000000002', 'Test User B');
+select results_eq(
+    $select count(*)::bigint from public.profiles$,
+    $values (2::bigint)$,
+    'Auth user creation automatically bootstraps two profiles'
+);
+
+select results_eq(
+    $
+    select count(*)::bigint
+    from private.security_events
+    where event_type = 'identity.user.registered'
+    $,
+    $values (2::bigint)$,
+    'Auth user creation records two registration security events'
+);
+
+set local role postgres;
+select set_config('request.jwt.claim.sub', '', true);
+
+select ok(
+    (select count(*) from private.security_events where user_id = '00000000-0000-0000-0000-000000000001') = 1,
+    'Registration security event is associated with User A'
+);
+
+set local role authenticated;
+select set_config(
+    'request.jwt.claim.sub',
+    '00000000-0000-0000-0000-000000000001',
+    true
+);
 
 select ok(
     (select relrowsecurity from pg_class where oid = 'public.profiles'::regclass),
@@ -53,13 +79,6 @@ select results_eq(
 );
 
 -- User A.
-set local role authenticated;
-select set_config(
-    'request.jwt.claim.sub',
-    '00000000-0000-0000-0000-000000000001',
-    true
-);
-
 select results_eq(
     $$select id from public.profiles order by id$$,
     $$values ('00000000-0000-0000-0000-000000000001'::uuid)$$,
