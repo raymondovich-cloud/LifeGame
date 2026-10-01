@@ -1,4 +1,4 @@
-/* list.css — Version 1.2 */
+/* list.css — Version 1.3 */
 
 .list-empty {
     display:grid;
@@ -18,34 +18,136 @@
     letter-spacing:var(--letter-spacing-system);
 }
 
-.list-empty p { margin:0; font-size:var(--font-size-xs); }
+.list-empty p {
+    margin:0;
+    font-size:var(--font-size-xs);
+}
+
+.finance-entry-list {
+    display:grid;
+    gap:var(--space-2);
+    margin-bottom:var(--space-3);
+}
+
+.finance-entry-list + .finance-add-form {
+    margin-top:var(--space-2);
+}
+
+.finance-add-form {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(7rem,.5fr) auto;
+    gap:var(--space-2);
+    align-items:center;
+    padding-top:var(--space-2);
+}
+
+.input-control {
+    width:100%;
+    min-width:0;
+    padding:var(--space-2) var(--space-3);
+    color:var(--color-white);
+    font:inherit;
+    font-size:var(--font-size-xs);
+    background:var(--color-black-soft);
+    border:var(--border-subtle);
+    border-radius:var(--radius-control);
+    outline:none;
+}
+
+.input-control::placeholder {
+    color:var(--color-gray-dark);
+}
+
+.input-control:focus {
+    border-color:var(--color-border-strong);
+}
+
+.button-control {
+    min-height:2.25rem;
+    padding:var(--space-2) var(--space-3);
+    color:var(--color-black);
+    font:inherit;
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-semibold);
+    background:var(--color-white);
+    border:0;
+    border-radius:var(--radius-control);
+    cursor:pointer;
+}
+
+.button-control:active {
+    transform:scale(.98);
+}
+
+.finance-form-error {
+    grid-column:1 / -1;
+    margin:0;
+    color:var(--color-danger);
+    font-size:var(--font-size-2xs);
+}
 
 .swipe-delete-item {
     position:relative;
     overflow:hidden;
     touch-action:pan-y;
-    transform:translateX(var(--swipe-offset,0));
-    transition:transform .2s ease;
+    border:var(--border-subtle);
+    border-radius:var(--radius-control);
+    background:var(--color-black-soft);
 }
 
-.swipe-delete-item.is-swiping { transition:none; }
+.swipe-delete-content {
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-3);
+    min-height:3rem;
+    padding:var(--space-2) var(--space-3);
+    color:var(--color-white);
+    background:var(--color-surface);
+    transform:translateX(var(--swipe-offset,0));
+    transition:transform var(--motion-duration-normal) var(--motion-ease-standard);
+    cursor:grab;
+}
 
-.swipe-delete-item.is-delete-ready {
+.swipe-delete-content.is-swiping {
+    transition:none;
+    cursor:grabbing;
+}
+
+.swipe-delete-item.is-delete-ready .swipe-delete-content {
     border-color:var(--color-danger);
 }
 
-.swipe-delete-item::after {
+.swipe-delete-action {
     position:absolute;
     top:0;
     right:0;
     bottom:0;
-    display:flex;
-    align-items:center;
-    padding-inline:var(--space-4);
+    width:6rem;
     color:var(--color-danger);
-    content:"Удалить";
+    font:inherit;
     font-size:var(--font-size-xs);
-    letter-spacing:var(--letter-spacing-wide);
-    pointer-events:none;
-    transform:translateX(100%);
+    font-weight:var(--font-weight-semibold);
+    background:transparent;
+    border:0;
+    cursor:pointer;
+}
+
+.finance-entry-label {
+    min-width:0;
+    overflow:hidden;
+    color:var(--color-white-soft);
+    font-size:var(--font-size-xs);
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.finance-entry-amount {
+    flex:0 0 auto;
+    color:var(--color-white);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-xs);
+    white-space:nowrap;
 }
