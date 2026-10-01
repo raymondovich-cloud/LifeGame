@@ -1,7 +1,9 @@
-// platforms/web/web.js — Version 1.4
+// platforms/web/web.js — Version 1.5
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
+import { renderRegistration } from "../../source/presentation/auth/register.js";
+import { createWebApplication } from "./composition/root.js";
 import { configureLiquidFundsMemory } from "../../source/application/finance/finance.js";
 import {
     saveLiquidFundsSnapshot,
@@ -12,6 +14,8 @@ import { subscribe } from "../../source/core/events/event.bus.js";
 const APP_ROOT_ID = "app";
 
 function startWeb() {
+    const application = createWebApplication();
+
     configureLiquidFundsMemory({
         getSnapshotAtOrBefore: getLiquidFundsSnapshotAtOrBefore
     });
@@ -43,6 +47,10 @@ function startWeb() {
 
         if (moduleId === "finance") {
             renderFinance(moduleContent);
+        }
+
+        if (moduleId === "profile") {
+            renderRegistration(moduleContent, application.auth);
         }
     }
 
