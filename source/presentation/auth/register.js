@@ -1,11 +1,16 @@
 // LifeGame 3.0 — Registration Presentation
-// Version: 1.1
+// Version: 1.2
 // Responsibility: render the registration interaction and call Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
 // encryption, or persistence.
 
-export function renderRegistration(container, authController, onBack) {
+export function renderRegistration(
+    container,
+    authController,
+    onBack,
+    onAuthenticated
+) {
     if (!container) {
         throw new Error("Registration container is required.");
     }
@@ -16,6 +21,10 @@ export function renderRegistration(container, authController, onBack) {
 
     if (typeof onBack !== "function") {
         throw new Error("Registration back action is required.");
+    }
+
+    if (typeof onAuthenticated !== "function") {
+        throw new Error("Registration authenticated action is required.");
     }
 
     const wrapper = document.createElement("section");
@@ -105,9 +114,9 @@ export function renderRegistration(container, authController, onBack) {
                     "Account created. Check your email to verify your address.";
             } else {
                 status.textContent = "Account created successfully.";
+                form.reset();
+                onAuthenticated();
             }
-
-            form.reset();
         } catch (error) {
             status.textContent =
                 error?.message || "Registration could not be completed.";
