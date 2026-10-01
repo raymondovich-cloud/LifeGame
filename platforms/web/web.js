@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 1.5
+// platforms/web/web.js — Version 1.6
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
@@ -30,16 +30,33 @@ function startWeb() {
 
     const appRoot = document.getElementById(APP_ROOT_ID);
     if (!appRoot) {
-        throw new Error("LifeGame Web: application root \"#" + APP_ROOT_ID + "\" was not found.");
+        throw new Error(
+            "LifeGame Web: application root #" + APP_ROOT_ID + " was not found."
+        );
     }
 
-    createNavigation(appRoot);
+    const applicationShell = appRoot.querySelector("#application-shell");
+    const authRoot = appRoot.querySelector("#auth-root");
 
-    const moduleContent = appRoot.querySelector("#module-content");
-    const navigationItems = [...appRoot.querySelectorAll(".navigation-item")];
+    if (!applicationShell) {
+        throw new Error("LifeGame Web: application shell was not found.");
+    }
+
+    if (!authRoot) {
+        throw new Error("LifeGame Web: auth root was not found.");
+    }
+
+    createNavigation(applicationShell);
+
+    const moduleContent = applicationShell.querySelector("#module-content");
+    const navigationItems = [
+        ...applicationShell.querySelectorAll(".navigation-item")
+    ];
 
     if (!moduleContent) {
-        throw new Error("LifeGame Web: module content container was not found.");
+        throw new Error(
+            "LifeGame Web: module content container was not found."
+        );
     }
 
     function renderModule(moduleId) {
@@ -49,22 +66,44 @@ function startWeb() {
             renderFinance(moduleContent);
         }
 
-        if (moduleId === "profile") {
-            renderRegistration(moduleContent, application.auth);
+        // Profile is intentionally not connected to Registration.
+        // Its authenticated content will be implemented separately.
+    }
+
+    function renderAuthRoute(route) {
+        authRoot.replaceChildren();
+
+        if (route === "register") {
+            renderRegistration(authRoot, application.auth);
         }
+    }
+
+    function renderRoute() {
+        const route = window.location.hash.slice(1);
+
+        if (route === "register") {
+            applicationShell.hidden = true;
+            authRoot.hidden = false;
+            renderAuthRoute(route);
+            return;
+        }
+
+        authRoot.hidden = true;
+        applicationShell.hidden = false;
+
+        renderModule(route || "finance");
     }
 
     navigationItems.forEach((item) => {
         item.addEventListener("click", () => {
-            renderModule(item.dataset.module);
+            renderRoute();
         });
     });
 
-    window.addEventListener("popstate", () => {
-        renderModule(window.location.hash.slice(1));
-    });
+    window.addEventListener("popstate", renderRoute);
+    window.addEventListener("hashchange", renderRoute);
 
-    renderModule(window.location.hash.slice(1) || "finance");
+    renderRoute();
 }
 
 startWeb();
