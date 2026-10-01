@@ -1,9 +1,12 @@
-<!-- platforms/web/index.html — Version 1.0 -->
+<!-- platforms/web/index.html — Version 1.1 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
 
     <meta
         name="description"
@@ -19,61 +22,76 @@
 
 <body>
     <main id="app" aria-label="LifeGame application">
-        <section class="app-shell">
+        <section class="app-shell" data-module="development">
             <header class="app-header">
+                <div class="system-time" aria-label="Current time">
+                    <span data-system-time>23:44</span>
+                    <span aria-hidden="true">•</span>
+                    <span aria-hidden="true">LTE</span>
+                </div>
+
                 <div class="brand">
-                    <span class="brand-mark" aria-hidden="true"></span>
-                    <span class="brand-name">LifeGame</span>
+                    <span class="brand-name">LIFE GAME</span>
                 </div>
 
                 <div class="system-status" aria-label="System status">
                     <span class="status-dot" aria-hidden="true"></span>
-                    <span>Private</span>
+                    <span>SYSTEM ONLINE</span>
                 </div>
             </header>
 
-            <section class="hero">
-                <p class="eyebrow">PERSONAL OPERATING SYSTEM</p>
-                <h1>Design your life.<br><span>Live it deliberately.</span></h1>
-                <p class="hero-copy">
-                    One private system for the parts of life that matter:
-                    Finance, Health and Development.
+            <section class="module-intro" aria-labelledby="module-title">
+                <div class="module-meta">
+                    <span class="module-label">LIFE MODULE 03</span>
+                </div>
+
+                <div class="module-title-group">
+                    <h1 id="module-title">Development</h1>
+                    <p class="module-title-local">Развитие</p>
+                </div>
+
+                <p class="module-status">
+                    Development module подключён.
+                </p>
+
+                <p class="module-tagline">
+                    Your life. Your system.
                 </p>
             </section>
 
-            <section class="domain-grid" aria-label="Life domains">
-                <article class="domain-card">
-                    <span class="domain-index">01</span>
-                    <div>
-                        <h2>Finance</h2>
-                        <p>Money, stability and long-term control.</p>
-                    </div>
-                    <span class="domain-arrow" aria-hidden="true">↗</span>
-                </article>
-
-                <article class="domain-card">
-                    <span class="domain-index">02</span>
-                    <div>
-                        <h2>Health</h2>
-                        <p>Energy, body and sustainable performance.</p>
-                    </div>
-                    <span class="domain-arrow" aria-hidden="true">↗</span>
-                </article>
-
-                <article class="domain-card">
-                    <span class="domain-index">03</span>
-                    <div>
-                        <h2>Development</h2>
-                        <p>Skills, learning and personal growth.</p>
-                    </div>
-                    <span class="domain-arrow" aria-hidden="true">↗</span>
-                </article>
+            <section class="module-description" aria-label="Module description">
+                <p>
+                    LIFE GAME построен как единая система независимых модулей.
+                    Каждый раздел имеет собственную логику и интерфейс, а
+                    центральное приложение отвечает за их взаимодействие.
+                </p>
             </section>
 
-            <footer class="app-footer">
-                <span>LifeGame</span>
-                <span>Private by design</span>
-            </footer>
+            <section class="module-indicator" aria-label="Current module">
+                <span class="module-number">03</span>
+                <span class="module-word">MODULE</span>
+            </section>
+
+            <nav class="app-navigation" aria-label="LifeGame modules">
+                <a class="navigation-item" href="#finance">
+                    <span class="navigation-index">01</span>
+                    <span class="navigation-label">Finance</span>
+                </a>
+
+                <a class="navigation-item" href="#health">
+                    <span class="navigation-index">02</span>
+                    <span class="navigation-label">Health</span>
+                </a>
+
+                <a
+                    class="navigation-item is-active"
+                    href="#development"
+                    aria-current="page"
+                >
+                    <span class="navigation-index">03</span>
+                    <span class="navigation-label">Development</span>
+                </a>
+            </nav>
         </section>
     </main>
 
