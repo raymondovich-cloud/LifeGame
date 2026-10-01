@@ -1,5 +1,5 @@
 <div align="center">
-<img src= /raymondovich-cloud/LifeGame/tree/main alt="LifeGame" width="100%">
+  <img src="docs/lifegame-header.png" alt="LifeGame" width="100%">
 </div>
 
 ⸻
