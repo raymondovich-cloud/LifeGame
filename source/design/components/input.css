@@ -1,10 +1,11 @@
 
-/* input.css — Version 1.3 */
+/* input.css — Version 1.4 */
 
 .input-control {
     width:100%;
     min-width:0;
-    padding:var(--space-2) var(--space-3);
+    height:2.25rem;
+    padding:0 var(--space-3);
     color:var(--color-white);
     font:inherit;
     /*
