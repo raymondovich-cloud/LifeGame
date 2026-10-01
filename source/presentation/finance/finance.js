@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.5
+// source/presentation/finance/finance.js — Version 1.6
 
 import {
     listFinanceEntries,
@@ -25,12 +25,6 @@ function createEntryRow(root, subblock, entry) {
     row.className = "swipe-delete-item";
     row.dataset.entryId = entry.id;
 
-    const action = document.createElement("button");
-    action.className = "swipe-delete-action";
-    action.type = "button";
-    action.textContent = "Удалить";
-    action.setAttribute("aria-label", "Удалить " + entry.label);
-
     const content = document.createElement("div");
     content.className = "swipe-delete-content";
 
@@ -43,12 +37,7 @@ function createEntryRow(root, subblock, entry) {
     amount.textContent = formatAmount(entry.amount);
 
     content.append(label, amount);
-    row.append(action, content);
-
-    action.addEventListener("click", () => {
-        removeFinanceEntry(subblock.id, entry.id);
-        renderFinance(root, subblock.id);
-    });
+    row.append(content);
 
     return row;
 }
@@ -111,8 +100,8 @@ function attachSwipeDelete(root) {
             const distance = currentX - startX;
 
             if (distance <= -64) {
-                content.style.setProperty("--swipe-offset", "-96px");
-                item.classList.add("is-delete-ready");
+                removeFinanceEntry(subblock.id, item.dataset.entryId);
+                renderFinance(root, subblock.id);
             } else {
                 close();
             }
@@ -121,9 +110,6 @@ function attachSwipeDelete(root) {
         content.addEventListener("pointerup", finishSwipe);
         content.addEventListener("pointercancel", finishSwipe);
 
-        content.addEventListener("click", () => {
-            if (item.classList.contains("is-delete-ready")) close();
-        });
     });
 }
 
