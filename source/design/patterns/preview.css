@@ -56,3 +56,38 @@
         display:none;
     }
 }
+
+
+.registration-modal {
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    display:grid;
+    place-items:center;
+    padding:var(--space-4);
+    background:rgba(0,0,0,.72);
+    backdrop-filter:blur(14px);
+}
+
+.registration-modal__dialog {
+    width:min(100%,32rem);
+    max-height:min(90vh,48rem);
+    overflow:auto;
+    padding:var(--space-6);
+    background:var(--gradient-card-premium);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-soft),0 24px 80px rgba(0,0,0,.45);
+}
+
+.registration-modal__context {
+    margin:0 0 var(--space-5);
+    color:var(--color-gray);
+    line-height:1.5;
+}
+
+@media (max-width:30rem) {
+    .registration-modal__dialog {
+        padding:var(--space-5);
+    }
+}
