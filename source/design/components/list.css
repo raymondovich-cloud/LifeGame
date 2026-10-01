@@ -1,3 +1,51 @@
-/* list.css — Version 1.0 */
+/* list.css — Version 1.1 */
 
-/* Визуальные правила списков. */
+.list-empty {
+    display:grid;
+    gap:var(--space-2);
+    padding:var(--space-5);
+    color:var(--color-gray);
+    text-align:left;
+    background:var(--color-black-soft);
+    border:var(--border-subtle);
+    border-radius:var(--radius-control);
+}
+
+.list-empty-label {
+    color:var(--color-gray-dark);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+    letter-spacing:var(--letter-spacing-system);
+}
+
+.list-empty p { margin:0; font-size:var(--font-size-sm); }
+
+.swipe-delete-item {
+    position:relative;
+    overflow:hidden;
+    touch-action:pan-y;
+    transform:translateX(var(--swipe-offset,0));
+    transition:transform .2s ease;
+}
+
+.swipe-delete-item.is-swiping { transition:none; }
+
+.swipe-delete-item.is-delete-ready {
+    border-color:var(--color-danger);
+}
+
+.swipe-delete-item::after {
+    position:absolute;
+    top:0;
+    right:0;
+    bottom:0;
+    display:flex;
+    align-items:center;
+    padding-inline:var(--space-5);
+    color:var(--color-danger);
+    content:"Удалить";
+    font-size:var(--font-size-xs);
+    letter-spacing:var(--letter-spacing-wide);
+    pointer-events:none;
+    transform:translateX(100%);
+}
