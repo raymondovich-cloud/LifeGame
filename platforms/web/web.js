@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 1.9
+// platforms/web/web.js — Version 2.0
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
@@ -85,7 +85,7 @@ function startWeb() {
         }
     }
 
-    function openRegistrationModal() {
+    function openRegistrationModal(moduleId) {
         closeRegistrationModal();
 
         const modal = document.createElement("div");
@@ -100,6 +100,20 @@ function startWeb() {
 
         modal.append(dialog);
         authRoot.append(modal);
+
+        const moduleNames = {
+            finance: "Финансы",
+            health: "Здоровье",
+            development: "Развитие"
+        };
+
+        const modalContext = document.createElement("p");
+        modalContext.className = "registration-modal__context";
+        modalContext.textContent =
+            "Чтобы изменять раздел «" +
+            (moduleNames[moduleId] || "LifeGame") +
+            "», необходимо создать аккаунт.";
+        dialog.append(modalContext);
 
         renderRegistration(
             dialog,
