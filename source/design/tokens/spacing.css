@@ -1,2 +1,22 @@
-/* spacing.css — Version 1.2 */
-:root { --space-1:.25rem; --space-2:.5rem; --space-3:.625rem; --space-4:.875rem; --space-5:1rem; --space-6:1.25rem; --space-8:1.5rem; --space-10:2rem; --space-12:2.5rem; --space-16:3rem; --page-padding-inline:clamp(1rem,5vw,3rem); --page-padding-block:clamp(.875rem,3vw,2rem); --section-gap:clamp(1.25rem,4vw,2rem); --component-gap:.625rem; }
+/* spacing.css — Version 1.3 */
+
+:root {
+    --space-1:.25rem;
+    --space-2:.5rem;
+    --space-3:.625rem;
+    --space-4:.875rem;
+    --space-5:1rem;
+    --space-6:1.25rem;
+    --space-8:1.5rem;
+    --space-10:2rem;
+    --space-12:2.5rem;
+    --space-16:3rem;
+    --page-padding-inline:clamp(1rem,5vw,3rem);
+    --page-padding-block:clamp(.875rem,3vw,2rem);
+    --section-gap:clamp(1.25rem,4vw,2rem);
+    --component-gap:clamp(.625rem,2vw,1rem);
+    --safe-area-inline-start:max(var(--page-padding-inline), env(safe-area-inset-left));
+    --safe-area-inline-end:max(var(--page-padding-inline), env(safe-area-inset-right));
+    --safe-area-block-start:max(var(--page-padding-block), env(safe-area-inset-top));
+    --safe-area-block-end:max(var(--page-padding-block), env(safe-area-inset-bottom));
+}
