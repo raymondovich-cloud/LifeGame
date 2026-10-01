@@ -1,1 +1,41 @@
-// liquid.funds.js — Version 1.0
+// liquid.funds.js — Version 1.1
+
+const entries = [];
+let nextId = 1;
+
+function listLiquidFunds() {
+    return entries.map((entry) => ({ ...entry }));
+}
+
+function addLiquidFund(label, amount) {
+    const normalizedLabel = String(label ?? "").trim();
+    const normalizedAmount = Number(amount);
+
+    if (!normalizedLabel) {
+        throw new Error("Liquid Funds: название записи обязательно.");
+    }
+
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+        throw new Error("Liquid Funds: сумма должна быть больше нуля.");
+    }
+
+    const entry = {
+        id: `liquid-fund-${nextId++}`,
+        label: normalizedLabel,
+        amount: normalizedAmount
+    };
+
+    entries.push(entry);
+    return { ...entry };
+}
+
+function removeLiquidFund(id) {
+    const index = entries.findIndex((entry) => entry.id === id);
+
+    if (index === -1) return false;
+
+    entries.splice(index, 1);
+    return true;
+}
+
+export { listLiquidFunds, addLiquidFund, removeLiquidFund };
