@@ -1,4 +1,4 @@
-<!-- platforms/web/index.html — Version 1.6 -->
+<!-- platforms/web/index.html — Version 1.7 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +22,14 @@
 
 <body>
     <main id="app" aria-label="LifeGame application">
-        <section class="app-shell" data-module="development">
+        <section
+            id="auth-root"
+            class="module-content"
+            aria-live="polite"
+            hidden
+        ></section>
+
+        <section id="application-shell" class="app-shell" data-module="development">
             <header class="app-header">
                 <div class="brand">
                     <span class="brand-name">LIFE GAME</span>
@@ -38,7 +45,6 @@
                 <div class="module-meta">
                     <span class="module-label">LIFE MODULE 03</span>
                 </div>
-
             </section>
 
             <section class="module-indicator" aria-label="Current module">
