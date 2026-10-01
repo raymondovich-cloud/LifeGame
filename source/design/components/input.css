@@ -1,4 +1,5 @@
-/* input.css — Version 1.2 */
+
+/* input.css — Version 1.3 */
 
 .input-control {
     width:100%;
@@ -13,7 +14,7 @@
      * typography scale everywhere else.
      */
     font-size:max(1rem, var(--font-size-xs));
-    background:var(--color-black-soft);
+    background:var(--gradient-surface);
     border:var(--border-subtle);
     border-radius:var(--radius-control);
     outline:none;
