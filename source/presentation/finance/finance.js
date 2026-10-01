@@ -3,7 +3,9 @@
 import {
     listFinanceEntries,
     addFinanceEntry,
-    removeFinanceEntry
+    removeFinanceEntry,
+    getLiquidFundsTotal,
+    getLiquidFundsStatistics
 } from "../../application/finance/finance.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
@@ -125,6 +127,90 @@ function attachSwipeDelete(root) {
     });
 }
 
+let selectedLiquidFundsPeriod = "week";
+
+const LIQUID_FUNDS_PERIODS = Object.freeze([
+    { id: "week", label: "Неделя" },
+    { id: "month", label: "Месяц" },
+    { id: "year", label: "Год" }
+]);
+
+function createLiquidFundsSummary(root) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "statistics liquid-funds-statistics";
+
+    const current = document.createElement("div");
+    current.className = "statistics";
+    current.innerHTML =
+        '<span class="statistics-meta">ТЕКУЩЕЕ СОСТОЯНИЕ</span>' +
+        '<span class="statistics-value">' + formatAmount(getLiquidFundsTotal()) + "</span>";
+    wrapper.appendChild(current);
+
+    const periodLabel = document.createElement("span");
+    periodLabel.className = "statistics-meta";
+    periodLabel.textContent = "СОСТОЯНИЕ ПО ПЕРИОДУ";
+
+    const selector = document.createElement("div");
+    selector.className = "statistics-period-selector";
+    selector.setAttribute("role", "group");
+    selector.setAttribute("aria-label", "Период статистики");
+
+    const result = document.createElement("div");
+    result.className = "statistics-period-result";
+
+    const renderPeriod = () => {
+        selector.replaceChildren();
+
+        LIQUID_FUNDS_PERIODS.forEach((period) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "button-control statistics-period-button";
+            button.textContent = period.label;
+            button.setAttribute("aria-pressed", String(selectedLiquidFundsPeriod === period.id));
+
+            if (selectedLiquidFundsPeriod === period.id) {
+                button.classList.add("is-active");
+            }
+
+            button.addEventListener("click", () => {
+                selectedLiquidFundsPeriod = period.id;
+                renderPeriod();
+            });
+
+            selector.appendChild(button);
+        });
+
+        const statistics = getLiquidFundsStatistics(selectedLiquidFundsPeriod);
+        result.replaceChildren();
+
+        const value = document.createElement("span");
+        value.className = "statistics-value";
+        value.textContent = formatAmount(statistics.total);
+
+        const meta = document.createElement("span");
+        meta.className = "statistics-meta";
+
+        if (statistics.occurredAt) {
+            meta.textContent =
+                "Срез: " +
+                new Intl.DateTimeFormat("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric"
+                }).format(statistics.occurredAt);
+        } else {
+            meta.textContent = "Исторических данных пока нет";
+        }
+
+        result.append(value, meta);
+    };
+
+    wrapper.append(periodLabel, selector, result);
+    renderPeriod();
+
+    return wrapper;
+}
+
 function createAddForm(root, subblock) {
     const wrapper = document.createElement("form");
     wrapper.className = "finance-add-form";
@@ -199,6 +285,10 @@ function createSubblock(root, subblock, isOpen) {
     content.hidden = !isOpen;
 
     const entries = listFinanceEntries(subblock.id);
+
+    if (subblock.id === "liquid-funds") {
+        content.appendChild(createLiquidFundsSummary(root));
+    }
 
     if (entries.length === 0) {
         const emptyState = document.createElement("div");
