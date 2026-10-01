@@ -1,3 +1,2 @@
-/* radius.css — Version 1.0 */
-
-/* Токены радиусов скругления Design System. */
+/* radius.css — Version 1.1 */
+:root { --radius-none:0; --radius-sm:.375rem; --radius-md:.625rem; --radius-lg:.875rem; --radius-xl:1.25rem; --radius-pill:999px; --radius-card:var(--radius-lg); --radius-control:var(--radius-md); }
