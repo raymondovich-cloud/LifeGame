@@ -1,7 +1,8 @@
-// finance.js — Version 1.0
+// finance.js — Version 1.1
 
 import {
     listLiquidFunds,
+    calculateLiquidFundsTotal,
     addLiquidFund,
     removeLiquidFund
 } from "../../domain/finance/liquid.funds/liquid.funds.js";
@@ -39,7 +40,7 @@ const FINANCE_OPERATIONS = Object.freeze({
     "actual-earnings": {
         list: listActualEarnings,
         add: addActualEarning,
-        remove: removeActualEarning
+        remove: removeLiquidFund
     },
     "financial-burden": {
         list: listFinancialBurden,
@@ -57,6 +58,16 @@ const FINANCE_OPERATIONS = Object.freeze({
         remove: removeFinancialCushion
     }
 });
+
+let liquidFundsSnapshotReader = () => null;
+
+function configureLiquidFundsMemory({ getSnapshotAtOrBefore }) {
+    if (typeof getSnapshotAtOrBefore !== "function") {
+        throw new Error("LifeGame Finance: Liquid Funds memory reader is required.");
+    }
+
+    liquidFundsSnapshotReader = getSnapshotAtOrBefore;
+}
 
 function getFinanceOperations(subblockId) {
     const operations = FINANCE_OPERATIONS[subblockId];
@@ -80,8 +91,64 @@ function removeFinanceEntry(subblockId, entryId) {
     return getFinanceOperations(subblockId).remove(entryId);
 }
 
+function getLiquidFundsTotal() {
+    return calculateLiquidFundsTotal();
+}
+
+function getPeriodStart(period, now) {
+    const date = new Date(now);
+
+    if (period === "week") {
+        const day = date.getDay() || 7;
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() - day + 1);
+        return date.getTime();
+    }
+
+    if (period === "month") {
+        date.setHours(0, 0, 0, 0);
+        date.setDate(1);
+        return date.getTime();
+    }
+
+    if (period === "year") {
+        date.setHours(0, 0, 0, 0);
+        date.setMonth(0, 1);
+        return date.getTime();
+    }
+
+    throw new Error("LifeGame Finance: неизвестный период.");
+}
+
+function getLiquidFundsStatistics(period = "week") {
+    const now = Date.now();
+    const periodStart = getPeriodStart(period, now);
+    const snapshot = liquidFundsSnapshotReader(now);
+
+    if (!snapshot) {
+        return {
+            period,
+            periodStart,
+            occurredAt: null,
+            total: 0,
+            entries: []
+        };
+    }
+
+    return {
+        period,
+        periodStart,
+        occurredAt: snapshot.occurredAt,
+        total: snapshot.total,
+        entries: snapshot.entries.map((entry) => ({ ...entry }))
+    };
+}
+
 export {
+    configureLiquidFundsMemory,
     listFinanceEntries,
     addFinanceEntry,
-    removeFinanceEntry
+    removeFinanceEntry,
+    getLiquidFundsTotal,
+    getLiquidFundsStatistics
 };
