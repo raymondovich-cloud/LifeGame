@@ -205,8 +205,10 @@ select throws_ok(
 );
 
 -- Security events are server-side only.
--- The private schema is not exposed to API roles, so authenticated and anon
--- must have neither schema USAGE nor table privileges.
+-- Inspect API-role privileges from the privileged test role so the test
+-- itself does not require private schema access for authenticated/anon.
+set local role postgres;
+
 select ok(
     not has_schema_privilege(
         'authenticated',
@@ -223,6 +225,15 @@ select ok(
         'SELECT,INSERT,UPDATE,DELETE'
     ),
     'authenticated has no direct privileges on security_events'
+);
+
+select ok(
+    not has_schema_privilege(
+        'anon',
+        'private',
+        'USAGE'
+    ),
+    'anon has no USAGE privilege on private schema'
 );
 
 select ok(
