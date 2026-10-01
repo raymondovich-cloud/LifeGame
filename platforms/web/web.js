@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 1.3
+// platforms/web/web.js — Version 1.4
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
