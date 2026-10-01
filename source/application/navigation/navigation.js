@@ -1,4 +1,4 @@
-// source/application/navigation/navigation.js — Version 1.2
+// source/application/navigation/navigation.js — Version 1.3
 
 const MODULES = Object.freeze({
     finance: Object.freeze({ id: "finance", number: "01", name: "Finance", localName: "Финансы" }),
@@ -7,7 +7,7 @@ const MODULES = Object.freeze({
     profile: Object.freeze({ id: "profile", number: "04", name: "Profile", localName: "Профиль" })
 });
 
-const DEFAULT_MODULE_ID = "development";
+const DEFAULT_MODULE_ID = "finance";
 
 function createNavigation(appRoot) {
     const shell = appRoot.querySelector(".app-shell");
