@@ -1,3 +1,2 @@
-/* shadows.css — Version 1.0 */
-
-/* Токены теней Design System. */
+/* shadows.css — Version 1.1 */
+:root { --shadow-none:none; --shadow-soft:0 1rem 3rem rgba(0,0,0,.28); --shadow-card:0 1.5rem 4rem rgba(0,0,0,.32); --shadow-focus:0 0 0 .1875rem rgba(255,255,255,.12); --shadow-glow:0 0 2rem rgba(255,255,255,.06); }
