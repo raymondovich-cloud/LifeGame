@@ -1,3 +1,5 @@
-/* base.css — Version 1.0 */
+/* base.css — Version 1.1 */
 
-/* Глобальные базовые правила интерфейса. */
+html { background:var(--color-black); }
+body { min-width:320px; min-height:100vh; min-height:100dvh; background:var(--gradient-ambient),var(--color-black); color:var(--color-white); font-family:var(--font-family-system); font-size:var(--font-size-md); font-weight:var(--font-weight-regular); line-height:var(--line-height-normal); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+::selection { background:var(--color-white); color:var(--color-black); }
