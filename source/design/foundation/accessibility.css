@@ -1,3 +1,6 @@
-/* accessibility.css — Version 1.0 */
+/* accessibility.css — Version 1.1 */
 
-/* Базовые визуальные правила доступности интерфейса. */
+:focus-visible { outline:var(--border-strong); outline-offset:.25rem; box-shadow:var(--shadow-focus); }
+@media (prefers-reduced-motion:reduce) {
+    *, *::before, *::after { scroll-behavior:auto !important; transition-duration:.01ms !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; }
+}
