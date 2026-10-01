@@ -1,4 +1,4 @@
-/* input.css — Version 1.1 */
+/* input.css — Version 1.2 */
 
 .input-control {
     width:100%;
@@ -6,7 +6,13 @@
     padding:var(--space-2) var(--space-3);
     color:var(--color-white);
     font:inherit;
-    font-size:var(--font-size-xs);
+    /*
+     * iOS Safari zooms the page when a focused text input has a
+     * computed font-size below 16px. Keep form controls at or above
+     * the native no-zoom threshold while preserving the Design System
+     * typography scale everywhere else.
+     */
+    font-size:max(1rem, var(--font-size-xs));
     background:var(--color-black-soft);
     border:var(--border-subtle);
     border-radius:var(--radius-control);
