@@ -1,11 +1,16 @@
 // LifeGame 3.0 — Supabase Identity Adapter
-// Version: 1.0
+// Version: 1.1
 // Responsibility: translate Supabase Auth operations into IdentityPort.
 //
 // This file is the ONLY Identity infrastructure boundary that may know
 // about the Supabase Auth client. Domain code must never import it.
 //
-// Registration is intentionally not wired to the UI yet.
+// Provider-specific responses and errors are normalized before leaving
+// Infrastructure.
+
+import {
+    mapSupabaseRegistrationResult
+} from './supabase.identity.mapper.js';
 
 export function createSupabaseIdentityAdapter(supabaseAuthClient) {
     if (!supabaseAuthClient) {
@@ -14,10 +19,12 @@ export function createSupabaseIdentityAdapter(supabaseAuthClient) {
 
     return Object.freeze({
         async register({ email, password }) {
-            return supabaseAuthClient.signUp({
+            const response = await supabaseAuthClient.signUp({
                 email,
                 password
             });
+
+            return mapSupabaseRegistrationResult(response);
         },
 
         async login({ email, password }) {
