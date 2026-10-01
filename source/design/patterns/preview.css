@@ -1,0 +1,58 @@
+/* preview.css — Version 1.0 */
+
+.preview-subblock-list {
+    display:grid;
+    gap:0;
+    width:100%;
+    border-top:var(--border-subtle);
+}
+
+.preview-subblock {
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:var(--space-4);
+    width:100%;
+    min-height:4.25rem;
+    padding:var(--space-3) 0;
+    color:var(--color-white-soft);
+    text-align:left;
+    background:transparent;
+    border:0;
+    border-bottom:var(--border-subtle);
+    cursor:pointer;
+    transition:color var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.preview-subblock:hover {
+    color:var(--color-white);
+}
+
+.preview-subblock-index {
+    color:var(--color-gray-dark);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+    letter-spacing:var(--letter-spacing-wide);
+}
+
+.preview-subblock-name {
+    font-size:var(--font-size-md);
+    font-weight:var(--font-weight-medium);
+}
+
+.preview-subblock-action {
+    color:var(--color-gray-dark);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+    letter-spacing:var(--letter-spacing-wide);
+}
+
+@media (max-width:30rem) {
+    .preview-subblock {
+        gap:var(--space-2);
+    }
+
+    .preview-subblock-action {
+        display:none;
+    }
+}
