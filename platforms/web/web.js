@@ -2,8 +2,8 @@
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
-import { renderAuthEntry } from "../../source/presentation/auth/auth.js";
 import { renderRegistration } from "../../source/presentation/auth/register.js";
+import { renderPublicEntry } from "../../source/presentation/auth/public-entry.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureLiquidFundsMemory } from "../../source/application/finance/finance.js";
 import {
@@ -13,7 +13,6 @@ import {
 import { subscribe } from "../../source/core/events/event.bus.js";
 
 const APP_ROOT_ID = "app";
-const DEFAULT_AUTH_ROUTE = "register";
 const DEFAULT_APPLICATION_ROUTE = "finance";
 
 function startWeb() {
@@ -63,13 +62,10 @@ function startWeb() {
         return window.location.hash.slice(1);
     }
 
-    function redirectToAuth() {
-        if (getRoute() !== DEFAULT_AUTH_ROUTE) {
-            window.location.hash = DEFAULT_AUTH_ROUTE;
-            return;
+    function clearPublicRoute() {
+        if (window.location.hash) {
+            history.replaceState({}, "", window.location.pathname + window.location.search);
         }
-
-        renderAuthRoute(DEFAULT_AUTH_ROUTE);
     }
 
     function renderModule(moduleId) {
@@ -82,28 +78,51 @@ function startWeb() {
         // Other authenticated modules will be connected here.
     }
 
-    function renderAuthRoute(route) {
-        applicationShell.hidden = true;
-        authRoot.hidden = false;
-        authRoot.replaceChildren();
-
-        if (route === "auth") {
-            renderAuthEntry(authRoot, () => {
-                window.location.hash = DEFAULT_AUTH_ROUTE;
-            });
-            return;
+    function closeRegistrationModal() {
+        const modal = authRoot.querySelector(".registration-modal");
+        if (modal) {
+            modal.remove();
         }
+    }
+
+    function openRegistrationModal() {
+        closeRegistrationModal();
+
+        const modal = document.createElement("div");
+        modal.className = "registration-modal";
+        modal.setAttribute("role", "presentation");
+
+        const dialog = document.createElement("div");
+        dialog.className = "registration-modal__dialog";
+        dialog.setAttribute("role", "dialog");
+        dialog.setAttribute("aria-modal", "true");
+        dialog.setAttribute("aria-labelledby", "registration-title");
+
+        modal.append(dialog);
+        authRoot.append(modal);
 
         renderRegistration(
-            authRoot,
+            dialog,
             application.auth,
+            closeRegistrationModal,
             () => {
-                window.location.hash = "auth";
-            },
-            () => {
+                closeRegistrationModal();
                 window.location.hash = DEFAULT_APPLICATION_ROUTE;
             }
         );
+
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                closeRegistrationModal();
+            }
+        });
+    }
+
+    function renderPublicRoute() {
+        applicationShell.hidden = true;
+        authRoot.hidden = false;
+
+        renderPublicEntry(authRoot, openRegistrationModal);
     }
 
     function initializeApplicationShell() {
@@ -140,17 +159,13 @@ function startWeb() {
             const session = sessionResult?.data?.session ?? null;
 
             if (!session) {
-                redirectToAuth();
+                clearPublicRoute();
+                renderPublicRoute();
                 return;
             }
 
             if (route === "auth" || route === "register" || route === "") {
-                if (route === "auth" || route === "register") {
-                    window.location.hash = DEFAULT_APPLICATION_ROUTE;
-                    return;
-                }
-
-                renderApplicationRoute(DEFAULT_APPLICATION_ROUTE);
+                window.location.hash = DEFAULT_APPLICATION_ROUTE;
                 return;
             }
 
