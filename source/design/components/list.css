@@ -7,7 +7,7 @@
     padding:var(--space-3);
     color:var(--color-gray);
     text-align:left;
-    background:var(--color-black-soft);
+    background:var(--gradient-surface);
     border:var(--border-subtle);
     border-radius:var(--radius-control);
 }
