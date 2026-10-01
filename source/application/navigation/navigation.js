@@ -1,4 +1,4 @@
-// source/application/navigation/navigation.js — Version 1.1
+// source/application/navigation/navigation.js — Version 1.2
 
 const MODULES = Object.freeze({
     finance: Object.freeze({ id: "finance", number: "01", name: "Finance", localName: "Финансы" }),
@@ -18,8 +18,8 @@ function createNavigation(appRoot) {
     const moduleStatus = appRoot.querySelector(".module-status");
     const navigationItems = [...appRoot.querySelectorAll(".navigation-item")];
 
-    if (!shell || !title || !localTitle || !moduleLabel || !moduleNumber || !moduleStatus) {
-        throw new Error("LifeGame Navigation: required interface elements were not found.");
+    if (!shell) {
+        throw new Error("LifeGame Navigation: application shell was not found.");
     }
 
     function resolveModule(moduleId) {
@@ -29,11 +29,25 @@ function createNavigation(appRoot) {
     function render(moduleId, updateUrl = true) {
         const module = resolveModule(moduleId);
         shell.dataset.module = module.id;
-        title.textContent = module.name;
-        localTitle.textContent = module.localName;
-        moduleLabel.textContent = "LIFE MODULE " + module.number;
-        moduleNumber.textContent = module.number;
-        moduleStatus.textContent = module.name + " module подключён.";
+        if (title) {
+            title.textContent = module.name;
+        }
+
+        if (localTitle) {
+            localTitle.textContent = module.localName;
+        }
+
+        if (moduleLabel) {
+            moduleLabel.textContent = "LIFE MODULE " + module.number;
+        }
+
+        if (moduleNumber) {
+            moduleNumber.textContent = module.number;
+        }
+
+        if (moduleStatus) {
+            moduleStatus.textContent = module.name + " module подключён.";
+        }
 
         navigationItems.forEach((item) => {
             const isActive = item.dataset.module === module.id;
