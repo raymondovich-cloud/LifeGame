@@ -1,13 +1,35 @@
-/* statistics.css — Version 1.2 */
+/* statistics.css — Version 1.3 */
 
 .statistics { display:grid; gap:var(--space-3); }
 .statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
 .statistics-meta { color:var(--color-gray); font-size:var(--font-size-xs); letter-spacing:var(--letter-spacing-wide); text-transform:uppercase; }
 
-.liquid-funds-statistics {
+.liquid-funds-summary {
     display:grid;
     gap:var(--space-3);
     margin-bottom:var(--space-4);
+}
+
+.liquid-funds-current-total {
+    display:grid;
+    gap:var(--space-2);
+}
+
+.liquid-funds-statistics-trigger {
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.liquid-funds-statistics-container {
+    display:grid;
+    gap:var(--space-3);
+}
+
+.liquid-funds-statistics-panel {
+    display:grid;
+    gap:var(--space-3);
 }
 
 .statistics-period-selector {
