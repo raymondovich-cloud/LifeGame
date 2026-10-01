@@ -24,6 +24,7 @@ function createEntryRow(root, subblock, entry) {
     const row = document.createElement("div");
     row.className = "swipe-delete-item";
     row.dataset.entryId = entry.id;
+    row.dataset.subblockId = subblock.id;
 
     const content = document.createElement("div");
     content.className = "swipe-delete-content";
@@ -100,8 +101,8 @@ function attachSwipeDelete(root) {
             const distance = currentX - startX;
 
             if (distance <= -64) {
-                removeFinanceEntry(subblock.id, item.dataset.entryId);
-                renderFinance(root, subblock.id);
+                removeFinanceEntry(item.dataset.subblockId, item.dataset.entryId);
+                renderFinance(root, item.dataset.subblockId);
             } else {
                 close();
             }
