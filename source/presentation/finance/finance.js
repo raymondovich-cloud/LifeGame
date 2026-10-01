@@ -127,6 +127,7 @@ function attachSwipeDelete(root) {
     });
 }
 
+let liquidFundsStatisticsOpen = false;
 let selectedLiquidFundsPeriod = "week";
 
 const LIQUID_FUNDS_PERIODS = Object.freeze([
@@ -135,20 +136,9 @@ const LIQUID_FUNDS_PERIODS = Object.freeze([
     { id: "year", label: "Год" }
 ]);
 
-function createLiquidFundsSummary(root) {
+function createLiquidFundsStatistics(root) {
     const wrapper = document.createElement("div");
-    wrapper.className = "liquid-funds-statistics";
-
-    const current = document.createElement("div");
-    current.className = "liquid-funds-current-total";
-    current.innerHTML =
-        '<span class="statistics-meta">ЛИКВИДНЫЕ СРЕДСТВА</span>' +
-        '<span class="statistics-value">' + formatAmount(getLiquidFundsTotal()) + "</span>";
-    wrapper.appendChild(current);
-
-    const periodLabel = document.createElement("span");
-    periodLabel.className = "statistics-meta";
-    periodLabel.textContent = "СТАТИСТИКА";
+    wrapper.className = "liquid-funds-statistics-panel";
 
     const selector = document.createElement("div");
     selector.className = "statistics-period-selector";
@@ -183,14 +173,19 @@ function createLiquidFundsSummary(root) {
         const statistics = getLiquidFundsStatistics(selectedLiquidFundsPeriod);
         result.replaceChildren();
 
+        const heading = document.createElement("span");
+        heading.className = "statistics-meta";
+        heading.textContent = "СОСТОЯНИЕ НА СРЕЗЕ";
+
         const value = document.createElement("span");
         value.className = "statistics-value";
         value.textContent = formatAmount(statistics.total);
 
-        const meta = document.createElement("span");
-        meta.className = "statistics-meta";
+        result.append(heading, value);
 
         if (statistics.occurredAt) {
+            const meta = document.createElement("span");
+            meta.className = "statistics-meta";
             meta.textContent =
                 "Срез: " +
                 new Intl.DateTimeFormat("ru-RU", {
@@ -198,16 +193,76 @@ function createLiquidFundsSummary(root) {
                     month: "2-digit",
                     year: "numeric"
                 }).format(statistics.occurredAt);
+            result.appendChild(meta);
         } else {
+            const meta = document.createElement("span");
+            meta.className = "statistics-meta";
             meta.textContent = "Исторических данных пока нет";
+            result.appendChild(meta);
         }
 
-        result.append(value, meta);
+        if (statistics.entries.length > 0) {
+            const entryList = document.createElement("div");
+            entryList.className = "finance-entry-list";
+
+            statistics.entries.forEach((entry) => {
+                const row = document.createElement("div");
+                row.className = "finance-entry-row";
+
+                const label = document.createElement("span");
+                label.className = "finance-entry-label";
+                label.textContent = entry.label;
+
+                const amount = document.createElement("span");
+                amount.className = "finance-entry-amount";
+                amount.textContent = formatAmount(entry.amount);
+
+                row.append(label, amount);
+                entryList.appendChild(row);
+            });
+
+            result.appendChild(entryList);
+        }
     };
 
-    wrapper.append(periodLabel, selector, result);
     renderPeriod();
+    wrapper.appendChild(selector);
+    wrapper.appendChild(result);
 
+    return wrapper;
+}
+
+function createLiquidFundsSummary(root) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "liquid-funds-summary";
+
+    const current = document.createElement("div");
+    current.className = "statistics liquid-funds-current-total";
+    current.innerHTML =
+        '<span class="statistics-meta">ТЕКУЩЕЕ СОСТОЯНИЕ</span>' +
+        '<span class="statistics-value">' + formatAmount(getLiquidFundsTotal()) + "</span>";
+
+    const statisticsButton = document.createElement("button");
+    statisticsButton.type = "button";
+    statisticsButton.className = "button-control liquid-funds-statistics-trigger";
+    statisticsButton.setAttribute("aria-expanded", String(liquidFundsStatisticsOpen));
+    statisticsButton.innerHTML =
+        '<span>Статистика</span><span aria-hidden="true">›</span>';
+
+    const statisticsContainer = document.createElement("div");
+    statisticsContainer.className = "liquid-funds-statistics-container";
+    statisticsContainer.hidden = !liquidFundsStatisticsOpen;
+
+    if (liquidFundsStatisticsOpen) {
+        statisticsContainer.appendChild(createLiquidFundsStatistics(root));
+    }
+
+    statisticsButton.addEventListener("click", () => {
+        liquidFundsStatisticsOpen = !liquidFundsStatisticsOpen;
+        renderFinance(root, "liquid-funds");
+    });
+
+    wrapper.append(current, statisticsButton, statisticsContainer);
     return wrapper;
 }
 
