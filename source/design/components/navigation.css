@@ -1,4 +1,4 @@
-/* navigation.css — Version 1.5 */
+/* navigation.css — Version 1.6 */
 
 .app-navigation {
     display:grid;
@@ -72,4 +72,13 @@
     .navigation-label {
         font-size:clamp(.62rem,2.6vw,.75rem);
     }
+}
+
+
+#app[data-access="public"] .app-navigation {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+#app[data-access="public"] .navigation-item[data-module="profile"] {
+    display:none;
 }
