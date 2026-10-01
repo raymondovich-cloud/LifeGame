@@ -2,10 +2,28 @@
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
+import { configureLiquidFundsMemory } from "../../source/application/finance/finance.js";
+import {
+    saveLiquidFundsSnapshot,
+    getLiquidFundsSnapshotAtOrBefore
+} from "../../source/memory/finance/liquid.funds.memory.js";
+import { subscribe } from "../../source/core/events/event.bus.js";
 
 const APP_ROOT_ID = "app";
 
 function startWeb() {
+    configureLiquidFundsMemory({
+        getSnapshotAtOrBefore: getLiquidFundsSnapshotAtOrBefore
+    });
+
+    subscribe("finance.liquid-funds.state.changed", (event) => {
+        saveLiquidFundsSnapshot({
+            occurredAt: event.occurredAt,
+            total: event.payload.total,
+            entries: event.payload.entries
+        });
+    });
+
     const appRoot = document.getElementById(APP_ROOT_ID);
     if (!appRoot) {
         throw new Error("LifeGame Web: application root \"#" + APP_ROOT_ID + "\" was not found.");
