@@ -1,4 +1,4 @@
-<!-- platforms/web/index.html — Version 1.1 -->
+<!-- platforms/web/index.html — Version 1.2 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,18 +73,19 @@
             </section>
 
             <nav class="app-navigation" aria-label="LifeGame modules">
-                <a class="navigation-item" href="#finance">
+                <a class="navigation-item" data-module="finance" href="#finance">
                     <span class="navigation-index">01</span>
                     <span class="navigation-label">Finance</span>
                 </a>
 
-                <a class="navigation-item" href="#health">
+                <a class="navigation-item" data-module="health" href="#health">
                     <span class="navigation-index">02</span>
                     <span class="navigation-label">Health</span>
                 </a>
 
                 <a
                     class="navigation-item is-active"
+                    data-module="development"
                     href="#development"
                     aria-current="page"
                 >
