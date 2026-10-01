@@ -1,7 +1,8 @@
-// platforms/web/web.js — Version 1.7
+// platforms/web/web.js — Version 1.8
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
+import { renderAuthEntry } from "../../source/presentation/auth/auth.js";
 import { renderRegistration } from "../../source/presentation/auth/register.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureLiquidFundsMemory } from "../../source/application/finance/finance.js";
@@ -46,8 +47,6 @@ function startWeb() {
         throw new Error("LifeGame Web: auth root was not found.");
     }
 
-    // Navigation owns the application shell and expects the page root.
-    // Keep the existing navigation composition boundary unchanged.
     createNavigation(appRoot);
 
     const moduleContent = applicationShell.querySelector("#module-content");
@@ -75,15 +74,28 @@ function startWeb() {
     function renderAuthRoute(route) {
         authRoot.replaceChildren();
 
+        if (route === "auth") {
+            renderAuthEntry(authRoot, () => {
+                window.location.hash = "register";
+            });
+            return;
+        }
+
         if (route === "register") {
-            renderRegistration(authRoot, application.auth);
+            renderRegistration(
+                authRoot,
+                application.auth,
+                () => {
+                    window.location.hash = "auth";
+                }
+            );
         }
     }
 
     function renderRoute() {
         const route = window.location.hash.slice(1);
 
-        if (route === "register") {
+        if (route === "auth" || route === "register") {
             applicationShell.hidden = true;
             authRoot.hidden = false;
             renderAuthRoute(route);
@@ -97,9 +109,7 @@ function startWeb() {
     }
 
     navigationItems.forEach((item) => {
-        item.addEventListener("click", () => {
-            renderRoute();
-        });
+        item.addEventListener("click", renderRoute);
     });
 
     window.addEventListener("popstate", renderRoute);
