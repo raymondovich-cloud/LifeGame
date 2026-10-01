@@ -43,7 +43,7 @@ function createEntryRow(root, subblock, entry) {
     return row;
 }
 
-function attachSwipeDelete(root) {
+function attachSwipeDelete(root, onWriteAttempt = null) {
     const items = [...root.querySelectorAll(".swipe-delete-item")];
 
     items.forEach((item) => {
@@ -101,8 +101,16 @@ function attachSwipeDelete(root) {
             const distance = currentX - startX;
 
             if (distance <= -64) {
-                removeFinanceEntry(item.dataset.subblockId, item.dataset.entryId);
-                renderFinance(root, item.dataset.subblockId);
+                const remove = () => {
+                    removeFinanceEntry(item.dataset.subblockId, item.dataset.entryId);
+                    renderFinance(root, item.dataset.subblockId, onWriteAttempt);
+                };
+
+                if (typeof onWriteAttempt === "function") {
+                    onWriteAttempt(remove);
+                } else {
+                    remove();
+                }
             } else {
                 close();
             }
@@ -123,7 +131,7 @@ const LIQUID_FUNDS_PERIODS = Object.freeze([
     { id: "year", label: "Год" }
 ]);
 
-function createLiquidFundsStatistics(root) {
+function createLiquidFundsStatistics(root, onWriteAttempt = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "liquid-funds-statistics-panel";
 
@@ -219,7 +227,7 @@ function createLiquidFundsStatistics(root) {
     return wrapper;
 }
 
-function createLiquidFundsSummary(root) {
+function createLiquidFundsSummary(root, onWriteAttempt = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "liquid-funds-summary";
 
@@ -241,12 +249,12 @@ function createLiquidFundsSummary(root) {
     statisticsContainer.hidden = !liquidFundsStatisticsOpen;
 
     if (liquidFundsStatisticsOpen) {
-        statisticsContainer.appendChild(createLiquidFundsStatistics(root));
+        statisticsContainer.appendChild(createLiquidFundsStatistics(root, onWriteAttempt));
     }
 
     statisticsButton.addEventListener("click", () => {
         liquidFundsStatisticsOpen = !liquidFundsStatisticsOpen;
-        renderFinance(root, "liquid-funds");
+        renderFinance(root, "liquid-funds", onWriteAttempt);
     });
 
     wrapper.append(current, statisticsButton, statisticsContainer);
@@ -338,7 +346,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     const entries = listFinanceEntries(subblock.id);
 
     if (subblock.id === "liquid-funds") {
-        content.appendChild(createLiquidFundsSummary(root));
+        content.appendChild(createLiquidFundsSummary(root, onWriteAttempt));
     }
 
     if (entries.length === 0) {
@@ -397,7 +405,7 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null) {
     section.append(heading, list);
     root.appendChild(section);
 
-    attachSwipeDelete(root);
+    attachSwipeDelete(root, onWriteAttempt);
 }
 
 export { renderFinance, attachSwipeDelete };
