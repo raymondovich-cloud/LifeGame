@@ -1,9 +1,10 @@
-// source/application/navigation/navigation.js — Version 1.0
+// source/application/navigation/navigation.js — Version 1.1
 
 const MODULES = Object.freeze({
     finance: Object.freeze({ id: "finance", number: "01", name: "Finance", localName: "Финансы" }),
     health: Object.freeze({ id: "health", number: "02", name: "Health", localName: "Здоровье" }),
-    development: Object.freeze({ id: "development", number: "03", name: "Development", localName: "Развитие" })
+    development: Object.freeze({ id: "development", number: "03", name: "Development", localName: "Развитие" }),
+    profile: Object.freeze({ id: "profile", number: "04", name: "Profile", localName: "Профиль" })
 });
 
 const DEFAULT_MODULE_ID = "development";
@@ -21,7 +22,9 @@ function createNavigation(appRoot) {
         throw new Error("LifeGame Navigation: required interface elements were not found.");
     }
 
-    function resolveModule(moduleId) { return MODULES[moduleId] || MODULES[DEFAULT_MODULE_ID]; }
+    function resolveModule(moduleId) {
+        return MODULES[moduleId] || MODULES[DEFAULT_MODULE_ID];
+    }
 
     function render(moduleId, updateUrl = true) {
         const module = resolveModule(moduleId);
@@ -31,21 +34,34 @@ function createNavigation(appRoot) {
         moduleLabel.textContent = "LIFE MODULE " + module.number;
         moduleNumber.textContent = module.number;
         moduleStatus.textContent = module.name + " module подключён.";
+
         navigationItems.forEach((item) => {
             const isActive = item.dataset.module === module.id;
             item.classList.toggle("is-active", isActive);
-            if (isActive) item.setAttribute("aria-current", "page");
-            else item.removeAttribute("aria-current");
+
+            if (isActive) {
+                item.setAttribute("aria-current", "page");
+            } else {
+                item.removeAttribute("aria-current");
+            }
         });
-        if (updateUrl) history.pushState({ module: module.id }, "", "#" + module.id);
+
+        if (updateUrl) {
+            history.pushState({ module: module.id }, "", "#" + module.id);
+        }
     }
 
-    navigationItems.forEach((item) => item.addEventListener("click", (event) => {
-        event.preventDefault();
-        render(item.dataset.module);
-    }));
+    navigationItems.forEach((item) => {
+        item.addEventListener("click", (event) => {
+            event.preventDefault();
+            render(item.dataset.module);
+        });
+    });
 
-    window.addEventListener("popstate", () => render(window.location.hash.slice(1), false));
+    window.addEventListener("popstate", () => {
+        render(window.location.hash.slice(1), false);
+    });
+
     render(window.location.hash.slice(1) || DEFAULT_MODULE_ID, false);
 }
 
