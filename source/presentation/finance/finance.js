@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.4
+// source/presentation/finance/finance.js — Version 1.5
 
 import {
     listFinanceEntries,
@@ -137,18 +137,18 @@ const LIQUID_FUNDS_PERIODS = Object.freeze([
 
 function createLiquidFundsSummary(root) {
     const wrapper = document.createElement("div");
-    wrapper.className = "statistics liquid-funds-statistics";
+    wrapper.className = "liquid-funds-statistics";
 
     const current = document.createElement("div");
-    current.className = "statistics";
+    current.className = "liquid-funds-current-total";
     current.innerHTML =
-        '<span class="statistics-meta">ТЕКУЩЕЕ СОСТОЯНИЕ</span>' +
+        '<span class="statistics-meta">ЛИКВИДНЫЕ СРЕДСТВА</span>' +
         '<span class="statistics-value">' + formatAmount(getLiquidFundsTotal()) + "</span>";
     wrapper.appendChild(current);
 
     const periodLabel = document.createElement("span");
     periodLabel.className = "statistics-meta";
-    periodLabel.textContent = "СОСТОЯНИЕ ПО ПЕРИОДУ";
+    periodLabel.textContent = "СТАТИСТИКА";
 
     const selector = document.createElement("div");
     selector.className = "statistics-period-selector";
