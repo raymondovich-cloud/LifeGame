@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.6
+// source/presentation/finance/finance.js — Version 1.7
 
 import {
     listFinanceEntries,
@@ -253,7 +253,7 @@ function createLiquidFundsSummary(root) {
     return wrapper;
 }
 
-function createAddForm(root, subblock) {
+function createAddForm(root, subblock, onWriteAttempt = null) {
     const wrapper = document.createElement("form");
     wrapper.className = "finance-add-form";
 
@@ -290,19 +290,28 @@ function createAddForm(root, subblock) {
         event.preventDefault();
         error.hidden = true;
 
-        try {
-            addFinanceEntry(subblock.id, labelInput.value, amountInput.value);
-            renderFinance(root, subblock.id);
-        } catch (formError) {
-            error.textContent = formError.message;
-            error.hidden = false;
+        const save = () => {
+            try {
+                addFinanceEntry(subblock.id, labelInput.value, amountInput.value);
+                renderFinance(root, subblock.id, onWriteAttempt);
+            } catch (formError) {
+                error.textContent = formError.message;
+                error.hidden = false;
+            }
+        };
+
+        if (typeof onWriteAttempt === "function") {
+            onWriteAttempt(save);
+            return;
         }
+
+        save();
     });
 
     return wrapper;
 }
 
-function createSubblock(root, subblock, isOpen) {
+function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     const wrapper = document.createElement("article");
     wrapper.className = "accordion-item finance-subblock";
     wrapper.dataset.subblock = subblock.id;
@@ -350,18 +359,18 @@ function createSubblock(root, subblock, isOpen) {
         content.appendChild(entryList);
     }
 
-    content.appendChild(createAddForm(root, subblock));
+    content.appendChild(createAddForm(root, subblock, onWriteAttempt));
     wrapper.append(button, content);
 
     button.addEventListener("click", () => {
         const nextOpen = button.getAttribute("aria-expanded") !== "true";
-        renderFinance(root, nextOpen ? subblock.id : null);
+        renderFinance(root, nextOpen ? subblock.id : null, onWriteAttempt);
     });
 
     return wrapper;
 }
 
-function renderFinance(root, openSubblockId = null) {
+function renderFinance(root, openSubblockId = null, onWriteAttempt = null) {
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -382,7 +391,7 @@ function renderFinance(root, openSubblockId = null) {
     list.className = "accordion-list";
 
     FINANCE_SUBBLOCKS.forEach((subblock) => {
-        list.appendChild(createSubblock(root, subblock, subblock.id === openSubblockId));
+        list.appendChild(createSubblock(root, subblock, subblock.id === openSubblockId, onWriteAttempt));
     });
 
     section.append(heading, list);
