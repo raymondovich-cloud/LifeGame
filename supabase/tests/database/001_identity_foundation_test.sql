@@ -33,7 +33,10 @@ values
 );
 
 select results_eq(
-    $select count(*)::bigint from public.profiles$,
+    $
+    select count(*)::bigint
+    from public.profiles
+    $,
     $values (2::bigint)$,
     'Auth user creation automatically bootstraps two profiles'
 );
