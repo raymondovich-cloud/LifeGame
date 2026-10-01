@@ -1,4 +1,4 @@
-# .github/workflows/pages.yml — Version 1.0
+# .github/workflows/pages.yml — Version 1.1
 name: Deploy LifeGame
 
 on:
@@ -30,10 +30,17 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare web application
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp -R platforms _site/
+          cp -R source _site/
+
       - name: Upload web application
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./platforms/web
+          path: ./_site
 
       - name: Deploy to GitHub Pages
         id: deployment
