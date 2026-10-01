@@ -9,7 +9,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(22);
 
 -- Fixed test identities. The transaction is rolled back at the end.
 insert into auth.users (
