@@ -1,8 +1,17 @@
-/* layout.css — Version 1.1 */
+/* layout.css — Version 1.2 */
 
 #app { min-height:100vh; min-height:100dvh; }
 .app-shell { position:relative; display:flex; flex-direction:column; width:min(100%,56rem); min-height:100vh; min-height:100dvh; margin:0 auto; padding:var(--page-padding-block) var(--page-padding-inline) calc(var(--page-padding-block) + 5rem); overflow:hidden; }
 .app-shell::before { position:fixed; inset:0; z-index:-1; pointer-events:none; content:""; background:var(--gradient-ambient); }
 .module-intro { display:flex; flex-direction:column; gap:var(--space-5); margin-top:var(--section-gap); }
-.module-description { max-width:38rem; margin-top:var(--section-gap); }
+.module-meta { display:flex; align-items:center; }
+.module-label { color:var(--color-gray); font-family:var(--font-family-mono); font-size:var(--font-size-2xs); font-weight:var(--font-weight-medium); letter-spacing:var(--letter-spacing-system); text-transform:uppercase; }
+.module-title-group { display:flex; flex-direction:column; gap:var(--space-2); }
+.module-title-group h1 { max-width:100%; font-size:var(--font-size-2xl); }
+.module-title-local { color:var(--color-gray); font-size:var(--font-size-md); }
+.module-status { color:var(--color-gray); font-size:var(--font-size-sm); }
+.module-tagline { color:var(--color-white-soft); font-size:var(--font-size-sm); letter-spacing:.01em; }
+.module-description { max-width:38rem; margin-top:var(--section-gap); color:var(--color-gray); font-size:var(--font-size-sm); line-height:var(--line-height-normal); }
 .module-indicator { display:flex; align-items:baseline; gap:var(--space-2); margin-top:auto; padding-top:var(--section-gap); }
+.module-number { color:var(--color-white); font-family:var(--font-family-mono); font-size:var(--font-size-xl); font-weight:var(--font-weight-medium); letter-spacing:var(--letter-spacing-tight); }
+.module-word { color:var(--color-gray-dark); font-size:var(--font-size-2xs); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-system); }
