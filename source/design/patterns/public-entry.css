@@ -1,4 +1,4 @@
-/* public-entry.css — Version 1.0 */
+/* public-entry.css — Version 1.1 */
 
 .public-entry {
     display:grid;
@@ -94,6 +94,12 @@
     border:1px solid rgba(255,255,255,.12);
     border-radius:var(--radius-card);
     box-shadow:var(--shadow-soft),0 24px 80px rgba(0,0,0,.45);
+}
+
+.registration-modal__context {
+    margin:0 0 var(--space-5);
+    color:var(--color-gray);
+    line-height:1.5;
 }
 
 .registration-modal__close {
