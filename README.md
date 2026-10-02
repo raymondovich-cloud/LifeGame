@@ -1,4 +1,10 @@
-<!-- version 1.1 -->
+<!-- version 1.2 -->
+
+<div align="center">
+
+<img src="docs/readme-header.svg" alt="LifeGame" width="100%">
+
+</div>
 
 <div align="center">
 
