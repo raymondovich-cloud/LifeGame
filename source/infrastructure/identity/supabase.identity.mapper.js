@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Mapper
-// Version: 1.1
+// Version: 1.2
 // Responsibility: translate Supabase-specific results/errors into
 // provider-independent Identity application contracts.
 //
@@ -78,11 +78,53 @@ export function mapSupabaseLoginResult(response) {
     });
 }
 
+export function mapSupabaseSessionResult(response) {
+    const { data, error } = response || {};
+
+    if (error) {
+        throw mapSupabaseError(
+            error,
+            IDENTITY_ERROR_CODE.SESSION_FAILED,
+            'Authentication state could not be verified.'
+        );
+    }
+
+    return Object.freeze({
+        session: data?.session ?? null
+    });
+}
+
+export function mapSupabaseVerificationResult(response) {
+    const { error } = response || {};
+
+    if (error) {
+        throw mapSupabaseError(
+            error,
+            IDENTITY_ERROR_CODE.VERIFICATION_FAILED,
+            'Verification email could not be sent.'
+        );
+    }
+
+    return Object.freeze({
+        sent: true
+    });
+}
+
 export function mapSupabaseError(error, fallbackCode, fallbackMessage) {
     if (error?.status === 429) {
         return new IdentityApplicationError(
             IDENTITY_ERROR_CODE.RATE_LIMITED,
-            'Too many requests. Please try again later.'
+            'Too many requests. Please wait before trying again.'
+        );
+    }
+
+    if (
+        error?.code === 'email_not_confirmed' ||
+        error?.message?.toLowerCase().includes('email not confirmed')
+    ) {
+        return new IdentityApplicationError(
+            IDENTITY_ERROR_CODE.EMAIL_NOT_CONFIRMED,
+            'Email address is not confirmed yet.'
         );
     }
 
