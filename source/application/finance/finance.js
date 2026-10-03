@@ -1,4 +1,4 @@
-// finance.js — Version 1.1
+// finance.js — Version 1.2
 
 import {
     listLiquidFunds,
@@ -30,6 +30,8 @@ import {
     addFinancialCushion,
     removeFinancialCushion
 } from "../../domain/finance/financial.cushion/financial.cushion.js";
+
+import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
 
 const FINANCE_OPERATIONS = Object.freeze({
     "liquid-funds": {
@@ -91,6 +93,16 @@ function removeFinanceEntry(subblockId, entryId) {
     return getFinanceOperations(subblockId).remove(entryId);
 }
 
+function getFinancialStabilityIndex() {
+    return calculateFinancialStabilityIndex({
+        liquidFunds: listLiquidFunds(),
+        actualEarnings: listActualEarnings(),
+        financialBurden: listFinancialBurden(),
+        mandatoryExpenses: listMandatoryExpenses(),
+        financialCushion: listFinancialCushion()
+    });
+}
+
 function getLiquidFundsTotal() {
     return calculateLiquidFundsTotal();
 }
@@ -150,5 +162,6 @@ export {
     addFinanceEntry,
     removeFinanceEntry,
     getLiquidFundsTotal,
-    getLiquidFundsStatistics
+    getLiquidFundsStatistics,
+    getFinancialStabilityIndex
 };
