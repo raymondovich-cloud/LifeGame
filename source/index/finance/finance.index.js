@@ -1,4 +1,4 @@
-// source/index/finance/finance.index.js — Version 2.0
+// source/index/finance/finance.index.js — Version 2.1
 
 const INDEX_LIMITS = Object.freeze({
     minimum: 0,
@@ -14,6 +14,11 @@ function normalizeAmount(value) {
 function sumEntries(entries) {
     if (!Array.isArray(entries)) return 0;
     return entries.reduce((total, entry) => total + normalizeAmount(entry?.amount), 0);
+}
+
+function resolveAmount(value, entries) {
+    if (value !== undefined) return normalizeAmount(value);
+    return sumEntries(entries);
 }
 
 function clampScore(value) {
@@ -49,12 +54,12 @@ function calculateFinancialCushionScore(cushion, expenses) {
 }
 
 function calculateFinancialStabilityIndex(financeState = {}) {
-    const assets = normalizeAmount(financeState.assets);
-    const debts = normalizeAmount(financeState.debts);
-    const income = normalizeAmount(financeState.income);
-    const payments = normalizeAmount(financeState.payments);
-    const expenses = normalizeAmount(financeState.expenses);
-    const cushion = normalizeAmount(financeState.cushion);
+    const assets = resolveAmount(financeState.assets, financeState.liquidFunds);
+    const debts = resolveAmount(financeState.debts, financeState.debtsEntries);
+    const income = resolveAmount(financeState.income, financeState.actualEarnings);
+    const payments = resolveAmount(financeState.payments, financeState.financialBurden);
+    const expenses = resolveAmount(financeState.expenses, financeState.mandatoryExpenses);
+    const cushion = resolveAmount(financeState.cushion, financeState.financialCushion);
 
     const p1 = calculateAssetBalanceScore(assets, debts);
     const p2 = calculateActualEarningsScore(income, expenses);
@@ -68,11 +73,11 @@ function calculateFinancialStabilityIndex(financeState = {}) {
         value: Math.max(INDEX_LIMITS.minimum, Math.min(INDEX_LIMITS.maximum, Math.round(value))),
         scale: INDEX_LIMITS.maximum,
         components: {
-            p1: p1,
-            p2: p2,
-            p3: p3,
-            p4: p4,
-            p5: p5
+            p1,
+            p2,
+            p3,
+            p4,
+            p5
         }
     };
 }
