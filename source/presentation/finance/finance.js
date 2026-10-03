@@ -1,11 +1,12 @@
-// source/presentation/finance/finance.js — Version 1.7
+// source/presentation/finance/finance.js — Version 1.8
 
 import {
     listFinanceEntries,
     addFinanceEntry,
     removeFinanceEntry,
     getLiquidFundsTotal,
-    getLiquidFundsStatistics
+    getLiquidFundsStatistics,
+    getFinancialStabilityIndex
 } from "../../application/finance/finance.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
@@ -13,7 +14,8 @@ const FINANCE_SUBBLOCKS = Object.freeze([
     { id: "actual-earnings", number: "02", title: "Фактически заработанно", description: "Фактически полученный доход за выбранный период." },
     { id: "financial-burden", number: "03", title: "Финансовая нагрузка", description: "Обязательства и финансовые нагрузки, влияющие на устойчивость." },
     { id: "mandatory-expenses", number: "04", title: "Обязательные траты", description: "Регулярные расходы, которые необходимо учитывать в первую очередь." },
-    { id: "financial-cushion", number: "05", title: "Финансовая подушка", description: "Резерв, предназначенный для защиты финансовой устойчивости." }
+    { id: "financial-cushion", number: "05", title: "Финансовая подушка", description: "Резерв, предназначенный для защиты финансовой устойчивости." },
+    { id: "financial-stability-index", number: "06", title: "Индекс финансовой стабильности", description: "Сводная оценка текущей финансовой устойчивости." }
 ]);
 
 function formatAmount(amount) {
@@ -261,6 +263,50 @@ function createLiquidFundsSummary(root, onWriteAttempt = null) {
     return wrapper;
 }
 
+function createFinancialStabilityIndexPanel() {
+    const result = getFinancialStabilityIndex();
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "financial-stability-index-panel";
+
+    const label = document.createElement("span");
+    label.className = "statistics-meta";
+    label.textContent = "ИНДЕКС ФИНАНСОВОЙ СТАБИЛЬНОСТИ";
+
+    const value = document.createElement("span");
+    value.className = "statistics-value";
+    value.textContent = result.value + "/" + result.scale;
+
+    const description = document.createElement("p");
+    description.className = "financial-stability-index-description";
+    description.textContent =
+        "Индекс рассчитывается на основе ликвидности, финансовой нагрузки и финансовой подушки.";
+
+    const components = document.createElement("div");
+    components.className = "financial-stability-index-components";
+
+    [
+        ["Ликвидность", result.components.liquidity],
+        ["Нагрузка", result.components.burden],
+        ["Подушка", result.components.cushion]
+    ].forEach(([name, componentValue]) => {
+        const item = document.createElement("div");
+        item.className = "financial-stability-index-component";
+
+        const itemName = document.createElement("span");
+        itemName.textContent = name;
+
+        const itemValue = document.createElement("span");
+        itemValue.textContent = componentValue + "/100";
+
+        item.append(itemName, itemValue);
+        components.appendChild(item);
+    });
+
+    wrapper.append(label, value, description, components);
+    return wrapper;
+}
+
 function createAddForm(root, subblock, onWriteAttempt = null) {
     const wrapper = document.createElement("form");
     wrapper.className = "finance-add-form";
@@ -367,7 +413,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
         content.appendChild(entryList);
     }
 
-    content.appendChild(createAddForm(root, subblock, onWriteAttempt));
+    if (subblock.id !== "financial-stability-index") {\n        content.appendChild(createAddForm(root, subblock, onWriteAttempt));\n    }
     wrapper.append(button, content);
 
     button.addEventListener("click", () => {
