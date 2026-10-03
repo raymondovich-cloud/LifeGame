@@ -1,4 +1,4 @@
-/* navigation.css — Version 1.6 */
+/* navigation.css — Version 1.7 */
 
 .app-navigation {
     display:grid;
@@ -55,6 +55,18 @@
     text-overflow:ellipsis;
 }
 
+.navigation-item[data-module="profile"] {
+    display:none;
+}
+
+#app[data-access="authenticated"] .app-navigation {
+    grid-template-columns:repeat(4,minmax(0,1fr));
+}
+
+#app[data-access="authenticated"] .navigation-item[data-module="profile"] {
+    display:flex;
+}
+
 @media (max-width:30rem) {
     .app-navigation {
         gap:0;
@@ -72,17 +84,4 @@
     .navigation-label {
         font-size:clamp(.62rem,2.6vw,.75rem);
     }
-}
-
-
-#app .navigation-item[data-module="profile"] {
-    display:none;
-}
-
-#app[data-access="authenticated"] .app-navigation {
-    grid-template-columns:repeat(4,minmax(0,1fr));
-}
-
-#app[data-access="authenticated"] .navigation-item[data-module="profile"] {
-    display:flex;
 }
