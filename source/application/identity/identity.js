@@ -1,8 +1,9 @@
 // LifeGame 3.0 — Identity Application Service
-// Version: 1.1
+// Version: 1.2
 // Responsibility: expose Identity use cases through injected ports.
 
 import { createRegistrationUseCase } from './registration.js';
+import { createLoginUseCase } from './login.js';
 
 export function createIdentityApplication(identityPort) {
     if (!identityPort) {
@@ -10,6 +11,7 @@ export function createIdentityApplication(identityPort) {
     }
 
     const register = createRegistrationUseCase(identityPort);
+    const login = createLoginUseCase(identityPort);
 
     return Object.freeze({
         async register(input) {
@@ -17,7 +19,7 @@ export function createIdentityApplication(identityPort) {
         },
 
         async login(input) {
-            return identityPort.login(input);
+            return login.execute(input);
         },
 
         async logout() {
