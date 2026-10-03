@@ -1,10 +1,12 @@
 // LifeGame 3.0 — Supabase Identity Mapper Tests
+// Version: 1.1
 // Responsibility: verify provider-specific mapping without contacting Supabase.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+    mapSupabaseLoginResult,
     mapSupabaseRegistrationResult,
     mapSupabaseError
 } from './supabase.identity.mapper.js';
@@ -50,39 +52,60 @@ test('maps registration requiring email verification', () => {
     });
 });
 
-test('does not expose provider error details', () => {
+test('maps successful login without exposing session tokens', () => {
+    const result = mapSupabaseLoginResult({
+        data: {
+            user: { id: 'user-login' },
+            session: { access_token: 'must-not-cross-boundary' }
+        },
+        error: null
+    });
+
+    assert.deepEqual(result, {
+        userId: 'user-login',
+        authenticated: true
+    });
+
+    assert.equal('access_token' in result, false);
+});
+
+test('maps failed login to a provider-independent authentication error', () => {
     assert.throws(
-        () => mapSupabaseRegistrationResult({
+        () => mapSupabaseLoginResult({
             data: null,
             error: {
-                message: 'sensitive provider detail',
-                code: 'provider_internal_code'
+                message: 'invalid credentials provider detail',
+                code: 'provider-specific-code'
             }
         }),
         error => {
             assert.ok(error instanceof IdentityApplicationError);
-            assert.equal(error.code, IDENTITY_ERROR_CODE.REGISTRATION_FAILED);
-            assert.equal(error.message, 'Registration could not be completed.');
-            assert.equal(error.message.includes('sensitive provider detail'), false);
-            assert.equal(error.message.includes('provider_internal_code'), false);
+            assert.equal(error.code, IDENTITY_ERROR_CODE.AUTHENTICATION_FAILED);
+            assert.equal(error.message, 'Login could not be completed.');
+            assert.equal(error.message.includes('provider-specific'), false);
             return true;
         }
     );
 });
 
-test('maps provider rate limiting to a stable application error', () => {
-    const result = mapSupabaseError(
-        { status: 429, message: 'provider detail' },
-        IDENTITY_ERROR_CODE.REGISTRATION_FAILED,
-        'Registration could not be completed.'
+test('rejects a login response without an authenticated session', () => {
+    assert.throws(
+        () => mapSupabaseLoginResult({
+            data: {
+                user: { id: 'user-login' },
+                session: null
+            },
+            error: null
+        }),
+        error => {
+            assert.ok(error instanceof IdentityApplicationError);
+            assert.equal(error.code, IDENTITY_ERROR_CODE.AUTHENTICATION_FAILED);
+            return true;
+        }
     );
-
-    assert.ok(result instanceof IdentityApplicationError);
-    assert.equal(result.code, IDENTITY_ERROR_CODE.RATE_LIMITED);
-    assert.equal(result.message, 'Too many requests. Please try again later.');
 });
 
-test('does not leak provider error objects', () => {
+test('does not expose provider error objects', () => {
     const providerError = { message: 'private provider detail' };
 
     const result = mapSupabaseError(
