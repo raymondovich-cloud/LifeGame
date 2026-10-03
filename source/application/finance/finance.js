@@ -1,4 +1,4 @@
-// finance.js — Version 1.2
+// finance.js — Version 1.3
 
 import {
     listLiquidFunds,
@@ -89,15 +89,21 @@ function addFinanceEntry(subblockId, label, amount) {
     return getFinanceOperations(subblockId).add(label, amount);
 }
 
+function addFinancialBurdenEntry(label, debt, payment) {
+    return addFinancialBurden(label, debt, payment);
+}
+
 function removeFinanceEntry(subblockId, entryId) {
     return getFinanceOperations(subblockId).remove(entryId);
 }
 
 function getFinancialStabilityIndex() {
+    const financialBurden = listFinancialBurden();
+
     return calculateFinancialStabilityIndex({
         liquidFunds: listLiquidFunds(),
         actualEarnings: listActualEarnings(),
-        financialBurden: listFinancialBurden(),
+        financialBurden,
         mandatoryExpenses: listMandatoryExpenses(),
         financialCushion: listFinancialCushion()
     });
@@ -160,6 +166,7 @@ export {
     configureLiquidFundsMemory,
     listFinanceEntries,
     addFinanceEntry,
+    addFinancialBurdenEntry,
     removeFinanceEntry,
     getLiquidFundsTotal,
     getLiquidFundsStatistics,
