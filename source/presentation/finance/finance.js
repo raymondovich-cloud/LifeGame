@@ -1,8 +1,9 @@
-// source/presentation/finance/finance.js — Version 1.10
+// source/presentation/finance/finance.js — Version 1.11
 
 import {
     listFinanceEntries,
     addFinanceEntry,
+    addFinancialBurdenEntry,
     removeFinanceEntry,
     getLiquidFundsTotal,
     getLiquidFundsStatistics,
@@ -35,11 +36,21 @@ function createEntryRow(root, subblock, entry) {
     label.className = "finance-entry-label";
     label.textContent = entry.label;
 
-    const amount = document.createElement("span");
-    amount.className = "finance-entry-amount";
-    amount.textContent = formatAmount(entry.amount);
+    if (subblock.id === "financial-burden") {
+        const details = document.createElement("span");
+        details.className = "finance-entry-amount";
+        details.textContent =
+            "Долг " + formatAmount(entry.debt) +
+            " · Платёж " + formatAmount(entry.payment);
 
-    content.append(label, amount);
+        content.append(label, details);
+    } else {
+        const amount = document.createElement("span");
+        amount.className = "finance-entry-amount";
+        amount.textContent = formatAmount(entry.amount);
+
+        content.append(label, amount);
+    }
     row.append(content);
 
     return row;
@@ -326,8 +337,23 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     amountInput.inputMode = "decimal";
     amountInput.min = "0.01";
     amountInput.step = "0.01";
-    amountInput.placeholder = "Сумма";
+    amountInput.placeholder = subblock.id === "financial-burden" ? "Общий долг" : "Сумма";
     amountInput.required = true;
+
+    const paymentInput = subblock.id === "financial-burden"
+        ? document.createElement("input")
+        : null;
+
+    if (paymentInput) {
+        paymentInput.className = "input-control";
+        paymentInput.name = "payment";
+        paymentInput.type = "number";
+        paymentInput.inputMode = "decimal";
+        paymentInput.min = "0";
+        paymentInput.step = "0.01";
+        paymentInput.placeholder = "Регулярный платёж";
+        paymentInput.required = true;
+    }
 
     const addButton = document.createElement("button");
     addButton.className = "button-control";
@@ -338,7 +364,9 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     error.className = "finance-form-error";
     error.hidden = true;
 
-    wrapper.append(labelInput, amountInput, addButton, error);
+    wrapper.append(labelInput, amountInput);
+    if (paymentInput) wrapper.appendChild(paymentInput);
+    wrapper.append(addButton, error);
 
     wrapper.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -346,7 +374,16 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
 
         const save = () => {
             try {
-                addFinanceEntry(subblock.id, labelInput.value, amountInput.value);
+                if (subblock.id === "financial-burden") {
+                    addFinancialBurdenEntry(
+                        labelInput.value,
+                        amountInput.value,
+                        paymentInput.value
+                    );
+                } else {
+                    addFinanceEntry(subblock.id, labelInput.value, amountInput.value);
+                }
+
                 renderFinance(root, subblock.id, onWriteAttempt);
             } catch (formError) {
                 error.textContent = formError.message;
