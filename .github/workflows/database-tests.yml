@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Identity application tests
-        run: node --test source/application/identity/registration.test.mjs
+        run: node --test source/application/identity/registration.test.mjs source/application/identity/login.test.mjs
 
       - name: Run Identity Infrastructure tests
         run: node --test source/infrastructure/identity/supabase.identity.mapper.test.mjs source/infrastructure/identity/supabase.identity.adapter.test.mjs
