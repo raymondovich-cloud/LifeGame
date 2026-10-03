@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.11
+// source/presentation/finance/finance.js — Version 1.12
 
 import {
     listFinanceEntries,
@@ -291,15 +291,17 @@ function createFinancialStabilityIndexPanel() {
     const description = document.createElement("p");
     description.className = "financial-stability-index-description";
     description.textContent =
-        "Индекс рассчитывается на основе ликвидности, финансовой нагрузки и финансовой подушки.";
+        "ИФС-1000 объединяет имущественный баланс, заработок, долговую нагрузку, контроль трат и финансовую подушку.";
 
     const components = document.createElement("div");
     components.className = "financial-stability-index-components";
 
     [
-        ["Ликвидность", result.components.liquidity],
-        ["Нагрузка", result.components.burden],
-        ["Подушка", result.components.cushion]
+        ["P₁ · Имущественный баланс", result.components.p1],
+        ["P₂ · Фактически заработано", result.components.p2],
+        ["P₃ · Финансовая нагрузка", result.components.p3],
+        ["P₄ · Контроль трат", result.components.p4],
+        ["P₅ · Финансовая подушка", result.components.p5]
     ].forEach(([name, componentValue]) => {
         const item = document.createElement("div");
         item.className = "financial-stability-index-component";
@@ -308,7 +310,7 @@ function createFinancialStabilityIndexPanel() {
         itemName.textContent = name;
 
         const itemValue = document.createElement("span");
-        itemValue.textContent = componentValue + "/100";
+        itemValue.textContent = Math.round(componentValue) + "/200";
 
         item.append(itemName, itemValue);
         components.appendChild(item);
