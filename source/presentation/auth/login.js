@@ -1,11 +1,18 @@
 // LifeGame 3.0 — Login Presentation
-// Version: 1.0
+// Version: 1.1
 // Responsibility: render the Login interaction through Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
 // encryption, or persistence.
 
-export function renderLogin(container, authController, onBack, onAuthenticated) {
+import { IDENTITY_ERROR_CODE } from '../../application/identity/identity.error.js';
+
+export function renderLogin(
+    container,
+    authController,
+    onBack,
+    onAuthenticated
+) {
     if (!container) {
         throw new Error('Login container is required.');
     }
@@ -84,7 +91,38 @@ export function renderLogin(container, authController, onBack, onAuthenticated) 
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
 
-    form.append(emailField, passwordField, submit, status);
+    const resendButton = document.createElement('button');
+    resendButton.className = 'button-control';
+    resendButton.type = 'button';
+    resendButton.textContent = 'Resend verification email';
+    resendButton.hidden = true;
+
+    resendButton.addEventListener('click', async () => {
+        resendButton.disabled = true;
+        status.textContent = 'Sending verification email…';
+
+        try {
+            await authController.resendVerification({
+                email: emailInput.value
+            });
+
+            status.textContent =
+                'Verification email sent. Check your inbox.';
+        } catch (error) {
+            status.textContent =
+                error?.message || 'Verification email could not be sent.';
+        } finally {
+            resendButton.disabled = false;
+        }
+    });
+
+    form.append(
+        emailField,
+        passwordField,
+        submit,
+        status,
+        resendButton
+    );
     wrapper.append(backButton, title, form);
     container.append(wrapper);
 
@@ -92,6 +130,7 @@ export function renderLogin(container, authController, onBack, onAuthenticated) 
         event.preventDefault();
 
         submit.disabled = true;
+        resendButton.hidden = true;
         status.textContent = 'Signing in…';
 
         try {
@@ -107,8 +146,17 @@ export function renderLogin(container, authController, onBack, onAuthenticated) 
             form.reset();
             onAuthenticated();
         } catch (error) {
-            status.textContent =
-                error?.message || 'Login could not be completed.';
+            if (error?.code === IDENTITY_ERROR_CODE.EMAIL_NOT_CONFIRMED) {
+                status.textContent =
+                    'Email address is not confirmed. Check your inbox or resend the verification email.';
+                resendButton.hidden = false;
+            } else if (error?.code === IDENTITY_ERROR_CODE.RATE_LIMITED) {
+                status.textContent =
+                    'Too many requests. Wait before trying again.';
+            } else {
+                status.textContent =
+                    error?.message || 'Login could not be completed.';
+            }
         } finally {
             submit.disabled = false;
         }
