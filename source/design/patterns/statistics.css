@@ -1,5 +1,5 @@
 
-/* statistics.css — Version 1.8 */
+/* statistics.css — Version 1.9 */
 
 .statistics { display:grid; gap:var(--space-3); }
 .statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
@@ -67,4 +67,38 @@
     background:var(--gradient-card-premium);
     border:var(--border-subtle);
     border-radius:var(--radius-control);
+}
+
+
+.financial-stability-index-panel {
+    display:grid;
+    gap:var(--space-2);
+    padding:var(--space-4);
+    background:var(--gradient-card-premium);
+    border:var(--border-subtle);
+    border-radius:var(--radius-card);
+}
+
+.financial-stability-index-description {
+    margin:0;
+    color:var(--color-gray);
+    font-size:var(--font-size-sm);
+    line-height:var(--line-height-relaxed);
+}
+
+.financial-stability-index-components {
+    display:grid;
+    gap:var(--space-2);
+    margin-top:var(--space-2);
+}
+
+.financial-stability-index-component {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-3);
+    padding:var(--space-2) 0;
+    color:var(--color-white-soft);
+    border-top:var(--border-subtle);
+    font-size:var(--font-size-sm);
 }
