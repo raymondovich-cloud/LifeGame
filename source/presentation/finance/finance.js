@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.8
+// source/presentation/finance/finance.js — Version 1.9
 
 import {
     listFinanceEntries,
@@ -389,7 +389,13 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     content.id = subblock.id + "-content";
     content.hidden = false;
 
-    const entries = listFinanceEntries(subblock.id);
+    const entries = subblock.id === "financial-stability-index"
+        ? []
+        : listFinanceEntries(subblock.id);
+
+    if (subblock.id === "financial-stability-index") {
+        content.appendChild(createFinancialStabilityIndexPanel());
+    }
 
     if (subblock.id === "liquid-funds") {
         content.appendChild(createLiquidFundsSummary(root, onWriteAttempt));
@@ -413,7 +419,9 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
         content.appendChild(entryList);
     }
 
-    if (subblock.id !== "financial-stability-index") {\n        content.appendChild(createAddForm(root, subblock, onWriteAttempt));\n    }
+    if (subblock.id !== "financial-stability-index") {
+        content.appendChild(createAddForm(root, subblock, onWriteAttempt));
+    }
     wrapper.append(button, content);
 
     button.addEventListener("click", () => {
