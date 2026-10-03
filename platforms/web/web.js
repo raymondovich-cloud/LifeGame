@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 2.2
+// platforms/web/web.js — Version 2.3
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
@@ -317,7 +317,7 @@ function startWeb() {
 
         try {
             const sessionResult = await application.auth.getCurrentSession();
-            const session = sessionResult?.data?.session ?? null;
+            const session = sessionResult?.session ?? null;
 
             if (!session) {
                 const publicRoute = isPublicModule(requestedRoute)
