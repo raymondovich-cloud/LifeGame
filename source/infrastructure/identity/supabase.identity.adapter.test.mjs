@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Adapter Tests
-// Version: 1.1
+// Version: 1.2
 // Responsibility: verify the Supabase adapter boundary without contacting Supabase.
 
 import test from 'node:test';
@@ -14,7 +14,7 @@ import {
     IDENTITY_ERROR_CODE
 } from '../../application/identity/identity.error.js';
 
-test('registration calls Supabase signUp with the supplied credentials', async () => {
+test('registration calls Supabase signUp with credentials and redirect URL', async () => {
     let received = null;
 
     const supabaseAuthClient = {
@@ -31,7 +31,9 @@ test('registration calls Supabase signUp with the supplied credentials', async (
         }
     };
 
-    const adapter = createSupabaseIdentityAdapter(supabaseAuthClient);
+    const adapter = createSupabaseIdentityAdapter(supabaseAuthClient, {
+        emailRedirectTo: 'https://raymondovich-cloud.github.io/LifeGame/'
+    });
 
     const result = await adapter.register({
         email: 'user@example.com',
@@ -40,13 +42,46 @@ test('registration calls Supabase signUp with the supplied credentials', async (
 
     assert.deepEqual(received, {
         email: 'user@example.com',
-        password: 'ValidPassword123!'
+        password: 'ValidPassword123!',
+        options: {
+            emailRedirectTo: 'https://raymondovich-cloud.github.io/LifeGame/'
+        }
     });
 
     assert.deepEqual(result, {
         userId: 'user-1',
         status: IDENTITY_REGISTRATION_STATUS.PENDING_EMAIL_VERIFICATION,
         sessionEstablished: false
+    });
+});
+
+test('registration works without an optional redirect URL', async () => {
+    let received = null;
+
+    const supabaseAuthClient = {
+        async signUp(input) {
+            received = input;
+
+            return {
+                data: {
+                    user: { id: 'user-redirect-optional' },
+                    session: null
+                },
+                error: null
+            };
+        }
+    };
+
+    const adapter = createSupabaseIdentityAdapter(supabaseAuthClient);
+
+    await adapter.register({
+        email: 'user@example.com',
+        password: 'ValidPassword123!'
+    });
+
+    assert.deepEqual(received, {
+        email: 'user@example.com',
+        password: 'ValidPassword123!'
     });
 });
 
