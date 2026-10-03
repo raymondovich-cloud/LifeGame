@@ -3,6 +3,7 @@
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
 import { renderRegistration } from "../../source/presentation/auth/register.js";
+import { renderLogin } from "../../source/presentation/auth/login.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureLiquidFundsMemory } from "../../source/application/finance/finance.js";
 import {
@@ -114,6 +115,48 @@ function startWeb() {
             dialog,
             application.auth,
             closeRegistrationModal,
+            () => {
+                closeRegistrationModal();
+
+                if (typeof pendingAction === "function") {
+                    pendingAction();
+                    return;
+                }
+
+                window.location.hash = DEFAULT_APPLICATION_ROUTE;
+            },
+            () => {
+                openLoginModal(pendingAction);
+            }
+        );
+
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                closeRegistrationModal();
+            }
+        });
+    }
+
+    function openLoginModal(pendingAction = null) {
+        closeRegistrationModal();
+        authRoot.hidden = false;
+
+        const modal = document.createElement("div");
+        modal.className = "registration-modal";
+
+        const dialog = document.createElement("div");
+        dialog.className = "registration-modal__dialog";
+        dialog.setAttribute("role", "dialog");
+        dialog.setAttribute("aria-modal", "true");
+        dialog.setAttribute("aria-labelledby", "login-title");
+
+        modal.appendChild(dialog);
+        authRoot.appendChild(modal);
+
+        renderLogin(
+            dialog,
+            application.auth,
+            () => openRegistrationModal(pendingAction),
             () => {
                 closeRegistrationModal();
 
