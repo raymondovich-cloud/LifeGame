@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Adapter
-// Version: 1.3
+// Version: 1.4
 // Responsibility: translate Supabase Auth operations into IdentityPort.
 //
 // This file is the ONLY Identity infrastructure boundary that may know
@@ -14,7 +14,9 @@
 import {
     mapSupabaseError,
     mapSupabaseLoginResult,
-    mapSupabaseRegistrationResult
+    mapSupabaseRegistrationResult,
+    mapSupabaseSessionResult,
+    mapSupabaseVerificationResult
 } from './supabase.identity.mapper.js';
 
 export function createSupabaseIdentityAdapter(supabaseAuthClient, options = {}) {
@@ -47,31 +49,66 @@ export function createSupabaseIdentityAdapter(supabaseAuthClient, options = {}) 
         },
 
         async logout() {
-            return supabaseAuthClient.signOut();
+            const response = await supabaseAuthClient.signOut();
+
+            if (response?.error) {
+                throw mapSupabaseError(
+                    response.error,
+                    'IDENTITY_SESSION_FAILED',
+                    'Logout could not be completed.'
+                );
+            }
+
+            return Object.freeze({ authenticated: false });
         },
 
         async getCurrentSession() {
-            return supabaseAuthClient.getSession();
+            return mapSupabaseSessionResult(
+                await supabaseAuthClient.getSession()
+            );
         },
 
         async requestPasswordReset({ email, redirectTo }) {
-            return supabaseAuthClient.resetPasswordForEmail(email, {
-                redirectTo
-            });
+            const response = await supabaseAuthClient.resetPasswordForEmail(
+                email,
+                { redirectTo }
+            );
+
+            if (response?.error) {
+                throw mapSupabaseError(
+                    response.error,
+                    'IDENTITY_PASSWORD_RESET_FAILED',
+                    'Password reset could not be requested.'
+                );
+            }
+
+            return Object.freeze({ sent: true });
         },
 
         async updatePassword({ password }) {
-            return supabaseAuthClient.updateUser({ password });
+            const response = await supabaseAuthClient.updateUser({ password });
+
+            if (response?.error) {
+                throw mapSupabaseError(
+                    response.error,
+                    'IDENTITY_PASSWORD_UPDATE_FAILED',
+                    'Password could not be updated.'
+                );
+            }
+
+            return Object.freeze({ updated: true });
         },
 
         async resendVerification({ email }) {
-            return supabaseAuthClient.resend({
-                type: 'signup',
-                email,
-                ...(emailRedirectTo
-                    ? { options: { emailRedirectTo } }
-                    : {})
-            });
+            return mapSupabaseVerificationResult(
+                await supabaseAuthClient.resend({
+                    type: 'signup',
+                    email,
+                    ...(emailRedirectTo
+                        ? { options: { emailRedirectTo } }
+                        : {})
+                })
+            );
         }
     });
 }
