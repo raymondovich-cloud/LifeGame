@@ -1,9 +1,10 @@
-// platforms/web/web.js — Version 2.1
+// platforms/web/web.js — Version 2.2
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
 import { renderRegistration } from "../../source/presentation/auth/register.js";
 import { renderLogin } from "../../source/presentation/auth/login.js";
+import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureLiquidFundsMemory } from "../../source/application/finance/finance.js";
 import {
@@ -63,6 +64,13 @@ function startWeb() {
         return window.location.hash.slice(1);
     }
 
+    function isApplicationModule(route) {
+        return route === "finance" ||
+            route === "health" ||
+            route === "development" ||
+            route === "profile";
+    }
+
     function isPublicModule(route) {
         return route === "finance" ||
             route === "health" ||
@@ -79,6 +87,14 @@ function startWeb() {
         return DEFAULT_APPLICATION_ROUTE;
     }
 
+    function getCurrentApplicationRoute() {
+        const route = getRoute();
+
+        return isApplicationModule(route)
+            ? route
+            : DEFAULT_APPLICATION_ROUTE;
+    }
+
     function closeRegistrationModal() {
         const modal = authRoot.querySelector(".registration-modal");
 
@@ -90,6 +106,7 @@ function startWeb() {
     }
 
     function openRegistrationModal(pendingAction = null) {
+        const originRoute = getCurrentApplicationRoute();
         closeRegistrationModal();
         authRoot.hidden = false;
 
@@ -123,7 +140,7 @@ function startWeb() {
                     return;
                 }
 
-                window.location.hash = DEFAULT_APPLICATION_ROUTE;
+                window.location.hash = originRoute;
             },
             () => {
                 openLoginModal(pendingAction);
@@ -138,6 +155,7 @@ function startWeb() {
     }
 
     function openLoginModal(pendingAction = null) {
+        const originRoute = getCurrentApplicationRoute();
         closeRegistrationModal();
         authRoot.hidden = false;
 
@@ -165,7 +183,7 @@ function startWeb() {
                     return;
                 }
 
-                window.location.hash = DEFAULT_APPLICATION_ROUTE;
+                window.location.hash = originRoute;
             }
         );
 
@@ -241,13 +259,24 @@ function startWeb() {
         moduleContent.appendChild(section);
     }
 
-    function renderModule(moduleId) {
+    function renderModule(moduleId, session = null) {
         if (moduleId === "finance") {
             renderFinance(
                 moduleContent,
                 null,
                 publicMode ? (action) => openRegistrationModal(action) : null
             );
+            return;
+        }
+
+        if (moduleId === "profile") {
+            if (publicMode) {
+                renderPreviewModule("profile");
+                openRegistrationModal();
+                return;
+            }
+
+            renderProfile(moduleContent, session);
             return;
         }
 
@@ -271,7 +300,7 @@ function startWeb() {
         });
     }
 
-    function renderApplicationShell(route, isPublic) {
+    function renderApplicationShell(route, isPublic, session = null) {
         publicMode = isPublic;
         appRoot.dataset.access = isPublic ? "public" : "authenticated";
 
@@ -280,7 +309,7 @@ function startWeb() {
         authRoot.hidden = true;
         applicationShell.hidden = false;
 
-        renderModule(route);
+        renderModule(route, session);
     }
 
     async function renderRoute() {
@@ -291,7 +320,11 @@ function startWeb() {
             const session = sessionResult?.data?.session ?? null;
 
             if (!session) {
-                renderApplicationShell(getModuleRoute(), true);
+                const publicRoute = isPublicModule(requestedRoute)
+                    ? requestedRoute
+                    : DEFAULT_APPLICATION_ROUTE;
+
+                renderApplicationShell(publicRoute, true);
                 return;
             }
 
@@ -305,10 +338,11 @@ function startWeb() {
             }
 
             renderApplicationShell(
-                isPublicModule(requestedRoute)
+                isApplicationModule(requestedRoute)
                     ? requestedRoute
                     : DEFAULT_APPLICATION_ROUTE,
-                false
+                false,
+                session
             );
         } catch (error) {
             applicationShell.hidden = true;
