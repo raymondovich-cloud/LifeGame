@@ -39,17 +39,7 @@ export function createSupabaseIdentityAdapter(supabaseAuthClient) {
         },
 
         async logout() {
-            const response = await supabaseAuthClient.signOut();
-
-            if (response?.error) {
-                throw mapSupabaseError(
-                    response.error,
-                    'IDENTITY_AUTHENTICATION_FAILED',
-                    'Logout could not be completed.'
-                );
-            }
-
-            return Object.freeze({ success: true });
+            return supabaseAuthClient.signOut();
         },
 
         async getCurrentSession() {
