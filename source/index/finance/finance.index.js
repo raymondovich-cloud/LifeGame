@@ -1,4 +1,4 @@
-// source/index/finance/finance.index.js — Version 2.1
+// source/index/finance/finance.index.js — Version 2.2
 
 const INDEX_LIMITS = Object.freeze({
     minimum: 0,
@@ -14,6 +14,11 @@ function normalizeAmount(value) {
 function sumEntries(entries) {
     if (!Array.isArray(entries)) return 0;
     return entries.reduce((total, entry) => total + normalizeAmount(entry?.amount), 0);
+}
+
+function sumEntryField(entries, field) {
+    if (!Array.isArray(entries)) return 0;
+    return entries.reduce((total, entry) => total + normalizeAmount(entry?.[field]), 0);
 }
 
 function resolveAmount(value, entries) {
@@ -55,9 +60,13 @@ function calculateFinancialCushionScore(cushion, expenses) {
 
 function calculateFinancialStabilityIndex(financeState = {}) {
     const assets = resolveAmount(financeState.assets, financeState.liquidFunds);
-    const debts = resolveAmount(financeState.debts, financeState.debtsEntries);
+    const debts = financeState.debts !== undefined
+        ? normalizeAmount(financeState.debts)
+        : sumEntryField(financeState.financialBurden, "debt");
     const income = resolveAmount(financeState.income, financeState.actualEarnings);
-    const payments = resolveAmount(financeState.payments, financeState.financialBurden);
+    const payments = financeState.payments !== undefined
+        ? normalizeAmount(financeState.payments)
+        : sumEntryField(financeState.financialBurden, "payment");
     const expenses = resolveAmount(financeState.expenses, financeState.mandatoryExpenses);
     const cushion = resolveAmount(financeState.cushion, financeState.financialCushion);
 
