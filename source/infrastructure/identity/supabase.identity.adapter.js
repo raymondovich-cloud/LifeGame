@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Adapter
-// Version: 1.2
+// Version: 1.3
 // Responsibility: translate Supabase Auth operations into IdentityPort.
 //
 // This file is the ONLY Identity infrastructure boundary that may know
@@ -7,6 +7,9 @@
 //
 // Provider-specific responses and errors are normalized before leaving
 // Infrastructure.
+//
+// redirectTo is supplied by the platform composition root. The adapter
+// never decides which public URL a platform should use.
 
 import {
     mapSupabaseError,
@@ -14,16 +17,21 @@ import {
     mapSupabaseRegistrationResult
 } from './supabase.identity.mapper.js';
 
-export function createSupabaseIdentityAdapter(supabaseAuthClient) {
+export function createSupabaseIdentityAdapter(supabaseAuthClient, options = {}) {
     if (!supabaseAuthClient) {
         throw new Error('Supabase Auth client is required.');
     }
+
+    const { emailRedirectTo } = options;
 
     return Object.freeze({
         async register({ email, password }) {
             const response = await supabaseAuthClient.signUp({
                 email,
-                password
+                password,
+                ...(emailRedirectTo
+                    ? { options: { emailRedirectTo } }
+                    : {})
             });
 
             return mapSupabaseRegistrationResult(response);
@@ -59,7 +67,10 @@ export function createSupabaseIdentityAdapter(supabaseAuthClient) {
         async resendVerification({ email }) {
             return supabaseAuthClient.resend({
                 type: 'signup',
-                email
+                email,
+                ...(emailRedirectTo
+                    ? { options: { emailRedirectTo } }
+                    : {})
             });
         }
     });
