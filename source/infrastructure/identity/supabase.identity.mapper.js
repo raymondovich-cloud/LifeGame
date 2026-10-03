@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Mapper
-// Version: 1.0
+// Version: 1.1
 // Responsibility: translate Supabase-specific results/errors into
 // provider-independent Identity application contracts.
 //
@@ -48,6 +48,33 @@ export function mapSupabaseRegistrationResult(response) {
         userId: user?.id ?? null,
         status: mapRegistrationStatus(user, session),
         sessionEstablished: Boolean(session)
+    });
+}
+
+export function mapSupabaseLoginResult(response) {
+    const { data, error } = response || {};
+
+    if (error) {
+        throw mapSupabaseError(
+            error,
+            IDENTITY_ERROR_CODE.AUTHENTICATION_FAILED,
+            'Login could not be completed.'
+        );
+    }
+
+    const user = data?.user ?? null;
+    const session = data?.session ?? null;
+
+    if (!user || !session) {
+        throw new IdentityApplicationError(
+            IDENTITY_ERROR_CODE.AUTHENTICATION_FAILED,
+            'Login could not be completed.'
+        );
+    }
+
+    return Object.freeze({
+        userId: user.id,
+        authenticated: true
     });
 }
 
