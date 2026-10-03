@@ -1,4 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Adapter Tests
+// Version: 1.1
 // Responsibility: verify the Supabase adapter boundary without contacting Supabase.
 
 import test from 'node:test';
@@ -107,6 +108,70 @@ test('registration maps an established session without exposing provider session
     });
 
     assert.equal('access_token' in result, false);
+});
+
+test('login calls Supabase signInWithPassword with the supplied credentials', async () => {
+    let received = null;
+
+    const supabaseAuthClient = {
+        async signInWithPassword(input) {
+            received = input;
+
+            return {
+                data: {
+                    user: { id: 'user-login' },
+                    session: { access_token: 'provider-secret' }
+                },
+                error: null
+            };
+        }
+    };
+
+    const adapter = createSupabaseIdentityAdapter(supabaseAuthClient);
+
+    const result = await adapter.login({
+        email: 'user@example.com',
+        password: 'ValidPassword123!'
+    });
+
+    assert.deepEqual(received, {
+        email: 'user@example.com',
+        password: 'ValidPassword123!'
+    });
+
+    assert.deepEqual(result, {
+        userId: 'user-login',
+        authenticated: true
+    });
+});
+
+test('login normalizes a Supabase authentication error', async () => {
+    const supabaseAuthClient = {
+        async signInWithPassword() {
+            return {
+                data: null,
+                error: {
+                    message: 'provider-specific secret',
+                    code: 'provider-specific-code'
+                }
+            };
+        }
+    };
+
+    const adapter = createSupabaseIdentityAdapter(supabaseAuthClient);
+
+    await assert.rejects(
+        () => adapter.login({
+            email: 'user@example.com',
+            password: 'ValidPassword123!'
+        }),
+        error => {
+            assert.ok(error instanceof IdentityApplicationError);
+            assert.equal(error.code, IDENTITY_ERROR_CODE.AUTHENTICATION_FAILED);
+            assert.equal(error.message, 'Login could not be completed.');
+            return true;
+        }
+    );
 });
 
 test('adapter requires a Supabase Auth client', () => {
