@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.9
+// source/presentation/finance/finance.js — Version 1.10
 
 import {
     listFinanceEntries,
@@ -401,22 +401,24 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
         content.appendChild(createLiquidFundsSummary(root, onWriteAttempt));
     }
 
-    if (entries.length === 0) {
-        const emptyState = document.createElement("div");
-        emptyState.className = "list-empty";
-        emptyState.innerHTML =
-            '<span class="list-empty-label">ДАННЫЕ</span>' +
-            "<p>Записей пока нет.</p>";
-        content.appendChild(emptyState);
-    } else {
-        const entryList = document.createElement("div");
-        entryList.className = "finance-entry-list";
+    if (subblock.id !== "financial-stability-index") {
+        if (entries.length === 0) {
+            const emptyState = document.createElement("div");
+            emptyState.className = "list-empty";
+            emptyState.innerHTML =
+                '<span class="list-empty-label">ДАННЫЕ</span>' +
+                "<p>Записей пока нет.</p>";
+            content.appendChild(emptyState);
+        } else {
+            const entryList = document.createElement("div");
+            entryList.className = "finance-entry-list";
 
-        entries.forEach((entry) => {
-            entryList.appendChild(createEntryRow(root, subblock, entry));
-        });
+            entries.forEach((entry) => {
+                entryList.appendChild(createEntryRow(root, subblock, entry));
+            });
 
-        content.appendChild(entryList);
+            content.appendChild(entryList);
+        }
     }
 
     if (subblock.id !== "financial-stability-index") {
