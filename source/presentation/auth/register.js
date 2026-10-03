@@ -9,7 +9,8 @@ export function renderRegistration(
     container,
     authController,
     onBack,
-    onAuthenticated
+    onAuthenticated,
+    onLogin
 ) {
     if (!container) {
         throw new Error("Registration container is required.");
@@ -25,6 +26,10 @@ export function renderRegistration(
 
     if (typeof onAuthenticated !== "function") {
         throw new Error("Registration authenticated action is required.");
+    }
+
+    if (typeof onLogin !== "function") {
+        throw new Error("Registration login action is required.");
     }
 
     const wrapper = document.createElement("section");
@@ -93,8 +98,14 @@ export function renderRegistration(
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
 
+    const loginButton = document.createElement("button");
+    loginButton.className = "button-control";
+    loginButton.type = "button";
+    loginButton.textContent = "Log in";
+    loginButton.addEventListener("click", onLogin);
+
     form.append(emailField, passwordField, submit, status);
-    wrapper.append(backButton, title, description, form);
+    wrapper.append(backButton, title, description, form, loginButton);
     container.append(wrapper);
 
     form.addEventListener("submit", async (event) => {
