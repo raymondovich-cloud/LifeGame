@@ -1,4 +1,4 @@
-// financial.burden.js — Version 1.1
+// financial.burden.js — Version 1.2
 
 const entries = [];
 let nextId = 1;
@@ -7,22 +7,29 @@ function listFinancialBurden() {
     return entries.map((entry) => ({ ...entry }));
 }
 
-function addFinancialBurden(label, amount) {
+function addFinancialBurden(label, debt, payment) {
     const normalizedLabel = String(label ?? "").trim();
-    const normalizedAmount = Number(amount);
+    const normalizedDebt = Number(debt);
+    const normalizedPayment = Number(payment);
 
     if (!normalizedLabel) {
         throw new Error("Financial Burden: название записи обязательно.");
     }
 
-    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
-        throw new Error("Financial Burden: сумма должна быть больше нуля.");
+    if (!Number.isFinite(normalizedDebt) || normalizedDebt <= 0) {
+        throw new Error("Financial Burden: сумма долга должна быть больше нуля.");
+    }
+
+    if (!Number.isFinite(normalizedPayment) || normalizedPayment < 0) {
+        throw new Error("Financial Burden: регулярный платеж не может быть отрицательным.");
     }
 
     const entry = {
         id: `financial-burden-${nextId++}`,
         label: normalizedLabel,
-        amount: normalizedAmount
+        amount: normalizedPayment,
+        debt: normalizedDebt,
+        payment: normalizedPayment
     };
 
     entries.push(entry);
