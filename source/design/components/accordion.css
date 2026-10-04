@@ -1,4 +1,4 @@
-/* accordion.css — Version 1.9 */
+/* accordion.css — Version 1.10 */
 
 .accordion-list { display:grid; gap:var(--component-gap); overflow-anchor:none; }
 
@@ -67,7 +67,7 @@
 .accordion-content[hidden] {
     display:block;
 }
-.accordion-item.is-open .accordion-trigger { border-bottom:var(--border-subtle); }
+.accordion-item.is-open .accordion-header { border-bottom:var(--border-subtle); }
 .module-subblocks { display:grid; gap:var(--space-4); }
 .module-subblocks-header { display:grid; gap:var(--space-1); }
 .module-subblocks-label { color:var(--color-gray); font-family:var(--font-family-mono); font-size:var(--font-size-2xs); letter-spacing:var(--letter-spacing-system); }
