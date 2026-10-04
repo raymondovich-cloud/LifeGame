@@ -1,17 +1,15 @@
-/* accordion.css — Version 1.11 */
+/* accordion.css — Version 1.12 */
 
 .accordion-list { display:grid; gap:var(--component-gap); overflow-anchor:none; }
 
 .accordion-item {
     position:relative;
     overflow:visible;
-    background:var(--gradient-card-premium);
-    border:1px solid rgba(255,255,255,.10);
+    background:var(--surface-section);
+    border:var(--border-subtle);
     border-radius:var(--radius-card);
-    box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22);
+    box-shadow:none;
 }
-
-.accordion-item::before { position:absolute; top:0; left:8%; right:8%; height:1px; pointer-events:none; content:""; background:var(--gradient-accent-line); opacity:.28; }
 
 .accordion-header {
     position:relative;
