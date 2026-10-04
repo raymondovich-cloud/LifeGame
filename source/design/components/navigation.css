@@ -1,4 +1,4 @@
-/* navigation.css — Version 1.7 */
+/* navigation.css — Version 1.8 */
 
 .app-navigation {
     display:grid;
@@ -6,7 +6,7 @@
     gap:var(--space-1);
     width:100%;
     margin-top:var(--space-6);
-    padding-top:var(--space-2);
+    padding:var(--space-2) 0 0;
     border-top:var(--border-subtle);
 }
 
@@ -25,14 +25,32 @@
     transition:color var(--motion-duration-normal) var(--motion-ease-standard),background var(--motion-duration-normal) var(--motion-ease-standard);
 }
 
+.navigation-item::before {
+    position:absolute;
+    top:0;
+    left:20%;
+    right:20%;
+    height:1px;
+    content:"";
+    background:var(--color-accent);
+    opacity:0;
+    transform:scaleX(.45);
+    transition:opacity var(--motion-duration-normal) var(--motion-ease-standard),transform var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
 .navigation-item:hover {
     color:var(--color-white-soft);
-    background:var(--color-accent-soft);
+    background:transparent;
 }
 
 .navigation-item.is-active {
     color:var(--color-white);
-    background:var(--color-surface-highlight);
+    background:transparent;
+}
+
+.navigation-item.is-active::before {
+    opacity:1;
+    transform:scaleX(1);
 }
 
 .navigation-index {
@@ -50,7 +68,7 @@
 .navigation-label {
     min-width:0;
     overflow:hidden;
-    font-size:clamp(.62rem,.8vw,.8125rem);
+    font-size:var(--font-size-interface);
     font-weight:var(--font-weight-medium);
     text-overflow:ellipsis;
 }
@@ -70,6 +88,8 @@
 @media (max-width:30rem) {
     .app-navigation {
         gap:0;
+        margin-top:var(--space-5);
+        padding-top:var(--space-1);
     }
 
     .navigation-item {
@@ -82,6 +102,6 @@
     }
 
     .navigation-label {
-        font-size:clamp(.62rem,2.6vw,.75rem);
+        font-size:clamp(.6875rem,2.6vw,.75rem);
     }
 }
