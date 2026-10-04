@@ -1,8 +1,23 @@
-/* statistics.css — Version 1.15 */
+/* statistics.css — Version 1.16 */
 
 .statistics { display:grid; gap:var(--space-3); }
-.statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
-.statistics-meta { color:var(--color-gray); font-size:var(--font-size-xs); letter-spacing:var(--letter-spacing-wide); text-transform:uppercase; }
+
+.statistics-value {
+    color:var(--color-white);
+    font-size:var(--font-size-value);
+    font-weight:var(--font-weight-semibold);
+    letter-spacing:var(--letter-spacing-tight);
+    line-height:var(--line-height-tight);
+}
+
+.statistics-meta {
+    color:var(--color-gray);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+    letter-spacing:var(--letter-spacing-wide);
+    line-height:var(--line-height-snug);
+    text-transform:uppercase;
+}
 
 .liquid-funds-summary {
     display:grid;
@@ -29,6 +44,7 @@
     background:transparent;
     color:var(--color-gray);
     font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
     letter-spacing:var(--letter-spacing-wide);
     text-transform:uppercase;
     white-space:nowrap;
@@ -44,7 +60,7 @@
     align-items:baseline;
     width:100%;
     min-width:0;
-    padding:var(--space-2) 0 0;
+    padding:var(--space-3) 0 0;
     box-sizing:border-box;
 }
 
@@ -53,8 +69,9 @@
     max-width:100%;
     overflow:hidden;
     color:var(--color-white);
+    font-size:var(--font-size-value);
     font-weight:var(--font-weight-semibold);
-    letter-spacing:-0.04em;
+    letter-spacing:-0.05em;
     line-height:0.98;
     white-space:nowrap;
 }
@@ -62,7 +79,8 @@
 .liquid-funds-summary-date {
     justify-self:start;
     margin-top:var(--space-1);
-    color:var(--color-gray);
+    color:var(--color-gray-dark);
+    font-size:var(--font-size-2xs);
 }
 
 .liquid-funds-statistics-screen {
