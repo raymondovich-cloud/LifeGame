@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.14
+// source/presentation/finance/finance.js — Version 1.15
 
 import {
     listFinanceEntries,
@@ -151,55 +151,16 @@ function createLiquidFundsSummary(root, onWriteAttempt = null) {
 
     const statistics = getLiquidFundsStatistics("month");
 
-    const current = document.createElement("div");
-    current.className = "statistics liquid-funds-current-total";
-
-    const date = document.createElement("span");
-    date.className = "statistics-meta";
-    date.textContent = formatSnapshotDate(statistics.currentOccurredAt);
+    const heading = document.createElement("div");
+    heading.className = "liquid-funds-summary-heading";
 
     const title = document.createElement("span");
     title.className = "statistics-meta";
-    title.textContent = "СОСТОЯНИЕ ИМУЩЕСТВЕННЫХ АКТИВОВ";
-
-    const value = document.createElement("span");
-    value.className = "statistics-value";
-    value.textContent = formatAmount(getLiquidFundsTotal());
-
-    current.append(date, title, value);
-
-    const change = document.createElement("div");
-    change.className = "liquid-funds-period-change";
-
-    const changeLabel = document.createElement("span");
-    changeLabel.className = "statistics-meta";
-    changeLabel.textContent = "ЗА ПОСЛЕДНИЙ МЕСЯЦ";
-
-    const changeValue = document.createElement("span");
-    changeValue.className = "liquid-funds-period-change-value";
-
-    if (statistics.hasComparison) {
-        const direction = statistics.changePercent >= 0
-            ? "увеличилось"
-            : "уменьшилось";
-        const sign = statistics.changePercent >= 0 ? "+" : "";
-
-        changeValue.textContent =
-            "Состояние " +
-            direction +
-            " на " +
-            sign +
-            statistics.changePercent +
-            "%";
-    } else {
-        changeValue.textContent = "Недостаточно данных для расчёта";
-    }
-
-    change.append(changeLabel, changeValue);
+    title.textContent = "СОСТОЯНИЕ";
 
     const statisticsButton = document.createElement("button");
     statisticsButton.type = "button";
-    statisticsButton.className = "button-control button-control--accent liquid-funds-statistics-trigger";
+    statisticsButton.className = "liquid-funds-statistics-trigger";
     statisticsButton.innerHTML =
         '<span>Статистика</span><span aria-hidden="true">›</span>';
 
@@ -210,7 +171,30 @@ function createLiquidFundsSummary(root, onWriteAttempt = null) {
         );
     });
 
-    wrapper.append(current, change, statisticsButton);
+    heading.append(title, statisticsButton);
+
+    const amountRow = document.createElement("div");
+    amountRow.className = "liquid-funds-total-row";
+
+    const amount = document.createElement("span");
+    amount.className = "liquid-funds-total-value";
+    const amountText = formatAmount(getLiquidFundsTotal()) + " ₽";
+    amount.textContent = amountText;
+
+    const numericLength = amountText.replace(/\\D/g, "").length;
+    const fontSize = Math.max(
+        1.45,
+        Math.min(2.6, 2.6 - Math.max(0, numericLength - 7) * 0.12)
+    );
+    amount.style.fontSize = fontSize + "rem";
+
+    amountRow.appendChild(amount);
+
+    const date = document.createElement("span");
+    date.className = "statistics-meta liquid-funds-summary-date";
+    date.textContent = formatSnapshotDate(statistics.currentOccurredAt);
+
+    wrapper.append(heading, amountRow, date);
     return wrapper;
 }
 
