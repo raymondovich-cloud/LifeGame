@@ -1,10 +1,11 @@
-/* typography.css — Version 1.2 */
+/* typography.css — Version 1.3 */
 
 :root {
     --font-family-system: -apple-system, BlinkMacSystemFont, "SF Pro Display",
         "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
     --font-family-mono: "SFMono-Regular", Menlo, Monaco, Consolas,
         "Liberation Mono", monospace;
+
     --font-size-2xs: 0.625rem;
     --font-size-xs: clamp(0.6875rem, 1.5vw, 0.75rem);
     --font-size-sm: clamp(0.8125rem, 1.8vw, 0.9375rem);
@@ -12,13 +13,22 @@
     --font-size-lg: clamp(1.125rem, 2.8vw, 1.375rem);
     --font-size-xl: clamp(1.5rem, 5vw, 2.25rem);
     --font-size-2xl: clamp(2.25rem, 9vw, 4rem);
+
+    /* Semantic hierarchy: interface → section → primary value → display. */
+    --font-size-interface: var(--font-size-sm);
+    --font-size-section: clamp(1rem, 2.4vw, 1.125rem);
+    --font-size-value: clamp(2rem, 8vw, 2.75rem);
+    --font-size-display: var(--font-size-2xl);
+
     --font-weight-regular: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
+
     --line-height-tight: 1.05;
     --line-height-snug: 1.25;
     --line-height-normal: 1.5;
+
     --letter-spacing-tight: -0.04em;
     --letter-spacing-normal: 0;
     --letter-spacing-wide: 0.08em;
