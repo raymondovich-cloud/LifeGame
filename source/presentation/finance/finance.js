@@ -181,7 +181,7 @@ function createLiquidFundsSummary(root, onWriteAttempt = null) {
     const amountText = formatAmount(getLiquidFundsTotal()) + " ₽";
     amount.textContent = amountText;
 
-    const numericLength = amountText.replace(/\\D/g, "").length;
+    const numericLength = amountText.replace(/\D/g, "").length;
     const fontSize = Math.max(
         1.45,
         Math.min(2.6, 2.6 - Math.max(0, numericLength - 7) * 0.12)
