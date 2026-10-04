@@ -1,35 +1,74 @@
-/* statistics.css — Version 1.10 */
+/* statistics.css — Version 1.11 */
 
 .statistics { display:grid; gap:var(--space-3); }
 .statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
 .statistics-meta { color:var(--color-gray); font-size:var(--font-size-xs); letter-spacing:var(--letter-spacing-wide); text-transform:uppercase; }
 
-.liquid-funds-summary { display:grid; gap:var(--space-3); margin-bottom:var(--space-4); }
-.liquid-funds-current-total { display:grid; gap:var(--space-2); }
-
-.liquid-funds-period-change {
+.liquid-funds-summary {
     display:grid;
-    gap:var(--space-2);
-    padding:var(--space-3);
-    background:var(--gradient-card-premium);
-    border:var(--border-subtle);
-    border-radius:var(--radius-control);
+    gap:var(--space-4);
+    margin-bottom:var(--space-4);
 }
 
-.liquid-funds-period-change-value {
-    color:var(--color-white);
-    font-size:var(--font-size-sm);
-    line-height:var(--line-height-relaxed);
-}
-
-.liquid-funds-statistics-trigger {
-    width:100%;
+.liquid-funds-summary-heading {
     display:flex;
     align-items:center;
     justify-content:space-between;
-    min-height:2.75rem;
-    padding-inline:var(--space-4);
+    gap:var(--space-3);
 }
+
+.liquid-funds-statistics-trigger {
+    display:inline-flex;
+    align-items:center;
+    gap:var(--space-1);
+    margin:0;
+    padding:0;
+    min-height:auto;
+    border:0;
+    background:transparent;
+    color:var(--color-gray);
+    font-size:var(--font-size-xs);
+    letter-spacing:var(--letter-spacing-wide);
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
+.liquid-funds-statistics-trigger:hover,
+.liquid-funds-statistics-trigger:focus-visible {
+    color:var(--color-white);
+}
+
+.liquid-funds-total-row {
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    width:fit-content;
+    max-width:100%;
+    justify-self:end;
+    min-width:min(9rem, 100%);
+    padding:var(--space-4) var(--space-5);
+    overflow:hidden;
+    background:var(--gradient-card-premium);
+    border:var(--border-subtle);
+    border-radius:var(--radius-card);
+    box-sizing:border-box;
+}
+
+.liquid-funds-total-value {
+    display:block;
+    max-width:100%;
+    overflow:hidden;
+    color:var(--color-white);
+    font-weight:var(--font-weight-semibold);
+    letter-spacing:var(--letter-spacing-tight);
+    line-height:1;
+    white-space:nowrap;
+}
+
+.liquid-funds-summary-date {
+    justify-self:end;
+}
+
 
 .liquid-funds-statistics-screen {
     display:grid;
