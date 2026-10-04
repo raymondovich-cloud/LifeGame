@@ -20,4 +20,13 @@
     --color-success: #b9ffcf;
     --color-warning: #ffe2a8;
     --color-danger: #ffb8b8;
+
+    /* Surface hierarchy: page → section → elevated → highlight. */
+    --surface-page: var(--color-black);
+    --surface-section: var(--color-surface);
+    --surface-elevated: var(--color-surface-elevated);
+    --surface-highlight: var(--color-surface-highlight);
+    --surface-control: rgba(255,255,255,.035);
+    --surface-control-hover: rgba(255,255,255,.065);
+    --surface-overlay: rgba(0,0,0,.72);
 }
