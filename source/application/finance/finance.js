@@ -1,4 +1,4 @@
-// finance.js — Version 1.3
+// finance.js — Version 1.4
 
 import {
     listLiquidFunds,
@@ -117,21 +117,17 @@ function getPeriodStart(period, now) {
     const date = new Date(now);
 
     if (period === "week") {
-        const day = date.getDay() || 7;
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() - day + 1);
+        date.setDate(date.getDate() - 7);
         return date.getTime();
     }
 
     if (period === "month") {
-        date.setHours(0, 0, 0, 0);
-        date.setDate(1);
+        date.setMonth(date.getMonth() - 1);
         return date.getTime();
     }
 
     if (period === "year") {
-        date.setHours(0, 0, 0, 0);
-        date.setMonth(0, 1);
+        date.setFullYear(date.getFullYear() - 1);
         return date.getTime();
     }
 
@@ -141,24 +137,39 @@ function getPeriodStart(period, now) {
 function getLiquidFundsStatistics(period = "week") {
     const now = Date.now();
     const periodStart = getPeriodStart(period, now);
-    const snapshot = liquidFundsSnapshotReader(now);
+    const currentSnapshot = liquidFundsSnapshotReader(now);
+    const baselineSnapshot = liquidFundsSnapshotReader(periodStart);
 
-    if (!snapshot) {
-        return {
-            period,
-            periodStart,
-            occurredAt: null,
-            total: 0,
-            entries: []
-        };
-    }
+    const currentTotal = calculateLiquidFundsTotal();
+    const currentEntries = listLiquidFunds();
+
+    const currentOccurredAt = currentSnapshot?.occurredAt || now;
+    const baselineTotal = baselineSnapshot?.total ?? null;
+
+    const hasComparison =
+        baselineTotal !== null &&
+        baselineTotal > 0 &&
+        Number.isFinite(currentTotal);
+
+    const changeAmount = hasComparison
+        ? currentTotal - baselineTotal
+        : null;
+
+    const changePercent = hasComparison
+        ? Math.round(((changeAmount / baselineTotal) * 100) * 10) / 10
+        : null;
 
     return {
         period,
         periodStart,
-        occurredAt: snapshot.occurredAt,
-        total: snapshot.total,
-        entries: snapshot.entries.map((entry) => ({ ...entry }))
+        currentOccurredAt,
+        currentTotal,
+        currentEntries: currentEntries.map((entry) => ({ ...entry })),
+        baselineOccurredAt: baselineSnapshot?.occurredAt || null,
+        baselineTotal,
+        changeAmount,
+        changePercent,
+        hasComparison
     };
 }
 
