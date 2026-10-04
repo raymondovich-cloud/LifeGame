@@ -9,6 +9,7 @@
 @import "./tokens/shadows.css";
 @import "./tokens/borders.css";
 @import "./tokens/gradients.css";
+@import "./tokens/surfaces.css";
 @import "./tokens/motion.css";
 
 @import "./foundation/reset.css";
