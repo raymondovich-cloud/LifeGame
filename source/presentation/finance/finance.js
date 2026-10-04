@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.12
+// source/presentation/finance/finance.js — Version 1.13
 
 import {
     listFinanceEntries,
@@ -282,27 +282,32 @@ function createFinancialStabilityIndexPanel() {
 
     const label = document.createElement("span");
     label.className = "statistics-meta";
-    label.textContent = "ИНДЕКС ФИНАНСОВОЙ СТАБИЛЬНОСТИ";
+    label.textContent = "FSI 2.1 · ИНДЕКС ФИНАНСОВОЙ СТАБИЛЬНОСТИ";
 
     const value = document.createElement("span");
     value.className = "statistics-value";
-    value.textContent = result.value + "/" + result.scale;
+    value.textContent = result.value + "/100";
+
+    const category = document.createElement("span");
+    category.className = "statistics-meta";
+    category.textContent = result.category?.label || "—";
 
     const description = document.createElement("p");
     description.className = "financial-stability-index-description";
     description.textContent =
-        "ИФС-1000 объединяет имущественный баланс, заработок, долговую нагрузку, контроль трат и финансовую подушку.";
+        "FSI 2.1 оценивает не только текущее финансовое положение, но и устойчивость дохода, долга, ликвидности, резерва и финансового тренда.";
 
     const components = document.createElement("div");
     components.className = "financial-stability-index-components";
 
     [
-        ["P₁ · Имущественный баланс", result.components.p1],
-        ["P₂ · Фактически заработано", result.components.p2],
-        ["P₃ · Финансовая нагрузка", result.components.p3],
-        ["P₄ · Контроль трат", result.components.p4],
-        ["P₅ · Финансовая подушка", result.components.p5]
-    ].forEach(([name, componentValue]) => {
+        ["Финансовая сила", result.components.financialStrength, "/100"],
+        ["Стабильность", result.components.stabilityFactor, "/1"],
+        ["Финансовая выживаемость", result.diagnostics.survivalMonths, " мес."],
+        ["Покрытие расходов", result.diagnostics.incomeCoverage, "×"],
+        ["Долговая нагрузка", result.diagnostics.debtBurdenRatio, "×"],
+        ["Долговая экспозиция", result.diagnostics.debtExposureRatio, "×"]
+    ].forEach(([name, componentValue, suffix]) => {
         const item = document.createElement("div");
         item.className = "financial-stability-index-component";
 
@@ -310,13 +315,17 @@ function createFinancialStabilityIndexPanel() {
         itemName.textContent = name;
 
         const itemValue = document.createElement("span");
-        itemValue.textContent = Math.round(componentValue) + "/200";
+        itemValue.textContent = componentValue === null || componentValue === undefined
+            ? "—"
+            : (typeof componentValue === "number"
+                ? componentValue.toFixed(1)
+                : componentValue) + suffix;
 
         item.append(itemName, itemValue);
         components.appendChild(item);
     });
 
-    wrapper.append(label, value, description, components);
+    wrapper.append(label, value, category, description, components);
     return wrapper;
 }
 
