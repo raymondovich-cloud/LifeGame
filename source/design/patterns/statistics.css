@@ -1,4 +1,4 @@
-/* statistics.css — Version 1.19 */
+/* statistics.css — Version 1.20 */
 
 /* Shared statistics hierarchy */
 
@@ -85,7 +85,7 @@
     font-size:var(--font-size-2xs);
 }
 
-/* Liquid Funds statistics — same hierarchy and rhythm as the parent block */
+/* Liquid Funds analytics — dedicated page for liquid funds analysis */
 
 .liquid-funds-statistics-screen {
     display:grid;
