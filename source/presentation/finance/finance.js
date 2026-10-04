@@ -140,9 +140,9 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
 function formatSnapshotDate(timestamp) {
     return new Intl.DateTimeFormat("ru-RU", {
         day: "2-digit",
-        month: "2-digit",
+        month: "short",
         year: "numeric"
-    }).format(timestamp ? new Date(timestamp) : new Date());
+    }).format(timestamp ? new Date(timestamp) : new Date()).toUpperCase();
 }
 
 function createLiquidFundsSummary(root, onWriteAttempt = null) {
