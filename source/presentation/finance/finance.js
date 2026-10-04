@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.13
+// source/presentation/finance/finance.js — Version 1.14
 
 import {
     listFinanceEntries,
@@ -9,6 +9,8 @@ import {
     getLiquidFundsStatistics,
     getFinancialStabilityIndex
 } from "../../application/finance/finance.js";
+
+import { renderLiquidFundsStatisticsScreen } from "./liquid.funds.statistics.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
     { id: "liquid-funds", number: "01", title: "Ликвидные средства", description: "Деньги, которыми пользователь может распоряжаться сейчас." },
@@ -135,142 +137,80 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
     });
 }
 
-let liquidFundsStatisticsOpen = false;
-let selectedLiquidFundsPeriod = "week";
-
-const LIQUID_FUNDS_PERIODS = Object.freeze([
-    { id: "week", label: "Неделя" },
-    { id: "month", label: "Месяц" },
-    { id: "year", label: "Год" }
-]);
-
-function createLiquidFundsStatistics(root, onWriteAttempt = null) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "liquid-funds-statistics-panel";
-
-    const selector = document.createElement("div");
-    selector.className = "statistics-period-selector";
-    selector.setAttribute("role", "group");
-    selector.setAttribute("aria-label", "Период статистики");
-
-    const result = document.createElement("div");
-    result.className = "statistics-period-result";
-
-    const renderPeriod = () => {
-        selector.replaceChildren();
-
-        LIQUID_FUNDS_PERIODS.forEach((period) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "button-control statistics-period-button";
-            button.textContent = period.label;
-            button.setAttribute("aria-pressed", String(selectedLiquidFundsPeriod === period.id));
-
-            if (selectedLiquidFundsPeriod === period.id) {
-                button.classList.add("is-active");
-            }
-
-            button.addEventListener("click", () => {
-                selectedLiquidFundsPeriod = period.id;
-                renderPeriod();
-            });
-
-            selector.appendChild(button);
-        });
-
-        const statistics = getLiquidFundsStatistics(selectedLiquidFundsPeriod);
-        result.replaceChildren();
-
-        const heading = document.createElement("span");
-        heading.className = "statistics-meta";
-        heading.textContent = "СОСТОЯНИЕ НА СРЕЗЕ";
-
-        const value = document.createElement("span");
-        value.className = "statistics-value";
-        value.textContent = formatAmount(statistics.total);
-
-        result.append(heading, value);
-
-        if (statistics.occurredAt) {
-            const meta = document.createElement("span");
-            meta.className = "statistics-meta";
-            meta.textContent =
-                "Срез: " +
-                new Intl.DateTimeFormat("ru-RU", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric"
-                }).format(statistics.occurredAt);
-            result.appendChild(meta);
-        } else {
-            const meta = document.createElement("span");
-            meta.className = "statistics-meta";
-            meta.textContent = "Исторических данных пока нет";
-            result.appendChild(meta);
-        }
-
-        if (statistics.entries.length > 0) {
-            const entryList = document.createElement("div");
-            entryList.className = "finance-entry-list";
-
-            statistics.entries.forEach((entry) => {
-                const row = document.createElement("div");
-                row.className = "finance-entry-row";
-
-                const label = document.createElement("span");
-                label.className = "finance-entry-label";
-                label.textContent = entry.label;
-
-                const amount = document.createElement("span");
-                amount.className = "finance-entry-amount";
-                amount.textContent = formatAmount(entry.amount);
-
-                row.append(label, amount);
-                entryList.appendChild(row);
-            });
-
-            result.appendChild(entryList);
-        }
-    };
-
-    renderPeriod();
-    wrapper.appendChild(selector);
-    wrapper.appendChild(result);
-
-    return wrapper;
+function formatSnapshotDate(timestamp) {
+    return new Intl.DateTimeFormat("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    }).format(timestamp ? new Date(timestamp) : new Date());
 }
 
 function createLiquidFundsSummary(root, onWriteAttempt = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "liquid-funds-summary";
 
+    const statistics = getLiquidFundsStatistics("month");
+
     const current = document.createElement("div");
     current.className = "statistics liquid-funds-current-total";
-    current.innerHTML =
-        '<span class="statistics-meta">ТЕКУЩЕЕ СОСТОЯНИЕ</span>' +
-        '<span class="statistics-value">' + formatAmount(getLiquidFundsTotal()) + "</span>";
+
+    const date = document.createElement("span");
+    date.className = "statistics-meta";
+    date.textContent = formatSnapshotDate(statistics.currentOccurredAt);
+
+    const title = document.createElement("span");
+    title.className = "statistics-meta";
+    title.textContent = "СОСТОЯНИЕ ИМУЩЕСТВЕННЫХ АКТИВОВ";
+
+    const value = document.createElement("span");
+    value.className = "statistics-value";
+    value.textContent = formatAmount(getLiquidFundsTotal());
+
+    current.append(date, title, value);
+
+    const change = document.createElement("div");
+    change.className = "liquid-funds-period-change";
+
+    const changeLabel = document.createElement("span");
+    changeLabel.className = "statistics-meta";
+    changeLabel.textContent = "ЗА ПОСЛЕДНИЙ МЕСЯЦ";
+
+    const changeValue = document.createElement("span");
+    changeValue.className = "liquid-funds-period-change-value";
+
+    if (statistics.hasComparison) {
+        const direction = statistics.changePercent >= 0
+            ? "увеличилось"
+            : "уменьшилось";
+        const sign = statistics.changePercent >= 0 ? "+" : "";
+
+        changeValue.textContent =
+            "Состояние " +
+            direction +
+            " на " +
+            sign +
+            statistics.changePercent +
+            "%";
+    } else {
+        changeValue.textContent = "Недостаточно данных для расчёта";
+    }
+
+    change.append(changeLabel, changeValue);
 
     const statisticsButton = document.createElement("button");
     statisticsButton.type = "button";
     statisticsButton.className = "button-control button-control--accent liquid-funds-statistics-trigger";
-    statisticsButton.setAttribute("aria-expanded", String(liquidFundsStatisticsOpen));
     statisticsButton.innerHTML =
         '<span>Статистика</span><span aria-hidden="true">›</span>';
 
-    const statisticsContainer = document.createElement("div");
-    statisticsContainer.className = "liquid-funds-statistics-container";
-    statisticsContainer.hidden = !liquidFundsStatisticsOpen;
-
-    if (liquidFundsStatisticsOpen) {
-        statisticsContainer.appendChild(createLiquidFundsStatistics(root, onWriteAttempt));
-    }
-
     statisticsButton.addEventListener("click", () => {
-        liquidFundsStatisticsOpen = !liquidFundsStatisticsOpen;
-        renderFinance(root, "liquid-funds", onWriteAttempt);
+        renderLiquidFundsStatisticsScreen(
+            root,
+            () => renderFinance(root, "liquid-funds", onWriteAttempt)
+        );
     });
 
-    wrapper.append(current, statisticsButton, statisticsContainer);
+    wrapper.append(current, change, statisticsButton);
     return wrapper;
 }
 
@@ -337,7 +277,7 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     labelInput.className = "input-control";
     labelInput.name = "label";
     labelInput.type = "text";
-    labelInput.placeholder = "Название";
+    labelInput.placeholder = subblock.id === "liquid-funds" ? "Актив" : "Название";
     labelInput.autocomplete = "off";
     labelInput.required = true;
 
