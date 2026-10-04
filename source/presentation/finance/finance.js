@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.16
+// source/presentation/finance/finance.js — Version 1.17
 
 import {
     listFinanceEntries,
@@ -353,8 +353,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
         '<span class="accordion-title-group">' +
             '<span class="accordion-title">' + subblock.title + "</span>" +
             '<span class="accordion-description">' + subblock.description + "</span>" +
-        "</span>" +
-        '<span class="accordion-icon" aria-hidden="true">' + (isOpen ? "−" : "+") + "</span>";
+        "</span>";
 
     const content = document.createElement("div");
     content.className = "accordion-content" + (isOpen ? " is-open" : "");
