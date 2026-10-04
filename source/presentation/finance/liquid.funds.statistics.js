@@ -1,4 +1,4 @@
-// source/presentation/finance/liquid.funds.statistics.js — Version 1.0
+// source/presentation/finance/liquid.funds.statistics.js — Version 1.1
 
 import {
     getLiquidFundsStatistics
@@ -40,7 +40,7 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
 
     const backButton = document.createElement("button");
     backButton.type = "button";
-    backButton.className = "button-control liquid-funds-statistics-back";
+    backButton.className = "liquid-funds-statistics-back";
     backButton.textContent = "← Ликвидные средства";
     backButton.addEventListener("click", () => {
         if (typeof onBack === "function") {
