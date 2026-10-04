@@ -1,4 +1,4 @@
-/* info.tooltip.css — Version 1.0 */
+/* info.tooltip.css — Version 1.1 */
 
 .info-tooltip {
     position:relative;
@@ -90,7 +90,8 @@
         width:auto;
     }
 
-    .info-tooltip[data-placement="bottom-end"] .info-tooltip-content::before {
+    .info-tooltip[data-placement="bottom-end"] .info-tooltip-content::before,
+    .info-tooltip[data-placement="top-end"] .info-tooltip-content::before {
         display:none;
     }
 }
