@@ -1,5 +1,5 @@
 
-/* statistics.css — Version 1.9 */
+/* statistics.css — Version 1.10 */
 
 .statistics { display:grid; gap:var(--space-3); }
 .statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
@@ -7,6 +7,21 @@
 
 .liquid-funds-summary { display:grid; gap:var(--space-3); margin-bottom:var(--space-4); }
 .liquid-funds-current-total { display:grid; gap:var(--space-2); }
+
+.liquid-funds-period-change {
+    display:grid;
+    gap:var(--space-2);
+    padding:var(--space-3);
+    background:var(--gradient-card-premium);
+    border:var(--border-subtle);
+    border-radius:var(--radius-control);
+}
+
+.liquid-funds-period-change-value {
+    color:var(--color-white);
+    font-size:var(--font-size-sm);
+    line-height:var(--line-height-relaxed);
+}
 
 .liquid-funds-statistics-trigger {
     width:100%;
@@ -17,58 +32,62 @@
     padding-inline:var(--space-4);
 }
 
-.liquid-funds-statistics-container { display:grid; gap:var(--space-3); }
-
-.liquid-funds-statistics-panel {
+.liquid-funds-statistics-screen {
     display:grid;
+    gap:var(--space-4);
+}
+
+.liquid-funds-statistics-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
     gap:var(--space-3);
-    padding:var(--space-3);
-    background:var(--gradient-surface);
+}
+
+.liquid-funds-statistics-back {
+    min-height:2.25rem;
+}
+
+.liquid-funds-statistics-heading {
+    display:grid;
+    gap:var(--space-1);
+}
+
+.liquid-funds-statistics-metric {
+    display:grid;
+    gap:var(--space-2);
+    padding:var(--space-4);
+    background:var(--gradient-card-premium);
     border:var(--border-subtle);
     border-radius:var(--radius-card);
 }
 
-.statistics-period-selector {
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:0;
-    padding:2px;
-    background:var(--color-surface);
-    border:var(--border-subtle);
-    border-radius:var(--radius-control);
-    overflow:hidden;
-}
-
-.statistics-period-button {
-    min-width:0;
-    min-height:2.15rem;
-    color:var(--color-gray);
-    background:var(--gradient-surface);
-    border:0;
-    border-radius:calc(var(--radius-control) - 2px);
-    font:inherit;
-    font-size:var(--font-size-xs);
-    font-weight:var(--font-weight-semibold);
-    transition:color .2s ease,background .2s ease,box-shadow .2s ease;
-}
-
-.statistics-period-button:hover { color:var(--color-white-soft); background:var(--gradient-card-premium); }
-
-.statistics-period-button.is-active {
+.liquid-funds-statistics-change {
     color:var(--color-white);
-    background:var(--gradient-card-premium);
-    box-shadow:inset 0 0 0 1px var(--color-border-strong),0 2px 10px rgba(0,0,0,.16);
+    font-size:var(--font-size-lg);
+    font-weight:var(--font-weight-semibold);
 }
 
-.statistics-period-result {
+.liquid-funds-statistics-history {
     display:grid;
-    gap:var(--space-1);
-    padding:var(--space-3);
-    background:var(--gradient-card-premium);
-    border:var(--border-subtle);
-    border-radius:var(--radius-control);
+    gap:var(--space-2);
 }
 
+.liquid-funds-statistics-history-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-3);
+    padding:var(--space-3) 0;
+    border-top:var(--border-subtle);
+    color:var(--color-white-soft);
+    font-size:var(--font-size-sm);
+}
+
+.liquid-funds-statistics-assets {
+    display:grid;
+    gap:var(--space-2);
+}
 
 .financial-stability-index-panel {
     display:grid;
