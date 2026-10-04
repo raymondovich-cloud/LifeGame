@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.17
+// source/presentation/finance/finance.js — Version 1.18
 
 import {
     listFinanceEntries,
@@ -11,14 +11,15 @@ import {
 } from "../../application/finance/finance.js";
 
 import { renderLiquidFundsStatisticsScreen } from "./liquid.funds.statistics.js";
+import { createInfoTooltip } from "../shared/info.tooltip.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
-    { id: "liquid-funds", number: "01", title: "Ликвидные средства", description: "Деньги, которыми пользователь может распоряжаться сейчас." },
-    { id: "actual-earnings", number: "02", title: "Фактически заработанно", description: "Фактически полученный доход за выбранный период." },
-    { id: "financial-burden", number: "03", title: "Финансовая нагрузка", description: "Обязательства и финансовые нагрузки, влияющие на устойчивость." },
-    { id: "mandatory-expenses", number: "04", title: "Обязательные траты", description: "Регулярные расходы, которые необходимо учитывать в первую очередь." },
-    { id: "financial-cushion", number: "05", title: "Финансовая подушка", description: "Резерв, предназначенный для защиты финансовой устойчивости." },
-    { id: "financial-stability-index", number: "06", title: "Индекс финансовой стабильности", description: "Сводная оценка текущей финансовой устойчивости." }
+    { id: "liquid-funds", number: "01", title: "Ликвидные средства", description: "Деньги, которыми пользователь может распоряжаться сейчас.", info: "Деньги, которыми вы можете воспользоваться прямо сейчас: наличные, средства на картах и доступные остатки на счетах." },
+    { id: "actual-earnings", number: "02", title: "Фактически заработанно", description: "Фактически полученный доход за выбранный период.", info: "Доход, который вы фактически получили за выбранный период." },
+    { id: "financial-burden", number: "03", title: "Финансовая нагрузка", description: "Обязательства и финансовые нагрузки, влияющие на устойчивость.", info: "Обязательства и регулярные финансовые нагрузки, которые уменьшают доступные средства и влияют на устойчивость." },
+    { id: "mandatory-expenses", number: "04", title: "Обязательные траты", description: "Регулярные расходы, которые необходимо учитывать в первую очередь.", info: "Расходы, которые необходимо оплачивать регулярно независимо от других трат." },
+    { id: "financial-cushion", number: "05", title: "Финансовая подушка", description: "Резерв, предназначенный для защиты финансовой устойчивости.", info: "Резерв средств, предназначенный для покрытия непредвиденных расходов и периодов снижения дохода." },
+    { id: "financial-stability-index", number: "06", title: "Индекс финансовой стабильности", description: "Сводная оценка текущей финансовой устойчивости.", info: "Сводная оценка финансовой устойчивости, учитывающая силу финансового положения, стабильность, ликвидность, резерв, долговую нагрузку и финансовый тренд." }
 ]);
 
 function formatAmount(amount) {
@@ -355,6 +356,16 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
             '<span class="accordion-description">' + subblock.description + "</span>" +
         "</span>";
 
+    const header = document.createElement("div");
+    header.className = "accordion-header";
+
+    const infoTooltip = createInfoTooltip({
+        label: "Информация: " + subblock.title,
+        text: subblock.info
+    });
+
+    header.append(button, infoTooltip);
+
     const content = document.createElement("div");
     content.className = "accordion-content" + (isOpen ? " is-open" : "");
     content.id = subblock.id + "-content";
@@ -395,7 +406,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     if (subblock.id !== "financial-stability-index") {
         content.appendChild(createAddForm(root, subblock, onWriteAttempt));
     }
-    wrapper.append(button, content);
+    wrapper.append(header, content);
 
     button.addEventListener("click", () => {
         const nextOpen = button.getAttribute("aria-expanded") !== "true";
