@@ -1,4 +1,4 @@
-// source/presentation/shared/info.tooltip.js — Version 1.0
+// source/presentation/shared/info.tooltip.js — Version 1.1
 
 const ACTIVE_TOOLTIP_SELECTOR = "[data-info-tooltip][aria-expanded=\"true\"]";
 
@@ -38,10 +38,26 @@ function createInfoTooltip({ label, text, placement = "bottom-end" }) {
 
     trigger.setAttribute("aria-controls", tooltip.id);
 
+    const updatePlacement = () => {
+        if (window.matchMedia("(max-width: 40rem)").matches) return;
+
+        wrapper.dataset.placement = "bottom-end";
+        const triggerRect = trigger.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        if (triggerRect.bottom + tooltipRect.height + 12 > window.innerHeight) {
+            wrapper.dataset.placement = "top-end";
+        }
+    };
+
     const setOpen = (open) => {
         closeActiveTooltip(open ? trigger : null);
         trigger.setAttribute("aria-expanded", String(open));
         tooltip.hidden = !open;
+
+        if (open) {
+            requestAnimationFrame(updatePlacement);
+        }
     };
 
     trigger.addEventListener("click", (event) => {
