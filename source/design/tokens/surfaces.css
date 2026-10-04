@@ -1,0 +1,16 @@
+/* surfaces.css — Version 1.0 */
+
+:root {
+    /* Surface hierarchy: page → section → elevated → highlight. */
+    --surface-page: var(--color-black);
+    --surface-section: var(--color-surface);
+    --surface-elevated: var(--color-surface-elevated);
+    --surface-highlight: var(--color-surface-highlight);
+
+    /* Controls remain slightly lighter than their surrounding surface. */
+    --surface-control: rgba(255,255,255,.035);
+    --surface-control-hover: rgba(255,255,255,.065);
+
+    /* Overlays are intentionally independent from content surfaces. */
+    --surface-overlay: rgba(0,0,0,.72);
+}
