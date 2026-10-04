@@ -1,4 +1,4 @@
-/* accordion.css — Version 1.6 */
+/* accordion.css — Version 1.7 */
 
 .accordion-list { display:grid; gap:var(--component-gap); overflow-anchor:none; }
 
@@ -15,7 +15,7 @@
 
 .accordion-trigger {
     display:grid;
-    grid-template-columns:auto minmax(0,1fr) auto;
+    grid-template-columns:auto minmax(0,1fr);
     align-items:center;
     width:100%;
     gap:var(--space-3);
@@ -32,7 +32,6 @@
 .accordion-title-group { display:grid; min-width:0; gap:2px; }
 .accordion-title { overflow:hidden; font-size:var(--font-size-sm); font-weight:var(--font-weight-semibold); line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
 .accordion-description { overflow:hidden; color:var(--color-gray); font-size:var(--font-size-2xs); line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
-.accordion-icon { display:grid; place-items:center; width:1.75rem; height:1.75rem; color:var(--color-gray); font-size:var(--font-size-md); font-weight:var(--font-weight-regular); border:var(--border-subtle); border-radius:var(--radius-pill); }
 .accordion-content {
     max-height:0;
     overflow:hidden;
