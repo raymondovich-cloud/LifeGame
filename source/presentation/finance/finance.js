@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.18
+// source/presentation/finance/finance.js — Version 1.19
 
 import {
     listFinanceEntries,
@@ -340,7 +340,7 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
 
 function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     const wrapper = document.createElement("article");
-    wrapper.className = "accordion-item finance-subblock";
+    wrapper.className = "accordion-item finance-subblock" + (isOpen ? " is-open" : "");
     wrapper.dataset.subblock = subblock.id;
 
     const button = document.createElement("button");
