@@ -1,4 +1,4 @@
-// source/presentation/finance/liquid.funds.statistics.js — Version 1.1
+// source/presentation/finance/liquid.funds.statistics.js — Version 1.2
 
 import {
     getLiquidFundsStatistics
@@ -33,7 +33,7 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
 
     const screen = document.createElement("section");
     screen.className = "liquid-funds-statistics-screen";
-    screen.setAttribute("aria-label", "Статистика имущественных активов");
+    screen.setAttribute("aria-label", "Аналитика ликвидных средств");
 
     const header = document.createElement("header");
     header.className = "liquid-funds-statistics-header";
@@ -57,7 +57,7 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
 
     const title = document.createElement("span");
     title.className = "accordion-title";
-    title.textContent = "Статистика";
+    title.textContent = "Аналитика";
 
     heading.append(eyebrow, title);
     header.append(backButton, heading);
@@ -65,7 +65,7 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
     const selector = document.createElement("div");
     selector.className = "statistics-period-selector";
     selector.setAttribute("role", "group");
-    selector.setAttribute("aria-label", "Период статистики");
+    selector.setAttribute("aria-label", "Период аналитики");
 
     const content = document.createElement("div");
 
