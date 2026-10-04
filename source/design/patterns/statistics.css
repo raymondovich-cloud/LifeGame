@@ -1,4 +1,4 @@
-/* statistics.css — Version 1.12 */
+/* statistics.css — Version 1.13 */
 
 .statistics { display:grid; gap:var(--space-3); }
 .statistics-value { color:var(--color-white); font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
@@ -42,7 +42,7 @@
     display:flex;
     justify-content:flex-start;
     align-items:center;
-    width:100%;
+    width:50%;
     max-width:100%;
     justify-self:start;
     padding:var(--space-4) var(--space-5);
