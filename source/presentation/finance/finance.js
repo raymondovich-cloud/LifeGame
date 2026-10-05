@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.2
+// source/presentation/finance/finance.js — Version 2.3
 
 import {
     listFinanceEntries,
@@ -32,6 +32,12 @@ function createEntryRow(root, subblock, entry) {
     row.dataset.entryId = entry.id;
     row.dataset.subblockId = subblock.id;
 
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "swipe-delete-action";
+    action.setAttribute("aria-label", "Удалить " + entry.label);
+    action.textContent = "Удалить";
+
     const content = document.createElement("div");
     content.className = "swipe-delete-content";
 
@@ -54,35 +60,79 @@ function createEntryRow(root, subblock, entry) {
 
         content.append(label, amount);
     }
-    row.append(content);
 
+    row.append(action, content);
     return row;
 }
 
 function attachSwipeDelete(root, onWriteAttempt = null) {
     const items = [...root.querySelectorAll(".swipe-delete-item")];
+    const maxReveal = 88;
+    const activationDistance = 56;
+
+    const deleteItem = (item) => {
+        const remove = () => {
+            item.classList.add("is-deleting");
+            item.style.setProperty("--delete-height", item.getBoundingClientRect().height + "px");
+
+            window.setTimeout(() => {
+                removeFinanceEntry(item.dataset.subblockId, item.dataset.entryId);
+                renderFinance(root, item.dataset.subblockId, onWriteAttempt);
+            }, 230);
+        };
+
+        if (typeof onWriteAttempt === "function") {
+            onWriteAttempt(remove);
+            return;
+        }
+
+        remove();
+    };
 
     items.forEach((item) => {
         const content = item.querySelector(".swipe-delete-content");
-        if (!content) return;
+        const action = item.querySelector(".swipe-delete-action");
+        if (!content || !action) return;
 
         let startX = 0;
         let currentX = 0;
         let startY = 0;
         let tracking = false;
         let horizontalSwipe = false;
+        let opened = false;
 
-        const close = () => {
-            content.style.setProperty("--swipe-offset", "0px");
-            item.classList.remove("is-delete-ready");
+        const setOffset = (offset, animated = false) => {
+            content.style.setProperty("--swipe-offset", offset + "px");
+            content.classList.toggle("is-swiping", !animated);
         };
 
+        const open = () => {
+            opened = true;
+            item.classList.add("is-delete-ready");
+            setOffset(-maxReveal, true);
+        };
+
+        const close = () => {
+            opened = false;
+            item.classList.remove("is-delete-ready");
+            setOffset(0, true);
+        };
+
+        action.addEventListener("click", () => deleteItem(item));
+
         content.addEventListener("pointerdown", (event) => {
+            if (event.pointerType === "mouse" && event.button !== 0) return;
+
             startX = event.clientX;
             currentX = startX;
             startY = event.clientY;
             tracking = true;
             horizontalSwipe = false;
+
+            if (opened) {
+                startX += maxReveal;
+            }
+
             content.classList.add("is-swiping");
             content.setPointerCapture?.(event.pointerId);
         });
@@ -96,15 +146,16 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
 
             if (!horizontalSwipe && Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
                 tracking = false;
-                content.classList.remove("is-swiping");
                 close();
                 return;
             }
 
-            if (deltaX < -8) {
+            if (deltaX < -8 || opened) {
                 horizontalSwipe = true;
-                const offset = Math.max(deltaX, -96);
-                content.style.setProperty("--swipe-offset", offset + "px");
+
+                const base = opened ? -maxReveal : 0;
+                const offset = Math.min(0, Math.max(deltaX + base, -maxReveal));
+                setOffset(offset);
             }
         });
 
@@ -116,20 +167,22 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
 
             const distance = currentX - startX;
 
-            if (distance <= -64) {
-                const remove = () => {
-                    removeFinanceEntry(item.dataset.subblockId, item.dataset.entryId);
-                    renderFinance(root, item.dataset.subblockId, onWriteAttempt);
-                };
-
-                if (typeof onWriteAttempt === "function") {
-                    onWriteAttempt(remove);
-                } else {
-                    remove();
-                }
-            } else {
+            if (opened && distance > activationDistance / 2) {
                 close();
+                return;
             }
+
+            if (!opened && distance <= -activationDistance) {
+                open();
+                return;
+            }
+
+            if (opened) {
+                open();
+                return;
+            }
+
+            close();
         };
 
         content.addEventListener("pointerup", finishSwipe);
