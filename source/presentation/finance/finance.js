@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 3.8
+// source/presentation/finance/finance.js — Version 3.9
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -404,6 +404,35 @@ function createAssetsSummary(root, onWriteAttempt = null, financeApplication = n
     return wrapper;
 }
 
+function createFinanceOverview(financeApplication) {
+    const result = financeApplication.getFinancialStabilityIndex();
+    const wrapper = document.createElement("div");
+    wrapper.className = "finance-overview";
+
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "finance-overview-eyebrow";
+    eyebrow.textContent = "FINANCIAL HEALTH";
+
+    const scoreRow = document.createElement("div");
+    scoreRow.className = "finance-overview-score-row";
+
+    const score = document.createElement("span");
+    score.className = "finance-overview-score";
+    score.textContent = String(result.value);
+
+    const suffix = document.createElement("span");
+    suffix.className = "finance-overview-score-suffix";
+    suffix.textContent = "/100";
+
+    const category = document.createElement("span");
+    category.className = "finance-overview-category";
+    category.textContent = result.category?.label || "—";
+
+    scoreRow.append(score, suffix);
+    wrapper.append(eyebrow, scoreRow, category);
+    return wrapper;
+}
+
 function createFinancialStabilityIndexPanel(financeApplication) {
     const result = financeApplication.getFinancialStabilityIndex();
 
@@ -743,7 +772,11 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null, finan
     heading.className = "module-subblocks-header";
     heading.innerHTML =
         '<span class="module-subblocks-label">FINANCE SYSTEM</span>' +
-        "<p>Финансовая система разделена на независимые блоки.</p>";
+        "<p>Финансовая система. Одно пространство управления капиталом.</p>";
+
+    if (financeApplication) {
+        section.appendChild(createFinanceOverview(financeApplication));
+    }
 
     const list = document.createElement("div");
     list.className = "accordion-list";
