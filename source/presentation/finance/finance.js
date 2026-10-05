@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.1
+// source/presentation/finance/finance.js — Version 4.2
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -7,7 +7,6 @@ import { createAssetsAnalytics } from "../../application/finance/assets.analytic
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
-import { createFinanceDashboard } from "./finance.dashboard.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
@@ -839,18 +838,34 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null, finan
             )
         );
     } else {
-        page.append(
-            createFinanceDashboard({
-                snapshot,
-                health,
-                onManage: () => renderFinance(
-                    root,
-                    "assets",
-                    onWriteAttempt,
-                    financeApplication
-                )
-            })
-        );
+        const data = document.createElement("section");
+        data.className = "finance-data-entry";
+
+        const copy = document.createElement("div");
+        copy.className = "finance-data-entry-copy";
+
+        const meta = document.createElement("span");
+        meta.className = "finance-section-meta";
+        meta.textContent = "DATA";
+
+        const title = document.createElement("strong");
+        title.textContent = "Управление финансовыми данными";
+
+        const description = document.createElement("p");
+        description.textContent = "Добавление, редактирование и удаление записей.";
+
+        copy.append(meta, title, description);
+
+        const action = document.createElement("button");
+        action.type = "button";
+        action.className = "finance-text-action";
+        action.textContent = "Открыть →";
+        action.addEventListener("click", () => {
+            renderFinance(root, "assets", onWriteAttempt, financeApplication);
+        });
+
+        data.append(copy, action);
+        page.appendChild(data);
     }
 
     root.appendChild(page);
