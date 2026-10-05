@@ -1,0 +1,47 @@
+/* row-interaction-menu.css — Version 1.0 */
+
+.row-interaction-menu {
+    transform-origin:top left;
+    position:relative;
+    z-index:1200;
+    width:min(9.5rem,100%);
+    max-width:100%;
+    padding:.2rem;
+    background:var(--gradient-card-premium);
+    border:1px solid var(--color-accent-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card),0 0 1.5rem rgba(242,138,46,.08);
+    opacity:0;
+    transform:translate3d(0,4px,0) scale(.96);
+    pointer-events:none;
+    transition:
+        opacity 180ms var(--motion-ease-standard),
+        transform 220ms var(--motion-ease-emphasis);
+    will-change:transform,opacity;
+}
+
+.row-interaction-menu.is-visible {
+    opacity:1;
+    transform:translate3d(0,0,0) scale(1);
+    pointer-events:auto;
+}
+
+.row-interaction-menu__item {
+    display:block;
+    width:100%;
+    min-height:2.55rem;
+    padding:0 .8rem;
+    color:var(--color-white);
+    font:inherit;
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+    text-align:left;
+    background:var(--gradient-accent-button);
+    border:0;
+    border-radius:var(--radius-md);
+    outline:none;
+}
+
+.row-interaction-menu__item:active {
+    background:var(--color-accent-soft);
+}
