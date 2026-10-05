@@ -27,7 +27,7 @@ Profile Memory не вводится: для этих данных отдель�
 
 Тесты построены на `node:test` и не требуют подключения к Supabase.
 
-Supabase JavaScript API поддерживает цепочку `.update(...).eq(...).select(...)`, что соответствует реализованному adapter boundary. citeturn0search0turn0search8
+Supabase JavaScript API поддерживает цепочку `.update(...).eq(...).select(...)`, что соответствует реализованному adapter boundary.
 
 ## Статус
 
