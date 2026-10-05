@@ -128,13 +128,8 @@ test("updateProfile requires a user id", async () => {
 });
 
 // LifeGame 3.0 — Profile Application Lifecycle Tests
-// Version: 1.0
+// Version: 1.1
 // Responsibility: verify the complete Profile read/update/read lifecycle at the Application boundary.
-
-import test from "node:test";
-import assert from "node:assert/strict";
-
-import { createProfileApplication } from "./profile.js";
 
 test("profile lifecycle reads, updates, and reads the persisted user profile", async () => {
     const profiles = new Map([
