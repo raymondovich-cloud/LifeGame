@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 3.3
+// source/presentation/finance/finance.js — Version 3.4
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -7,12 +7,11 @@ import {
     addFinanceEntry,
     addFinancialBurdenEntry,
     removeFinanceEntry,
-    getAssetsTotal,
-    getAssetsStatistics,
     getFinancialStabilityIndex
 } from "../../application/finance/finance.js";
 
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
+import { getAssetsAnalytics, getAssetsAnalyticsRange } from "../../application/finance/assets.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -132,7 +131,8 @@ function refreshAssetsSummary(root) {
     const amount = summary.querySelector(".assets-total-value");
     if (!amount) return;
 
-    const amountText = formatAmount(getAssetsTotal()) + " ₽";
+    const statistics = getAssetsAnalytics(getAssetsAnalyticsRange("month"));
+    const amountText = formatAmount(statistics.current?.total ?? 0) + " ₽";
     amount.textContent = amountText;
 
     const numericLength = amountText.replace(/\D/g, "").length;
@@ -142,7 +142,7 @@ function refreshAssetsSummary(root) {
     );
     amount.style.fontSize = fontSize + "rem";
 
-    const statistics = getAssetsStatistics("month");
+    const statistics = getAssetsAnalytics(getAssetsAnalyticsRange("month"));
     const date = summary.querySelector(".assets-summary-date");
 
     if (date) {
@@ -355,7 +355,7 @@ function createAssetsSummary(root, onWriteAttempt = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "assets-summary";
 
-    const statistics = getAssetsStatistics("month");
+    const statistics = getAssetsAnalytics(getAssetsAnalyticsRange("month"));
 
     const heading = document.createElement("div");
     heading.className = "assets-summary-heading";
@@ -384,7 +384,8 @@ function createAssetsSummary(root, onWriteAttempt = null) {
 
     const amount = document.createElement("span");
     amount.className = "assets-total-value";
-    const amountText = formatAmount(getAssetsTotal()) + " ₽";
+    const statistics = getAssetsAnalytics(getAssetsAnalyticsRange("month"));
+    const amountText = formatAmount(statistics.current?.total ?? 0) + " ₽";
     amount.textContent = amountText;
 
     const numericLength = amountText.replace(/\D/g, "").length;
