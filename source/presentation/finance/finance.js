@@ -396,7 +396,7 @@ function createAssetsSummary(root, onWriteAttempt = null) {
 
     const date = document.createElement("span");
     date.className = "statistics-meta assets-summary-date";
-    date.textContent = formatSnapshotDate(statistics.currentOccurredAt);
+    date.textContent = formatSnapshotDate(statistics.current?.occurredAt);
 
     wrapper.append(heading, amountRow, date);
     return wrapper;
