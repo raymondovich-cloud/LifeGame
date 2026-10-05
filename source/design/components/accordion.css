@@ -1,4 +1,4 @@
-/* accordion.css — Version 1.16 */
+/* accordion.css — Version 1.17 */
 
 .accordion-list {
     display:grid;
@@ -130,6 +130,12 @@
     padding:0 var(--space-4) var(--space-5);
     opacity:1;
     transform:translateY(0);
+}
+
+/* Для четырёх финансовых блоков после «Активов» добавляем визуальный воздух
+   между разделительной линией заголовка и первой строкой контента. */
+.finance-subblock:not([data-subblock="assets"]) .accordion-content.is-open {
+    padding-top:var(--space-3);
 }
 
 .accordion-content[hidden] {
