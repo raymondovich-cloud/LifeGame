@@ -1,4 +1,4 @@
-/* list.css — Version 1.9 */
+/* list.css — Version 2.0 */
 
 .list-empty {
     display:grid;
@@ -182,4 +182,54 @@
     font-family:var(--font-family-mono);
     font-size:var(--font-size-xs);
     white-space:nowrap;
+}
+
+
+.assets-context-menu {
+    position:absolute;
+    top:50%;
+    left:50%;
+    z-index:20;
+    min-width:10rem;
+    padding:.25rem;
+    background:rgba(18,18,18,.96);
+    border:var(--border-subtle);
+    border-radius:var(--radius-control);
+    box-shadow:var(--shadow-elevated);
+    opacity:0;
+    transform:translate(-50%,-46%) scale(.96);
+    transform-origin:center;
+    pointer-events:none;
+    transition:
+        opacity 180ms var(--motion-ease-emphasis),
+        transform 220ms var(--motion-ease-emphasis);
+}
+
+.assets-context-menu.is-visible {
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+    pointer-events:auto;
+}
+
+.assets-context-menu__item {
+    display:block;
+    width:100%;
+    min-height:2.5rem;
+    padding:0 .9rem;
+    color:var(--color-white);
+    font:inherit;
+    font-size:var(--font-size-xs);
+    text-align:left;
+    background:transparent;
+    border:0;
+    border-radius:var(--radius-control);
+}
+
+.assets-context-menu__item:active {
+    background:rgba(255,255,255,.08);
+}
+
+.swipe-delete-item.is-long-pressing .swipe-delete-content {
+    transform:scale(.985);
+    transition:transform 120ms var(--motion-ease-standard);
 }
