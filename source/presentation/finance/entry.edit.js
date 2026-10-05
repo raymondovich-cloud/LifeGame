@@ -227,12 +227,12 @@ function openEntryEditModal(subblockId, entry, onSaved) {
         if (event.target === modal) close();
     });
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
         event.preventDefault();
         error.hidden = true;
 
         try {
-            const updated = updateFinanceEntry(
+            const updated = await updateFinanceEntry(
                 subblockId,
                 entry.id,
                 labelInput.value,
