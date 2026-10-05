@@ -1,0 +1,72 @@
+/* subscription-limit.css — Version 1.0 */
+
+.subscription-limit-notice {
+    position:fixed;
+    inset:0;
+    z-index:1300;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:var(--space-4);
+    background:rgba(0,0,0,.58);
+    opacity:0;
+    pointer-events:none;
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
+    transition:opacity 180ms var(--motion-ease-standard);
+}
+
+.subscription-limit-notice.is-visible {
+    opacity:1;
+    pointer-events:auto;
+}
+
+.subscription-limit-notice__dialog {
+    width:min(100%,24rem);
+    padding:var(--space-4);
+    text-align:left;
+    background:var(--gradient-surface);
+    border:var(--border-subtle);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-elevated);
+    transform:translateY(8px) scale(.985);
+    transition:transform 220ms var(--motion-ease-emphasis);
+}
+
+.subscription-limit-notice.is-visible .subscription-limit-notice__dialog {
+    transform:translateY(0) scale(1);
+}
+
+.subscription-limit-notice__eyebrow {
+    color:var(--color-accent);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+    font-weight:var(--font-weight-medium);
+    letter-spacing:var(--letter-spacing-system);
+}
+
+.subscription-limit-notice__title {
+    margin:var(--space-1) 0 var(--space-2);
+    color:var(--color-white);
+    font-size:var(--font-size-lg);
+}
+
+.subscription-limit-notice__message {
+    margin:0;
+    color:var(--color-white-soft);
+    font-size:var(--font-size-xs);
+    line-height:1.5;
+}
+
+.subscription-limit-notice__button {
+    width:100%;
+    min-height:2.6rem;
+    margin-top:var(--space-3);
+    color:var(--color-white);
+    font:inherit;
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+    background:var(--gradient-accent-button);
+    border:0;
+    border-radius:var(--radius-md);
+}
