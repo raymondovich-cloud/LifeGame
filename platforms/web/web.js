@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.2
+// platforms/web/web.js — Version 4.3
 
 import {
     trace,
@@ -11,10 +11,6 @@ import { renderRegistration } from "../../source/presentation/auth/register.js";
 import { renderLogin } from "../../source/presentation/auth/login.js";
 import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { createWebApplication } from "./composition/root.js";
-import {
-    configureAssetsAnalyticsMemory,
-    clearAssetsAnalyticsMemory
-} from "../../source/application/finance/assets.analytics.js";
 import { configureAssetsAnalyticsAccess } from "../../source/application/finance/assets.analytics.access.js";
 
 const APP_ROOT_ID = "app";
@@ -25,12 +21,6 @@ function startWeb() {
 
     configureAssetsAnalyticsAccess({
         getEntitlement: () => "free"
-    });
-
-    configureAssetsAnalyticsMemory({
-        getSnapshotAtOrBefore: () => null,
-        getSnapshotsBetween: () => [],
-        getFirstSnapshot: () => null
     });
 
     const appRoot = document.getElementById(APP_ROOT_ID);
@@ -296,7 +286,6 @@ function startWeb() {
         // finance view must never render the previous user's state.
         application.finance.clearForUser(activeUserId);
         activeUserId = null;
-        clearAssetsAnalyticsMemory();
 
         trace("web-shell", "logout.completed", {
             authenticated: false
@@ -423,11 +412,6 @@ function startWeb() {
                 return;
             }
 
-            configureAssetsAnalyticsMemory({
-                getSnapshotAtOrBefore: financeApplication.getAssetsSnapshotAtOrBefore,
-                getSnapshotsBetween: financeApplication.getAssetsSnapshotsBetween,
-                getFirstSnapshot: financeApplication.getFirstAssetsSnapshot
-            });
         }
 
         trace("web-shell", "render", {
