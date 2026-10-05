@@ -1,4 +1,4 @@
-// assets.js — Version 2.0
+// assets.js — Version 2.1
 
 import { publish } from "../../../core/events/event.bus.js";
 
@@ -24,9 +24,10 @@ function publishStateChanged() {
     });
 }
 
-function addAsset(label, amount) {
+function addAsset(label, amount, liquidity = "liquid") {
     const normalizedLabel = String(label ?? "").trim();
     const normalizedAmount = Number(amount);
+    const normalizedLiquidity = liquidity === "illiquid" ? "illiquid" : "liquid";
 
     if (!normalizedLabel) {
         throw new Error("Assets: название записи обязательно.");
@@ -39,7 +40,8 @@ function addAsset(label, amount) {
     const entry = {
         id: `asset-${nextId++}`,
         label: normalizedLabel,
-        amount: normalizedAmount
+        amount: normalizedAmount,
+        liquidity: normalizedLiquidity
     };
 
     entries.push(entry);
