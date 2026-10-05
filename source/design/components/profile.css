@@ -1,0 +1,60 @@
+/* profile.css — Version 1.0 */
+/* Responsibility: Profile presentation editing states. */
+
+.profile-editable-row {
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .18s ease;
+}
+
+.profile-editable-row:hover {
+    background:rgba(255,255,255,.025);
+}
+
+.profile-editable-row:focus-visible {
+    outline:2px solid var(--color-accent);
+    outline-offset:-2px;
+}
+
+.profile-edit-row {
+    align-items:start;
+    min-height:0;
+}
+
+.profile-edit-form {
+    display:grid;
+    grid-column:2 / -1;
+    width:100%;
+    gap:var(--space-3);
+}
+
+.profile-edit-fields {
+    display:grid;
+    gap:var(--space-2);
+}
+
+.profile-edit-message {
+    min-height:1.1rem;
+    margin:0;
+    color:var(--color-gray);
+    font-size:var(--font-size-xs);
+    line-height:1.3;
+}
+
+.profile-edit-actions {
+    display:flex;
+    justify-content:flex-end;
+    gap:var(--space-2);
+    flex-wrap:wrap;
+}
+
+.profile-logout {
+    cursor:pointer;
+}
+
+@media (max-width:40rem) {
+    .profile-edit-actions {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+    }
+}
