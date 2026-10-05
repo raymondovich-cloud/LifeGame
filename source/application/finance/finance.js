@@ -1,4 +1,4 @@
-// finance.js — Version 5.0
+// finance.js — Version 5.1
 
 import {
     createActualEarning,
@@ -85,7 +85,7 @@ function configureAssetsMemory({ memory }) {
         "saveAsset",
         "updateAsset",
         "deleteAsset",
-        "saveAssetsSnapshot"
+        "mutateAsset"
     ];
 
     for (const method of requiredMethods) {
@@ -139,15 +139,13 @@ async function addFinanceEntry(subblockId, label, amount, liquidity) {
     if (subblockId === "assets") {
         const memory = requireFinanceMemory();
         const result = createAsset({ label, amount, liquidity });
-        const savedEntry = await memory.saveAsset(result.entry);
-
-        await memory.saveAssetsSnapshot({
-            occurredAt: result.event.occurredAt,
-            total: calculateAssetsTotal(memory.listAssets()),
-            entries: memory.listAssets()
+        const mutation = await memory.mutateAsset({
+            operation: "create",
+            entry: result.entry,
+            occurredAt: result.event.occurredAt
         });
 
-        return savedEntry;
+        return mutation ? mutation.entry : false;
     }
 
     const config = getCollectionConfig(subblockId);
@@ -186,19 +184,14 @@ async function updateFinanceEntry(
             return false;
         }
 
-        const savedEntry = await memory.updateAsset(entryId, result.entry);
-
-        if (!savedEntry) {
-            return false;
-        }
-
-        await memory.saveAssetsSnapshot({
-            occurredAt: result.event.occurredAt,
-            total: calculateAssetsTotal(memory.listAssets()),
-            entries: memory.listAssets()
+        const mutation = await memory.mutateAsset({
+            operation: "update",
+            entryId,
+            entry: result.entry,
+            occurredAt: result.event.occurredAt
         });
 
-        return savedEntry;
+        return mutation ? mutation.entry : false;
     }
 
     const config = getCollectionConfig(subblockId);
@@ -237,19 +230,13 @@ async function removeFinanceEntry(subblockId, entryId) {
             return false;
         }
 
-        const deleted = await memory.deleteAsset(entryId);
-
-        if (!deleted) {
-            return false;
-        }
-
-        await memory.saveAssetsSnapshot({
-            occurredAt: result.event.occurredAt,
-            total: calculateAssetsTotal(memory.listAssets()),
-            entries: memory.listAssets()
+        const mutation = await memory.mutateAsset({
+            operation: "delete",
+            entryId,
+            occurredAt: result.event.occurredAt
         });
 
-        return true;
+        return Boolean(mutation);
     }
 
     const config = getCollectionConfig(subblockId);
