@@ -1,38 +1,29 @@
-// assets.analytics.js — Version 1.1
+// assets.analytics.js — Version 1.2
 
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
-let assetsSnapshotReader = () => null;
-let assetsSnapshotsRangeReader = () => [];
-let firstAssetsSnapshotReader = () => null;
-
-function configureAssetsAnalyticsMemory({
-    getSnapshotAtOrBefore,
-    getSnapshotsBetween,
-    getFirstSnapshot
-}) {
-    if (
-        typeof getSnapshotAtOrBefore !== "function" ||
-        typeof getSnapshotsBetween !== "function" ||
-        typeof getFirstSnapshot !== "function"
-    ) {
-        throw new Error(
-            "LifeGame Assets Analytics: memory readers are required."
-        );
+function createAssetsAnalytics({ financeApplication }) {
+    if (!financeApplication) {
+        throw new Error("LifeGame Assets Analytics: Finance Application is required.");
     }
 
-    assetsSnapshotReader = getSnapshotAtOrBefore;
-    assetsSnapshotsRangeReader = getSnapshotsBetween;
-    firstAssetsSnapshotReader = getFirstSnapshot;
-}
+    const requiredReaders = [
+        "getAssetsSnapshotAtOrBefore",
+        "getAssetsSnapshotsBetween",
+        "getFirstAssetsSnapshot"
+    ];
 
-function clearAssetsAnalyticsMemory() {
-    assetsSnapshotReader = () => null;
-    assetsSnapshotsRangeReader = () => [];
-    firstAssetsSnapshotReader = () => null;
-}
+    for (const reader of requiredReaders) {
+        if (typeof financeApplication[reader] !== "function") {
+            throw new Error("LifeGame Assets Analytics: Finance Application reader is required: " + reader);
+        }
+    }
 
-function getAssetsAnalyticsRange(period, now = Date.now()) {
+    const getSnapshotAtOrBefore = financeApplication.getAssetsSnapshotAtOrBefore;
+    const getSnapshotsBetween = financeApplication.getAssetsSnapshotsBetween;
+    const getFirstSnapshot = financeApplication.getFirstAssetsSnapshot;
+
+    function getAssetsAnalyticsRange(period, now = Date.now()) {(period, now = Date.now()) {
     const endDate = new Date(now);
     let startDate;
 
@@ -46,7 +37,7 @@ function getAssetsAnalyticsRange(period, now = Date.now()) {
         startDate = new Date(now);
         startDate.setFullYear(startDate.getFullYear() - 1);
     } else if (period === "all-time") {
-        const firstSnapshot = firstAssetsSnapshotReader();
+        const firstSnapshot = getFirstSnapshot();
 
         if (!firstSnapshot) {
             return {
@@ -60,13 +51,13 @@ function getAssetsAnalyticsRange(period, now = Date.now()) {
         throw new Error("LifeGame Assets Analytics: unknown period.");
     }
 
-    return {
-        startDate: startDate.getTime(),
+        return {
+            startDate: startDate.getTime(),
         endDate: endDate.getTime()
     };
 }
 
-function getAssetsAnalytics({ startDate, endDate }) {
+    function getAssetsAnalytics({ startDate, endDate }) {
     const startTimestamp = new Date(startDate).getTime();
     const endTimestamp = new Date(endDate).getTime();
 
@@ -78,13 +69,13 @@ function getAssetsAnalytics({ startDate, endDate }) {
         throw new Error("LifeGame Assets Analytics: invalid date range.");
     }
 
-    const snapshots = assetsSnapshotsRangeReader(
+    const snapshots = getSnapshotsBetween(
         startTimestamp,
         endTimestamp
     );
 
-    const baselineSnapshot = assetsSnapshotReader(startTimestamp);
-    const currentSnapshot = assetsSnapshotReader(endTimestamp);
+    const baselineSnapshot = getSnapshotAtOrBefore(startTimestamp);
+    const currentSnapshot = getSnapshotAtOrBefore(endTimestamp);
     const currentEntries = currentSnapshot?.entries ?? [];
 
     const baselineTotal = baselineSnapshot?.total ?? null;
@@ -114,7 +105,7 @@ function getAssetsAnalytics({ startDate, endDate }) {
 
     const liquidityTotal = liquidTotal + illiquidTotal;
 
-    trace("application", "finance.assets.analytics.completed", {
+        trace("application", "finance.assets.analytics.completed", {
         startDate: startTimestamp,
         endDate: endTimestamp,
         snapshotCount: snapshots.length
@@ -156,12 +147,13 @@ function getAssetsAnalytics({ startDate, endDate }) {
                 : null
         },
         composition: currentEntries.map((entry) => ({ ...entry }))
-    };
+        };
+    }
+
+    return Object.freeze({
+        getAssetsAnalyticsRange,
+        getAssetsAnalytics
+    });
 }
 
-export {
-    configureAssetsAnalyticsMemory,
-    clearAssetsAnalyticsMemory,
-    getAssetsAnalyticsRange,
-    getAssetsAnalytics
-};
+export { createAssetsAnalytics };
