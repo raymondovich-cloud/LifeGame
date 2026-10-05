@@ -1,4 +1,4 @@
-// finance.js — Version 3.1
+// finance.js — Version 3.2
 
 import {
     listAssets,
@@ -149,6 +149,5 @@ export {
     addFinancialBurdenEntry,
     removeFinanceEntry,
     updateFinanceEntry,
-    getAssetsTotal,
     getFinancialStabilityIndex
 };
