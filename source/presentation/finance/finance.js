@@ -129,10 +129,6 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
             tracking = true;
             horizontalSwipe = false;
 
-            if (opened) {
-                startX += maxReveal;
-            }
-
             content.classList.add("is-swiping");
             content.setPointerCapture?.(event.pointerId);
         });
