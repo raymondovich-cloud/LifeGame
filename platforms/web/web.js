@@ -313,7 +313,7 @@ function startWeb() {
         await renderRoute();
     }
 
-    function renderModule(moduleId, session = null) {
+    async function renderModule(moduleId, session = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
             openLoginModal();
@@ -447,7 +447,7 @@ function startWeb() {
         authRoot.hidden = true;
         applicationShell.hidden = false;
 
-        renderModule(route, session);
+        await renderModule(route, session);
     }
 
     async function renderRoute() {
