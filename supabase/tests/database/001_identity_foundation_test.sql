@@ -9,12 +9,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(26);
 
 -- Fixed test identities. The transaction is rolled back at the end.
 insert into auth.users (
     id, instance_id, aud, role, email, encrypted_password,
-    email_confirmed_at, created_at, updated_at
+    email_confirmed_at, created_at, updated_at, raw_user_meta_data
 )
 values
 (
@@ -22,14 +22,16 @@ values
     '00000000-0000-0000-0000-000000000000',
     'authenticated', 'authenticated',
     'lifegame-test-a@example.invalid',
-    'not-a-real-password-hash', now(), now(), now()
+    'not-a-real-password-hash', now(), now(), now(),
+    '{"display_name":"Test User A","birth_date":"1997-04-27"}'::jsonb
 ),
 (
     '00000000-0000-0000-0000-000000000002',
     '00000000-0000-0000-0000-000000000000',
     'authenticated', 'authenticated',
     'lifegame-test-b@example.invalid',
-    'not-a-real-password-hash', now(), now(), now()
+    'not-a-real-password-hash', now(), now(), now(),
+    '{"display_name":"Test User B","birth_date":"1998-08-15"}'::jsonb
 );
 
 select results_eq(
@@ -42,13 +44,31 @@ select results_eq(
 );
 
 select results_eq(
-    $$
+    $
     select count(*)::bigint
     from private.security_events
     where event_type = 'identity.user.registered'
-    $$,
-    $$values (2::bigint)$$,
+    $,
+    $values (2::bigint)$,
     'Auth user creation records two registration security events'
+);
+
+select results_eq(
+    $
+    select display_name from public.profiles
+    where id = '00000000-0000-0000-0000-000000000001'
+    $,
+    $values ('Test User A'::text)$,
+    'Registration metadata bootstraps User A display name'
+);
+
+select results_eq(
+    $
+    select birth_date from public.profiles
+    where id = '00000000-0000-0000-0000-000000000001'
+    $,
+    $values ('1997-04-27'::date)$,
+    'Registration metadata bootstraps User A birth date'
 );
 
 set local role postgres;
