@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.9
+// source/presentation/finance/finance.js — Version 3.0
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -137,7 +137,7 @@ function createEntryRow(root, subblock, entry) {
 
     const labelGroup = document.createElement("span");
     labelGroup.className = "finance-entry-label-group";
-    labelGroup.append(label, pinIndicator);
+    labelGroup.appendChild(label);
 
     if (subblock.id === "financial-burden") {
         const details = document.createElement("span");
@@ -146,13 +146,13 @@ function createEntryRow(root, subblock, entry) {
             "Долг " + formatAmount(entry.debt) +
             " · Платёж " + formatAmount(entry.payment);
 
-        content.append(labelGroup, details);
+        content.append(labelGroup, details, pinIndicator);
     } else {
         const amount = document.createElement("span");
         amount.className = "finance-entry-amount";
         amount.textContent = formatAmount(entry.amount);
 
-        content.append(labelGroup, amount);
+        content.append(labelGroup, amount, pinIndicator);
     }
 
     row.append(action, content);
