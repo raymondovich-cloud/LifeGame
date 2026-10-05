@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Web Composition Root
-// Version: 1.3
+// Version: 1.4
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 
 import { createIdentityApplication } from "../../../source/application/identity/identity.js";
@@ -28,11 +28,25 @@ export function createWebApplication() {
 
     const identityApplication = createIdentityApplication(identityPort);
     const authController = createAuthController(identityApplication);
+    const financeMemoryByUser = new Map();
 
     function createFinanceMemoryForUser(userId) {
-        const userContext = createUserContext(userId);
-        const memory = createFinanceMemory(userContext);
-        return createFinanceMemoryPort(memory);
+        const normalizedUserId = String(userId ?? "").trim();
+
+        if (!normalizedUserId) {
+            throw new Error("LifeGame Web: authenticated user id is required.");
+        }
+
+        if (!financeMemoryByUser.has(normalizedUserId)) {
+            const userContext = createUserContext(normalizedUserId);
+            const memory = createFinanceMemory(userContext);
+            financeMemoryByUser.set(
+                normalizedUserId,
+                createFinanceMemoryPort(memory)
+            );
+        }
+
+        return financeMemoryByUser.get(normalizedUserId);
     }
 
     return Object.freeze({
