@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Adapter Tests
-// Version: 1.2
+// Version: 1.3
 // Responsibility: verify the Supabase adapter boundary without contacting Supabase.
 
 import test from 'node:test';
