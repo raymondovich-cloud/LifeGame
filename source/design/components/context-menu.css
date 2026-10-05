@@ -1,6 +1,6 @@
-/* context-menu.css — Version 1.4 */
+/* context-menu.css — Version 1.5 */
 
-.assets-context-menu {
+.row-interaction-menu {
     transform-origin:top left;
     position:relative;
     z-index:1200;
@@ -13,7 +13,6 @@
     box-shadow:var(--shadow-card),0 0 1.5rem rgba(242,138,46,.08);
     opacity:0;
     transform:translate3d(0,4px,0) scale(.96);
-    transform-origin:top left;
     pointer-events:none;
     transition:
         opacity 180ms var(--motion-ease-standard),
@@ -21,13 +20,13 @@
     will-change:transform,opacity;
 }
 
-.assets-context-menu.is-visible {
+.row-interaction-menu.is-visible {
     opacity:1;
     transform:translate3d(0,0,0) scale(1);
     pointer-events:auto;
 }
 
-.assets-context-menu__item {
+.row-interaction-menu__item {
     display:block;
     width:100%;
     min-height:2.55rem;
@@ -43,7 +42,6 @@
     outline:none;
 }
 
-.assets-context-menu__item:active {
+.row-interaction-menu__item:active {
     background:var(--color-accent-soft);
 }
-
