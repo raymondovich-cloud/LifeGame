@@ -1,4 +1,4 @@
-// finance.js — Version 2.5
+// finance.js — Version 2.6
 
 import {
     listAssets,
@@ -48,12 +48,25 @@ const FINANCE_OPERATIONS = Object.freeze({
 });
 
 let assetsSnapshotReader = () => null;
+let liquidAssetsReader = () => null;
+let illiquidAssetsReader = () => null;
 
-function configureAssetsMemory({ getSnapshotAtOrBefore }) {
-    if (typeof getSnapshotAtOrBefore !== "function") {
-        throw new Error("LifeGame Finance: Assets memory reader is required.");
+function configureAssetsMemory({
+    getSnapshotAtOrBefore,
+    getLiquidAssetsAtOrBefore,
+    getIlliquidAssetsAtOrBefore
+}) {
+    if (
+        typeof getSnapshotAtOrBefore !== "function" ||
+        typeof getLiquidAssetsAtOrBefore !== "function" ||
+        typeof getIlliquidAssetsAtOrBefore !== "function"
+    ) {
+        throw new Error("LifeGame Finance: Assets memory readers are required.");
     }
+
     assetsSnapshotReader = getSnapshotAtOrBefore;
+    liquidAssetsReader = getLiquidAssetsAtOrBefore;
+    illiquidAssetsReader = getIlliquidAssetsAtOrBefore;
 }
 
 function getFinanceOperations(subblockId) {
@@ -110,15 +123,14 @@ function removeFinanceEntry(subblockId, entryId) {
 }
 
 function getFinancialStabilityIndex() {
+    const now = Date.now();
     const financialBurden = listFinancialBurden();
-    const assetsSnapshot = assetsSnapshotReader(Date.now());
+    const assetsSnapshot = assetsSnapshotReader(now);
     const assetEntries = assetsSnapshot?.entries ?? listAssets();
-    const liquidAssets = assetEntries.filter(
-        (entry) => entry?.liquidity !== "illiquid"
-    );
-    const illiquidAssets = assetEntries.filter(
-        (entry) => entry?.liquidity === "illiquid"
-    );
+    const liquidAssets = liquidAssetsReader(now) ??
+        assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
+    const illiquidAssets = illiquidAssetsReader(now) ??
+        assetEntries.filter((entry) => entry?.liquidity === "illiquid");
 
     return calculateFinancialStabilityIndex({
         assets: assetEntries,
