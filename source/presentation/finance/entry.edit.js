@@ -1,4 +1,4 @@
-// entry.edit.js — Version 1.5
+// entry.edit.js — Version 1.6
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
@@ -9,7 +9,7 @@ function triggerHaptic() {
 
     if (telegramWebApp?.HapticFeedback?.impactOccurred) {
         try {
-            telegramWebApp.HapticFeedback.impactOccurred("light");
+            telegramWebApp.HapticFeedback.impactOccurred("medium");
             return;
         } catch {
             // Fall through to the browser vibration fallback.
@@ -18,7 +18,7 @@ function triggerHaptic() {
 
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
         try {
-            navigator.vibrate(10);
+            navigator.vibrate([12, 18, 12]);
         } catch {
             // Haptics are optional and must never interrupt the interaction.
         }
