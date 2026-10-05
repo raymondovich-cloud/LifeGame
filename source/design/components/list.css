@@ -1,4 +1,4 @@
-/* list.css — Version 2.6 */
+/* list.css — Version 2.7 */
 
 .list-empty {
     display:grid;
@@ -250,3 +250,17 @@
 }
 
 
+
+
+.finance-entry-trailing {
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:var(--space-1);
+    margin-left:auto;
+}
+
+.finance-entry-trailing .finance-entry-pin {
+    margin-left:0;
+}
