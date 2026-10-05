@@ -1,11 +1,4 @@
-// finance.js — Version 3.2
-
-import {
-    listAssets,
-    addAsset,
-    removeAsset,
-    updateAsset
-} from "../../domain/finance/assets/assets.js";
+// finance.js — Version 3.3
 
 import {
     listActualEarnings,
@@ -35,37 +28,75 @@ import {
     removeFinancialCushion
 } from "../../domain/finance/financial.cushion/financial.cushion.js";
 
+import {
+    createAsset,
+    updateAsset,
+    removeAsset,
+    calculateAssetsTotal
+} from "../../domain/finance/assets/assets.js";
+
 import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 const FINANCE_OPERATIONS = Object.freeze({
-    "assets": { list: listAssets, add: addAsset, remove: removeAsset, update: updateAsset },
-    "actual-earnings": { list: listActualEarnings, add: addActualEarning, remove: removeActualEarning, update: updateActualEarning },
-    "financial-burden": { list: listFinancialBurden, add: addFinancialBurden, remove: removeFinancialBurden, update: updateFinancialBurden },
-    "mandatory-expenses": { list: listMandatoryExpenses, add: addMandatoryExpense, remove: removeMandatoryExpense, update: updateMandatoryExpense },
-    "financial-cushion": { list: listFinancialCushion, add: addFinancialCushion, remove: removeFinancialCushion, update: updateFinancialCushion }
+    "actual-earnings": {
+        list: listActualEarnings,
+        add: addActualEarning,
+        remove: removeActualEarning,
+        update: updateActualEarning
+    },
+    "financial-burden": {
+        list: listFinancialBurden,
+        add: addFinancialBurden,
+        remove: removeFinancialBurden,
+        update: updateFinancialBurden
+    },
+    "mandatory-expenses": {
+        list: listMandatoryExpenses,
+        add: addMandatoryExpense,
+        remove: removeMandatoryExpense,
+        update: updateMandatoryExpense
+    },
+    "financial-cushion": {
+        list: listFinancialCushion,
+        add: addFinancialCushion,
+        remove: removeFinancialCushion,
+        update: updateFinancialCushion
+    }
 });
 
-let assetsSnapshotReader = () => null;
-let liquidAssetsReader = () => null;
-let illiquidAssetsReader = () => null;
+let assetsMemory = null;
 
-function configureAssetsMemory({
-    getSnapshotAtOrBefore,
-    getLiquidAssetsAtOrBefore,
-    getIlliquidAssetsAtOrBefore
-}) {
-    if (
-        typeof getSnapshotAtOrBefore !== "function" ||
-        typeof getLiquidAssetsAtOrBefore !== "function" ||
-        typeof getIlliquidAssetsAtOrBefore !== "function"
-    ) {
-        throw new Error("LifeGame Finance: Assets memory readers are required.");
+function configureAssetsMemory({ memory }) {
+    if (!memory) {
+        throw new Error("LifeGame Finance: Assets memory is required.");
     }
 
-    assetsSnapshotReader = getSnapshotAtOrBefore;
-    liquidAssetsReader = getLiquidAssetsAtOrBefore;
-    illiquidAssetsReader = getIlliquidAssetsAtOrBefore;
+    const requiredMethods = [
+        "listAssets",
+        "saveAsset",
+        "updateAsset",
+        "deleteAsset",
+        "saveAssetsSnapshot"
+    ];
+
+    for (const method of requiredMethods) {
+        if (typeof memory[method] !== "function") {
+            throw new Error(
+                "LifeGame Finance: Assets memory method is required: " + method
+            );
+        }
+    }
+
+    assetsMemory = memory;
+}
+
+function requireAssetsMemory() {
+    if (!assetsMemory) {
+        throw new Error("LifeGame Finance: Assets memory is not configured.");
+    }
+
+    return assetsMemory;
 }
 
 function getFinanceOperations(subblockId) {
@@ -79,35 +110,125 @@ function getFinanceOperations(subblockId) {
 }
 
 function listFinanceEntries(subblockId) {
+    if (subblockId === "assets") {
+        return requireAssetsMemory().listAssets();
+    }
+
     return getFinanceOperations(subblockId).list();
 }
 
 function addFinanceEntry(subblockId, label, amount, liquidity) {
-    return subblockId === "assets"
-        ? getFinanceOperations(subblockId).add(label, amount, liquidity)
-        : getFinanceOperations(subblockId).add(label, amount);
+    if (subblockId === "assets") {
+        const memory = requireAssetsMemory();
+        const result = createAsset({ label, amount, liquidity });
+        const savedEntry = memory.saveAsset(result.entry);
+
+        memory.saveAssetsSnapshot({
+            occurredAt: result.event.occurredAt,
+            total: calculateAssetsTotal(memory.listAssets()),
+            entries: memory.listAssets()
+        });
+
+        return savedEntry;
+    }
+
+    return getFinanceOperations(subblockId).add(label, amount);
 }
 
 function addFinancialBurdenEntry(label, debt, payment) {
     return addFinancialBurden(label, debt, payment);
 }
 
-function updateFinanceEntry(subblockId, entryId, label, amount, liquidity, payment = null) {
+function updateFinanceEntry(
+    subblockId,
+    entryId,
+    label,
+    amount,
+    liquidity,
+    payment = null
+) {
+    if (subblockId === "assets") {
+        const memory = requireAssetsMemory();
+        const existingAsset = memory
+            .listAssets()
+            .find((entry) => entry.id === entryId);
+
+        const result = updateAsset(existingAsset, {
+            label,
+            amount,
+            liquidity
+        });
+
+        if (!result) {
+            return false;
+        }
+
+        const savedEntry = memory.updateAsset(entryId, result.entry);
+
+        if (!savedEntry) {
+            return false;
+        }
+
+        memory.saveAssetsSnapshot({
+            occurredAt: result.event.occurredAt,
+            total: calculateAssetsTotal(memory.listAssets()),
+            entries: memory.listAssets()
+        });
+
+        return savedEntry;
+    }
+
     const operations = getFinanceOperations(subblockId);
 
     if (typeof operations.update !== "function") {
-        throw new Error("LifeGame Finance: редактирование этого подблока не поддерживается.");
+        throw new Error(
+            "LifeGame Finance: редактирование этого подблока не поддерживается."
+        );
     }
 
     trace("application", "finance.update.begin", { subblockId, entryId });
+
     const result = subblockId === "financial-burden"
         ? operations.update(entryId, label, amount, payment)
         : operations.update(entryId, label, amount, liquidity);
-    trace("application", "finance.update.completed", { subblockId, entryId, result: Boolean(result) });
+
+    trace("application", "finance.update.completed", {
+        subblockId,
+        entryId,
+        result: Boolean(result)
+    });
+
     return result;
 }
 
 function removeFinanceEntry(subblockId, entryId) {
+    if (subblockId === "assets") {
+        const memory = requireAssetsMemory();
+        const existingAsset = memory
+            .listAssets()
+            .find((entry) => entry.id === entryId);
+
+        const result = removeAsset(existingAsset);
+
+        if (!result) {
+            return false;
+        }
+
+        const deleted = memory.deleteAsset(entryId);
+
+        if (!deleted) {
+            return false;
+        }
+
+        memory.saveAssetsSnapshot({
+            occurredAt: result.event.occurredAt,
+            total: calculateAssetsTotal(memory.listAssets()),
+            entries: memory.listAssets()
+        });
+
+        return true;
+    }
+
     trace("application", "finance.remove.begin", { subblockId, entryId });
 
     const result = getFinanceOperations(subblockId).remove(entryId);
@@ -122,14 +243,17 @@ function removeFinanceEntry(subblockId, entryId) {
 }
 
 function getFinancialStabilityIndex() {
-    const now = Date.now();
+    const memory = requireAssetsMemory();
     const financialBurden = listFinancialBurden();
-    const assetsSnapshot = assetsSnapshotReader(now);
-    const assetEntries = assetsSnapshot?.entries ?? listAssets();
-    const liquidAssets = liquidAssetsReader(now) ??
-        assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
-    const illiquidAssets = illiquidAssetsReader(now) ??
-        assetEntries.filter((entry) => entry?.liquidity === "illiquid");
+    const assetEntries = memory.listAssets();
+
+    const liquidAssets = assetEntries.filter(
+        (entry) => entry?.liquidity !== "illiquid"
+    );
+
+    const illiquidAssets = assetEntries.filter(
+        (entry) => entry?.liquidity === "illiquid"
+    );
 
     return calculateFinancialStabilityIndex({
         assets: assetEntries,
