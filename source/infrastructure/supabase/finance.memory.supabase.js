@@ -23,6 +23,13 @@ function createSupabaseFinanceMemory({ client, userContext }) {
     function normalizeRow(row) {
         if (!row) return row;
         const result = { ...row };
+
+        ["amount", "debt", "payment"].forEach((field) => {
+            if (result[field] !== undefined && result[field] !== null) {
+                result[field] = Number(result[field]);
+            }
+        });
+
         delete result.user_id;
         delete result.created_at;
         delete result.updated_at;
