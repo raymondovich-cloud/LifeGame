@@ -24,7 +24,7 @@ function publishStateChanged() {
     });
 }
 
-function addLiquidFund(label, amount) {
+function addAsset(label, amount) {
     const normalizedLabel = String(label ?? "").trim();
     const normalizedAmount = Number(amount);
 
@@ -37,7 +37,7 @@ function addLiquidFund(label, amount) {
     }
 
     const entry = {
-        id: `liquid-fund-${nextId++}`,
+        id: `asset-${nextId++}`,
         label: normalizedLabel,
         amount: normalizedAmount
     };
@@ -48,7 +48,7 @@ function addLiquidFund(label, amount) {
     return { ...entry };
 }
 
-function removeLiquidFund(id) {
+function removeAsset(id) {
     const index = entries.findIndex((entry) => entry.id === id);
 
     if (index === -1) return false;
@@ -62,6 +62,6 @@ function removeLiquidFund(id) {
 export {
     listAssets,
     calculateAssetsTotal,
-    addLiquidFund,
-    removeLiquidFund
+    addAsset,
+    removeAsset
 };
