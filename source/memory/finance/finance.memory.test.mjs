@@ -1,4 +1,4 @@
-// finance.memory.test.mjs — Version 2.0
+// finance.memory.test.mjs — Version 2.1
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -62,4 +62,51 @@ test("Finance Memory preserves identity on update", () => {
 
     assert.equal(updated.id, saved.id);
     assert.equal(updated.amount, 120000);
+});
+
+
+test("Finance Memory mutation creates exactly one Assets snapshot", () => {
+    const memory = createFinanceMemory(createUserContext("user-1"));
+
+    const created = memory.mutateAsset({
+        operation: "create",
+        entry: {
+            label: "Счёт",
+            amount: 100000,
+            liquidity: "liquid"
+        },
+        occurredAt: 1000
+    });
+
+    assert.equal(created.entry.amount, 100000);
+    assert.equal(memory.listAssets().length, 1);
+    assert.equal(memory.getAssetsSnapshotsBetween(0, 2000).length, 1);
+    assert.equal(memory.getLatestAssetsSnapshot().total, 100000);
+
+    const updated = memory.mutateAsset({
+        operation: "update",
+        entryId: created.entry.id,
+        entry: {
+            ...created.entry,
+            amount: 120000,
+            liquidity: "illiquid"
+        },
+        occurredAt: 2000
+    });
+
+    assert.equal(updated.entry.amount, 120000);
+    assert.equal(memory.listAssets()[0].liquidity, "illiquid");
+    assert.equal(memory.getAssetsSnapshotsBetween(0, 3000).length, 2);
+    assert.equal(memory.getLatestAssetsSnapshot().total, 120000);
+
+    const deleted = memory.mutateAsset({
+        operation: "delete",
+        entryId: created.entry.id,
+        occurredAt: 3000
+    });
+
+    assert.equal(deleted.entry, null);
+    assert.equal(memory.listAssets().length, 0);
+    assert.equal(memory.getAssetsSnapshotsBetween(0, 4000).length, 3);
+    assert.equal(memory.getLatestAssetsSnapshot().total, 0);
 });
