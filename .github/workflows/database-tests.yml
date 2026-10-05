@@ -24,11 +24,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Identity application tests
-        run: node --test source/application/identity/registration.test.mjs source/application/identity/login.test.mjs
+      - name: Run Identity and Profile application tests
+        run: node --test source/application/identity/registration.test.mjs source/application/identity/login.test.mjs source/application/profile/profile.test.mjs
 
-      - name: Run Identity Infrastructure tests
-        run: node --test source/infrastructure/identity/supabase.identity.mapper.test.mjs source/infrastructure/identity/supabase.identity.adapter.test.mjs
+      - name: Run Identity and Profile infrastructure tests
+        run: node --test source/infrastructure/identity/supabase.identity.mapper.test.mjs source/infrastructure/identity/supabase.identity.adapter.test.mjs source/infrastructure/supabase/profile.adapter.test.mjs
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
