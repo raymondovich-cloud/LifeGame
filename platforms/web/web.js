@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 2.6
+// platforms/web/web.js — Version 2.7
 
 import {
     trace,
@@ -65,6 +65,7 @@ function startWeb() {
     let navigationInitialized = false;
     let publicMode = true;
     let sessionState = "unknown";
+    let authenticationEstablished = false;
 
     // Each route render gets a monotonically increasing request id.
     // Authentication can trigger a second render before an earlier
@@ -301,9 +302,15 @@ function startWeb() {
     async function handleAuthenticated(pendingAction = null, originRoute = DEFAULT_APPLICATION_ROUTE) {
         closeRegistrationModal();
 
-        // Authentication changes the shell state without changing the hash.
-        // Re-render explicitly so publicMode and the authenticated navigation
-        // are updated immediately after login/registration.
+        // The authentication action itself is authoritative. Supabase can
+        // briefly return a stale/null session from a concurrent getSession()
+        // call immediately after login/registration. Mark authentication as
+        // established before the route re-check so a transient null session
+        // can never downgrade the authenticated shell to public mode.
+        authenticationEstablished = true;
+        publicMode = false;
+        sessionState = "authenticated";
+
         await renderRoute();
 
         if (typeof pendingAction === "function") {
@@ -366,6 +373,22 @@ function startWeb() {
                 return;
             }
 
+            if (!session && authenticationEstablished) {
+                sessionState = "authenticated";
+
+                trace("web-shell", "route.session.pending-after-auth", {
+                    requestedRoute
+                });
+
+                renderApplicationShell(
+                    isApplicationModule(requestedRoute)
+                        ? requestedRoute
+                        : DEFAULT_APPLICATION_ROUTE,
+                    false
+                );
+                return;
+            }
+
             if (!session) {
                 sessionState = "unauthenticated";
 
@@ -410,6 +433,23 @@ function startWeb() {
                     renderId,
                     latestRenderId: routeRenderSequence
                 });
+                return;
+            }
+
+            if (authenticationEstablished) {
+                sessionState = "authenticated";
+
+                trace("web-shell", "route.session.error-after-auth", {
+                    requestedRoute,
+                    error: error?.message || "unknown"
+                });
+
+                renderApplicationShell(
+                    isApplicationModule(requestedRoute)
+                        ? requestedRoute
+                        : DEFAULT_APPLICATION_ROUTE,
+                    false
+                );
                 return;
             }
 
