@@ -1,10 +1,11 @@
-// source/application/navigation/navigation.js — Version 1.3
+// source/application/navigation/navigation.js — Version 1.4
 
 const MODULES = Object.freeze({
     finance: Object.freeze({ id: "finance", number: "01", name: "Finance", localName: "Финансы" }),
     health: Object.freeze({ id: "health", number: "02", name: "Health", localName: "Здоровье" }),
     development: Object.freeze({ id: "development", number: "03", name: "Development", localName: "Развитие" }),
-    profile: Object.freeze({ id: "profile", number: "04", name: "Profile", localName: "Профиль" })
+    profile: Object.freeze({ id: "profile", number: "04", name: "Profile", localName: "Профиль" }),
+    auth: Object.freeze({ id: "auth", number: "04", name: "Authorization", localName: "Авторизация" })
 });
 
 const DEFAULT_MODULE_ID = "finance";
@@ -17,6 +18,9 @@ function createNavigation(appRoot) {
     const moduleNumber = appRoot.querySelector(".module-number");
     const moduleStatus = appRoot.querySelector(".module-status");
     const navigationItems = [...appRoot.querySelectorAll(".navigation-item")];
+    const accountNavigationItem = navigationItems.find(
+        (item) => item.dataset.navigationSlot === "account"
+    ) || navigationItems[3];
 
     if (!shell) {
         throw new Error("LifeGame Navigation: application shell was not found.");
@@ -65,6 +69,27 @@ function createNavigation(appRoot) {
         }
     }
 
+    function setAuthenticationState(isAuthenticated) {
+        if (!accountNavigationItem) {
+            throw new Error("LifeGame Navigation: account navigation item was not found.");
+        }
+
+        const module = isAuthenticated ? MODULES.profile : MODULES.auth;
+
+        accountNavigationItem.dataset.module = module.id;
+        accountNavigationItem.href = "#" + module.id;
+
+        const label = accountNavigationItem.querySelector(".navigation-label");
+        if (label) {
+            label.textContent = module.localName;
+        }
+
+        const currentRoute = window.location.hash.slice(1);
+        if (currentRoute === "profile" || currentRoute === "auth") {
+            render(currentRoute, false);
+        }
+    }
+
     navigationItems.forEach((item) => {
         item.addEventListener("click", (event) => {
             event.preventDefault();
@@ -77,6 +102,11 @@ function createNavigation(appRoot) {
     });
 
     render(window.location.hash.slice(1) || DEFAULT_MODULE_ID, false);
+
+    return Object.freeze({
+        render,
+        setAuthenticationState
+    });
 }
 
 export { createNavigation };
