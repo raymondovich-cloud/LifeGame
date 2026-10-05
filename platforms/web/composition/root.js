@@ -1,4 +1,4 @@
-// root.js — Version 1.6
+// root.js — Version 1.7
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 
@@ -9,6 +9,7 @@ import { createAuthController } from "../../../source/presentation/auth/auth.con
 import { createUserContext } from "../../../source/application/user/user.context.js";
 import { createSupabaseFinanceMemory } from "../../../source/infrastructure/supabase/finance.memory.supabase.js";
 import { createFinanceMemoryPort } from "../../../source/application/finance/finance.memory.port.js";
+import { createFinanceApplication } from "../../../source/application/finance/finance.js";
 import { createProfileApplication } from "../../../source/application/profile/profile.js";
 import { createSupabaseProfileAdapter } from "../../../source/infrastructure/supabase/profile.adapter.js";
 
@@ -32,36 +33,41 @@ export function createWebApplication() {
     const authController = createAuthController(identityApplication);
     const profileAdapter = createSupabaseProfileAdapter(supabaseClient);
     const profileApplication = createProfileApplication(profileAdapter);
-    const financeMemoryByUser = new Map();
+    const financeApplicationByUser = new Map();
 
-    async function createFinanceMemoryForUser(userId) {
+    async function createFinanceApplicationForUser(userId) {
         const normalizedUserId = String(userId ?? "").trim();
 
         if (!normalizedUserId) {
             throw new Error("LifeGame Web: authenticated user id is required.");
         }
 
-        if (!financeMemoryByUser.has(normalizedUserId)) {
+        if (!financeApplicationByUser.has(normalizedUserId)) {
             const userContext = createUserContext(normalizedUserId);
             const memory = createSupabaseFinanceMemory({
                 client: supabaseClient,
                 userContext
             });
             await memory.hydrate();
-            financeMemoryByUser.set(
+            const financeMemory = createFinanceMemoryPort(memory);
+            financeApplicationByUser.set(
                 normalizedUserId,
-                createFinanceMemoryPort(memory)
+                createFinanceApplication({ memory: financeMemory })
             );
         }
 
-        return financeMemoryByUser.get(normalizedUserId);
+        return financeApplicationByUser.get(normalizedUserId);
     }
 
     return Object.freeze({
         auth: authController,
         profile: profileApplication,
         finance: Object.freeze({
-            createMemoryForUser: createFinanceMemoryForUser
+            createApplicationForUser: createFinanceApplicationForUser,
+            clearForUser(userId) {
+                const normalizedUserId = String(userId ?? "").trim();
+                financeApplicationByUser.delete(normalizedUserId);
+            }
         })
     });
 }
