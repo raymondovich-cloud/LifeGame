@@ -1,6 +1,6 @@
-/* statistics.css — Version 1.20 */
+/* statistics.css — Version 1.21 */
 
-/* Shared statistics hierarchy */
+/* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
 .statistics { display:grid; gap:var(--space-3); }
 
@@ -53,9 +53,7 @@
 }
 
 .liquid-funds-statistics-trigger:hover,
-.liquid-funds-statistics-trigger:focus-visible {
-    color:var(--color-white);
-}
+.liquid-funds-statistics-trigger:focus-visible { color:var(--color-white); }
 
 .liquid-funds-total-row {
     display:flex;
@@ -85,16 +83,16 @@
     font-size:var(--font-size-2xs);
 }
 
-/* Liquid Funds analytics — dedicated page for liquid funds analysis */
+/* Liquid Funds analytics — dedicated page. */
 
 .liquid-funds-statistics-screen {
     display:grid;
-    gap:var(--space-4);
+    gap:var(--space-5);
 }
 
 .liquid-funds-statistics-header {
     display:grid;
-    gap:var(--space-3);
+    gap:var(--space-4);
 }
 
 .liquid-funds-statistics-back {
@@ -113,19 +111,33 @@
 }
 
 .liquid-funds-statistics-back:hover,
-.liquid-funds-statistics-back:focus-visible {
-    color:var(--color-white-soft);
-}
+.liquid-funds-statistics-back:focus-visible { color:var(--color-white-soft); }
 
 .liquid-funds-statistics-heading {
     display:grid;
-    gap:var(--space-1);
+    gap:var(--space-2);
+}
+
+.liquid-funds-statistics-title {
+    margin:0;
+    color:var(--color-white);
+    font-size:var(--font-size-section);
+    font-weight:var(--font-weight-semibold);
+    line-height:var(--line-height-snug);
+}
+
+.liquid-funds-statistics-description {
+    max-width:34rem;
+    margin:0;
+    color:var(--color-gray);
+    font-size:var(--font-size-sm);
+    line-height:var(--line-height-normal);
 }
 
 .statistics-period-selector {
     display:flex;
     align-items:center;
-    gap:var(--space-4);
+    gap:var(--space-5);
     padding:0;
     background:transparent;
     border:0;
@@ -136,7 +148,7 @@
     position:relative;
     width:auto;
     min-width:0;
-    min-height:2rem;
+    min-height:2.25rem;
     margin:0;
     padding:0 0 var(--space-2);
     background:transparent;
@@ -150,19 +162,16 @@
 }
 
 .statistics-period-button:hover,
-.statistics-period-button:focus-visible {
+.statistics-period-button:focus-visible,
+.statistics-period-button.is-active {
     background:transparent;
     border-color:transparent;
-    color:var(--color-white-soft);
     box-shadow:none;
 }
 
-.statistics-period-button.is-active {
-    color:var(--color-white);
-    background:transparent;
-    border-color:transparent;
-    box-shadow:none;
-}
+.statistics-period-button:hover,
+.statistics-period-button:focus-visible { color:var(--color-white-soft); }
+.statistics-period-button.is-active { color:var(--color-white); }
 
 .statistics-period-button.is-active::after {
     content:"";
@@ -171,26 +180,32 @@
     bottom:0;
     left:0;
     height:1px;
-    background:var(--color-white);
+    background:var(--color-accent);
 }
 
-.liquid-funds-statistics-screen > div:last-child {
+.liquid-funds-analytics-content {
     display:grid;
-    gap:var(--space-5);
+    gap:0;
 }
+
+.liquid-funds-analytics-primary {
+    display:grid;
+    gap:var(--space-2);
+    padding:var(--space-5) 0 var(--space-6);
+    border-top:var(--border-subtle);
+}
+
+.liquid-funds-analytics-primary-value {
+    font-size:clamp(2.5rem,12vw,4rem);
+    line-height:.95;
+}
+
+.liquid-funds-analytics-date { color:var(--color-gray-dark); }
 
 .liquid-funds-statistics-metric {
     display:grid;
     gap:var(--space-2);
-    padding:0;
-    background:transparent;
-    border:0;
-    border-radius:0;
-    box-shadow:none;
-}
-
-.liquid-funds-statistics-metric + .liquid-funds-statistics-metric {
-    padding-top:var(--space-4);
+    padding:var(--space-5) 0;
     border-top:var(--border-subtle);
 }
 
@@ -201,10 +216,17 @@
     line-height:var(--line-height-tight);
 }
 
+.liquid-funds-analytics-detail {
+    color:var(--color-gray);
+    font-size:var(--font-size-sm);
+    line-height:var(--line-height-normal);
+}
+
 .liquid-funds-statistics-history,
 .liquid-funds-statistics-assets {
     display:grid;
     gap:var(--space-2);
+    padding:var(--space-5) 0 0;
 }
 
 .liquid-funds-statistics-history-row {
@@ -218,8 +240,9 @@
     font-size:var(--font-size-sm);
 }
 
-.liquid-funds-statistics-history-row:first-of-type {
-    margin-top:var(--space-1);
+.liquid-funds-statistics-history-row span:last-child {
+    color:var(--color-gray);
+    text-align:right;
 }
 
 .financial-stability-index-panel {
