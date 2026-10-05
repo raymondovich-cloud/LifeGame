@@ -126,3 +126,142 @@ test("updateProfile requires a user id", async () => {
         /Profile user id is required/
     );
 });
+
+// LifeGame 3.0 — Profile Application Lifecycle Tests
+// Version: 1.0
+// Responsibility: verify the complete Profile read/update/read lifecycle at the Application boundary.
+
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import { createProfileApplication } from "./profile.js";
+
+test("profile lifecycle reads, updates, and reads the persisted user profile", async () => {
+    const profiles = new Map([
+        [
+            "user-1",
+            {
+                id: "user-1",
+                displayName: "Before Update",
+                birthDate: "1997-04-12"
+            }
+        ]
+    ]);
+
+    const profilePort = {
+        async getProfile(userId) {
+            return structuredClone(profiles.get(userId) ?? null);
+        },
+
+        async updateProfile(userId, input) {
+            const current = profiles.get(userId);
+
+            if (!current) {
+                throw new Error("Profile not found.");
+            }
+
+            const updated = {
+                id: userId,
+                displayName: input.displayName,
+                birthDate: input.birthDate
+            };
+
+            profiles.set(userId, updated);
+
+            return structuredClone(updated);
+        }
+    };
+
+    const application = createProfileApplication(profilePort);
+
+    const before = await application.getProfile("user-1");
+
+    assert.deepEqual(before, {
+        id: "user-1",
+        displayName: "Before Update",
+        birthDate: "1997-04-12"
+    });
+
+    const updated = await application.updateProfile("user-1", {
+        displayName: "After Update",
+        birthDate: "1998-08-15"
+    });
+
+    assert.deepEqual(updated, {
+        id: "user-1",
+        displayName: "After Update",
+        birthDate: "1998-08-15"
+    });
+
+    const after = await application.getProfile("user-1");
+
+    assert.deepEqual(after, {
+        id: "user-1",
+        displayName: "After Update",
+        birthDate: "1998-08-15"
+    });
+});
+
+test("profile lifecycle remains user-scoped", async () => {
+    const profiles = new Map([
+        [
+            "user-a",
+            {
+                id: "user-a",
+                displayName: "User A",
+                birthDate: "1997-04-12"
+            }
+        ],
+        [
+            "user-b",
+            {
+                id: "user-b",
+                displayName: "User B",
+                birthDate: "1998-08-15"
+            }
+        ]
+    ]);
+
+    const profilePort = {
+        async getProfile(userId) {
+            return structuredClone(profiles.get(userId) ?? null);
+        },
+
+        async updateProfile(userId, input) {
+            const current = profiles.get(userId);
+
+            if (!current) {
+                throw new Error("Profile not found.");
+            }
+
+            const updated = {
+                id: userId,
+                displayName: input.displayName,
+                birthDate: input.birthDate
+            };
+
+            profiles.set(userId, updated);
+
+            return structuredClone(updated);
+        }
+    };
+
+    const application = createProfileApplication(profilePort);
+
+    await application.updateProfile("user-a", {
+        displayName: "User A Updated",
+        birthDate: "2000-01-01"
+    });
+
+    assert.deepEqual(await application.getProfile("user-a"), {
+        id: "user-a",
+        displayName: "User A Updated",
+        birthDate: "2000-01-01"
+    });
+
+    assert.deepEqual(await application.getProfile("user-b"), {
+        id: "user-b",
+        displayName: "User B",
+        birthDate: "1998-08-15"
+    });
+});
