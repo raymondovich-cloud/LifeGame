@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.20
+// source/presentation/finance/finance.js — Version 1.21
 
 import {
     listFinanceEntries,
@@ -163,7 +163,7 @@ function createLiquidFundsSummary(root, onWriteAttempt = null) {
     statisticsButton.type = "button";
     statisticsButton.className = "liquid-funds-statistics-trigger";
     statisticsButton.innerHTML =
-        '<span>Статистика</span><span aria-hidden="true">›</span>';
+        '<span>Аналитика</span><span aria-hidden="true">›</span>';
 
     statisticsButton.addEventListener("click", () => {
         renderLiquidFundsStatisticsScreen(
