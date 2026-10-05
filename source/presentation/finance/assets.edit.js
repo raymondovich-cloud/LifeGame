@@ -1,4 +1,4 @@
-// assets.edit.js — Version 1.1
+// assets.edit.js — Version 1.2
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
@@ -8,7 +8,7 @@ function triggerHaptic() {
     }
 }
 
-function createContextMenu(item, onEdit, point) {
+function createContextMenu(item, onEdit) {
     const menu = document.createElement("div");
     menu.className = "assets-context-menu";
     menu.setAttribute("role", "menu");
@@ -23,6 +23,7 @@ function createContextMenu(item, onEdit, point) {
         event.preventDefault();
         event.stopPropagation();
         menu.remove();
+        item.classList.remove("is-editing-target");
         onEdit();
     });
 
@@ -31,17 +32,25 @@ function createContextMenu(item, onEdit, point) {
 
     const margin = 12;
     const gap = 10;
-    const menuWidth = 180;
-    const menuHeight = 52;
-    let left = point.x - menuWidth / 2;
-    let top = point.y - menuHeight - gap;
+    const rowRect = item.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
 
-    if (top < margin) {
-        top = point.y + gap;
+    let left = rowRect.left;
+    let top = rowRect.bottom + gap;
+
+    if (top + menuRect.height > window.innerHeight - margin) {
+        top = rowRect.top - menuRect.height - gap;
     }
 
-    left = Math.max(margin, Math.min(left, window.innerWidth - menuWidth - margin));
-    top = Math.max(margin, Math.min(top, window.innerHeight - menuHeight - margin));
+    left = Math.max(
+        margin,
+        Math.min(left, window.innerWidth - menuRect.width - margin)
+    );
+
+    top = Math.max(
+        margin,
+        Math.min(top, window.innerHeight - menuRect.height - margin)
+    );
 
     menu.style.left = left + "px";
     menu.style.top = top + "px";
@@ -53,6 +62,7 @@ function createContextMenu(item, onEdit, point) {
     const close = (event) => {
         if (!menu.contains(event.target)) {
             menu.remove();
+            item.classList.remove("is-editing-target");
             document.removeEventListener("pointerdown", close, true);
         }
     };
@@ -260,7 +270,9 @@ function attachAssetEdit(item, entry, onWriteAttempt = null, onSaved = null) {
             pressTimer = null;
             item.classList.remove("is-long-pressing");
             triggerHaptic();
-            createContextMenu(item, openEdit, { x: event.clientX, y: event.clientY });
+            item.classList.remove("is-long-pressing");
+            item.classList.add("is-editing-target");
+            createContextMenu(item, openEdit);
         }, 500);
     });
 
