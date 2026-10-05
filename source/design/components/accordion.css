@@ -1,4 +1,4 @@
-/* accordion.css — Version 1.14 */
+/* accordion.css — Version 1.15 */
 
 .accordion-list {
     display:grid;
@@ -9,8 +9,10 @@
 .accordion-item {
     position:relative;
     overflow:visible;
-    background:var(--gradient-card-premium);
-    border:1px solid var(--color-accent-border);
+    background:
+        var(--gradient-card-premium) padding-box,
+        linear-gradient(135deg, rgba(242,138,46,.28) 0%, rgba(10,10,10,.72) 45%, rgba(242,138,46,.16) 100%) border-box;
+    border:1px solid transparent;
     border-radius:var(--radius-card);
     box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22);
 }
@@ -24,7 +26,7 @@
     pointer-events:none;
     content:"";
     background:var(--gradient-accent-line);
-    opacity:.38;
+    opacity:.24;
 }
 
 .accordion-header {
