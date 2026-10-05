@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.0
+// platforms/web/web.js — Version 4.1
 
 import {
     trace,
@@ -336,7 +336,8 @@ function startWeb() {
                 return;
             }
 
-            renderProfile(moduleContent, session, {
+            await renderProfile(moduleContent, session, {
+                profileApplication: application.profile,
                 onLogout: handleLogout
             });
             return;
