@@ -27,8 +27,7 @@ import {
 import {
     createAsset,
     updateAsset,
-    removeAsset,
-    calculateAssetsTotal
+    removeAsset
 } from "../../domain/finance/assets/assets.js";
 
 import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
