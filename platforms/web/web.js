@@ -379,6 +379,15 @@ function startWeb() {
     }
 
     async function renderApplicationShell(route, isPublic, session = null, renderId = null) {
+        if (renderId !== null && renderId !== routeRenderSequence) {
+            trace("web-shell", "shell.render.stale-before-state", {
+                route,
+                renderId,
+                latestRenderId: routeRenderSequence
+            });
+            return;
+        }
+
         // Set access state before any asynchronous user-memory hydration.
         // Otherwise a stale public render can leave authenticated Finance rows
         // with a public write guard, which opens the Create Account modal.
@@ -491,7 +500,12 @@ function startWeb() {
                     ? requestedRoute
                     : DEFAULT_APPLICATION_ROUTE;
 
-                await renderApplicationShell(publicRoute, true);
+                await renderApplicationShell(
+                    publicRoute,
+                    true,
+                    null,
+                    renderId
+                );
                 return;
             }
 
