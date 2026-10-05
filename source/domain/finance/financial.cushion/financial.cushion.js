@@ -1,4 +1,4 @@
-// financial.cushion.js — Version 1.1
+// financial.cushion.js — Version 1.2
 
 const entries = [];
 let nextId = 1;
@@ -29,6 +29,23 @@ function addFinancialCushion(label, amount) {
     return { ...entry };
 }
 
+function updateFinancialCushion(id, label, amount) {
+    const normalizedLabel = String(label ?? "").trim();
+    const normalizedAmount = Number(amount);
+
+    if (!normalizedLabel) throw new Error("Financial Cushion: название записи обязательно.");
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+        throw new Error("Financial Cushion: сумма должна быть больше нуля.");
+    }
+
+    const entry = entries.find((item) => item.id === id);
+    if (!entry) return false;
+
+    entry.label = normalizedLabel;
+    entry.amount = normalizedAmount;
+    return { ...entry };
+}
+
 function removeFinancialCushion(id) {
     const index = entries.findIndex((entry) => entry.id === id);
 
@@ -38,4 +55,4 @@ function removeFinancialCushion(id) {
     return true;
 }
 
-export { listFinancialCushion, addFinancialCushion, removeFinancialCushion };
+export { listFinancialCushion, addFinancialCushion, updateFinancialCushion, removeFinancialCushion };
