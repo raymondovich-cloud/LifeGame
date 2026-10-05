@@ -127,6 +127,10 @@ function listFinanceEntries(subblockId) {
         return financeMemory ? financeMemory.listAssets() : [];
     }
 
+    if (!financeMemory) {
+        return [];
+    }
+
     const config = getCollectionConfig(subblockId);
     return getMemoryMethod(config, "list")();
 }
