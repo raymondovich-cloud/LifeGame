@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Login Presentation
-// Version: 1.1
+// Version: 1.2
 // Responsibility: render the Login interaction through Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -10,7 +10,7 @@ import { IDENTITY_ERROR_CODE } from '../../application/identity/identity.error.j
 export function renderLogin(
     container,
     authController,
-    onBack,
+    onCreateAccount,
     onAuthenticated
 ) {
     if (!container) {
@@ -21,8 +21,8 @@ export function renderLogin(
         throw new Error('Auth controller is required.');
     }
 
-    if (typeof onBack !== 'function') {
-        throw new Error('Login back action is required.');
+    if (typeof onCreateAccount !== 'function') {
+        throw new Error('Login registration action is required.');
     }
 
     if (typeof onAuthenticated !== 'function') {
@@ -32,12 +32,6 @@ export function renderLogin(
     const wrapper = document.createElement('section');
     wrapper.className = 'form';
     wrapper.setAttribute('aria-labelledby', 'login-title');
-
-    const backButton = document.createElement('button');
-    backButton.className = 'button-control';
-    backButton.type = 'button';
-    backButton.textContent = 'Back';
-    backButton.addEventListener('click', onBack);
 
     const title = document.createElement('h1');
     title.id = 'login-title';
@@ -116,6 +110,21 @@ export function renderLogin(
         }
     });
 
+    const registrationPrompt = document.createElement('div');
+    registrationPrompt.className = 'auth-secondary-action';
+
+    const registrationText = document.createElement('span');
+    registrationText.className = 'auth-secondary-action__text';
+    registrationText.textContent = "Don't have an account?";
+
+    const registrationButton = document.createElement('button');
+    registrationButton.className = 'button-control';
+    registrationButton.type = 'button';
+    registrationButton.textContent = 'Create account';
+    registrationButton.addEventListener('click', onCreateAccount);
+
+    registrationPrompt.append(registrationText, registrationButton);
+
     form.append(
         emailField,
         passwordField,
@@ -123,7 +132,7 @@ export function renderLogin(
         status,
         resendButton
     );
-    wrapper.append(backButton, title, form);
+    wrapper.append(title, form, registrationPrompt);
     container.append(wrapper);
 
     form.addEventListener('submit', async (event) => {
