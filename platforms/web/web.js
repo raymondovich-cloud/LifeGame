@@ -291,11 +291,11 @@ function startWeb() {
         authenticationEstablished = false;
         publicMode = true;
         sessionState = "unauthenticated";
-        activeUserId = null;
 
-        // Remove the active user's in-memory data immediately. The public
+        // Remove the active user's scoped Application immediately. The public
         // finance view must never render the previous user's state.
         application.finance.clearForUser(activeUserId);
+        activeUserId = null;
         clearAssetsAnalyticsMemory();
 
         trace("web-shell", "logout.completed", {
