@@ -1,4 +1,4 @@
-// assets.js — Version 2.2
+// assets.js — Version 2.3
 
 import { publish } from "../../../core/events/event.bus.js";
 import { trace } from "../../../core/diagnostics/lifecycle.trace.js";
@@ -55,6 +55,36 @@ function addAsset(label, amount, liquidity = "liquid") {
     return { ...entry };
 }
 
+function updateAsset(id, label, amount, liquidity = "liquid") {
+    const normalizedLabel = String(label ?? "").trim();
+    const normalizedAmount = Number(amount);
+    const normalizedLiquidity = liquidity === "illiquid" ? "illiquid" : "liquid";
+
+    if (!normalizedLabel) {
+        throw new Error("Assets: название записи обязательно.");
+    }
+
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+        throw new Error("Assets: сумма должна быть больше нуля.");
+    }
+
+    const entry = entries.find((item) => item.id === id);
+
+    if (!entry) {
+        trace("domain", "finance.assets.update.not_found", { entryId: id });
+        return false;
+    }
+
+    entry.label = normalizedLabel;
+    entry.amount = normalizedAmount;
+    entry.liquidity = normalizedLiquidity;
+
+    publishStateChanged();
+
+    trace("domain", "finance.assets.update.completed", { entryId: id });
+    return { ...entry };
+}
+
 function removeAsset(id) {
     trace("domain", "finance.assets.remove.begin", { entryId: id });
 
@@ -80,5 +110,6 @@ export {
     listAssets,
     calculateAssetsTotal,
     addAsset,
-    removeAsset
+    removeAsset,
+    updateAsset
 };
