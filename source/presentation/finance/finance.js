@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.6
+// source/presentation/finance/finance.js — Version 2.7
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -14,7 +14,7 @@ import {
 
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
-import { attachAssetEdit } from "./assets.edit.js";
+import { attachEntryEdit } from "./entry.edit.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
     { id: "assets", number: "01", title: "Активы", description: "Имущество и средства, которыми вы владеете", info: "Активы, которыми вы владеете: недвижимость, автомобиль, наличные, средства на картах, счета и другие активы, которые пользователь хочет учитывать в своей финансовой картине." },
@@ -586,12 +586,29 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
                 const row = createEntryRow(root, subblock, entry);
                 entryList.appendChild(row);
 
-                if (subblock.id === "assets") {
-                    attachAssetEdit(
+                if (subblock.id !== "financial-stability-index") {
+                    attachEntryEdit(
                         row,
+                        subblock.id,
                         entry,
                         onWriteAttempt,
-                        () => refreshAssetsSummary(root)
+                        (updated) => {
+                            const label = row.querySelector(".finance-entry-label");
+                            const amount = row.querySelector(".finance-entry-amount");
+
+                            if (label) label.textContent = updated.label;
+
+                            if (amount) {
+                                amount.textContent = subblock.id === "financial-burden"
+                                    ? "Долг " + formatAmount(updated.debt) +
+                                      " · Платёж " + formatAmount(updated.payment)
+                                    : formatAmount(updated.amount);
+                            }
+
+                            if (subblock.id === "assets") {
+                                refreshAssetsSummary(root);
+                            }
+                        }
                     );
                 }
             });
