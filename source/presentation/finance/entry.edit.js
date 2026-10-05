@@ -1,4 +1,4 @@
-// entry.edit.js — Version 1.1
+// entry.edit.js — Version 1.2
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
@@ -48,7 +48,7 @@ function animateEntryListReflow(entryList, mutate, onDone = null) {
     }, 250);
 }
 
-function createRowInteractionMenu(item, onEdit) {
+function createRowInteractionMenu(item, onEdit, onPin, onDelete) {
     const entryList = item.closest(".finance-entry-list");
     const menu = document.createElement("div");
     menu.className = "row-interaction-menu";
@@ -59,7 +59,20 @@ function createRowInteractionMenu(item, onEdit) {
     editButton.className = "row-interaction-menu__item";
     editButton.textContent = "Редактировать";
     editButton.setAttribute("role", "menuitem");
-    menu.appendChild(editButton);
+
+    const pinButton = document.createElement("button");
+    pinButton.type = "button";
+    pinButton.className = "row-interaction-menu__item";
+    pinButton.textContent = item.classList.contains("is-pinned") ? "Открепить" : "Закрепить";
+    pinButton.setAttribute("role", "menuitem");
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "row-interaction-menu__item row-interaction-menu__item--danger";
+    deleteButton.textContent = "Удалить";
+    deleteButton.setAttribute("role", "menuitem");
+
+    menu.append(editButton, pinButton, deleteButton);
 
     const cleanup = () => {
         if (!menu.isConnected) return;
@@ -75,6 +88,20 @@ function createRowInteractionMenu(item, onEdit) {
         event.stopPropagation();
         cleanup();
         onEdit();
+    });
+
+    pinButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        cleanup();
+        onPin?.();
+    });
+
+    deleteButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        cleanup();
+        onDelete?.();
     });
 
     animateEntryListReflow(entryList, () => {
@@ -249,7 +276,7 @@ function openEntryEditModal(subblockId, entry, onSaved) {
     });
 }
 
-function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved = null) {
+function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved = null, onPin = null, onDelete = null) {
     if (!item || !entry || subblockId === "financial-stability-index") return;
 
     let pressTimer = null;
@@ -291,7 +318,7 @@ function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved
             item.classList.remove("is-long-pressing");
             triggerHaptic();
             item.classList.add("is-editing-target");
-            createRowInteractionMenu(item, showEditor);
+            createRowInteractionMenu(item, showEditor, onPin, onDelete);
         }, 500);
     });
 
