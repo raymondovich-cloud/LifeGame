@@ -1,4 +1,12 @@
-// finance.memory.js — Version 1.0
+// finance.memory.js — Version 2.0
+
+const COLLECTIONS = Object.freeze([
+    "assets",
+    "actual-earnings",
+    "financial-burden",
+    "mandatory-expenses",
+    "financial-cushion"
+]);
 
 function createFinanceMemory(userContext) {
     const userId = userContext?.userId;
@@ -7,59 +15,78 @@ function createFinanceMemory(userContext) {
         throw new Error("LifeGame Finance Memory: user context is required.");
     }
 
-    const assets = [];
+    const collections = new Map(
+        COLLECTIONS.map((collection) => [collection, []])
+    );
     const snapshots = [];
 
-    function cloneAsset(asset) {
-        return { ...asset };
+    function cloneEntry(entry) {
+        return { ...entry };
+    }
+
+    function cloneEntries(entries) {
+        return entries.map(cloneEntry);
     }
 
     function cloneSnapshot(snapshot) {
         return {
             occurredAt: snapshot.occurredAt,
             total: snapshot.total,
-            entries: snapshot.entries.map(cloneAsset)
+            entries: cloneEntries(snapshot.entries)
         };
     }
 
-    function listAssets() {
-        return assets.map(cloneAsset);
+    function requireCollection(collection) {
+        if (!collections.has(collection)) {
+            throw new Error("LifeGame Finance Memory: unknown collection.");
+        }
+
+        return collections.get(collection);
     }
 
-    function saveAsset(asset) {
-        const storedAsset = {
-            ...asset,
-            id: asset.id || ("asset-" + crypto.randomUUID())
+    function listEntries(collection) {
+        return cloneEntries(requireCollection(collection));
+    }
+
+    function saveEntry(collection, entry) {
+        const entries = requireCollection(collection);
+        const storedEntry = {
+            ...entry,
+            id: entry.id || (
+                collection + "-" + crypto.randomUUID()
+            )
         };
 
-        assets.push(storedAsset);
-        return cloneAsset(storedAsset);
+        entries.push(storedEntry);
+        return cloneEntry(storedEntry);
     }
 
-    function updateAsset(id, asset) {
-        const index = assets.findIndex((entry) => entry.id === id);
+    function updateEntry(collection, id, entry) {
+        const entries = requireCollection(collection);
+        const index = entries.findIndex((item) => item.id === id);
 
         if (index === -1) {
             return false;
         }
 
-        assets[index] = {
-            ...assets[index],
-            ...asset,
+        entries[index] = {
+            ...entries[index],
+            ...entry,
             id
         };
 
-        return cloneAsset(assets[index]);
+        return cloneEntry(entries[index]);
     }
 
-    function deleteAsset(id) {
-        const index = assets.findIndex((entry) => entry.id === id);
+    function deleteEntry(collection, id) {
+        const entries = requireCollection(collection);
+        const index = entries.findIndex((entry) => entry.id === id);
 
         if (index === -1) {
             return false;
         }
 
-        assets.splice(index, 1);
+        entries.splice(index, 1);
         return true;
     }
 
@@ -71,7 +98,7 @@ function createFinanceMemory(userContext) {
         snapshots.push({
             occurredAt: snapshot.occurredAt,
             total: Number(snapshot.total) || 0,
-            entries: snapshot.entries.map(cloneAsset)
+            entries: cloneEntries(snapshot.entries)
         });
     }
 
@@ -133,10 +160,44 @@ function createFinanceMemory(userContext) {
 
     return Object.freeze({
         userId,
-        listAssets,
-        saveAsset,
-        updateAsset,
-        deleteAsset,
+        listAssets: () => listEntries("assets"),
+        saveAsset: (entry) => saveEntry("assets", entry),
+        updateAsset: (id, entry) => updateEntry("assets", id, entry),
+        deleteAsset: (id) => deleteEntry("assets", id),
+
+        listActualEarnings: () => listEntries("actual-earnings"),
+        saveActualEarning: (entry) => saveEntry("actual-earnings", entry),
+        updateActualEarning: (id, entry) =>
+            updateEntry("actual-earnings", id, entry),
+        deleteActualEarning: (id) =>
+            deleteEntry("actual-earnings", id),
+
+        listFinancialBurden: () => listEntries("financial-burden"),
+        saveFinancialBurden: (entry) =>
+            saveEntry("financial-burden", entry),
+        updateFinancialBurden: (id, entry) =>
+            updateEntry("financial-burden", id, entry),
+        deleteFinancialBurden: (id) =>
+            deleteEntry("financial-burden", id),
+
+        listMandatoryExpenses: () =>
+            listEntries("mandatory-expenses"),
+        saveMandatoryExpense: (entry) =>
+            saveEntry("mandatory-expenses", entry),
+        updateMandatoryExpense: (id, entry) =>
+            updateEntry("mandatory-expenses", id, entry),
+        deleteMandatoryExpense: (id) =>
+            deleteEntry("mandatory-expenses", id),
+
+        listFinancialCushion: () =>
+            listEntries("financial-cushion"),
+        saveFinancialCushion: (entry) =>
+            saveEntry("financial-cushion", entry),
+        updateFinancialCushion: (id, entry) =>
+            updateEntry("financial-cushion", id, entry),
+        deleteFinancialCushion: (id) =>
+            deleteEntry("financial-cushion", id),
+
         saveAssetsSnapshot,
         getAssetsSnapshotAtOrBefore,
         getAssetsSnapshotsBetween,
