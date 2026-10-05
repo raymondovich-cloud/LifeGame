@@ -1,14 +1,14 @@
-/* list.css — Version 2.9 */
+/* list.css — Version 3.0 */
 
 .list-empty {
     display:grid;
     gap:var(--space-1);
-    padding:var(--space-3);
+    padding:var(--space-3) 0;
     color:var(--color-gray);
     text-align:left;
-    background:var(--gradient-surface);
-    border:var(--border-subtle);
-    border-radius:var(--radius-control);
+    background:transparent;
+    border:0;
+    border-radius:0;
 }
 
 .list-empty-label {
@@ -37,7 +37,7 @@
 
 .finance-entry-list {
     display:grid;
-    gap:var(--space-2);
+    gap:0;
     margin-bottom:var(--space-4);
 }
 
@@ -127,9 +127,9 @@
     -webkit-user-select:none;
     user-select:none;
     -webkit-touch-callout:none;
-    border:var(--border-subtle);
-    border-radius:var(--radius-control);
-    background:var(--gradient-surface);
+    border:0;
+    border-radius:0;
+    background:transparent;
     isolation:isolate;
 }
 
@@ -142,8 +142,8 @@
     align-items:center;
     justify-content:space-between;
     gap:var(--space-3);
-    min-height:2.75rem;
-    padding:var(--space-2) var(--space-3);
+    min-height:3.25rem;
+    padding:var(--space-3) 0;
     color:var(--color-white);
     background:var(--gradient-surface);
     transform:translate3d(var(--swipe-offset,0),0,0);
@@ -297,4 +297,44 @@
 
 .finance-entry-trailing .finance-entry-pin {
     margin-left:0;
+}
+
+.finance-overview {
+    display:grid;
+    gap:var(--space-1);
+    padding:var(--space-4) 0 var(--space-5);
+    border-bottom:var(--border-subtle);
+}
+
+.finance-overview-eyebrow {
+    color:var(--color-gray);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+    letter-spacing:var(--letter-spacing-system);
+}
+
+.finance-overview-score-row {
+    display:flex;
+    align-items:baseline;
+    gap:.2rem;
+}
+
+.finance-overview-score {
+    color:var(--color-white);
+    font-family:var(--font-family-mono);
+    font-size:clamp(3.2rem,14vw,5.2rem);
+    font-weight:var(--font-weight-semibold);
+    letter-spacing:-.07em;
+    line-height:.95;
+}
+
+.finance-overview-score-suffix {
+    color:var(--color-gray-dark);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-interface);
+}
+
+.finance-overview-category {
+    color:var(--color-white-soft);
+    font-size:var(--font-size-xs);
 }
