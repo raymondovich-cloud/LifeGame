@@ -6,11 +6,11 @@ import { renderRegistration } from "../../source/presentation/auth/register.js";
 import { renderLogin } from "../../source/presentation/auth/login.js";
 import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { createWebApplication } from "./composition/root.js";
-import { configureLiquidFundsMemory } from "../../source/application/finance/finance.js";
+import { configureAssetsMemory } from "../../source/application/finance/finance.js";
 import {
-    saveLiquidFundsSnapshot,
-    getLiquidFundsSnapshotAtOrBefore
-} from "../../source/memory/finance/liquid.funds.memory.js";
+    saveAssetsSnapshot,
+    getAssetsSnapshotAtOrBefore
+} from "../../source/memory/finance/assets.memory.js";
 import { subscribe } from "../../source/core/events/event.bus.js";
 
 const APP_ROOT_ID = "app";
@@ -19,12 +19,12 @@ const DEFAULT_APPLICATION_ROUTE = "finance";
 function startWeb() {
     const application = createWebApplication();
 
-    configureLiquidFundsMemory({
-        getSnapshotAtOrBefore: getLiquidFundsSnapshotAtOrBefore
+    configureAssetsMemory({
+        getSnapshotAtOrBefore: getAssetsSnapshotAtOrBefore
     });
 
-    subscribe("finance.liquid-funds.state.changed", (event) => {
-        saveLiquidFundsSnapshot({
+    subscribe("finance.assets.state.changed", (event) => {
+        saveAssetsSnapshot({
             occurredAt: event.occurredAt,
             total: event.payload.total,
             entries: event.payload.entries
