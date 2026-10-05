@@ -11,7 +11,7 @@
 - Runtime Finance Memory обновлён до Version 2.1.
 - Supabase Finance Memory Adapter обновлён до Version 2.1.
 - Добавлен unit-тест полного create → update → delete lifecycle с проверкой snapshots.
-- Добавлены две SQL migration: 20261005150724_add_atomic_finance_asset_mutations и 20261005151100_optimize_finance_rls_auth_uid.
+- Добавлены две SQL migration: 20261005150724_add_atomic_finance_asset_mutations и 20261005151108_optimize_finance_rls_auth_uid.
 - Все Finance RLS-политики переведены на оптимизированный вызов (select auth.uid()).
 
 ## Проверка
