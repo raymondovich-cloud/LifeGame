@@ -1,4 +1,4 @@
-// finance.js — Version 2.4
+// finance.js — Version 2.5
 
 import {
     listAssets,
@@ -111,9 +111,19 @@ function removeFinanceEntry(subblockId, entryId) {
 
 function getFinancialStabilityIndex() {
     const financialBurden = listFinancialBurden();
+    const assetsSnapshot = assetsSnapshotReader(Date.now());
+    const assetEntries = assetsSnapshot?.entries ?? listAssets();
+    const liquidAssets = assetEntries.filter(
+        (entry) => entry?.liquidity !== "illiquid"
+    );
+    const illiquidAssets = assetEntries.filter(
+        (entry) => entry?.liquidity === "illiquid"
+    );
 
     return calculateFinancialStabilityIndex({
-        assets: listAssets(),
+        assets: assetEntries,
+        liquidAssets,
+        illiquidAssets,
         actualEarnings: listActualEarnings(),
         financialBurden,
         mandatoryExpenses: listMandatoryExpenses(),
