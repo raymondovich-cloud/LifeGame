@@ -1,11 +1,11 @@
-/* context-menu.css — Version 1.2 */
+/* context-menu.css — Version 1.3 */
 
 .assets-context-menu {
     transform-origin:top left;
-    position:fixed;
+    position:relative;
     z-index:1200;
-    min-width:10.5rem;
-    max-width:calc(100vw - 2rem);
+    width:min(11.25rem,100%);
+    max-width:100%;
     padding:.25rem;
     background:var(--gradient-card-premium);
     border:1px solid var(--color-accent-border);
@@ -13,7 +13,7 @@
     box-shadow:var(--shadow-card),0 0 1.5rem rgba(242,138,46,.08);
     opacity:0;
     transform:translate3d(0,4px,0) scale(.96);
-    transform-origin:center;
+    transform-origin:top left;
     pointer-events:none;
     transition:
         opacity 180ms var(--motion-ease-standard),
