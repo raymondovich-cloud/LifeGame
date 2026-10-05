@@ -634,7 +634,7 @@ function createStructure(financeApplication, snapshot, root, activeSectionId, on
     return section;
 }
 
-function finalizeDeletedItem(root, item, financeApplication, assetsAnalytics) {
+function finalizeDeletedItem(root, item, financeApplication, assetsAnalytics, onWriteAttempt = null) {
     const entryList = item.closest(".finance-entry-list");
     item.remove();
 
@@ -645,7 +645,7 @@ function finalizeDeletedItem(root, item, financeApplication, assetsAnalytics) {
         entryList.appendChild(empty);
     }
 
-    renderFinance(root, item.dataset.subblockId, null, financeApplication);
+    renderFinance(root, item.dataset.subblockId, onWriteAttempt, financeApplication);
 }
 
 function deleteFinanceEntryItem(root, item, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
@@ -666,7 +666,7 @@ function deleteFinanceEntryItem(root, item, onWriteAttempt = null, financeApplic
                 );
 
                 pinnedEntries.delete(getEntryKey(item.dataset.subblockId, item.dataset.entryId));
-                finalizeDeletedItem(root, item, financeApplication, assetsAnalytics);
+                finalizeDeletedItem(root, item, financeApplication, assetsAnalytics, onWriteAttempt);
                 endOperation(operationId, result ? "completed" : "not_found");
             } catch (error) {
                 item.classList.remove("is-deleting");
