@@ -12,6 +12,7 @@ import { renderLogin } from "../../source/presentation/auth/login.js";
 import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureAssetsMemory } from "../../source/application/finance/finance.js";
+import { configureAssetsAnalyticsMemory } from "../../source/application/finance/assets.analytics.js";
 import {
     saveAssetsSnapshot,
     getAssetsSnapshotAtOrBefore,
@@ -32,6 +33,12 @@ function startWeb() {
         getSnapshotAtOrBefore: getAssetsSnapshotAtOrBefore,
         getLiquidAssetsAtOrBefore,
         getIlliquidAssetsAtOrBefore,
+        getSnapshotsBetween: getAssetsSnapshotsBetween,
+        getFirstSnapshot: getFirstAssetsSnapshot
+    });
+
+    configureAssetsAnalyticsMemory({
+        getSnapshotAtOrBefore: getAssetsSnapshotAtOrBefore,
         getSnapshotsBetween: getAssetsSnapshotsBetween,
         getFirstSnapshot: getFirstAssetsSnapshot
     });
