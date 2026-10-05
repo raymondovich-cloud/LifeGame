@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 3.4
+// source/presentation/finance/finance.js — Version 3.5
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -14,6 +14,7 @@ import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
 import { getAssetsAnalytics, getAssetsAnalyticsRange } from "../../application/finance/assets.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
+import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 
 const pinnedEntries = new Set();
 
@@ -32,8 +33,6 @@ function countPinnedEntries(subblockId) {
         pinnedEntries.has(getEntryKey(subblockId, entry.id))
     ).length;
 }
-
-import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 
 function toggleEntryPinned(subblockId, entryId) {
     const key = getEntryKey(subblockId, entryId);
