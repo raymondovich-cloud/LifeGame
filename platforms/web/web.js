@@ -275,6 +275,31 @@ function startWeb() {
         moduleContent.appendChild(section);
     }
 
+    async function handleLogout() {
+        if (sessionState !== "authenticated") {
+            return;
+        }
+
+        trace("web-shell", "logout.begin");
+
+        await application.auth.logout();
+
+        authenticationEstablished = false;
+        publicMode = true;
+        sessionState = "unauthenticated";
+        activeUserId = null;
+
+        trace("web-shell", "logout.completed", {
+            authenticated: false
+        });
+
+        if (getRoute() !== DEFAULT_APPLICATION_ROUTE) {
+            window.location.hash = DEFAULT_APPLICATION_ROUTE;
+        }
+
+        await renderRoute();
+    }
+
     function renderModule(moduleId, session = null) {
         if (moduleId === "finance") {
             renderFinance(
@@ -292,7 +317,9 @@ function startWeb() {
                 return;
             }
 
-            renderProfile(moduleContent, session);
+            renderProfile(moduleContent, session, {
+                onLogout: handleLogout
+            });
             return;
         }
 
