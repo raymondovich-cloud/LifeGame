@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 3.5
+// source/presentation/finance/finance.js — Version 3.6
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -183,14 +183,14 @@ function deleteFinanceEntryItem(root, item, onWriteAttempt = null) {
         item.classList.add("is-deleting");
         item.style.setProperty("--delete-height", item.getBoundingClientRect().height + "px");
 
-        window.setTimeout(() => {
+        window.setTimeout(async () => {
             try {
                 trace("ui", "finance.delete.domain_call", {
                     subblockId: item.dataset.subblockId,
                     entryId: item.dataset.entryId
                 });
 
-                const result = removeFinanceEntry(
+                const result = await removeFinanceEntry(
                     item.dataset.subblockId,
                     item.dataset.entryId
                 );
@@ -551,20 +551,20 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     if (paymentInput) wrapper.appendChild(paymentInput);
     wrapper.append(addButton, error);
 
-    wrapper.addEventListener("submit", (event) => {
+    wrapper.addEventListener("submit", async (event) => {
         event.preventDefault();
         error.hidden = true;
 
-        const save = () => {
+        const save = async () => {
             try {
                 if (subblock.id === "financial-burden") {
-                    addFinancialBurdenEntry(
+                    await addFinancialBurdenEntry(
                         labelInput.value,
                         amountInput.value,
                         paymentInput.value
                     );
                 } else {
-                    addFinanceEntry(subblock.id, labelInput.value, amountInput.value, assetLiquidity);
+                    await addFinanceEntry(subblock.id, labelInput.value, amountInput.value, assetLiquidity);
                 }
 
                 renderFinance(root, subblock.id, onWriteAttempt);
