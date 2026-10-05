@@ -1,13 +1,6 @@
-// financial.cushion.js — Version 1.2
+// financial.cushion.js — Version 2.0
 
-const entries = [];
-let nextId = 1;
-
-function listFinancialCushion() {
-    return entries.map((entry) => ({ ...entry }));
-}
-
-function addFinancialCushion(label, amount) {
+function createFinancialCushion(label, amount) {
     const normalizedLabel = String(label ?? "").trim();
     const normalizedAmount = Number(amount);
 
@@ -19,40 +12,59 @@ function addFinancialCushion(label, amount) {
         throw new Error("Financial Cushion: сумма должна быть больше нуля.");
     }
 
-    const entry = {
-        id: `financial-cushion-${nextId++}`,
-        label: normalizedLabel,
-        amount: normalizedAmount
+    return {
+        entry: {
+            label: normalizedLabel,
+            amount: normalizedAmount
+        },
+        event: {
+            type: "finance.financial.cushion.changed",
+            occurredAt: Date.now(),
+            payload: {
+                operation: "created"
+            }
+        }
     };
-
-    entries.push(entry);
-    return { ...entry };
 }
 
-function updateFinancialCushion(id, label, amount) {
-    const normalizedLabel = String(label ?? "").trim();
-    const normalizedAmount = Number(amount);
+function updateFinancialCushion(existingEntry, label, amount) {
+    if (!existingEntry) return false;
 
-    if (!normalizedLabel) throw new Error("Financial Cushion: название записи обязательно.");
-    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
-        throw new Error("Financial Cushion: сумма должна быть больше нуля.");
-    }
+    const result = createFinancialCushion(label, amount);
 
-    const entry = entries.find((item) => item.id === id);
-    if (!entry) return false;
-
-    entry.label = normalizedLabel;
-    entry.amount = normalizedAmount;
-    return { ...entry };
+    return {
+        entry: {
+            ...result.entry,
+            id: existingEntry.id
+        },
+        event: {
+            ...result.event,
+            payload: {
+                operation: "updated",
+                entryId: existingEntry.id
+            }
+        }
+    };
 }
 
-function removeFinancialCushion(id) {
-    const index = entries.findIndex((entry) => entry.id === id);
+function removeFinancialCushion(existingEntry) {
+    if (!existingEntry) return false;
 
-    if (index === -1) return false;
-
-    entries.splice(index, 1);
-    return true;
+    return {
+        entry: { ...existingEntry },
+        event: {
+            type: "finance.financial.cushion.changed",
+            occurredAt: Date.now(),
+            payload: {
+                operation: "deleted",
+                entryId: existingEntry.id
+            }
+        }
+    };
 }
 
-export { listFinancialCushion, addFinancialCushion, updateFinancialCushion, removeFinancialCushion };
+export {
+    createFinancialCushion,
+    updateFinancialCushion,
+    removeFinancialCushion
+};
