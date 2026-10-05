@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.2
+// source/presentation/finance/finance.js — Version 4.3
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -266,46 +266,38 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
     return section;
 }
 
-function createStructureRow(root, section, total, active, onWriteAttempt, financeApplication, assetsAnalytics) {
+function createStructureRow(root, section, total, count, active, onWriteAttempt, financeApplication) {
     const row = document.createElement("button");
     row.type = "button";
     row.className = "finance-structure-row" + (active ? " is-active" : "");
     row.setAttribute("aria-expanded", String(active));
-
     const main = document.createElement("span");
     main.className = "finance-structure-main";
-
     const label = document.createElement("span");
     label.className = "finance-structure-label";
     label.textContent = section.label;
-
     const title = document.createElement("span");
     title.className = "finance-structure-title";
     title.textContent = section.title;
-
-    main.append(label, title);
-
+    const countLabel = document.createElement("span");
+    countLabel.className = "finance-structure-count";
+    countLabel.textContent = count + " " + (count === 1 ? "запись" : count >= 2 && count <= 4 ? "записи" : "записей");
+    main.append(label, title, countLabel);
     const trailing = document.createElement("span");
     trailing.className = "finance-structure-trailing";
-
     const value = document.createElement("strong");
     value.textContent = formatAmount(total) + " ₽";
-
     const arrow = document.createElement("span");
     arrow.className = "finance-structure-arrow";
     arrow.setAttribute("aria-hidden", "true");
-    arrow.textContent = active ? "−" : "+";
-
+    arrow.textContent = "→";
     trailing.append(value, arrow);
     row.append(main, trailing);
-
     row.addEventListener("click", () => {
         renderFinance(root, active ? null : section.id, onWriteAttempt, financeApplication);
     });
-
     return row;
 }
-
 function createEntryRow(root, section, entry, onWriteAttempt, financeApplication, assetsAnalytics) {
     const row = document.createElement("div");
     row.className = "swipe-delete-item";
@@ -575,7 +567,16 @@ function createDetail(root, section, onWriteAttempt, financeApplication, assetsA
         });
     }
 
-    detail.append(header, list, createAddForm(root, section, onWriteAttempt, financeApplication));
+    const summary = document.createElement("div");
+    summary.className = "finance-detail-summary";
+    const summaryValue = document.createElement("strong");
+    summaryValue.textContent = formatAmount(getSectionTotal(financeApplication, section.id)) + " ₽";
+    const summaryCount = document.createElement("span");
+    const summaryCountValue = entries.length;
+    summaryCount.textContent = summaryCountValue + " " + (summaryCountValue === 1 ? "запись" : summaryCountValue >= 2 && summaryCountValue <= 4 ? "записи" : "записей");
+    summary.append(summaryValue, summaryCount);
+    const add = createAddForm(root, section, onWriteAttempt, financeApplication);
+    detail.append(header, summary, list, add);
     return detail;
 }
 
@@ -583,60 +584,31 @@ function createStructure(financeApplication, snapshot, root, activeSectionId, on
     const section = document.createElement("section");
     section.className = "finance-structure";
     section.setAttribute("aria-label", "Financial structure");
-
     const header = document.createElement("div");
     header.className = "finance-block-heading";
-
     const title = document.createElement("div");
-
     const eyebrow = document.createElement("span");
     eyebrow.className = "finance-section-meta";
     eyebrow.textContent = "FINANCIAL STRUCTURE";
-
     const description = document.createElement("p");
     description.className = "finance-structure-description";
-    description.textContent = "Состояние системы по ключевым направлениям.";
-
+    description.textContent = "Выберите направление для управления данными.";
     title.append(eyebrow, description);
     header.appendChild(title);
-
     const rows = document.createElement("div");
     rows.className = "finance-structure-list";
-
     FINANCE_SECTIONS.forEach((item) => {
-        rows.appendChild(
-            createStructureRow(
-                root,
-                item,
-                snapshot[item.id === "assets"
-                    ? "capital"
-                    : item.id === "actual-earnings"
-                        ? "income"
-                        : item.id === "financial-burden"
-                            ? "burden"
-                            : item.id === "mandatory-expenses"
-                                ? "expenses"
-                                : "reserve"],
-                item.id === activeSectionId,
-                onWriteAttempt,
-                financeApplication,
-                assetsAnalytics
-            )
-        );
+        const entries = financeApplication.listFinanceEntries(item.id);
+        const total = getSectionTotal(financeApplication, item.id);
+        rows.appendChild(createStructureRow(root, item, total, entries.length, item.id === activeSectionId, onWriteAttempt, financeApplication));
     });
-
     section.append(header, rows);
-
     if (activeSectionId) {
         const active = getSection(activeSectionId);
-        section.append(
-            createDetail(root, active, onWriteAttempt, financeApplication, assetsAnalytics)
-        );
+        section.append(createDetail(root, active, onWriteAttempt, financeApplication, assetsAnalytics));
     }
-
     return section;
 }
-
 function finalizeDeletedItem(root, item, financeApplication, assetsAnalytics, onWriteAttempt = null) {
     const entryList = item.closest(".finance-entry-list");
     item.remove();
