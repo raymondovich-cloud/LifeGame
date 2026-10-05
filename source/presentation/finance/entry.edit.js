@@ -1,4 +1,4 @@
-// entry.edit.js — Version 1.3
+// entry.edit.js — Version 1.4
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
@@ -8,51 +8,32 @@ function triggerHaptic() {
         : null;
 
     if (telegramWebApp?.HapticFeedback?.impactOccurred) {
-        telegramWebApp.HapticFeedback.impactOccurred("light");
-        return;
+        try {
+            telegramWebApp.HapticFeedback.impactOccurred("light");
+            return;
+        } catch {
+            // Fall through to the browser vibration fallback.
+        }
     }
 
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-        navigator.vibrate(10);
+        try {
+            navigator.vibrate(10);
+        } catch {
+            // Haptics are optional and must never interrupt the interaction.
+        }
     }
-}
-
-function animateEntryListReflow(entryList, mutate, onDone = null) {
-    if (!entryList) {
-        mutate();
-        onDone?.();
-        return;
-    }
-
-    const rows = [...entryList.querySelectorAll(".swipe-delete-item")];
-    const before = new Map(rows.map((row) => [row, row.getBoundingClientRect().top]));
-
-    mutate();
-
-    const after = new Map(rows.map((row) => [row, row.getBoundingClientRect().top]));
-
-    rows.forEach((row) => {
-        const previousTop = before.get(row);
-        const nextTop = after.get(row);
-        if (previousTop === undefined || nextTop === undefined) return;
-        row.style.setProperty("--context-reflow-y", (previousTop - nextTop) + "px");
-    });
-
-    requestAnimationFrame(() => {
-        rows.forEach((row) => row.style.setProperty("--context-reflow-y", "0px"));
-    });
-
-    window.setTimeout(() => {
-        rows.forEach((row) => row.style.removeProperty("--context-reflow-y"));
-        onDone?.();
-    }, 250);
 }
 
 function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
-    const entryList = item.closest(".finance-entry-list");
+    const backdrop = document.createElement("div");
+    backdrop.className = "row-interaction-backdrop";
+    backdrop.setAttribute("role", "presentation");
+
     const menu = document.createElement("div");
     menu.className = "row-interaction-menu";
     menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", "Действия со строкой");
 
     const editButton = document.createElement("button");
     editButton.type = "button";
@@ -73,14 +54,21 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
     deleteButton.setAttribute("role", "menuitem");
 
     menu.append(editButton, pinButton, deleteButton);
+    backdrop.appendChild(menu);
+    document.body.appendChild(backdrop);
+
+    let closing = false;
 
     const cleanup = () => {
-        if (!menu.isConnected) return;
+        if (closing) return;
+        closing = true;
 
-        animateEntryListReflow(entryList, () => menu.remove(), () => {
+        backdrop.classList.remove("is-visible");
+
+        window.setTimeout(() => {
+            backdrop.remove();
             item.classList.remove("is-editing-target");
-            entryList?.classList.remove("is-context-editing");
-        });
+        }, 220);
     };
 
     editButton.addEventListener("click", (event) => {
@@ -112,25 +100,11 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
         onDelete?.();
     });
 
-    animateEntryListReflow(entryList, () => {
-        if (entryList) {
-            entryList.insertBefore(menu, item.nextSibling);
-            entryList.classList.add("is-context-editing");
-        } else {
-            document.body.appendChild(menu);
-        }
+    backdrop.addEventListener("click", (event) => {
+        if (event.target === backdrop) cleanup();
     });
 
-    requestAnimationFrame(() => menu.classList.add("is-visible"));
-
-    const close = (event) => {
-        if (!menu.contains(event.target)) {
-            cleanup();
-            document.removeEventListener("pointerdown", close, true);
-        }
-    };
-
-    window.setTimeout(() => document.addEventListener("pointerdown", close, true), 0);
+    requestAnimationFrame(() => backdrop.classList.add("is-visible"));
 }
 
 function openEntryEditModal(subblockId, entry, onSaved) {
@@ -326,6 +300,7 @@ function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved
             item.classList.remove("is-long-pressing");
             triggerHaptic();
             item.classList.add("is-editing-target");
+            triggerHaptic();
             createRowInteractionMenu(item, showEditor, onPin, onDelete, onPinLimit);
         }, 500);
     });
