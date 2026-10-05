@@ -1,4 +1,4 @@
-// finance.js — Version 2.8
+// finance.js — Version 2.9
 
 import {
     listAssets,
@@ -50,22 +50,16 @@ const FINANCE_OPERATIONS = Object.freeze({
 let assetsSnapshotReader = () => null;
 let liquidAssetsReader = () => null;
 let illiquidAssetsReader = () => null;
-let assetsSnapshotsRangeReader = () => [];
-let firstAssetsSnapshotReader = () => null;
 
 function configureAssetsMemory({
     getSnapshotAtOrBefore,
     getLiquidAssetsAtOrBefore,
-    getIlliquidAssetsAtOrBefore,
-    getSnapshotsBetween,
-    getFirstSnapshot
+    getIlliquidAssetsAtOrBefore
 }) {
     if (
         typeof getSnapshotAtOrBefore !== "function" ||
         typeof getLiquidAssetsAtOrBefore !== "function" ||
-        typeof getIlliquidAssetsAtOrBefore !== "function" ||
-        typeof getSnapshotsBetween !== "function" ||
-        typeof getFirstSnapshot !== "function"
+        typeof getIlliquidAssetsAtOrBefore !== "function"
     ) {
         throw new Error("LifeGame Finance: Assets memory readers are required.");
     }
@@ -73,8 +67,6 @@ function configureAssetsMemory({
     assetsSnapshotReader = getSnapshotAtOrBefore;
     liquidAssetsReader = getLiquidAssetsAtOrBefore;
     illiquidAssetsReader = getIlliquidAssetsAtOrBefore;
-    assetsSnapshotsRangeReader = getSnapshotsBetween;
-    firstAssetsSnapshotReader = getFirstSnapshot;
 }
 
 function getFinanceOperations(subblockId) {
