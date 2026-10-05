@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.2
+// finance.memory.supabase.integration.test.mjs — Version 1.3
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -9,8 +9,8 @@ import { createSupabaseFinanceMemory } from "./finance.memory.supabase.js";
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.API_URL;
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    throw new Error("Real Supabase integration test requires Supabase URL and anon key.");
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error("Real Supabase integration test requires Supabase URL and publishable key.");
 }
 
 function createClientForTest() {
