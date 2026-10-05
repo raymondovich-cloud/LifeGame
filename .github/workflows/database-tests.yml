@@ -61,5 +61,8 @@ jobs:
           printf 'Supabase test environment: API_URL=set, PUBLISHABLE_KEY=set\n'
           node --test source/infrastructure/supabase/finance.memory.supabase.integration.test.mjs
 
+      - name: Reset local database before database tests
+        run: supabase db reset
+
       - name: Run database tests
         run: supabase test db
