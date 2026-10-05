@@ -1,6 +1,7 @@
-/* context-menu.css — Version 1.1 */
+/* context-menu.css — Version 1.2 */
 
 .assets-context-menu {
+    transform-origin:top left;
     position:fixed;
     z-index:1200;
     min-width:10.5rem;
@@ -15,7 +16,7 @@
     transform-origin:center;
     pointer-events:none;
     transition:
-        opacity 160ms var(--motion-ease-standard),
+        opacity 180ms var(--motion-ease-standard),
         transform 220ms var(--motion-ease-emphasis);
     will-change:transform,opacity;
 }
