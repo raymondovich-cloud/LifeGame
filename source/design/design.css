@@ -1,4 +1,4 @@
-/* design.css — Version 1.2 */
+/* design.css — Version 1.3 */
 
 /* Единая точка входа Design System. */
 
@@ -24,6 +24,7 @@
 @import "./components/navigation.css";
 @import "./components/header.css";
 @import "./components/list.css";
+@import "./components/context-menu.css";
 @import "./components/badge.css";
 @import "./components/progress.css";
 @import "./components/liquidity.switch.css";
