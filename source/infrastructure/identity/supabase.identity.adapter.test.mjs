@@ -253,7 +253,7 @@ test('logout normalizes a Supabase signOut error', async () => {
         () => adapter.logout(),
         error => {
             assert.ok(error instanceof IdentityApplicationError);
-            assert.equal(error.code, IDENTITY_ERROR_CODE.IDENTITY_SESSION_FAILED);
+            assert.equal(error.code, IDENTITY_ERROR_CODE.SESSION_FAILED);
             assert.equal(error.message, 'Logout could not be completed.');
             return true;
         }
