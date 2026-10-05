@@ -1,4 +1,4 @@
-// source/presentation/finance/liquid.funds.statistics.js — Version 1.2
+// source/presentation/finance/liquid.funds.statistics.js — Version 1.3
 
 import {
     getLiquidFundsStatistics
@@ -43,9 +43,7 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
     backButton.className = "liquid-funds-statistics-back";
     backButton.textContent = "← Ликвидные средства";
     backButton.addEventListener("click", () => {
-        if (typeof onBack === "function") {
-            onBack();
-        }
+        if (typeof onBack === "function") onBack();
     });
 
     const heading = document.createElement("div");
@@ -55,11 +53,15 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
     eyebrow.className = "statistics-meta";
     eyebrow.textContent = "FINANCE · 01";
 
-    const title = document.createElement("span");
-    title.className = "accordion-title";
+    const title = document.createElement("h2");
+    title.className = "liquid-funds-statistics-title";
     title.textContent = "Аналитика";
 
-    heading.append(eyebrow, title);
+    const description = document.createElement("p");
+    description.className = "liquid-funds-statistics-description";
+    description.textContent = "Как менялись ваши доступные средства за выбранный период.";
+
+    heading.append(eyebrow, title, description);
     header.append(backButton, heading);
 
     const selector = document.createElement("div");
@@ -68,6 +70,7 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
     selector.setAttribute("aria-label", "Период аналитики");
 
     const content = document.createElement("div");
+    content.className = "liquid-funds-analytics-content";
 
     function render() {
         selector.replaceChildren();
@@ -78,14 +81,9 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
             button.type = "button";
             button.className = "button-control statistics-period-button";
             button.textContent = period.label;
-            button.setAttribute(
-                "aria-pressed",
-                String(selectedPeriod === period.id)
-            );
+            button.setAttribute("aria-pressed", String(selectedPeriod === period.id));
 
-            if (selectedPeriod === period.id) {
-                button.classList.add("is-active");
-            }
+            if (selectedPeriod === period.id) button.classList.add("is-active");
 
             button.addEventListener("click", () => {
                 selectedPeriod = period.id;
@@ -95,85 +93,85 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
             selector.appendChild(button);
         });
 
-        const statistics = getLiquidFundsStatistics(selectedPeriod);
+        const analytics = getLiquidFundsStatistics(selectedPeriod);
 
-        const currentMetric = document.createElement("div");
-        currentMetric.className = "liquid-funds-statistics-metric";
+        const currentMetric = document.createElement("section");
+        currentMetric.className = "liquid-funds-analytics-primary";
 
         const currentMeta = document.createElement("span");
         currentMeta.className = "statistics-meta";
         currentMeta.textContent = "ТЕКУЩЕЕ СОСТОЯНИЕ";
 
         const currentValue = document.createElement("span");
-        currentValue.className = "statistics-value";
-        currentValue.textContent = formatAmount(statistics.currentTotal);
+        currentValue.className = "statistics-value liquid-funds-analytics-primary-value";
+        currentValue.textContent = formatAmount(analytics.currentTotal) + " ₽";
 
         const currentDate = document.createElement("span");
-        currentDate.className = "statistics-meta";
-        currentDate.textContent = "Срез: " + formatDate(statistics.currentOccurredAt);
+        currentDate.className = "statistics-meta liquid-funds-analytics-date";
+        currentDate.textContent = "Срез · " + formatDate(analytics.currentOccurredAt);
 
         currentMetric.append(currentMeta, currentValue, currentDate);
 
-        const changeMetric = document.createElement("div");
+        const changeMetric = document.createElement("section");
         changeMetric.className = "liquid-funds-statistics-metric";
 
         const changeMeta = document.createElement("span");
         changeMeta.className = "statistics-meta";
-        changeMeta.textContent = "ИЗМЕНЕНИЕ ЗА ПЕРИОД";
+        changeMeta.textContent = "ДИНАМИКА";
 
         const changeValue = document.createElement("span");
         changeValue.className = "liquid-funds-statistics-change";
 
-        if (statistics.hasComparison) {
-            const sign = statistics.changePercent >= 0 ? "+" : "";
-            changeValue.textContent =
-                sign + statistics.changePercent + "% · " +
-                (statistics.changeAmount >= 0 ? "+" : "") +
-                formatAmount(statistics.changeAmount) + " ₽";
+        if (analytics.hasComparison) {
+            const sign = analytics.changePercent >= 0 ? "+" : "";
+            changeValue.textContent = sign + analytics.changePercent + "%";
         } else {
-            changeValue.textContent = "Недостаточно данных для расчёта";
+            changeValue.textContent = "Нет базы для сравнения";
         }
 
-        changeMetric.append(changeMeta, changeValue);
+        const changeDetail = document.createElement("span");
+        changeDetail.className = "liquid-funds-analytics-detail";
+        changeDetail.textContent = analytics.hasComparison
+            ? (analytics.changeAmount >= 0 ? "+" : "") + formatAmount(analytics.changeAmount) + " ₽ за период"
+            : "Добавьте больше данных, чтобы увидеть динамику.";
 
-        const history = document.createElement("div");
+        changeMetric.append(changeMeta, changeValue, changeDetail);
+
+        const history = document.createElement("section");
         history.className = "liquid-funds-statistics-history";
 
         const historyTitle = document.createElement("span");
         historyTitle.className = "statistics-meta";
-        historyTitle.textContent = "ИСТОРИЯ СОСТОЯНИЯ";
+        historyTitle.textContent = "ИЗМЕНЕНИЕ";
         history.appendChild(historyTitle);
 
         const baselineRow = document.createElement("div");
         baselineRow.className = "liquid-funds-statistics-history-row";
         baselineRow.innerHTML =
             "<span>Начало периода</span><span>" +
-            (statistics.baselineTotal === null
+            (analytics.baselineTotal === null
                 ? "—"
-                : formatAmount(statistics.baselineTotal) + " ₽ · " +
-                    formatDate(statistics.baselineOccurredAt)) +
+                : formatAmount(analytics.baselineTotal) + " ₽ · " + formatDate(analytics.baselineOccurredAt)) +
             "</span>";
 
         const currentRow = document.createElement("div");
         currentRow.className = "liquid-funds-statistics-history-row";
         currentRow.innerHTML =
             "<span>Текущее состояние</span><span>" +
-            formatAmount(statistics.currentTotal) +
-            " ₽ · " +
-            formatDate(statistics.currentOccurredAt) +
+            formatAmount(analytics.currentTotal) + " ₽ · " + formatDate(analytics.currentOccurredAt) +
             "</span>";
 
         history.append(baselineRow, currentRow);
 
-        const assets = document.createElement("div");
+        const assets = document.createElement("section");
         assets.className = "liquid-funds-statistics-assets";
 
         const assetsTitle = document.createElement("span");
         assetsTitle.className = "statistics-meta";
-        assetsTitle.textContent = "АКТИВЫ";
+        assetsTitle.textContent = "СОСТАВ";
         assets.appendChild(assetsTitle);
 
-        statistics.currentEntries.forEach((entry) => {
+        analytics.currentEntries.forEach((entry) => {
             const row = document.createElement("div");
             row.className = "liquid-funds-statistics-history-row";
 
@@ -192,10 +190,7 @@ function renderLiquidFundsStatisticsScreen(root, onBack) {
 
     screen.append(header, selector, content);
     root.appendChild(screen);
-
     render();
 }
 
-export {
-    renderLiquidFundsStatisticsScreen
-};
+export { renderLiquidFundsStatisticsScreen };
