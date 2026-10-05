@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 2.7
+// platforms/web/web.js — Version 2.8
 
 import {
     trace,
@@ -66,6 +66,27 @@ function startWeb() {
     let publicMode = true;
     let sessionState = "unknown";
     let authenticationEstablished = false;
+
+    async function readSessionWithHydrationRetry() {
+        const attempts = 4;
+        const delays = [0, 120, 240, 400];
+
+        for (let attempt = 0; attempt < attempts; attempt += 1) {
+            if (delays[attempt] > 0) {
+                await new Promise((resolve) => {
+                    window.setTimeout(resolve, delays[attempt]);
+                });
+            }
+
+            const result = await application.auth.getCurrentSession();
+
+            if (result?.session) {
+                return result;
+            }
+        }
+
+        return { session: null };
+    }
 
     // Each route render gets a monotonically increasing request id.
     // Authentication can trigger a second render before an earlier
@@ -353,7 +374,7 @@ function startWeb() {
         });
 
         try {
-            const sessionResult = await application.auth.getCurrentSession();
+            const sessionResult = await readSessionWithHydrationRetry();
             const session = sessionResult?.session ?? null;
 
             trace("web-shell", "route.session.result", {
@@ -371,6 +392,10 @@ function startWeb() {
                     latestRenderId: routeRenderSequence
                 });
                 return;
+            }
+
+            if (session) {
+                authenticationEstablished = true;
             }
 
             if (!session && authenticationEstablished) {
