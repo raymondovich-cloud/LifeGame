@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Adapter
-// Version: 1.4
+// Version: 1.5
 // Responsibility: translate Supabase Auth operations into IdentityPort.
 //
 // This file is the ONLY Identity infrastructure boundary that may know
@@ -29,13 +29,17 @@ export function createSupabaseIdentityAdapter(supabaseAuthClient, options = {}) 
     const { emailRedirectTo } = options;
 
     return Object.freeze({
-        async register({ email, password }) {
+        async register({ email, password, displayName, birthDate }) {
             const response = await supabaseAuthClient.signUp({
                 email,
                 password,
-                ...(emailRedirectTo
-                    ? { options: { emailRedirectTo } }
-                    : {})
+                options: {
+                    ...(emailRedirectTo ? { emailRedirectTo } : {}),
+                    data: {
+                        display_name: displayName,
+                        birth_date: birthDate
+                    }
+                }
             });
 
             return mapSupabaseRegistrationResult(response);
