@@ -10,7 +10,7 @@ import {
     getFinancialStabilityIndex
 } from "../../application/finance/finance.js";
 
-import { renderLiquidFundsStatisticsScreen } from "./assets.statistics.js";
+import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
@@ -165,7 +165,7 @@ function createLiquidFundsSummary(root, onWriteAttempt = null) {
         '<span>Аналитика</span><span aria-hidden="true">›</span>';
 
     statisticsButton.addEventListener("click", () => {
-        renderLiquidFundsStatisticsScreen(
+        renderAssetsStatisticsScreen(
             root,
             () => renderFinance(root, "assets", onWriteAttempt)
         );
