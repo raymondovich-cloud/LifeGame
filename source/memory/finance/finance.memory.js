@@ -1,4 +1,4 @@
-// finance.memory.js — Version 2.0
+// finance.memory.js — Version 2.1
 
 const COLLECTIONS = Object.freeze([
     "assets",
@@ -90,6 +90,59 @@ function createFinanceMemory(userContext) {
         return true;
     }
 
+    function mutateAsset({ operation, entry = null, entryId = null, occurredAt = Date.now() }) {
+        if (!["create", "update", "delete"].includes(operation)) {
+            throw new Error("LifeGame Finance Memory: invalid Assets mutation.");
+        }
+
+        let result;
+
+        if (operation === "create") {
+            const saved = saveEntry("assets", entry);
+            result = {
+                entry: saved,
+                snapshot: null
+            };
+        } else if (operation === "update") {
+            const updated = updateEntry("assets", entryId, entry);
+
+            if (!updated) {
+                return false;
+            }
+
+            result = {
+                entry: updated,
+                snapshot: null
+            };
+        } else {
+            const deleted = deleteEntry("assets", entryId);
+
+            if (!deleted) {
+                return false;
+            }
+
+            result = {
+                entry: null,
+                snapshot: null
+            };
+        }
+
+        const currentEntries = listEntries("assets");
+        const snapshot = {
+            occurredAt,
+            total: currentEntries.reduce(
+                (total, item) => total + Number(item.amount || 0),
+                0
+            ),
+            entries: currentEntries
+        };
+
+        saveAssetsSnapshot(snapshot);
+        result.snapshot = cloneSnapshot(snapshot);
+
+        return result;
+    }
+
     function saveAssetsSnapshot(snapshot) {
         if (!snapshot || !snapshot.occurredAt || !Array.isArray(snapshot.entries)) {
             throw new Error("LifeGame Finance Memory: invalid Assets snapshot.");
@@ -164,6 +217,7 @@ function createFinanceMemory(userContext) {
         saveAsset: (entry) => saveEntry("assets", entry),
         updateAsset: (id, entry) => updateEntry("assets", id, entry),
         deleteAsset: (id) => deleteEntry("assets", id),
+        mutateAsset,
 
         listActualEarnings: () => listEntries("actual-earnings"),
         saveActualEarning: (entry) => saveEntry("actual-earnings", entry),
