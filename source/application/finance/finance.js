@@ -1,4 +1,4 @@
-// finance.js — Version 5.1
+// finance.js — Version 5.2
 
 import {
     createActualEarning,
@@ -96,6 +96,10 @@ function configureAssetsMemory({ memory }) {
     }
 
     financeMemory = memory;
+}
+
+function clearFinanceMemory() {
+    financeMemory = null;
 }
 
 function requireFinanceMemory() {
@@ -295,6 +299,7 @@ function getFinancialStabilityIndex() {
 
 export {
     configureAssetsMemory,
+    clearFinanceMemory,
     listFinanceEntries,
     addFinanceEntry,
     addFinancialBurdenEntry,
