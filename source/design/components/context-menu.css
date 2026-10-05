@@ -30,8 +30,8 @@
 .assets-context-menu__item {
     display:block;
     width:100%;
-    min-height:2.75rem;
-    padding:0 1rem;
+    min-height:2.55rem;
+    padding:0 .8rem;
     color:var(--color-white);
     font:inherit;
     font-size:var(--font-size-xs);
