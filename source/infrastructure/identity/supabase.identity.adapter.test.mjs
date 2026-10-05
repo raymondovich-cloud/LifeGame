@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Identity Adapter Tests
-// Version: 1.3
+// Version: 1.4
 // Responsibility: verify the Supabase adapter boundary without contacting Supabase.
 
 import test from 'node:test';
@@ -37,14 +37,20 @@ test('registration calls Supabase signUp with credentials and redirect URL', asy
 
     const result = await adapter.register({
         email: 'user@example.com',
-        password: 'ValidPassword123!'
+        password: 'ValidPassword123!',
+        displayName: 'Test User',
+        birthDate: '1990-01-15'
     });
 
     assert.deepEqual(received, {
         email: 'user@example.com',
         password: 'ValidPassword123!',
         options: {
-            emailRedirectTo: 'https://raymondovich-cloud.github.io/LifeGame/'
+            emailRedirectTo: 'https://raymondovich-cloud.github.io/LifeGame/',
+            data: {
+                display_name: 'Test User',
+                birth_date: '1990-01-15'
+            }
         }
     });
 
@@ -76,12 +82,20 @@ test('registration works without an optional redirect URL', async () => {
 
     await adapter.register({
         email: 'user@example.com',
-        password: 'ValidPassword123!'
+        password: 'ValidPassword123!',
+        displayName: undefined,
+        birthDate: undefined
     });
 
     assert.deepEqual(received, {
         email: 'user@example.com',
-        password: 'ValidPassword123!'
+        password: 'ValidPassword123!',
+        options: {
+            data: {
+                display_name: undefined,
+                birth_date: undefined
+            }
+        }
     });
 });
 
