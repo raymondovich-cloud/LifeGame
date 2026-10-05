@@ -1,11 +1,11 @@
-// finance.js — Version 1.4
+// finance.js — Version 2.0
 
 import {
-    listLiquidFunds,
-    calculateLiquidFundsTotal,
-    addLiquidFund,
-    removeLiquidFund
-} from "../../domain/finance/liquid.funds/liquid.funds.js";
+    listAssets,
+    calculateAssetsTotal,
+    addAsset,
+    removeAsset
+} from "../../domain/finance/assets/assets.js";
 
 import {
     listActualEarnings,
@@ -34,10 +34,10 @@ import {
 import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
 
 const FINANCE_OPERATIONS = Object.freeze({
-    "liquid-funds": {
-        list: listLiquidFunds,
-        add: addLiquidFund,
-        remove: removeLiquidFund
+    "assets": {
+        list: listAssets,
+        add: addAsset,
+        remove: removeAsset
     },
     "actual-earnings": {
         list: listActualEarnings,
@@ -63,9 +63,9 @@ const FINANCE_OPERATIONS = Object.freeze({
 
 let liquidFundsSnapshotReader = () => null;
 
-function configureLiquidFundsMemory({ getSnapshotAtOrBefore }) {
+function configureAssetsMemory({ getSnapshotAtOrBefore }) {
     if (typeof getSnapshotAtOrBefore !== "function") {
-        throw new Error("LifeGame Finance: Liquid Funds memory reader is required.");
+        throw new Error("LifeGame Finance: Assets memory reader is required.");
     }
 
     liquidFundsSnapshotReader = getSnapshotAtOrBefore;
@@ -101,7 +101,7 @@ function getFinancialStabilityIndex() {
     const financialBurden = listFinancialBurden();
 
     return calculateFinancialStabilityIndex({
-        liquidFunds: listLiquidFunds(),
+        liquidFunds: listAssets(),
         actualEarnings: listActualEarnings(),
         financialBurden,
         mandatoryExpenses: listMandatoryExpenses(),
@@ -109,8 +109,8 @@ function getFinancialStabilityIndex() {
     });
 }
 
-function getLiquidFundsTotal() {
-    return calculateLiquidFundsTotal();
+function getAssetsTotal() {
+    return calculateAssetsTotal();
 }
 
 function getPeriodStart(period, now) {
@@ -134,14 +134,14 @@ function getPeriodStart(period, now) {
     throw new Error("LifeGame Finance: неизвестный период.");
 }
 
-function getLiquidFundsStatistics(period = "week") {
+function getAssetsStatistics(period = "week") {
     const now = Date.now();
     const periodStart = getPeriodStart(period, now);
     const currentSnapshot = liquidFundsSnapshotReader(now);
     const baselineSnapshot = liquidFundsSnapshotReader(periodStart);
 
-    const currentTotal = calculateLiquidFundsTotal();
-    const currentEntries = listLiquidFunds();
+    const currentTotal = calculateAssetsTotal();
+    const currentEntries = listAssets();
 
     const currentOccurredAt = currentSnapshot?.occurredAt || now;
     const baselineTotal = baselineSnapshot?.total ?? null;
@@ -174,12 +174,12 @@ function getLiquidFundsStatistics(period = "week") {
 }
 
 export {
-    configureLiquidFundsMemory,
+    configureAssetsMemory,
     listFinanceEntries,
     addFinanceEntry,
     addFinancialBurdenEntry,
     removeFinanceEntry,
-    getLiquidFundsTotal,
-    getLiquidFundsStatistics,
+    getAssetsTotal,
+    getAssetsStatistics,
     getFinancialStabilityIndex
 };
