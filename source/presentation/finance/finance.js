@@ -142,11 +142,10 @@ function refreshAssetsSummary(root) {
     );
     amount.style.fontSize = fontSize + "rem";
 
-    const statistics = getAssetsAnalytics(getAssetsAnalyticsRange("month"));
     const date = summary.querySelector(".assets-summary-date");
 
     if (date) {
-        date.textContent = formatSnapshotDate(statistics.currentOccurredAt);
+        date.textContent = formatSnapshotDate(statistics.current?.occurredAt);
     }
 }
 
@@ -384,7 +383,6 @@ function createAssetsSummary(root, onWriteAttempt = null) {
 
     const amount = document.createElement("span");
     amount.className = "assets-total-value";
-    const statistics = getAssetsAnalytics(getAssetsAnalyticsRange("month"));
     const amountText = formatAmount(statistics.current?.total ?? 0) + " ₽";
     amount.textContent = amountText;
 
