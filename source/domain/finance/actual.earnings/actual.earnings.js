@@ -1,4 +1,4 @@
-// actual.earnings.js — Version 1.1
+// actual.earnings.js — Version 1.2
 
 const entries = [];
 let nextId = 1;
@@ -29,6 +29,23 @@ function addActualEarning(label, amount) {
     return { ...entry };
 }
 
+function updateActualEarning(id, label, amount) {
+    const normalizedLabel = String(label ?? "").trim();
+    const normalizedAmount = Number(amount);
+
+    if (!normalizedLabel) throw new Error("Actual Earnings: название записи обязательно.");
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+        throw new Error("Actual Earnings: сумма должна быть больше нуля.");
+    }
+
+    const entry = entries.find((item) => item.id === id);
+    if (!entry) return false;
+
+    entry.label = normalizedLabel;
+    entry.amount = normalizedAmount;
+    return { ...entry };
+}
+
 function removeActualEarning(id) {
     const index = entries.findIndex((entry) => entry.id === id);
 
@@ -38,4 +55,4 @@ function removeActualEarning(id) {
     return true;
 }
 
-export { listActualEarnings, addActualEarning, removeActualEarning };
+export { listActualEarnings, addActualEarning, updateActualEarning, removeActualEarning };
