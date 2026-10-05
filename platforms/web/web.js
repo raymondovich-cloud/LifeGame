@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 2.4
+// platforms/web/web.js — Version 2.5
 
 import {
     trace,
@@ -138,15 +138,8 @@ function startWeb() {
             dialog,
             application.auth,
             closeRegistrationModal,
-            () => {
-                closeRegistrationModal();
-
-                if (typeof pendingAction === "function") {
-                    pendingAction();
-                    return;
-                }
-
-                window.location.hash = originRoute;
+            async () => {
+                await handleAuthenticated(pendingAction, originRoute);
             },
             () => {
                 openLoginModal(pendingAction);
@@ -181,15 +174,8 @@ function startWeb() {
             dialog,
             application.auth,
             () => openRegistrationModal(pendingAction),
-            () => {
-                closeRegistrationModal();
-
-                if (typeof pendingAction === "function") {
-                    pendingAction();
-                    return;
-                }
-
-                window.location.hash = originRoute;
+            async () => {
+                await handleAuthenticated(pendingAction, originRoute);
             }
         );
 
@@ -304,6 +290,24 @@ function startWeb() {
         navigationItems.forEach((item) => {
             item.addEventListener("click", renderRoute);
         });
+    }
+
+    async function handleAuthenticated(pendingAction = null, originRoute = DEFAULT_APPLICATION_ROUTE) {
+        closeRegistrationModal();
+
+        // Authentication changes the shell state without changing the hash.
+        // Re-render explicitly so publicMode and the authenticated navigation
+        // are updated immediately after login/registration.
+        await renderRoute();
+
+        if (typeof pendingAction === "function") {
+            pendingAction();
+            return;
+        }
+
+        if (getRoute() !== originRoute) {
+            window.location.hash = originRoute;
+        }
     }
 
     function renderApplicationShell(route, isPublic, session = null) {
