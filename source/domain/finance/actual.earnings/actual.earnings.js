@@ -1,13 +1,6 @@
-// actual.earnings.js — Version 1.2
+// actual.earnings.js — Version 2.0
 
-const entries = [];
-let nextId = 1;
-
-function listActualEarnings() {
-    return entries.map((entry) => ({ ...entry }));
-}
-
-function addActualEarning(label, amount) {
+function createActualEarning(label, amount) {
     const normalizedLabel = String(label ?? "").trim();
     const normalizedAmount = Number(amount);
 
@@ -19,40 +12,59 @@ function addActualEarning(label, amount) {
         throw new Error("Actual Earnings: сумма должна быть больше нуля.");
     }
 
-    const entry = {
-        id: `actual-earning-${nextId++}`,
-        label: normalizedLabel,
-        amount: normalizedAmount
+    return {
+        entry: {
+            label: normalizedLabel,
+            amount: normalizedAmount
+        },
+        event: {
+            type: "finance.actual.earnings.changed",
+            occurredAt: Date.now(),
+            payload: {
+                operation: "created"
+            }
+        }
     };
-
-    entries.push(entry);
-    return { ...entry };
 }
 
-function updateActualEarning(id, label, amount) {
-    const normalizedLabel = String(label ?? "").trim();
-    const normalizedAmount = Number(amount);
+function updateActualEarning(existingEntry, label, amount) {
+    if (!existingEntry) return false;
 
-    if (!normalizedLabel) throw new Error("Actual Earnings: название записи обязательно.");
-    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
-        throw new Error("Actual Earnings: сумма должна быть больше нуля.");
-    }
+    const result = createActualEarning(label, amount);
 
-    const entry = entries.find((item) => item.id === id);
-    if (!entry) return false;
-
-    entry.label = normalizedLabel;
-    entry.amount = normalizedAmount;
-    return { ...entry };
+    return {
+        entry: {
+            ...result.entry,
+            id: existingEntry.id
+        },
+        event: {
+            ...result.event,
+            payload: {
+                operation: "updated",
+                entryId: existingEntry.id
+            }
+        }
+    };
 }
 
-function removeActualEarning(id) {
-    const index = entries.findIndex((entry) => entry.id === id);
+function removeActualEarning(existingEntry) {
+    if (!existingEntry) return false;
 
-    if (index === -1) return false;
-
-    entries.splice(index, 1);
-    return true;
+    return {
+        entry: { ...existingEntry },
+        event: {
+            type: "finance.actual.earnings.changed",
+            occurredAt: Date.now(),
+            payload: {
+                operation: "deleted",
+                entryId: existingEntry.id
+            }
+        }
+    };
 }
 
-export { listActualEarnings, addActualEarning, updateActualEarning, removeActualEarning };
+export {
+    createActualEarning,
+    updateActualEarning,
+    removeActualEarning
+};
