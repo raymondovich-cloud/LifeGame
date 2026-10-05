@@ -14,15 +14,6 @@ import { createWebApplication } from "./composition/root.js";
 import { configureAssetsMemory } from "../../source/application/finance/finance.js";
 import { configureAssetsAnalyticsMemory } from "../../source/application/finance/assets.analytics.js";
 import { configureAssetsAnalyticsAccess } from "../../source/application/finance/assets.analytics.access.js";
-import {
-    saveAssetsSnapshot,
-    getAssetsSnapshotAtOrBefore,
-    getLiquidAssetsAtOrBefore,
-    getIlliquidAssetsAtOrBefore,
-    getAssetsSnapshotsBetween,
-    getFirstAssetsSnapshot
-} from "../../source/memory/finance/assets.memory.js";
-import { subscribe } from "../../source/core/events/event.bus.js";
 
 const APP_ROOT_ID = "app";
 const DEFAULT_APPLICATION_ROUTE = "finance";
@@ -30,28 +21,8 @@ const DEFAULT_APPLICATION_ROUTE = "finance";
 function startWeb() {
     const application = createWebApplication();
 
-    configureAssetsMemory({
-        getSnapshotAtOrBefore: getAssetsSnapshotAtOrBefore,
-        getLiquidAssetsAtOrBefore,
-        getIlliquidAssetsAtOrBefore
-    });
-
-    configureAssetsAnalyticsMemory({
-        getSnapshotAtOrBefore: getAssetsSnapshotAtOrBefore,
-        getSnapshotsBetween: getAssetsSnapshotsBetween,
-        getFirstSnapshot: getFirstAssetsSnapshot
-    });
-
     configureAssetsAnalyticsAccess({
         getEntitlement: () => "free"
-    });
-
-    subscribe("finance.assets.state.changed", (event) => {
-        saveAssetsSnapshot({
-            occurredAt: event.occurredAt,
-            total: event.payload.total,
-            entries: event.payload.entries
-        });
     });
 
     const appRoot = document.getElementById(APP_ROOT_ID);
@@ -84,6 +55,7 @@ function startWeb() {
     let publicMode = true;
     let sessionState = "unknown";
     let authenticationEstablished = false;
+    let activeUserId = null;
 
     async function readSessionWithHydrationRetry() {
         const attempts = 4;
@@ -363,6 +335,24 @@ function startWeb() {
     }
 
     function renderApplicationShell(route, isPublic, session = null) {
+        if (!isPublic && session?.user?.id) {
+            activeUserId = session.user.id;
+        }
+
+        if (!isPublic && activeUserId) {
+            const financeMemory = application.finance.createMemoryForUser(activeUserId);
+
+            configureAssetsMemory({
+                memory: financeMemory
+            });
+
+            configureAssetsAnalyticsMemory({
+                getSnapshotAtOrBefore: financeMemory.getAssetsSnapshotAtOrBefore,
+                getSnapshotsBetween: financeMemory.getAssetsSnapshotsBetween,
+                getFirstSnapshot: financeMemory.getFirstAssetsSnapshot
+            });
+        }
+
         publicMode = isPublic;
         sessionState = isPublic ? "unauthenticated" : "authenticated";
 
