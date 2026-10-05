@@ -5,7 +5,8 @@
 // Domain data remains raw; user state/history must come from Memory/application.
 //
 // Inputs:
-// L = liquid funds
+// A = total assets
+// L = liquid funds (only assets explicitly marked liquid)
 // I = average monthly actual income
 // E = essential mandatory monthly expenses
 // D = mandatory monthly debt payments
@@ -180,9 +181,11 @@ function calculateFinancialTrend(
 }
 
 function calculateFinancialStabilityIndex(financeState = {}) {
+    const assetEntries = Array.isArray(financeState.assets) ? financeState.assets : [];
+    const liquidAssetEntries = assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
     const liquidFunds = resolveAmount(
-        financeState.liquidFundsAmount ?? financeState.assets,
-        financeState.liquidFunds
+        financeState.liquidFundsAmount,
+        financeState.liquidFunds ?? liquidAssetEntries
     );
 
     const totalDebt = financeState.debts !== undefined
