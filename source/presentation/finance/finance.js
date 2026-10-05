@@ -677,12 +677,12 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
                                             : "Ликвидно";
                                 }
 
-                                refreshAssetsSummary(root);
+                                refreshAssetsSummary(root, financeApplication);
                             }
                         },
                         () => {
                             toggleEntryPinned(subblock.id, entry.id);
-                            renderFinance(root, subblock.id, onWriteAttempt);
+                            renderFinance(root, subblock.id, onWriteAttempt, financeApplication);
                         },
                         () => {
                             deleteFinanceEntryItem(root, row, onWriteAttempt, financeApplication);
@@ -710,7 +710,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
 
     button.addEventListener("click", () => {
         const nextOpen = button.getAttribute("aria-expanded") !== "true";
-        renderFinance(root, nextOpen ? subblock.id : null, onWriteAttempt);
+        renderFinance(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
     });
 
     return wrapper;
