@@ -25,6 +25,12 @@ function startWeb() {
         getEntitlement: () => "free"
     });
 
+    configureAssetsAnalyticsMemory({
+        getSnapshotAtOrBefore: () => null,
+        getSnapshotsBetween: () => [],
+        getFirstSnapshot: () => null
+    });
+
     const appRoot = document.getElementById(APP_ROOT_ID);
     if (!appRoot) {
         throw new Error(
