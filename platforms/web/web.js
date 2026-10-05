@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 3.9
+// platforms/web/web.js — Version 4.0
 
 import {
     trace,
