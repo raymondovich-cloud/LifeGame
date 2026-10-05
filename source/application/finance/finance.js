@@ -1,4 +1,4 @@
-// finance.js — Version 2.0
+// finance.js — Version 2.1
 
 import {
     listAssets,
@@ -85,8 +85,10 @@ function listFinanceEntries(subblockId) {
     return getFinanceOperations(subblockId).list();
 }
 
-function addFinanceEntry(subblockId, label, amount) {
-    return getFinanceOperations(subblockId).add(label, amount);
+function addFinanceEntry(subblockId, label, amount, liquidity) {
+    return subblockId === "assets"
+        ? getFinanceOperations(subblockId).add(label, amount, liquidity)
+        : getFinanceOperations(subblockId).add(label, amount);
 }
 
 function addFinancialBurdenEntry(label, debt, payment) {
@@ -101,7 +103,7 @@ function getFinancialStabilityIndex() {
     const financialBurden = listFinancialBurden();
 
     return calculateFinancialStabilityIndex({
-        liquidFunds: listAssets(),
+        assets: listAssets(),
         actualEarnings: listActualEarnings(),
         financialBurden,
         mandatoryExpenses: listMandatoryExpenses(),
