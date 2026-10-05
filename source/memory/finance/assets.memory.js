@@ -1,4 +1,4 @@
-// assets.memory.js — Version 2.1
+// assets.memory.js — Version 2.2
 
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -44,7 +44,27 @@ function getAssetsSnapshotAtOrBefore(timestamp) {
     };
 }
 
+function getAssetsByLiquidityAtOrBefore(timestamp, liquidity) {
+    const snapshot = getAssetsSnapshotAtOrBefore(timestamp);
+
+    if (!snapshot) return [];
+
+    return snapshot.entries
+        .filter((entry) => entry?.liquidity === liquidity)
+        .map((entry) => ({ ...entry }));
+}
+
+function getLiquidAssetsAtOrBefore(timestamp) {
+    return getAssetsByLiquidityAtOrBefore(timestamp, "liquid");
+}
+
+function getIlliquidAssetsAtOrBefore(timestamp) {
+    return getAssetsByLiquidityAtOrBefore(timestamp, "illiquid");
+}
+
 export {
     saveAssetsSnapshot,
-    getAssetsSnapshotAtOrBefore
+    getAssetsSnapshotAtOrBefore,
+    getLiquidAssetsAtOrBefore,
+    getIlliquidAssetsAtOrBefore
 };
