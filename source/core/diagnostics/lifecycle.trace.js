@@ -1,4 +1,4 @@
-// source/core/diagnostics/lifecycle.trace.js — Version 1.0
+// source/core/diagnostics/lifecycle.trace.js — Version 1.1
 //
 // Responsibility: diagnostic tracing for lifecycle investigations.
 // Diagnostic data is non-sensitive and excludes auth tokens, passwords,
@@ -9,9 +9,11 @@ const MAX_ENTRIES = 250;
 let activeOperationId = null;
 
 function isEnabled() {
+    if (typeof globalThis === "undefined") return false;
+
     return (
-        window.__LIFEGAME_TRACE__ === true ||
-        new URLSearchParams(window.location.search).get("trace") === "1"
+        globalThis.__LIFEGAME_TRACE__ === true ||
+        new URLSearchParams(globalThis.location?.search ?? "").get("trace") === "1"
     );
 }
 
