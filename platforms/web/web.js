@@ -1,4 +1,9 @@
-// platforms/web/web.js — Version 2.3
+// platforms/web/web.js — Version 2.4
+
+import {
+    trace,
+    installGlobalApi
+} from "../../source/core/diagnostics/lifecycle.trace.js";
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
 import { renderFinance } from "../../source/presentation/finance/finance.js";
@@ -59,6 +64,7 @@ function startWeb() {
 
     let navigationInitialized = false;
     let publicMode = true;
+    let sessionState = "unknown";
 
     function getRoute() {
         return window.location.hash.slice(1);
@@ -302,6 +308,13 @@ function startWeb() {
 
     function renderApplicationShell(route, isPublic, session = null) {
         publicMode = isPublic;
+        sessionState = isPublic ? "unauthenticated" : "authenticated";
+
+        trace("web-shell", "render", {
+            route,
+            access: isPublic ? "public" : "authenticated",
+            sessionState
+        });
         appRoot.dataset.access = isPublic ? "public" : "authenticated";
 
         initializeApplicationShell();
@@ -315,11 +328,27 @@ function startWeb() {
     async function renderRoute() {
         const requestedRoute = getRoute();
 
+        trace("web-shell", "route.check.begin", {
+            requestedRoute,
+            currentSessionState: sessionState
+        });
+
         try {
             const sessionResult = await application.auth.getCurrentSession();
             const session = sessionResult?.session ?? null;
 
+            trace("web-shell", "route.session.result", {
+                requestedRoute,
+                authenticated: Boolean(session)
+            });
+
             if (!session) {
+                sessionState = "unauthenticated";
+
+                trace("web-shell", "route.session.unauthenticated", {
+                    requestedRoute
+                });
+
                 const publicRoute = isPublicModule(requestedRoute)
                     ? requestedRoute
                     : DEFAULT_APPLICATION_ROUTE;
@@ -337,6 +366,12 @@ function startWeb() {
                 return;
             }
 
+            sessionState = "authenticated";
+
+            trace("web-shell", "route.session.authenticated", {
+                requestedRoute
+            });
+
             renderApplicationShell(
                 isApplicationModule(requestedRoute)
                     ? requestedRoute
@@ -345,6 +380,13 @@ function startWeb() {
                 session
             );
         } catch (error) {
+            sessionState = "error";
+
+            trace("web-shell", "route.session.error", {
+                requestedRoute,
+                error: error?.message || "unknown"
+            });
+
             applicationShell.hidden = true;
             authRoot.hidden = false;
             authRoot.replaceChildren();
@@ -360,9 +402,20 @@ function startWeb() {
         }
     }
 
-    window.addEventListener("popstate", renderRoute);
-    window.addEventListener("hashchange", renderRoute);
+    window.addEventListener("popstate", () => {
+        trace("web-shell", "navigation.popstate");
+        renderRoute();
+    });
 
+    window.addEventListener("hashchange", () => {
+        trace("web-shell", "navigation.hashchange", {
+            route: getRoute()
+        });
+        renderRoute();
+    });
+
+    installGlobalApi();
+    trace("web-shell", "application.start");
     renderRoute();
 }
 
