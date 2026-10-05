@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 3.7
+// platforms/web/web.js — Version 3.8
 
 import {
     trace,
@@ -64,6 +64,7 @@ function startWeb() {
     }
 
     let navigationInitialized = false;
+    let navigation = null;
     let publicMode = true;
     let sessionState = "unknown";
     let authenticationEstablished = false;
@@ -104,13 +105,15 @@ function startWeb() {
         return route === "finance" ||
             route === "health" ||
             route === "development" ||
-            route === "profile";
+            route === "profile" ||
+            route === "auth";
     }
 
     function isPublicModule(route) {
         return route === "finance" ||
             route === "health" ||
-            route === "development";
+            route === "development" ||
+            route === "auth";
     }
 
     function getModuleRoute() {
@@ -312,6 +315,12 @@ function startWeb() {
     }
 
     function renderModule(moduleId, session = null) {
+        if (moduleId === "auth") {
+            renderPreviewModule("profile");
+            openRegistrationModal();
+            return;
+        }
+
         if (moduleId === "finance") {
             renderFinance(
                 moduleContent,
@@ -342,7 +351,8 @@ function startWeb() {
             return;
         }
 
-        createNavigation(appRoot);
+        navigation = createNavigation(appRoot);
+        navigation.setAuthenticationState(false);
         navigationInitialized = true;
 
         const navigationItems = [
@@ -393,6 +403,10 @@ function startWeb() {
         // with a public write guard, which opens the Create Account modal.
         publicMode = isPublic;
         sessionState = isPublic ? "unauthenticated" : "authenticated";
+
+        if (navigation) {
+            navigation.setAuthenticationState(!isPublic);
+        }
 
         if (!isPublic && session?.user?.id) {
             activeUserId = session.user.id;
