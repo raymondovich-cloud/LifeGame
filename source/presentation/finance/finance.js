@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.1
+// source/presentation/finance/finance.js — Version 2.2
 
 import {
     listFinanceEntries,
@@ -270,14 +270,42 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     labelInput.autocomplete = "off";
     labelInput.required = true;
 
-    const assetTypeInput = subblock.id === "assets" ? document.createElement("select") : null;
+    let assetLiquidity = "liquid";
+    const liquidityControl = subblock.id === "assets"
+        ? document.createElement("div")
+        : null;
 
-    if (assetTypeInput) {
-        assetTypeInput.className = "input-control";
-        assetTypeInput.name = "liquidity";
-        assetTypeInput.innerHTML =
-            "<option value=\"liquid\">Ликвидный актив</option>" +
-            "<option value=\"illiquid\">Неликвидный актив</option>";
+    if (liquidityControl) {
+        liquidityControl.className = "liquidity-switch-field";
+
+        const liquidityLabel = document.createElement("span");
+        liquidityLabel.className = "liquidity-switch-label";
+        liquidityLabel.textContent = "Ликвидность";
+
+        const liquidityState = document.createElement("span");
+        liquidityState.className = "liquidity-switch-state";
+
+        const liquiditySwitch = document.createElement("button");
+        liquiditySwitch.type = "button";
+        liquiditySwitch.className = "liquidity-switch";
+        liquiditySwitch.setAttribute("role", "switch");
+        liquiditySwitch.setAttribute("aria-checked", "true");
+        liquiditySwitch.setAttribute("aria-label", "Переключить ликвидность актива");
+
+        const updateLiquidityControl = () => {
+            const isLiquid = assetLiquidity === "liquid";
+            liquiditySwitch.setAttribute("aria-checked", String(isLiquid));
+            liquiditySwitch.classList.toggle("is-on", isLiquid);
+            liquidityState.textContent = isLiquid ? "Ликвидный" : "Неликвидный";
+        };
+
+        liquiditySwitch.addEventListener("click", () => {
+            assetLiquidity = assetLiquidity === "liquid" ? "illiquid" : "liquid";
+            updateLiquidityControl();
+        });
+
+        liquidityControl.append(liquidityLabel, liquidityState, liquiditySwitch);
+        updateLiquidityControl();
     }
 
     const amountInput = document.createElement("input");
@@ -315,7 +343,7 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     error.hidden = true;
 
     wrapper.append(labelInput, amountInput);
-    if (assetTypeInput) wrapper.appendChild(assetTypeInput);
+    if (liquidityControl) wrapper.appendChild(liquidityControl);
     if (paymentInput) wrapper.appendChild(paymentInput);
     wrapper.append(addButton, error);
 
@@ -332,7 +360,7 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
                         paymentInput.value
                     );
                 } else {
-                    addFinanceEntry(subblock.id, labelInput.value, amountInput.value, assetTypeInput?.value);
+                    addFinanceEntry(subblock.id, labelInput.value, amountInput.value, assetLiquidity);
                 }
 
                 renderFinance(root, subblock.id, onWriteAttempt);
