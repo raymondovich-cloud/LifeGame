@@ -1,4 +1,4 @@
--- Version 1.4
+-- Version 1.5
 -- LifeGame 3.0
 -- Identity Foundation — behavioral RLS tests
 --
@@ -45,30 +45,30 @@ select results_eq(
 );
 
 select results_eq(
-    $
+    $$
     select count(*)::bigint
     from private.security_events
     where event_type = 'identity.user.registered'
     $,
-    $values (2::bigint)$,
+    $$values (2::bigint)$$,
     'Auth user creation records two registration security events'
 );
 
 select results_eq(
-    $
+    $$
     select display_name from public.profiles
     where id = '00000000-0000-0000-0000-000000000001'
     $,
-    $values ('Test User A'::text)$,
+    $$values ('Test User A'::text)$$,
     'Registration metadata bootstraps User A display name'
 );
 
 select results_eq(
-    $
+    $$
     select birth_date from public.profiles
     where id = '00000000-0000-0000-0000-000000000001'
     $,
-    $values ('1997-04-27'::date)$,
+    $$values ('1997-04-27'::date)$$,
     'Registration metadata bootstraps User A birth date'
 );
 
