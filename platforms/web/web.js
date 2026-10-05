@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 3.5
+// platforms/web/web.js — Version 3.6
 
 import {
     trace,
@@ -11,8 +11,14 @@ import { renderRegistration } from "../../source/presentation/auth/register.js";
 import { renderLogin } from "../../source/presentation/auth/login.js";
 import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { createWebApplication } from "./composition/root.js";
-import { configureAssetsMemory } from "../../source/application/finance/finance.js";
-import { configureAssetsAnalyticsMemory } from "../../source/application/finance/assets.analytics.js";
+import {
+    configureAssetsMemory,
+    clearFinanceMemory
+} from "../../source/application/finance/finance.js";
+import {
+    configureAssetsAnalyticsMemory,
+    clearAssetsAnalyticsMemory
+} from "../../source/application/finance/assets.analytics.js";
 import { configureAssetsAnalyticsAccess } from "../../source/application/finance/assets.analytics.access.js";
 
 const APP_ROOT_ID = "app";
@@ -288,6 +294,11 @@ function startWeb() {
         publicMode = true;
         sessionState = "unauthenticated";
         activeUserId = null;
+
+        // Remove the active user's in-memory data immediately. The public
+        // finance view must never render the previous user's state.
+        clearFinanceMemory();
+        clearAssetsAnalyticsMemory();
 
         trace("web-shell", "logout.completed", {
             authenticated: false
