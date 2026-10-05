@@ -1,4 +1,4 @@
-/* liquidity.switch.css — Version 1.0 */
+/* liquidity.switch.css — Version 1.1 */
 
 .liquidity-switch-field {
     display: grid;
@@ -45,13 +45,13 @@
     height: 22px;
     border-radius: 50%;
     background: var(--color-white);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-focus);
     transform: translateX(0);
     transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .liquidity-switch.is-on {
-    background: var(--gradient-orange);
+    background: var(--gradient-accent-button);
     border-color: transparent;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .liquidity-switch:focus-visible {
-    outline: 2px solid var(--color-orange);
+    outline: 2px solid var(--color-accent);
     outline-offset: 3px;
 }
 
