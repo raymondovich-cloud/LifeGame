@@ -192,7 +192,7 @@ async function updateFinanceEntry(
             return false;
         }
 
-        memory.saveAssetsSnapshot({
+        await memory.saveAssetsSnapshot({
             occurredAt: result.event.occurredAt,
             total: calculateAssetsTotal(memory.listAssets()),
             entries: memory.listAssets()
