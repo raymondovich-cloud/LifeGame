@@ -38,5 +38,15 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      - name: Install Supabase JavaScript client
+        run: npm install --no-save --no-package-lock @supabase/supabase-js@2.117.1
+
+      - name: Run real Finance persistence test
+        shell: bash
+        run: |
+          set -euo pipefail
+          eval "$(supabase status -o env)"
+          node --test source/infrastructure/supabase/finance.memory.supabase.integration.test.mjs
+
       - name: Run database tests
         run: supabase test db
