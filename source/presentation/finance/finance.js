@@ -127,6 +127,18 @@ function createEntryRow(root, subblock, entry) {
     label.className = "finance-entry-label";
     label.textContent = entry.label;
 
+    const pinIndicator = document.createElement("span");
+    pinIndicator.className = "finance-entry-pin";
+    pinIndicator.setAttribute("aria-hidden", "true");
+    pinIndicator.innerHTML =
+        '<svg viewBox="0 0 16 16" focusable="false">' +
+            '<path d="M5.2 1.8h5.6l-.7 3.2 2.1 2.1v1.1H8.9v4.1l-.9 1.7-.9-1.7V8.2H3.8V7.1l2.1-2.1z"></path>' +
+        '</svg>';
+
+    const labelGroup = document.createElement("span");
+    labelGroup.className = "finance-entry-label-group";
+    labelGroup.append(label, pinIndicator);
+
     if (subblock.id === "financial-burden") {
         const details = document.createElement("span");
         details.className = "finance-entry-amount";
@@ -134,13 +146,13 @@ function createEntryRow(root, subblock, entry) {
             "Долг " + formatAmount(entry.debt) +
             " · Платёж " + formatAmount(entry.payment);
 
-        content.append(label, details);
+        content.append(labelGroup, details);
     } else {
         const amount = document.createElement("span");
         amount.className = "finance-entry-amount";
         amount.textContent = formatAmount(entry.amount);
 
-        content.append(label, amount);
+        content.append(labelGroup, amount);
     }
 
     row.append(action, content);
