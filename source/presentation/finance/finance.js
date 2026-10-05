@@ -275,7 +275,12 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     if (assetTypeInput) {
         assetTypeInput.className = "input-control";
         assetTypeInput.name = "liquidity";
-        assetTypeInput.innerHTML =\n            "<option value=\"liquid\">Ликвидный актив</option>" +\n            "<option value=\"illiquid\">Неликвидный актив</option>";\n    }\n\n    const amountInput = document.createElement("input");
+        assetTypeInput.innerHTML =
+            "<option value=\"liquid\">Ликвидный актив</option>" +
+            "<option value=\"illiquid\">Неликвидный актив</option>";
+    }
+
+    const amountInput = document.createElement("input");
     amountInput.className = "input-control";
     amountInput.name = "amount";
     amountInput.type = "number";
