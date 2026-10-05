@@ -1,4 +1,4 @@
-// assets.edit.js — Version 1.0
+// assets.edit.js — Version 1.1
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
@@ -8,7 +8,7 @@ function triggerHaptic() {
     }
 }
 
-function createContextMenu(item, onEdit) {
+function createContextMenu(item, onEdit, point) {
     const menu = document.createElement("div");
     menu.className = "assets-context-menu";
     menu.setAttribute("role", "menu");
@@ -27,7 +27,24 @@ function createContextMenu(item, onEdit) {
     });
 
     menu.appendChild(editButton);
-    item.appendChild(menu);
+    document.body.appendChild(menu);
+
+    const margin = 12;
+    const gap = 10;
+    const menuWidth = 180;
+    const menuHeight = 52;
+    let left = point.x - menuWidth / 2;
+    let top = point.y - menuHeight - gap;
+
+    if (top < margin) {
+        top = point.y + gap;
+    }
+
+    left = Math.max(margin, Math.min(left, window.innerWidth - menuWidth - margin));
+    top = Math.max(margin, Math.min(top, window.innerHeight - menuHeight - margin));
+
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
 
     requestAnimationFrame(() => {
         menu.classList.add("is-visible");
@@ -243,7 +260,7 @@ function attachAssetEdit(item, entry, onWriteAttempt = null, onSaved = null) {
             pressTimer = null;
             item.classList.remove("is-long-pressing");
             triggerHaptic();
-            createContextMenu(item, openEdit);
+            createContextMenu(item, openEdit, { x: event.clientX, y: event.clientY });
         }, 500);
     });
 
