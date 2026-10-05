@@ -181,6 +181,8 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
     };
 
     items.forEach((item) => {
+        if (item.dataset.subblockId === "financial-stability-index") return;
+
         const content = item.querySelector(".swipe-delete-content");
         const action = item.querySelector(".swipe-delete-action");
         if (!content || !action) return;
