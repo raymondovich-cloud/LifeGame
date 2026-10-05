@@ -215,3 +215,48 @@ test('adapter requires a Supabase Auth client', () => {
         /Supabase Auth client is required/
     );
 });
+test('logout calls Supabase signOut and returns an unauthenticated result', async () => {
+    let called = 0;
+
+    const supabaseAuthClient = {
+        async signOut() {
+            called += 1;
+            return { error: null };
+        }
+    };
+
+    const adapter = createSupabaseIdentityAdapter(supabaseAuthClient);
+
+    const result = await adapter.logout();
+
+    assert.equal(called, 1);
+    assert.deepEqual(result, {
+        authenticated: false
+    });
+});
+
+test('logout normalizes a Supabase signOut error', async () => {
+    const supabaseAuthClient = {
+        async signOut() {
+            return {
+                error: {
+                    message: 'provider-specific secret',
+                    code: 'provider-specific-code'
+                }
+            };
+        }
+    };
+
+    const adapter = createSupabaseIdentityAdapter(supabaseAuthClient);
+
+    await assert.rejects(
+        () => adapter.logout(),
+        error => {
+            assert.ok(error instanceof IdentityApplicationError);
+            assert.equal(error.code, IDENTITY_ERROR_CODE.IDENTITY_SESSION_FAILED);
+            assert.equal(error.message, 'Logout could not be completed.');
+            return true;
+        }
+    );
+});
+
