@@ -1,11 +1,11 @@
-// source/presentation/finance/finance.js — Version 3.7
+// source/presentation/finance/finance.js — Version 3.8
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 
 
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
-import { getAssetsAnalytics, getAssetsAnalyticsRange } from "../../application/finance/assets.analytics.js";
+import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
@@ -117,14 +117,14 @@ function createEntryRow(root, subblock, entry) {
     return row;
 }
 
-function refreshAssetsSummary(root, financeApplication) {
+function refreshAssetsSummary(root, financeApplication, assetsAnalytics) {
     const summary = root.querySelector(".assets-summary");
     if (!summary) return;
 
     const amount = summary.querySelector(".assets-total-value");
     if (!amount) return;
 
-    const statistics = getAssetsAnalytics(getAssetsAnalyticsRange("month"));
+    const statistics = assetsAnalytics.getAssetsAnalytics(assetsAnalytics.getAssetsAnalyticsRange("month"));
     const amountText = formatAmount(statistics.current?.total ?? 0) + " ₽";
     amount.textContent = amountText;
 
@@ -142,7 +142,7 @@ function refreshAssetsSummary(root, financeApplication) {
     }
 }
 
-function finalizeDeletedItem(root, item) {
+function finalizeDeletedItem(root, item, financeApplication, assetsAnalytics) {
     const subblockId = item.dataset.subblockId;
     const entryList = item.closest(".finance-entry-list");
 
@@ -158,11 +158,11 @@ function finalizeDeletedItem(root, item) {
     }
 
     if (subblockId === "assets") {
-        refreshAssetsSummary(root, financeApplication);
+        refreshAssetsSummary(root, financeApplication, assetsAnalytics);
     }
 }
 
-function deleteFinanceEntryItem(root, item, onWriteAttempt = null, financeApplication = null) {
+function deleteFinanceEntryItem(root, item, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
     const operationId = beginOperation("finance.delete", {
         subblockId: item.dataset.subblockId,
         entryId: item.dataset.entryId
@@ -190,7 +190,7 @@ function deleteFinanceEntryItem(root, item, onWriteAttempt = null, financeApplic
                 );
 
                 pinnedEntries.delete(getEntryKey(item.dataset.subblockId, item.dataset.entryId));
-                finalizeDeletedItem(root, item);
+                finalizeDeletedItem(root, item, financeApplication, assetsAnalytics);
 
                 trace("ui", "finance.delete.ui_finalized", {
                     subblockId: item.dataset.subblockId,
@@ -225,12 +225,12 @@ function deleteFinanceEntryItem(root, item, onWriteAttempt = null, financeApplic
     remove();
 }
 
-function attachSwipeDelete(root, onWriteAttempt = null, financeApplication = null) {
+function attachSwipeDelete(root, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
     const items = [...root.querySelectorAll(".swipe-delete-item")];
     const maxReveal = 88;
     const activationDistance = 56;
 
-    const deleteItem = (item) => deleteFinanceEntryItem(root, item, onWriteAttempt, financeApplication);
+    const deleteItem = (item) => deleteFinanceEntryItem(root, item, onWriteAttempt, financeApplication, assetsAnalytics);
 
     items.forEach((item) => {
         if (item.dataset.subblockId === "financial-stability-index") return;
@@ -343,7 +343,7 @@ function formatSnapshotDate(timestamp) {
     }).format(timestamp ? new Date(timestamp) : new Date()).toUpperCase();
 }
 
-function createAssetsSummary(root, onWriteAttempt = null, financeApplication = null) {
+function createAssetsSummary(root, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "assets-summary";
 
@@ -365,7 +365,8 @@ function createAssetsSummary(root, onWriteAttempt = null, financeApplication = n
     statisticsButton.addEventListener("click", () => {
         renderAssetsStatisticsScreen(
             root,
-            () => renderFinance(root, "assets", onWriteAttempt, financeApplication)
+            () => renderFinance(root, "assets", onWriteAttempt, financeApplication),
+            assetsAnalytics
         );
     });
 
@@ -579,7 +580,7 @@ function createAddForm(root, subblock, onWriteAttempt = null, financeApplication
     return wrapper;
 }
 
-function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeApplication = null) {
+function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
     const wrapper = document.createElement("article");
     wrapper.className = "accordion-item finance-subblock" + (isOpen ? " is-open" : "");
     wrapper.dataset.subblock = subblock.id;
@@ -627,7 +628,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
     }
 
     if (subblock.id === "assets") {
-        content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication));
+        content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication, assetsAnalytics));
     }
 
     if (subblock.id !== "financial-stability-index") {
@@ -685,7 +686,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
                             renderFinance(root, subblock.id, onWriteAttempt, financeApplication);
                         },
                         () => {
-                            deleteFinanceEntryItem(root, row, onWriteAttempt, financeApplication);
+                            deleteFinanceEntryItem(root, row, onWriteAttempt, financeApplication, assetsAnalytics);
                         },
                         () => {
                             if (countPinnedEntries(subblock.id, financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
@@ -723,6 +724,10 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null, finan
 
     root.replaceChildren();
 
+    const assetsAnalytics = financeApplication
+        ? createAssetsAnalytics({ financeApplication })
+        : null;
+
     const section = document.createElement("section");
     section.className = "module-subblocks";
     section.setAttribute("aria-label", "Finance subblocks");
@@ -737,13 +742,13 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null, finan
     list.className = "accordion-list";
 
     FINANCE_SUBBLOCKS.forEach((subblock) => {
-        list.appendChild(createSubblock(root, subblock, subblock.id === openSubblockId, onWriteAttempt, financeApplication));
+        list.appendChild(createSubblock(root, subblock, subblock.id === openSubblockId, onWriteAttempt, financeApplication, assetsAnalytics));
     });
 
     section.append(heading, list);
     root.appendChild(section);
 
-    attachSwipeDelete(root, onWriteAttempt, financeApplication);
+    attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
 }
 
 export { renderFinance, attachSwipeDelete, deleteFinanceEntryItem };
