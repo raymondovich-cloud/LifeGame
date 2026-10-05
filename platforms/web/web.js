@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 3.1
+// platforms/web/web.js — Version 3.2
 
 import {
     trace,
@@ -13,6 +13,7 @@ import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureAssetsMemory } from "../../source/application/finance/finance.js";
 import { configureAssetsAnalyticsMemory } from "../../source/application/finance/assets.analytics.js";
+import { configureAssetsAnalyticsAccess } from "../../source/application/finance/assets.analytics.access.js";
 import {
     saveAssetsSnapshot,
     getAssetsSnapshotAtOrBefore,
@@ -39,6 +40,10 @@ function startWeb() {
         getSnapshotAtOrBefore: getAssetsSnapshotAtOrBefore,
         getSnapshotsBetween: getAssetsSnapshotsBetween,
         getFirstSnapshot: getFirstAssetsSnapshot
+    });
+
+    configureAssetsAnalyticsAccess({
+        getEntitlement: () => "free"
     });
 
     subscribe("finance.assets.state.changed", (event) => {
