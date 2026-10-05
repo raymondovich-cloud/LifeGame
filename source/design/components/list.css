@@ -1,4 +1,4 @@
-/* list.css — Version 2.8 */
+/* list.css — Version 2.9 */
 
 .list-empty {
     display:grid;
@@ -38,7 +38,7 @@
 .finance-entry-list {
     display:grid;
     gap:var(--space-2);
-    margin-bottom:var(--space-3);
+    margin-bottom:var(--space-4);
 }
 
 .finance-entry-list.is-context-editing .swipe-delete-item {
@@ -69,10 +69,14 @@
 
 .finance-add-form {
     display:grid;
-    grid-template-columns:minmax(0,1fr) minmax(7rem,.5fr) auto;
+    grid-template-columns:minmax(0,1fr) minmax(8rem,.65fr);
     gap:var(--space-2);
     align-items:center;
-    padding-top:var(--space-2);
+    padding-top:var(--space-3);
+}
+
+.finance-add-form .input-control {
+    height:2.75rem;
 }
 
 .finance-add-form .liquidity-switch-field {
@@ -80,10 +84,33 @@
     width:100%;
 }
 
+.finance-add-form .liquidity-switch-field + .input-control {
+    grid-column:1 / -1;
+}
+
+@media (max-width:640px) {
+    .finance-add-form {
+        grid-template-columns:1fr;
+        gap:var(--space-2);
+    }
+
+    .finance-add-form > .button-control,
+    .finance-add-form .liquidity-switch-field,
+    .finance-add-form .input-control {
+        grid-column:1;
+    }
+
+    .finance-add-form > .button-control {
+        margin-top:var(--space-1);
+    }
+}
+
 .finance-add-form > .button-control {
-    grid-column:3;
-    grid-row:1;
-    justify-self:end;
+    grid-column:1 / -1;
+    grid-row:auto;
+    width:100%;
+    min-height:2.75rem;
+    justify-self:stretch;
 }
 
 .finance-form-error {
@@ -115,7 +142,7 @@
     align-items:center;
     justify-content:space-between;
     gap:var(--space-3);
-    min-height:3rem;
+    min-height:2.75rem;
     padding:var(--space-2) var(--space-3);
     color:var(--color-white);
     background:var(--gradient-surface);
