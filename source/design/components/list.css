@@ -1,4 +1,4 @@
-/* list.css — Version 2.2 */
+/* list.css — Version 2.3 */
 
 .list-empty {
     display:grid;
@@ -195,3 +195,14 @@
     white-space:nowrap;
 }
 
+
+.swipe-delete-item.is-editing-target {
+    z-index:1100;
+    filter:brightness(.68) saturate(.82);
+    opacity:.72;
+    transform:scale(.995);
+    transition:
+        filter 220ms var(--motion-ease-standard),
+        opacity 220ms var(--motion-ease-standard),
+        transform 220ms var(--motion-ease-standard);
+}
