@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.0
+// source/presentation/finance/finance.js — Version 2.1
 
 import {
     listFinanceEntries,
@@ -270,7 +270,12 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     labelInput.autocomplete = "off";
     labelInput.required = true;
 
-    const amountInput = document.createElement("input");
+    const assetTypeInput = subblock.id === "assets" ? document.createElement("select") : null;
+
+    if (assetTypeInput) {
+        assetTypeInput.className = "input-control";
+        assetTypeInput.name = "liquidity";
+        assetTypeInput.innerHTML =\n            "<option value=\"liquid\">Ликвидный актив</option>" +\n            "<option value=\"illiquid\">Неликвидный актив</option>";\n    }\n\n    const amountInput = document.createElement("input");
     amountInput.className = "input-control";
     amountInput.name = "amount";
     amountInput.type = "number";
@@ -304,7 +309,7 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     error.className = "finance-form-error";
     error.hidden = true;
 
-    wrapper.append(labelInput, amountInput);
+    wrapper.append(labelInput, amountInput);\n    if (assetTypeInput) wrapper.appendChild(assetTypeInput);
     if (paymentInput) wrapper.appendChild(paymentInput);
     wrapper.append(addButton, error);
 
@@ -321,7 +326,7 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
                         paymentInput.value
                     );
                 } else {
-                    addFinanceEntry(subblock.id, labelInput.value, amountInput.value);
+                    addFinanceEntry(subblock.id, labelInput.value, amountInput.value, assetTypeInput?.value);
                 }
 
                 renderFinance(root, subblock.id, onWriteAttempt);
