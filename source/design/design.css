@@ -26,6 +26,7 @@
 @import "./components/list.css";
 @import "./components/badge.css";
 @import "./components/progress.css";
+@import "./components/liquidity.switch.css";
 @import "./components/info.tooltip.css";
 
 @import "./patterns/dashboard.css";
