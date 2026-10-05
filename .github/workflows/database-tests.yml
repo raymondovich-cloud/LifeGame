@@ -41,23 +41,24 @@ jobs:
       - name: Install Supabase JavaScript client
         run: npm install --no-save --no-package-lock @supabase/supabase-js@2.117.1
 
-      - name: Inspect Supabase CLI env output
+      - name: Export Supabase CLI env
         shell: bash
         run: |
           set -euo pipefail
           env_output="$(supabase status -o env)"
-          printf '%s\\n' "$env_output" | sed -E 's/((export )?(PUBLISHABLE_KEY|SECRET_KEY|ANON_KEY|SERVICE_ROLE_KEY|JWT_SECRET|ACCESS_TOKEN|REFRESH_TOKEN|PASSWORD))=.*/\\1=[REDACTED]/'
           eval "$env_output"
-          printf 'After eval: API_URL=%s\\n' "${API_URL:+set}"
-          printf 'After eval: PUBLISHABLE_KEY=%s\\n' "${PUBLISHABLE_KEY:+set}"
-          printf 'After eval: SUPABASE_URL=%s\\n' "${SUPABASE_URL:+set}"
-          printf 'After eval: SUPABASE_PUBLISHABLE_KEY=%s\\n' "${SUPABASE_PUBLISHABLE_KEY:+set}"
+          test -n "${API_URL:-}"
+          test -n "${PUBLISHABLE_KEY:-}"
+          {
+            printf 'API_URL=%s\n' "$API_URL"
+            printf 'PUBLISHABLE_KEY=%s\n' "$PUBLISHABLE_KEY"
+          } >> "$GITHUB_ENV"
 
       - name: Run real Finance persistence test
         shell: bash
         run: |
           set -euo pipefail
-          eval "$(supabase status -o env)"
+          printf 'Supabase test environment: API_URL=set, PUBLISHABLE_KEY=set\n'
           node --test source/infrastructure/supabase/finance.memory.supabase.integration.test.mjs
 
       - name: Run database tests
