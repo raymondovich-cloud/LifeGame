@@ -1,3 +1,73 @@
-/* modal.css — Version 1.0 */
+/* modal.css — Version 1.1 */
 
 /* Визуальные правила модальных окон. */
+
+
+.assets-edit-modal {
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:var(--space-4);
+    background:rgba(0,0,0,.58);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 180ms var(--motion-ease-standard);
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
+}
+
+.assets-edit-modal.is-visible {
+    opacity:1;
+    pointer-events:auto;
+}
+
+.assets-edit-modal__dialog {
+    width:min(100%,28rem);
+    padding:var(--space-4);
+    background:var(--gradient-surface);
+    border:var(--border-subtle);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-elevated);
+    transform:translateY(8px) scale(.985);
+    transition:transform 220ms var(--motion-ease-emphasis);
+}
+
+.assets-edit-modal.is-visible .assets-edit-modal__dialog {
+    transform:translateY(0) scale(1);
+}
+
+.assets-edit-modal__title {
+    margin:0 0 var(--space-3);
+    color:var(--color-white);
+    font-size:var(--font-size-lg);
+}
+
+.assets-edit-modal__form {
+    display:grid;
+    gap:var(--space-2);
+}
+
+.assets-edit-modal__liquidity {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-2);
+    min-height:2.5rem;
+    color:var(--color-white-soft);
+    font-size:var(--font-size-xs);
+}
+
+.assets-edit-modal__actions {
+    display:flex;
+    justify-content:flex-end;
+    gap:var(--space-2);
+    margin-top:var(--space-2);
+}
+
+.assets-edit-modal__cancel {
+    color:var(--color-white-soft);
+    background:transparent;
+}
