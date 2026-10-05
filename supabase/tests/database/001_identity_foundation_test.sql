@@ -1,4 +1,4 @@
--- Version 1.1
+-- Version 1.2
 -- LifeGame 3.0
 -- Identity Foundation — behavioral RLS tests
 --
@@ -44,15 +44,31 @@ select results_eq(
     'Auth user creation automatically bootstraps two profiles'
 );
 
-select results_eq(\n    $\n    select count(*)::bigint\n    from private.security_events\n    where event_type = 'identity.user.registered'\n    $,\n    $values (2::bigint)$,
+select results_eq(
+    $
+    select count(*)::bigint
+    from private.security_events
+    where event_type = 'identity.user.registered'
+    $,
+    $values (2::bigint)$,
     'Auth user creation records two registration security events'
 );
 
-select results_eq(\n    $\n    select display_name from public.profiles\n    where id = '00000000-0000-0000-0000-000000000001'\n    $,\n    $values ('Test User A'::text)$,
+select results_eq(
+    $
+    select display_name from public.profiles
+    where id = '00000000-0000-0000-0000-000000000001'
+    $,
+    $values ('Test User A'::text)$,
     'Registration metadata bootstraps User A display name'
 );
 
-select results_eq(\n    $\n    select birth_date from public.profiles\n    where id = '00000000-0000-0000-0000-000000000001'\n    $,\n    $values ('1997-04-27'::date)$,
+select results_eq(
+    $
+    select birth_date from public.profiles
+    where id = '00000000-0000-0000-0000-000000000001'
+    $,
+    $values ('1997-04-27'::date)$,
     'Registration metadata bootstraps User A birth date'
 );
 
