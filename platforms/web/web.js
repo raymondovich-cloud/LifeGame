@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 2.5
+// platforms/web/web.js — Version 2.6
 
 import {
     trace,
@@ -65,6 +65,12 @@ function startWeb() {
     let navigationInitialized = false;
     let publicMode = true;
     let sessionState = "unknown";
+
+    // Each route render gets a monotonically increasing request id.
+    // Authentication can trigger a second render before an earlier
+    // asynchronous session check finishes. A stale render must never
+    // overwrite the authenticated shell with public state.
+    let routeRenderSequence = 0;
 
     function getRoute() {
         return window.location.hash.slice(1);
@@ -330,11 +336,13 @@ function startWeb() {
     }
 
     async function renderRoute() {
+        const renderId = ++routeRenderSequence;
         const requestedRoute = getRoute();
 
         trace("web-shell", "route.check.begin", {
             requestedRoute,
-            currentSessionState: sessionState
+            currentSessionState: sessionState,
+            renderId
         });
 
         try {
@@ -343,8 +351,20 @@ function startWeb() {
 
             trace("web-shell", "route.session.result", {
                 requestedRoute,
-                authenticated: Boolean(session)
+                authenticated: Boolean(session),
+                renderId
             });
+
+            // A newer route render may have started while the session check
+            // was awaiting. Never allow this stale result to overwrite it.
+            if (renderId !== routeRenderSequence) {
+                trace("web-shell", "route.render.stale", {
+                    requestedRoute,
+                    renderId,
+                    latestRenderId: routeRenderSequence
+                });
+                return;
+            }
 
             if (!session) {
                 sessionState = "unauthenticated";
