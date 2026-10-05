@@ -1,4 +1,4 @@
-// finance.js — Version 5.2
+// finance.js — Version 5.3
 
 import {
     createActualEarning,
@@ -72,19 +72,17 @@ const COLLECTION_CONFIG = Object.freeze({
     }
 });
 
-let financeMemory = null;
-
-function configureAssetsMemory({ memory }) {
+function validateFinanceMemory(memory) {
     if (!memory) {
         throw new Error("LifeGame Finance: Finance memory is required.");
     }
 
     const requiredMethods = [
-        "listAssets",
-        "saveAsset",
-        "updateAsset",
-        "deleteAsset",
-        "mutateAsset"
+        "listAssets", "saveAsset", "updateAsset", "deleteAsset", "mutateAsset",
+        "listActualEarnings", "saveActualEarning", "updateActualEarning", "deleteActualEarning",
+        "listFinancialBurden", "saveFinancialBurden", "updateFinancialBurden", "deleteFinancialBurden",
+        "listMandatoryExpenses", "saveMandatoryExpense", "updateMandatoryExpense", "deleteMandatoryExpense",
+        "listFinancialCushion", "saveFinancialCushion", "updateFinancialCushion", "deleteFinancialCushion"
     ];
 
     for (const method of requiredMethods) {
@@ -95,35 +93,25 @@ function configureAssetsMemory({ memory }) {
         }
     }
 
-    financeMemory = memory;
+    return memory;
 }
 
-function clearFinanceMemory() {
-    financeMemory = null;
-}
+function createFinanceApplication({ memory }) {
+    const financeMemory = validateFinanceMemory(memory);
 
-function requireFinanceMemory() {
-    if (!financeMemory) {
-        throw new Error("LifeGame Finance: Finance memory is not configured.");
+    function getCollectionConfig(subblockId) {
+        const config = COLLECTION_CONFIG[subblockId];
+
+        if (!config) {
+            throw new Error("LifeGame Finance: неизвестный подблок.");
+        }
+
+        return config;
     }
 
-    return financeMemory;
-}
-
-function getCollectionConfig(subblockId) {
-    const config = COLLECTION_CONFIG[subblockId];
-
-    if (!config) {
-        throw new Error("LifeGame Finance: неизвестный подблок.");
+    function getMemoryMethod(config, operation) {
+        return financeMemory[config[operation]].bind(financeMemory);
     }
-
-    return config;
-}
-
-function getMemoryMethod(config, operation) {
-    const memory = requireFinanceMemory();
-    return memory[config[operation]].bind(memory);
-}
 
 function listFinanceEntries(subblockId) {
     if (subblockId === "assets") {
@@ -140,7 +128,7 @@ function listFinanceEntries(subblockId) {
 
 async function addFinanceEntry(subblockId, label, amount, liquidity) {
     if (subblockId === "assets") {
-        const memory = requireFinanceMemory();
+        const memory = financeMemory;
         const result = createAsset({ label, amount, liquidity });
         const mutation = await memory.mutateAsset({
             operation: "create",
