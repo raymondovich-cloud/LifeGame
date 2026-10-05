@@ -1,4 +1,4 @@
-/* list.css — Version 2.3 */
+/* list.css — Version 2.4 */
 
 .list-empty {
     display:grid;
@@ -39,6 +39,28 @@
     display:grid;
     gap:var(--space-2);
     margin-bottom:var(--space-3);
+}
+
+.finance-entry-list.is-context-editing .swipe-delete-item {
+    --context-reflow-y:0px;
+    transform:translate3d(0,var(--context-reflow-y),0) scale(.985);
+    opacity:.78;
+    filter:brightness(.8) saturate(.88);
+    transition:
+        transform 240ms var(--motion-ease-standard),
+        opacity 220ms var(--motion-ease-standard),
+        filter 220ms var(--motion-ease-standard);
+}
+
+.finance-entry-list.is-context-editing .swipe-delete-item.is-editing-target {
+    z-index:1100;
+    transform:translate3d(0,var(--context-reflow-y),0) scale(.995);
+    opacity:.72;
+    filter:brightness(.68) saturate(.82);
+}
+
+.finance-entry-list.is-context-editing .assets-context-menu {
+    grid-column:1;
 }
 
 .finance-entry-list + .finance-add-form {
@@ -196,13 +218,3 @@
 }
 
 
-.swipe-delete-item.is-editing-target {
-    z-index:1100;
-    filter:brightness(.68) saturate(.82);
-    opacity:.72;
-    transform:scale(.995);
-    transition:
-        filter 220ms var(--motion-ease-standard),
-        opacity 220ms var(--motion-ease-standard),
-        transform 220ms var(--motion-ease-standard);
-}
