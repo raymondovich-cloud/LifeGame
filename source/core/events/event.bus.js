@@ -1,4 +1,6 @@
-// event.bus.js — Version 1.0
+// event.bus.js — Version 1.1
+
+import { trace } from "../diagnostics/lifecycle.trace.js";
 
 const listeners = new Map();
 
@@ -25,10 +27,22 @@ function publish(event) {
         throw new Error("LifeGame Event Bus: invalid event.");
     }
 
+    trace("event-bus", "publish.begin", { eventType: event.type });
+
     const current = listeners.get(event.type);
-    if (!current) return;
+    if (!current) {
+        trace("event-bus", "publish.no_listeners", { eventType: event.type });
+        return;
+    }
+
+    trace("event-bus", "publish.dispatch", {
+        eventType: event.type,
+        listenerCount: current.size
+    });
 
     [...current].forEach((listener) => listener(event));
+
+    trace("event-bus", "publish.completed", { eventType: event.type });
 }
 
 export { subscribe, publish };
