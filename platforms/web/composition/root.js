@@ -1,5 +1,5 @@
+// root.js — Version 1.4
 // LifeGame 3.0 — Web Composition Root
-// Version: 1.4
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 
 import { createIdentityApplication } from "../../../source/application/identity/identity.js";
