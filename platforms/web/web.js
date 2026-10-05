@@ -170,7 +170,6 @@ function startWeb() {
         renderRegistration(
             dialog,
             application.auth,
-            closeRegistrationModal,
             async () => {
                 await handleAuthenticated(pendingAction, originRoute);
             },
