@@ -1,4 +1,4 @@
-// mandatory.expenses.js — Version 1.1
+// mandatory.expenses.js — Version 1.2
 
 const entries = [];
 let nextId = 1;
@@ -29,6 +29,23 @@ function addMandatoryExpense(label, amount) {
     return { ...entry };
 }
 
+function updateMandatoryExpense(id, label, amount) {
+    const normalizedLabel = String(label ?? "").trim();
+    const normalizedAmount = Number(amount);
+
+    if (!normalizedLabel) throw new Error("Mandatory Expenses: название записи обязательно.");
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+        throw new Error("Mandatory Expenses: сумма должна быть больше нуля.");
+    }
+
+    const entry = entries.find((item) => item.id === id);
+    if (!entry) return false;
+
+    entry.label = normalizedLabel;
+    entry.amount = normalizedAmount;
+    return { ...entry };
+}
+
 function removeMandatoryExpense(id) {
     const index = entries.findIndex((entry) => entry.id === id);
 
@@ -38,4 +55,4 @@ function removeMandatoryExpense(id) {
     return true;
 }
 
-export { listMandatoryExpenses, addMandatoryExpense, removeMandatoryExpense };
+export { listMandatoryExpenses, addMandatoryExpense, updateMandatoryExpense, removeMandatoryExpense };
