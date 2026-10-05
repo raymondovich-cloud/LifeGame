@@ -1,4 +1,4 @@
-/* context-menu.css — Version 1.0 */
+/* context-menu.css — Version 1.1 */
 
 .assets-context-menu {
     position:fixed;
@@ -46,7 +46,3 @@
     background:var(--color-accent-soft);
 }
 
-.swipe-delete-item.is-long-pressing .swipe-delete-content {
-    transform:scale(.985);
-    transition:transform 120ms var(--motion-ease-standard);
-}
