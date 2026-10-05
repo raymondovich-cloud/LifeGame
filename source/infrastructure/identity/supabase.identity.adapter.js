@@ -11,6 +11,8 @@
 // redirectTo is supplied by the platform composition root. The adapter
 // never decides which public URL a platform should use.
 
+import { trace } from '../../core/diagnostics/lifecycle.trace.js';
+
 import {
     mapSupabaseError,
     mapSupabaseLoginResult,
@@ -49,6 +51,8 @@ export function createSupabaseIdentityAdapter(supabaseAuthClient, options = {}) 
         },
 
         async logout() {
+            trace("supabase-auth", "logout.begin");
+
             const response = await supabaseAuthClient.signOut();
 
             if (response?.error) {
@@ -59,13 +63,25 @@ export function createSupabaseIdentityAdapter(supabaseAuthClient, options = {}) 
                 );
             }
 
+            trace("supabase-auth", "logout.completed", {
+                authenticated: false
+            });
+
             return Object.freeze({ authenticated: false });
         },
 
         async getCurrentSession() {
-            return mapSupabaseSessionResult(
+            trace("supabase-auth", "session.read.begin");
+
+            const result = mapSupabaseSessionResult(
                 await supabaseAuthClient.getSession()
             );
+
+            trace("supabase-auth", "session.read.completed", {
+                authenticated: Boolean(result?.session)
+            });
+
+            return result;
         },
 
         async requestPasswordReset({ email, redirectTo }) {
