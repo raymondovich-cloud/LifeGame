@@ -1,10 +1,11 @@
-// finance.js — Version 2.2
+// finance.js — Version 2.3
 
 import {
     listAssets,
     calculateAssetsTotal,
     addAsset,
-    removeAsset
+    removeAsset,
+    updateAsset
 } from "../../domain/finance/assets/assets.js";
 
 import {
@@ -35,7 +36,7 @@ import { calculateFinancialStabilityIndex } from "../../index/finance/finance.in
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 const FINANCE_OPERATIONS = Object.freeze({
-    "assets": { list: listAssets, add: addAsset, remove: removeAsset },
+    "assets": { list: listAssets, add: addAsset, remove: removeAsset, update: updateAsset },
     "actual-earnings": { list: listActualEarnings, add: addActualEarning, remove: removeActualEarning },
     "financial-burden": { list: listFinancialBurden, add: addFinancialBurden, remove: removeFinancialBurden },
     "mandatory-expenses": { list: listMandatoryExpenses, add: addMandatoryExpense, remove: removeMandatoryExpense },
@@ -73,6 +74,19 @@ function addFinanceEntry(subblockId, label, amount, liquidity) {
 
 function addFinancialBurdenEntry(label, debt, payment) {
     return addFinancialBurden(label, debt, payment);
+}
+
+function updateFinanceEntry(subblockId, entryId, label, amount, liquidity) {
+    const operations = getFinanceOperations(subblockId);
+
+    if (typeof operations.update !== "function") {
+        throw new Error("LifeGame Finance: редактирование этого подблока не поддерживается.");
+    }
+
+    trace("application", "finance.update.begin", { subblockId, entryId });
+    const result = operations.update(entryId, label, amount, liquidity);
+    trace("application", "finance.update.completed", { subblockId, entryId, result: Boolean(result) });
+    return result;
 }
 
 function removeFinanceEntry(subblockId, entryId) {
@@ -167,6 +181,7 @@ export {
     addFinanceEntry,
     addFinancialBurdenEntry,
     removeFinanceEntry,
+    updateFinanceEntry,
     getAssetsTotal,
     getAssetsStatistics,
     getFinancialStabilityIndex
