@@ -1,4 +1,4 @@
-// finance.js — Version 3.3
+// finance.js — Version 3.4
 
 import {
     listActualEarnings,
@@ -111,7 +111,7 @@ function getFinanceOperations(subblockId) {
 
 function listFinanceEntries(subblockId) {
     if (subblockId === "assets") {
-        return requireAssetsMemory().listAssets();
+        return assetsMemory ? assetsMemory.listAssets() : [];
     }
 
     return getFinanceOperations(subblockId).list();
@@ -243,9 +243,8 @@ function removeFinanceEntry(subblockId, entryId) {
 }
 
 function getFinancialStabilityIndex() {
-    const memory = requireAssetsMemory();
     const financialBurden = listFinancialBurden();
-    const assetEntries = memory.listAssets();
+    const assetEntries = assetsMemory ? assetsMemory.listAssets() : [];
 
     const liquidAssets = assetEntries.filter(
         (entry) => entry?.liquidity !== "illiquid"
