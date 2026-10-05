@@ -1,8 +1,8 @@
-/* navigation.css — Version 1.8 */
+/* navigation.css — Version 1.9 */
 
 .app-navigation {
     display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns:repeat(4,minmax(0,1fr));
     gap:var(--space-1);
     width:100%;
     margin-top:var(--space-6);
@@ -73,17 +73,6 @@
     text-overflow:ellipsis;
 }
 
-.navigation-item[data-module="profile"] {
-    display:none;
-}
-
-#app[data-access="authenticated"] .app-navigation {
-    grid-template-columns:repeat(4,minmax(0,1fr));
-}
-
-#app[data-access="authenticated"] .navigation-item[data-module="profile"] {
-    display:flex;
-}
 
 @media (max-width:30rem) {
     .app-navigation {
