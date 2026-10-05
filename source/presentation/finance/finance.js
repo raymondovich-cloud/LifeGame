@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 1.21
+// source/presentation/finance/finance.js — Version 1.22
 
 import {
     listFinanceEntries,
@@ -134,7 +134,6 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
 
         content.addEventListener("pointerup", finishSwipe);
         content.addEventListener("pointercancel", finishSwipe);
-
     });
 }
 
@@ -205,22 +204,27 @@ function createFinancialStabilityIndexPanel() {
     const wrapper = document.createElement("div");
     wrapper.className = "financial-stability-index-panel";
 
-    const label = document.createElement("span");
-    label.className = "statistics-meta";
-    label.textContent = "FSI 2.1 · ИНДЕКС ФИНАНСОВОЙ СТАБИЛЬНОСТИ";
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "financial-stability-index-eyebrow";
+    eyebrow.textContent = "FSI 2.1";
+
+    const scoreRow = document.createElement("div");
+    scoreRow.className = "financial-stability-index-score-row";
 
     const value = document.createElement("span");
-    value.className = "statistics-value";
+    value.className = "financial-stability-index-value";
     value.textContent = result.value + "/100";
 
     const category = document.createElement("span");
-    category.className = "statistics-meta";
+    category.className = "financial-stability-index-category";
     category.textContent = result.category?.label || "—";
+
+    scoreRow.append(value, category);
 
     const description = document.createElement("p");
     description.className = "financial-stability-index-description";
     description.textContent =
-        "FSI 2.1 оценивает не только текущее финансовое положение, но и устойчивость дохода, долга, ликвидности, резерва и финансового тренда.";
+        "Сводная оценка финансовой устойчивости с учётом ликвидности, дохода, долга, резерва и финансового тренда.";
 
     const components = document.createElement("div");
     components.className = "financial-stability-index-components";
@@ -250,7 +254,7 @@ function createFinancialStabilityIndexPanel() {
         components.appendChild(item);
     });
 
-    wrapper.append(label, value, category, description, components);
+    wrapper.append(eyebrow, scoreRow, description, components);
     return wrapper;
 }
 
