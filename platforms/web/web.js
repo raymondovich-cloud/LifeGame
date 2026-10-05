@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 3.3
+// platforms/web/web.js — Version 3.4
 
 import {
     trace,
@@ -340,13 +340,13 @@ function startWeb() {
         }
     }
 
-    function renderApplicationShell(route, isPublic, session = null) {
+    async function renderApplicationShell(route, isPublic, session = null) {
         if (!isPublic && session?.user?.id) {
             activeUserId = session.user.id;
         }
 
         if (!isPublic && activeUserId) {
-            const financeMemory = application.finance.createMemoryForUser(activeUserId);
+            const financeMemory = await application.finance.createMemoryForUser(activeUserId);
 
             configureAssetsMemory({
                 memory: financeMemory
@@ -419,7 +419,7 @@ function startWeb() {
                     requestedRoute
                 });
 
-                renderApplicationShell(
+                await renderApplicationShell(
                     isApplicationModule(requestedRoute)
                         ? requestedRoute
                         : DEFAULT_APPLICATION_ROUTE,
@@ -439,7 +439,7 @@ function startWeb() {
                     ? requestedRoute
                     : DEFAULT_APPLICATION_ROUTE;
 
-                renderApplicationShell(publicRoute, true);
+                await renderApplicationShell(publicRoute, true);
                 return;
             }
 
@@ -458,7 +458,7 @@ function startWeb() {
                 requestedRoute
             });
 
-            renderApplicationShell(
+            await renderApplicationShell(
                 isApplicationModule(requestedRoute)
                     ? requestedRoute
                     : DEFAULT_APPLICATION_ROUTE,
