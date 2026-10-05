@@ -1,4 +1,4 @@
-// finance.memory.supabase.js — Version 2.0
+// finance.memory.supabase.js — Version 2.1
 // Responsibility: implement the Finance Memory Port with Supabase persistence and a local runtime cache.
 
 const COLLECTIONS = Object.freeze({
@@ -83,7 +83,62 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         return clone(cache[key]);
     }
 
+    async function mutateAsset({ operation, entry = null, entryId = null, occurredAt = Date.now() }) {
+        const { data, error } = await client.rpc("finance_mutate_asset", {
+            p_operation: operation,
+            p_asset_id: entryId,
+            p_label: entry?.label ?? null,
+            p_amount: entry?.amount ?? null,
+            p_liquidity: entry?.liquidity ?? null,
+            p_occurred_at: new Date(occurredAt).toISOString()
+        });
+
+        if (error) throw error;
+        if (!data?.success) return false;
+
+        if (operation === "create") {
+            const saved = normalizeRow(data.asset);
+            cache.assets.push(saved);
+            applySnapshot(data.snapshot);
+            return {
+                entry: clone(saved),
+                snapshot: clone(data.snapshot)
+            };
+        }
+
+        if (operation === "update") {
+            const updated = normalizeRow(data.asset);
+            const index = cache.assets.findIndex((item) => item.id === entryId);
+
+            if (index !== -1) cache.assets[index] = updated;
+            applySnapshot(data.snapshot);
+
+            return {
+                entry: clone(updated),
+                snapshot: clone(data.snapshot)
+            };
+        }
+
+        cache.assets = cache.assets.filter((item) => item.id !== entryId);
+        applySnapshot(data.snapshot);
+
+        return {
+            entry: null,
+            snapshot: clone(data.snapshot)
+        };
+    }
+
     async function save(key, entry) {
+        if (key === "assets") {
+            const result = await mutateAsset({
+                operation: "create",
+                entry,
+                occurredAt: Date.now()
+            });
+
+            return result ? result.entry : false;
+        }
+
         const config = COLLECTIONS[key];
         const payload = { user_id: userId };
 
@@ -105,6 +160,17 @@ function createSupabaseFinanceMemory({ client, userContext }) {
     }
 
     async function update(key, id, entry) {
+        if (key === "assets") {
+            const result = await mutateAsset({
+                operation: "update",
+                entryId: id,
+                entry,
+                occurredAt: Date.now()
+            });
+
+            return result ? result.entry : false;
+        }
+
         const config = COLLECTIONS[key];
         const payload = {};
 
@@ -132,6 +198,16 @@ function createSupabaseFinanceMemory({ client, userContext }) {
     }
 
     async function remove(key, id) {
+        if (key === "assets") {
+            const result = await mutateAsset({
+                operation: "delete",
+                entryId: id,
+                occurredAt: Date.now()
+            });
+
+            return Boolean(result);
+        }
+
         const config = COLLECTIONS[key];
 
         const { data, error } = await client
@@ -148,77 +224,4 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         return true;
     }
 
-    async function saveAssetsSnapshot(snapshot) {
-        const { data, error } = await client
-            .from("finance_asset_snapshots")
-            .insert({
-                user_id: userId,
-                occurred_at: new Date(snapshot.occurredAt).toISOString(),
-                total: snapshot.total,
-                entries: snapshot.entries
-            })
-            .select("*")
-            .single();
 
-        if (error) throw error;
-
-        const saved = {
-            occurredAt: new Date(data.occurred_at).getTime(),
-            total: Number(data.total),
-            entries: data.entries || []
-        };
-
-        snapshots.push(clone(saved));
-        return clone(saved);
-    }
-
-    function listSnapshots() {
-        return clone(snapshots);
-    }
-
-    return Object.freeze({
-        userId,
-        hydrate,
-        listAssets: () => list("assets"),
-        saveAsset: (entry) => save("assets", entry),
-        updateAsset: (id, entry) => update("assets", id, entry),
-        deleteAsset: (id) => remove("assets", id),
-
-        listActualEarnings: () => list("actualEarnings"),
-        saveActualEarning: (entry) => save("actualEarnings", entry),
-        updateActualEarning: (id, entry) => update("actualEarnings", id, entry),
-        deleteActualEarning: (id) => remove("actualEarnings", id),
-
-        listFinancialBurden: () => list("financialBurden"),
-        saveFinancialBurden: (entry) => save("financialBurden", entry),
-        updateFinancialBurden: (id, entry) => update("financialBurden", id, entry),
-        deleteFinancialBurden: (id) => remove("financialBurden", id),
-
-        listMandatoryExpenses: () => list("mandatoryExpenses"),
-        saveMandatoryExpense: (entry) => save("mandatoryExpenses", entry),
-        updateMandatoryExpense: (id, entry) => update("mandatoryExpenses", id, entry),
-        deleteMandatoryExpense: (id) => remove("mandatoryExpenses", id),
-
-        listFinancialCushion: () => list("financialCushion"),
-        saveFinancialCushion: (entry) => save("financialCushion", entry),
-        updateFinancialCushion: (id, entry) => update("financialCushion", id, entry),
-        deleteFinancialCushion: (id) => remove("financialCushion", id),
-
-        saveAssetsSnapshot,
-        getAssetsSnapshotAtOrBefore: (timestamp) => {
-            const matches = snapshots.filter((item) => item.occurredAt <= timestamp);
-            return matches.length ? clone(matches[matches.length - 1]) : null;
-        },
-        getAssetsSnapshotsBetween: (start, end) =>
-            clone(snapshots.filter((item) =>
-                item.occurredAt >= start && item.occurredAt <= end
-            )),
-        getFirstAssetsSnapshot: () =>
-            snapshots.length ? clone(snapshots[0]) : null,
-        getLatestAssetsSnapshot: () =>
-            snapshots.length ? clone(snapshots[snapshots.length - 1]) : null,
-        listAssetsSnapshots: listSnapshots
-    });
-}
-
-export { createSupabaseFinanceMemory };
