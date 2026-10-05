@@ -1,4 +1,4 @@
-/* design.css — Version 1.5 */
+/* design.css — Version 1.6 */
 
 /* Единая точка входа Design System. */
 
@@ -30,6 +30,7 @@
 @import "./components/progress.css";
 @import "./components/liquidity.switch.css";
 @import "./components/info.tooltip.css";
+@import "./components/profile.css";
 
 @import "./patterns/dashboard.css";
 @import "./patterns/forms.css";
