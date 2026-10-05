@@ -1,4 +1,4 @@
-/* accordion.css — Version 1.14 */
+/* accordion.css — Version 1.15 */
 
 .accordion-list {
     display:grid;
@@ -10,9 +10,23 @@
     position:relative;
     overflow:visible;
     background:var(--gradient-card-premium);
-    border:1px solid var(--color-accent-border);
+    border:1px solid transparent;
     border-radius:var(--radius-card);
     box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22);
+}
+
+/* Градиентная чёрно-оранжевая рамка без изменения фона блока. */
+.accordion-item::after {
+    position:absolute;
+    inset:0;
+    padding:1px;
+    pointer-events:none;
+    content:"";
+    background:linear-gradient(135deg, rgba(242,138,46,.42) 0%, rgba(5,5,5,.92) 42%, rgba(242,138,46,.24) 100%);
+    border-radius:inherit;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
 }
 
 .accordion-item::before {
