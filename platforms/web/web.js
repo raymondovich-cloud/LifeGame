@@ -316,7 +316,7 @@ function startWeb() {
 
     function renderModule(moduleId, session = null) {
         if (moduleId === "auth") {
-            renderPreviewModule("profile");
+            moduleContent.replaceChildren();
             openRegistrationModal();
             return;
         }
