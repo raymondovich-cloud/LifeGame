@@ -309,7 +309,7 @@ function startWeb() {
         await renderRoute();
     }
 
-    async function renderModule(moduleId, session = null) {
+    async function renderModule(moduleId, session = null, financeApplication = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
             openLoginModal();
@@ -320,7 +320,8 @@ function startWeb() {
             renderFinance(
                 moduleContent,
                 null,
-                publicMode ? (action) => openRegistrationModal(action) : null
+                publicMode ? (action) => openRegistrationModal(action) : null,
+                financeApplication
             );
             return;
         }
@@ -408,8 +409,10 @@ function startWeb() {
             activeUserId = session.user.id;
         }
 
+        let financeApplication = null;
+
         if (!isPublic && activeUserId) {
-            const financeApplication = await application.finance.createApplicationForUser(activeUserId);
+            financeApplication = await application.finance.createApplicationForUser(activeUserId);
 
             if (renderId !== null && renderId !== routeRenderSequence) {
                 trace("web-shell", "shell.render.stale-after-memory", {
@@ -439,7 +442,7 @@ function startWeb() {
         authRoot.hidden = true;
         applicationShell.hidden = false;
 
-        await renderModule(route, session);
+        await renderModule(route, session, financeApplication);
     }
 
     async function renderRoute() {
