@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 3.0
+// platforms/web/web.js — Version 3.1
 
 import {
     trace,
@@ -32,9 +32,7 @@ function startWeb() {
     configureAssetsMemory({
         getSnapshotAtOrBefore: getAssetsSnapshotAtOrBefore,
         getLiquidAssetsAtOrBefore,
-        getIlliquidAssetsAtOrBefore,
-        getSnapshotsBetween: getAssetsSnapshotsBetween,
-        getFirstSnapshot: getFirstAssetsSnapshot
+        getIlliquidAssetsAtOrBefore
     });
 
     configureAssetsAnalyticsMemory({
