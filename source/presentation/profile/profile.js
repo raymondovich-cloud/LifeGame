@@ -156,7 +156,7 @@ function createLifeQualityVisual() {
     return visual;
 }
 
-function createSettingsModal(profile, email, profileApplication, userId, onLogout) {
+function createSettingsModal(profile, email, profileApplication, userId, onLogout, onProfileUpdated) {
     const modal = document.createElement("div");
     modal.className = "profile-settings-modal";
     modal.setAttribute("role", "dialog");
@@ -237,6 +237,10 @@ function createSettingsModal(profile, email, profileApplication, userId, onLogou
                     birthDate: updated.birthDate
                 };
 
+                if (typeof onProfileUpdated === "function") {
+                    onProfileUpdated(currentProfile);
+                }
+
                 renderRows();
             },
             renderRows
@@ -316,7 +320,7 @@ async function renderProfile(root, session = null, options = {}) {
         throw new Error("Profile application and authenticated user are required.");
     }
 
-    const profile = await profileApplication.getProfile(userId);
+    let currentProfile = await profileApplication.getProfile(userId);
     const email = session?.user?.email || "Account active";
 
     const section = document.createElement("section");
@@ -349,11 +353,14 @@ async function renderProfile(root, session = null, options = {}) {
         if (section.querySelector(".profile-settings-modal")) return;
 
         const settingsView = createSettingsModal(
-            profile,
+            currentProfile,
             email,
             profileApplication,
             userId,
-            onLogout
+            onLogout,
+            updatedProfile => {
+                currentProfile = updatedProfile;
+            }
         );
 
         section.appendChild(settingsView.modal);
