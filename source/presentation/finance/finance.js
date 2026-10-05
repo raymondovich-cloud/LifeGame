@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.7
+// source/presentation/finance/finance.js — Version 2.8
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -15,6 +15,28 @@ import {
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
+
+const pinnedEntries = new Set();
+
+function getEntryKey(subblockId, entryId) {
+    return subblockId + ":" + entryId;
+}
+
+function isEntryPinned(subblockId, entryId) {
+    return pinnedEntries.has(getEntryKey(subblockId, entryId));
+}
+
+function toggleEntryPinned(subblockId, entryId) {
+    const key = getEntryKey(subblockId, entryId);
+
+    if (pinnedEntries.has(key)) {
+        pinnedEntries.delete(key);
+        return false;
+    }
+
+    pinnedEntries.add(key);
+    return true;
+}
 
 const FINANCE_SUBBLOCKS = Object.freeze([
     { id: "assets", number: "01", title: "Активы", description: "Имущество и средства, которыми вы владеете", info: "Активы, которыми вы владеете: недвижимость, автомобиль, наличные, средства на картах, счета и другие активы, которые пользователь хочет учитывать в своей финансовой картине." },
@@ -113,72 +135,75 @@ function finalizeDeletedItem(root, item) {
     }
 }
 
+function deleteFinanceEntryItem(root, item, onWriteAttempt = null) {
+    const operationId = beginOperation("finance.delete", {
+        subblockId: item.dataset.subblockId,
+        entryId: item.dataset.entryId
+    });
+
+    trace("ui", "finance.delete.requested", {
+        subblockId: item.dataset.subblockId,
+        entryId: item.dataset.entryId
+    });
+
+    const remove = () => {
+        item.classList.add("is-deleting");
+        item.style.setProperty("--delete-height", item.getBoundingClientRect().height + "px");
+
+        window.setTimeout(() => {
+            try {
+                trace("ui", "finance.delete.domain_call", {
+                    subblockId: item.dataset.subblockId,
+                    entryId: item.dataset.entryId
+                });
+
+                const result = removeFinanceEntry(
+                    item.dataset.subblockId,
+                    item.dataset.entryId
+                );
+
+                pinnedEntries.delete(getEntryKey(item.dataset.subblockId, item.dataset.entryId));
+                finalizeDeletedItem(root, item);
+
+                trace("ui", "finance.delete.ui_finalized", {
+                    subblockId: item.dataset.subblockId,
+                    entryId: item.dataset.entryId,
+                    result
+                });
+
+                endOperation(operationId, result ? "completed" : "not_found");
+            } catch (error) {
+                trace("ui", "finance.delete.failed", {
+                    subblockId: item.dataset.subblockId,
+                    entryId: item.dataset.entryId,
+                    error: error?.message || "unknown"
+                });
+
+                item.classList.remove("is-deleting");
+                endOperation(operationId, "failed");
+                throw error;
+            }
+        }, 230);
+    };
+
+    if (typeof onWriteAttempt === "function") {
+        trace("ui", "finance.delete.write_guard", {
+            subblockId: item.dataset.subblockId,
+            entryId: item.dataset.entryId
+        });
+        onWriteAttempt(remove);
+        return;
+    }
+
+    remove();
+}
+
 function attachSwipeDelete(root, onWriteAttempt = null) {
     const items = [...root.querySelectorAll(".swipe-delete-item")];
     const maxReveal = 88;
     const activationDistance = 56;
 
-    const deleteItem = (item) => {
-        const operationId = beginOperation("finance.delete", {
-            subblockId: item.dataset.subblockId,
-            entryId: item.dataset.entryId
-        });
-
-        trace("ui", "finance.delete.requested", {
-            subblockId: item.dataset.subblockId,
-            entryId: item.dataset.entryId
-        });
-
-        const remove = () => {
-            item.classList.add("is-deleting");
-            item.style.setProperty("--delete-height", item.getBoundingClientRect().height + "px");
-
-            window.setTimeout(() => {
-                try {
-                    trace("ui", "finance.delete.domain_call", {
-                        subblockId: item.dataset.subblockId,
-                        entryId: item.dataset.entryId
-                    });
-
-                    const result = removeFinanceEntry(
-                        item.dataset.subblockId,
-                        item.dataset.entryId
-                    );
-
-                    finalizeDeletedItem(root, item);
-
-                    trace("ui", "finance.delete.ui_finalized", {
-                        subblockId: item.dataset.subblockId,
-                        entryId: item.dataset.entryId,
-                        result
-                    });
-
-                    endOperation(operationId, result ? "completed" : "not_found");
-                } catch (error) {
-                    trace("ui", "finance.delete.failed", {
-                        subblockId: item.dataset.subblockId,
-                        entryId: item.dataset.entryId,
-                        error: error?.message || "unknown"
-                    });
-
-                    item.classList.remove("is-deleting");
-                    endOperation(operationId, "failed");
-                    throw error;
-                }
-            }, 230);
-        };
-
-        if (typeof onWriteAttempt === "function") {
-            trace("ui", "finance.delete.write_guard", {
-                subblockId: item.dataset.subblockId,
-                entryId: item.dataset.entryId
-            });
-            onWriteAttempt(remove);
-            return;
-        }
-
-        remove();
-    };
+    const deleteItem = (item) => deleteFinanceEntryItem(root, item, onWriteAttempt);
 
     items.forEach((item) => {
         if (item.dataset.subblockId === "financial-stability-index") return;
@@ -562,7 +587,11 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
 
     const entries = subblock.id === "financial-stability-index"
         ? []
-        : listFinanceEntries(subblock.id);
+        : listFinanceEntries(subblock.id).sort((first, second) => {
+            const firstPinned = isEntryPinned(subblock.id, first.id);
+            const secondPinned = isEntryPinned(subblock.id, second.id);
+            return Number(secondPinned) - Number(firstPinned);
+        });
 
     if (subblock.id === "financial-stability-index") {
         content.appendChild(createFinancialStabilityIndexPanel());
@@ -586,6 +615,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
 
             entries.forEach((entry) => {
                 const row = createEntryRow(root, subblock, entry);
+                row.classList.toggle("is-pinned", isEntryPinned(subblock.id, entry.id));
                 entryList.appendChild(row);
 
                 if (subblock.id !== "financial-stability-index") {
@@ -610,6 +640,13 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
                             if (subblock.id === "assets") {
                                 refreshAssetsSummary(root);
                             }
+                        },
+                        () => {
+                            toggleEntryPinned(subblock.id, entry.id);
+                            renderFinance(root, subblock.id, onWriteAttempt);
+                        },
+                        () => {
+                            deleteFinanceEntryItem(root, row, onWriteAttempt);
                         }
                     );
                 }
@@ -662,4 +699,4 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null) {
     attachSwipeDelete(root, onWriteAttempt);
 }
 
-export { renderFinance, attachSwipeDelete };
+export { renderFinance, attachSwipeDelete, deleteFinanceEntryItem };
