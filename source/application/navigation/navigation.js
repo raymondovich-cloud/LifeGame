@@ -1,11 +1,11 @@
-// source/application/navigation/navigation.js — Version 1.4
+// source/application/navigation/navigation.js — Version 1.5
 
 const MODULES = Object.freeze({
-    finance: Object.freeze({ id: "finance", number: "01", name: "Finance", localName: "Финансы" }),
-    health: Object.freeze({ id: "health", number: "02", name: "Health", localName: "Здоровье" }),
-    development: Object.freeze({ id: "development", number: "03", name: "Development", localName: "Развитие" }),
-    profile: Object.freeze({ id: "profile", number: "04", name: "Profile", localName: "Профиль" }),
-    auth: Object.freeze({ id: "auth", number: "04", name: "Authorization", localName: "Авторизация" })
+    finance: Object.freeze({ id: "finance", number: "01", name: "Finance", localName: "Finance" }),
+    health: Object.freeze({ id: "health", number: "02", name: "Health", localName: "Health" }),
+    development: Object.freeze({ id: "development", number: "03", name: "Development", localName: "Development" }),
+    profile: Object.freeze({ id: "profile", number: "04", name: "Profile", localName: "Profile" }),
+    auth: Object.freeze({ id: "auth", number: "04", name: "Authorization", localName: "Authorization" })
 });
 
 const DEFAULT_MODULE_ID = "finance";
