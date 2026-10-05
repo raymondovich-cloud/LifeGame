@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Registration Presentation
-// Version: 1.3
+// Version: 1.4
 // Responsibility: render the registration interaction and call Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -10,7 +10,6 @@ import { IDENTITY_ERROR_CODE } from '../../application/identity/identity.error.j
 export function renderRegistration(
     container,
     authController,
-    onBack,
     onAuthenticated,
     onLogin
 ) {
@@ -20,10 +19,6 @@ export function renderRegistration(
 
     if (!authController) {
         throw new Error("Auth controller is required.");
-    }
-
-    if (typeof onBack !== "function") {
-        throw new Error("Registration back action is required.");
     }
 
     if (typeof onAuthenticated !== "function") {
@@ -38,12 +33,6 @@ export function renderRegistration(
     wrapper.className = "form";
     wrapper.setAttribute("aria-labelledby", "registration-title");
 
-    const backButton = document.createElement("button");
-    backButton.className = "button-control";
-    backButton.type = "button";
-    backButton.textContent = "Back";
-    backButton.addEventListener("click", onBack);
-
     const title = document.createElement("h1");
     title.id = "registration-title";
     title.textContent = "Create account";
@@ -54,6 +43,50 @@ export function renderRegistration(
 
     const form = document.createElement("form");
     form.className = "form";
+
+    const displayNameField = document.createElement("div");
+    displayNameField.className = "form-field";
+
+    const displayNameLabel = document.createElement("label");
+    displayNameLabel.className = "form-label";
+    displayNameLabel.htmlFor = "registration-display-name";
+    displayNameLabel.textContent = "Как к вам обращаться?";
+
+    const displayNameInput = document.createElement("input");
+    displayNameInput.className = "input-control";
+    displayNameInput.id = "registration-display-name";
+    displayNameInput.name = "displayName";
+    displayNameInput.type = "text";
+    displayNameInput.autocomplete = "name";
+    displayNameInput.required = true;
+
+    displayNameField.append(displayNameLabel, displayNameInput);
+
+    const birthDateField = document.createElement("div");
+    birthDateField.className = "form-field";
+
+    const birthDateLabel = document.createElement("label");
+    birthDateLabel.className = "form-label";
+    birthDateLabel.htmlFor = "registration-birth-date";
+    birthDateLabel.textContent = "Дата рождения";
+
+    const birthDateInput = document.createElement("input");
+    birthDateInput.className = "input-control";
+    birthDateInput.id = "registration-birth-date";
+    birthDateInput.name = "birthDate";
+    birthDateInput.type = "date";
+    birthDateInput.autocomplete = "bday";
+    birthDateInput.required = true;
+
+    const today = new Date();
+    birthDateInput.max =
+        today.getFullYear() +
+        "-" +
+        String(today.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(today.getDate()).padStart(2, "0");
+
+    birthDateField.append(birthDateLabel, birthDateInput);
 
     const emailField = document.createElement("div");
     emailField.className = "form-field";
@@ -132,13 +165,15 @@ export function renderRegistration(
     loginButton.addEventListener("click", onLogin);
 
     form.append(
+        displayNameField,
+        birthDateField,
         emailField,
         passwordField,
         submit,
         status,
         resendButton
     );
-    wrapper.append(backButton, title, description, form, loginButton);
+    wrapper.append(title, description, form, loginButton);
     container.append(wrapper);
 
     form.addEventListener("submit", async (event) => {
@@ -150,6 +185,8 @@ export function renderRegistration(
 
         try {
             const result = await authController.register({
+                displayName: displayNameInput.value,
+                birthDate: birthDateInput.value,
                 email: emailInput.value,
                 password: passwordInput.value
             });
