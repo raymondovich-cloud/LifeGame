@@ -1,5 +1,4 @@
-
-/* list.css — Version 1.8 */
+/* list.css — Version 1.9 */
 
 .list-empty {
     display:grid;
@@ -79,6 +78,7 @@
     border:var(--border-subtle);
     border-radius:var(--radius-control);
     background:var(--gradient-surface);
+    isolation:isolate;
 }
 
 .swipe-delete-content {
@@ -92,9 +92,10 @@
     padding:var(--space-2) var(--space-3);
     color:var(--color-white);
     background:var(--gradient-surface);
-    transform:translateX(var(--swipe-offset,0));
-    transition:transform var(--motion-duration-normal) var(--motion-ease-standard);
+    transform:translate3d(var(--swipe-offset,0),0,0);
+    transition:transform 220ms cubic-bezier(.22,.61,.36,1);
     cursor:grab;
+    will-change:transform;
 }
 
 .swipe-delete-content.is-swiping {
@@ -102,35 +103,68 @@
     cursor:grabbing;
 }
 
-.swipe-delete-item.is-delete-ready .swipe-delete-content {
-    border-color:var(--color-danger);
-}
-
 .swipe-delete-action {
     position:absolute;
-    top:0;
-    right:0;
-    bottom:0;
+    inset:0 0 0 auto;
     z-index:0;
-    width:6rem;
-    color:var(--color-danger);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:5.5rem;
+    padding:0;
+    color:var(--color-white);
     font:inherit;
     font-size:var(--font-size-xs);
-    font-weight:var(--font-weight-semibold);
-    background:transparent;
+    font-weight:var(--font-weight-medium);
+    background:var(--color-danger);
     border:0;
+    border-radius:0;
     cursor:pointer;
-    pointer-events:none;
-    visibility:hidden;
     opacity:0;
-    transition:opacity var(--motion-duration-fast) var(--motion-ease-standard), visibility 0s linear var(--motion-duration-fast);
+    transform:translateZ(0);
+    transition:opacity 120ms ease;
 }
 
 .swipe-delete-item.is-delete-ready .swipe-delete-action {
-    pointer-events:auto;
-    visibility:visible;
     opacity:1;
-    transition:opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.swipe-delete-item.is-deleting {
+    overflow:hidden;
+    pointer-events:none;
+    animation:swipe-delete-collapse 230ms cubic-bezier(.22,.61,.36,1) forwards;
+}
+
+.swipe-delete-item.is-deleting .swipe-delete-content {
+    transform:translate3d(-100%,0,0);
+    opacity:0;
+    transition:
+        transform 180ms cubic-bezier(.4,0,1,1),
+        opacity 130ms ease;
+}
+
+.swipe-delete-item.is-deleting .swipe-delete-action {
+    opacity:0;
+}
+
+@keyframes swipe-delete-collapse {
+    0% {
+        max-height:var(--delete-height);
+        margin-bottom:0;
+        opacity:1;
+    }
+
+    65% {
+        max-height:var(--delete-height);
+        margin-bottom:0;
+        opacity:1;
+    }
+
+    100% {
+        max-height:0;
+        margin-bottom:-.5rem;
+        opacity:0;
+    }
 }
 
 .finance-entry-label {
