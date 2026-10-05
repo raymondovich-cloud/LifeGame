@@ -1,4 +1,4 @@
-// assets.analytics.js — Version 1.0
+// assets.analytics.js — Version 1.1
 
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -24,6 +24,12 @@ function configureAssetsAnalyticsMemory({
     assetsSnapshotReader = getSnapshotAtOrBefore;
     assetsSnapshotsRangeReader = getSnapshotsBetween;
     firstAssetsSnapshotReader = getFirstSnapshot;
+}
+
+function clearAssetsAnalyticsMemory() {
+    assetsSnapshotReader = () => null;
+    assetsSnapshotsRangeReader = () => [];
+    firstAssetsSnapshotReader = () => null;
 }
 
 function getAssetsAnalyticsRange(period, now = Date.now()) {
@@ -155,6 +161,7 @@ function getAssetsAnalytics({ startDate, endDate }) {
 
 export {
     configureAssetsAnalyticsMemory,
+    clearAssetsAnalyticsMemory,
     getAssetsAnalyticsRange,
     getAssetsAnalytics
 };
