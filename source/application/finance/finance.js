@@ -1,4 +1,4 @@
-// finance.js — Version 2.3
+// finance.js — Version 2.4
 
 import {
     listAssets,
@@ -11,24 +11,28 @@ import {
 import {
     listActualEarnings,
     addActualEarning,
+    updateActualEarning,
     removeActualEarning
 } from "../../domain/finance/actual.earnings/actual.earnings.js";
 
 import {
     listFinancialBurden,
     addFinancialBurden,
+    updateFinancialBurden,
     removeFinancialBurden
 } from "../../domain/finance/financial.burden/financial.burden.js";
 
 import {
     listMandatoryExpenses,
     addMandatoryExpense,
+    updateMandatoryExpense,
     removeMandatoryExpense
 } from "../../domain/finance/mandatory.expenses/mandatory.expenses.js";
 
 import {
     listFinancialCushion,
     addFinancialCushion,
+    updateFinancialCushion,
     removeFinancialCushion
 } from "../../domain/finance/financial.cushion/financial.cushion.js";
 
@@ -37,10 +41,10 @@ import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 const FINANCE_OPERATIONS = Object.freeze({
     "assets": { list: listAssets, add: addAsset, remove: removeAsset, update: updateAsset },
-    "actual-earnings": { list: listActualEarnings, add: addActualEarning, remove: removeActualEarning },
-    "financial-burden": { list: listFinancialBurden, add: addFinancialBurden, remove: removeFinancialBurden },
-    "mandatory-expenses": { list: listMandatoryExpenses, add: addMandatoryExpense, remove: removeMandatoryExpense },
-    "financial-cushion": { list: listFinancialCushion, add: addFinancialCushion, remove: removeFinancialCushion }
+    "actual-earnings": { list: listActualEarnings, add: addActualEarning, remove: removeActualEarning, update: updateActualEarning },
+    "financial-burden": { list: listFinancialBurden, add: addFinancialBurden, remove: removeFinancialBurden, update: updateFinancialBurden },
+    "mandatory-expenses": { list: listMandatoryExpenses, add: addMandatoryExpense, remove: removeMandatoryExpense, update: updateMandatoryExpense },
+    "financial-cushion": { list: listFinancialCushion, add: addFinancialCushion, remove: removeFinancialCushion, update: updateFinancialCushion }
 });
 
 let assetsSnapshotReader = () => null;
@@ -76,7 +80,7 @@ function addFinancialBurdenEntry(label, debt, payment) {
     return addFinancialBurden(label, debt, payment);
 }
 
-function updateFinanceEntry(subblockId, entryId, label, amount, liquidity) {
+function updateFinanceEntry(subblockId, entryId, label, amount, liquidity, payment = null) {
     const operations = getFinanceOperations(subblockId);
 
     if (typeof operations.update !== "function") {
@@ -84,7 +88,9 @@ function updateFinanceEntry(subblockId, entryId, label, amount, liquidity) {
     }
 
     trace("application", "finance.update.begin", { subblockId, entryId });
-    const result = operations.update(entryId, label, amount, liquidity);
+    const result = subblockId === "financial-burden"
+        ? operations.update(entryId, label, amount, payment)
+        : operations.update(entryId, label, amount, liquidity);
     trace("application", "finance.update.completed", { subblockId, entryId, result: Boolean(result) });
     return result;
 }
