@@ -1,14 +1,8 @@
-// source/presentation/finance/finance.js — Version 3.6
+// source/presentation/finance/finance.js — Version 3.7
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
-import {
-    listFinanceEntries,
-    addFinanceEntry,
-    addFinancialBurdenEntry,
-    removeFinanceEntry,
-    getFinancialStabilityIndex
-} from "../../application/finance/finance.js";
+
 
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
 import { getAssetsAnalytics, getAssetsAnalyticsRange } from "../../application/finance/assets.analytics.js";
@@ -28,8 +22,8 @@ function isEntryPinned(subblockId, entryId) {
 
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
 
-function countPinnedEntries(subblockId) {
-    return listFinanceEntries(subblockId).filter((entry) =>
+function countPinnedEntries(subblockId, financeApplication) {
+    return financeApplication.listFinanceEntries(subblockId).filter((entry) =>
         pinnedEntries.has(getEntryKey(subblockId, entry.id))
     ).length;
 }
@@ -123,7 +117,7 @@ function createEntryRow(root, subblock, entry) {
     return row;
 }
 
-function refreshAssetsSummary(root) {
+function refreshAssetsSummary(root, financeApplication) {
     const summary = root.querySelector(".assets-summary");
     if (!summary) return;
 
@@ -164,11 +158,11 @@ function finalizeDeletedItem(root, item) {
     }
 
     if (subblockId === "assets") {
-        refreshAssetsSummary(root);
+        refreshAssetsSummary(root, financeApplication);
     }
 }
 
-function deleteFinanceEntryItem(root, item, onWriteAttempt = null) {
+function deleteFinanceEntryItem(root, item, onWriteAttempt = null, financeApplication = null) {
     const operationId = beginOperation("finance.delete", {
         subblockId: item.dataset.subblockId,
         entryId: item.dataset.entryId
@@ -190,7 +184,7 @@ function deleteFinanceEntryItem(root, item, onWriteAttempt = null) {
                     entryId: item.dataset.entryId
                 });
 
-                const result = await removeFinanceEntry(
+                const result = await financeApplication.removeFinanceEntry(
                     item.dataset.subblockId,
                     item.dataset.entryId
                 );
@@ -231,12 +225,12 @@ function deleteFinanceEntryItem(root, item, onWriteAttempt = null) {
     remove();
 }
 
-function attachSwipeDelete(root, onWriteAttempt = null) {
+function attachSwipeDelete(root, onWriteAttempt = null, financeApplication = null) {
     const items = [...root.querySelectorAll(".swipe-delete-item")];
     const maxReveal = 88;
     const activationDistance = 56;
 
-    const deleteItem = (item) => deleteFinanceEntryItem(root, item, onWriteAttempt);
+    const deleteItem = (item) => deleteFinanceEntryItem(root, item, onWriteAttempt, financeApplication);
 
     items.forEach((item) => {
         if (item.dataset.subblockId === "financial-stability-index") return;
@@ -349,7 +343,7 @@ function formatSnapshotDate(timestamp) {
     }).format(timestamp ? new Date(timestamp) : new Date()).toUpperCase();
 }
 
-function createAssetsSummary(root, onWriteAttempt = null) {
+function createAssetsSummary(root, onWriteAttempt = null, financeApplication = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "assets-summary";
 
@@ -371,7 +365,7 @@ function createAssetsSummary(root, onWriteAttempt = null) {
     statisticsButton.addEventListener("click", () => {
         renderAssetsStatisticsScreen(
             root,
-            () => renderFinance(root, "assets", onWriteAttempt)
+            () => renderFinance(root, "assets", onWriteAttempt, financeApplication)
         );
     });
 
@@ -402,8 +396,8 @@ function createAssetsSummary(root, onWriteAttempt = null) {
     return wrapper;
 }
 
-function createFinancialStabilityIndexPanel() {
-    const result = getFinancialStabilityIndex();
+function createFinancialStabilityIndexPanel(financeApplication) {
+    const result = financeApplication.getFinancialStabilityIndex();
 
     const wrapper = document.createElement("div");
     wrapper.className = "financial-stability-index-panel";
@@ -462,7 +456,7 @@ function createFinancialStabilityIndexPanel() {
     return wrapper;
 }
 
-function createAddForm(root, subblock, onWriteAttempt = null) {
+function createAddForm(root, subblock, onWriteAttempt = null, financeApplication = null) {
     const wrapper = document.createElement("form");
     wrapper.className = "finance-add-form";
 
@@ -558,16 +552,16 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
         const save = async () => {
             try {
                 if (subblock.id === "financial-burden") {
-                    await addFinancialBurdenEntry(
+                    await financeApplication.addFinancialBurdenEntry(
                         labelInput.value,
                         amountInput.value,
                         paymentInput.value
                     );
                 } else {
-                    await addFinanceEntry(subblock.id, labelInput.value, amountInput.value, assetLiquidity);
+                    await financeApplication.addFinanceEntry(subblock.id, labelInput.value, amountInput.value, assetLiquidity);
                 }
 
-                renderFinance(root, subblock.id, onWriteAttempt);
+                renderFinance(root, subblock.id, onWriteAttempt, financeApplication);
             } catch (formError) {
                 error.textContent = formError.message;
                 error.hidden = false;
@@ -585,7 +579,7 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     return wrapper;
 }
 
-function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
+function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeApplication = null) {
     const wrapper = document.createElement("article");
     wrapper.className = "accordion-item finance-subblock" + (isOpen ? " is-open" : "");
     wrapper.dataset.subblock = subblock.id;
@@ -618,20 +612,22 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     content.id = subblock.id + "-content";
     content.hidden = false;
 
-    const entries = subblock.id === "financial-stability-index"
+    const entries = subblock.id === "financial-stability-index" || !financeApplication
         ? []
-        : listFinanceEntries(subblock.id).sort((first, second) => {
+        : financeApplication.listFinanceEntries(subblock.id).sort((first, second) => {
             const firstPinned = isEntryPinned(subblock.id, first.id);
             const secondPinned = isEntryPinned(subblock.id, second.id);
             return Number(secondPinned) - Number(firstPinned);
         });
 
     if (subblock.id === "financial-stability-index") {
-        content.appendChild(createFinancialStabilityIndexPanel());
+        if (financeApplication) {
+            content.appendChild(createFinancialStabilityIndexPanel(financeApplication));
+        }
     }
 
     if (subblock.id === "assets") {
-        content.appendChild(createAssetsSummary(root, onWriteAttempt));
+        content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication));
     }
 
     if (subblock.id !== "financial-stability-index") {
@@ -657,6 +653,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
                         subblock.id,
                         entry,
                         onWriteAttempt,
+                        financeApplication,
                         (updated) => {
                             const label = row.querySelector(".finance-entry-label");
                             const amount = row.querySelector(".finance-entry-amount");
@@ -688,10 +685,10 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
                             renderFinance(root, subblock.id, onWriteAttempt);
                         },
                         () => {
-                            deleteFinanceEntryItem(root, row, onWriteAttempt);
+                            deleteFinanceEntryItem(root, row, onWriteAttempt, financeApplication);
                         },
                         () => {
-                            if (countPinnedEntries(subblock.id) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                            if (countPinnedEntries(subblock.id, financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
                                 showSubscriptionLimitNotice();
                                 return true;
                             }
@@ -707,7 +704,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     }
 
     if (subblock.id !== "financial-stability-index") {
-        content.appendChild(createAddForm(root, subblock, onWriteAttempt));
+        content.appendChild(createAddForm(root, subblock, onWriteAttempt, financeApplication));
     }
     wrapper.append(header, content);
 
@@ -719,7 +716,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     return wrapper;
 }
 
-function renderFinance(root, openSubblockId = null, onWriteAttempt = null) {
+function renderFinance(root, openSubblockId = null, onWriteAttempt = null, financeApplication = null) {
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -740,13 +737,13 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null) {
     list.className = "accordion-list";
 
     FINANCE_SUBBLOCKS.forEach((subblock) => {
-        list.appendChild(createSubblock(root, subblock, subblock.id === openSubblockId, onWriteAttempt));
+        list.appendChild(createSubblock(root, subblock, subblock.id === openSubblockId, onWriteAttempt, financeApplication));
     });
 
     section.append(heading, list);
     root.appendChild(section);
 
-    attachSwipeDelete(root, onWriteAttempt);
+    attachSwipeDelete(root, onWriteAttempt, financeApplication);
 }
 
 export { renderFinance, attachSwipeDelete, deleteFinanceEntryItem };
