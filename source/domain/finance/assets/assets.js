@@ -1,6 +1,7 @@
-// assets.js — Version 2.1
+// assets.js — Version 2.2
 
 import { publish } from "../../../core/events/event.bus.js";
+import { trace } from "../../../core/diagnostics/lifecycle.trace.js";
 
 const entries = [];
 let nextId = 1;
@@ -14,6 +15,10 @@ function calculateAssetsTotal() {
 }
 
 function publishStateChanged() {
+    trace("domain", "finance.assets.state.changed.prepare", {
+        totalEntries: entries.length
+    });
+
     publish({
         type: "finance.assets.state.changed",
         occurredAt: Date.now(),
@@ -51,12 +56,22 @@ function addAsset(label, amount, liquidity = "liquid") {
 }
 
 function removeAsset(id) {
+    trace("domain", "finance.assets.remove.begin", { entryId: id });
+
     const index = entries.findIndex((entry) => entry.id === id);
 
-    if (index === -1) return false;
+    if (index === -1) {
+        trace("domain", "finance.assets.remove.not_found", { entryId: id });
+        return false;
+    }
 
     entries.splice(index, 1);
     publishStateChanged();
+
+    trace("domain", "finance.assets.remove.completed", {
+        entryId: id,
+        remainingEntries: entries.length
+    });
 
     return true;
 }
