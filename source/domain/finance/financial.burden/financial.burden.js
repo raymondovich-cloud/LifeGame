@@ -1,13 +1,6 @@
-// financial.burden.js — Version 1.3
+// financial.burden.js — Version 2.0
 
-const entries = [];
-let nextId = 1;
-
-function listFinancialBurden() {
-    return entries.map((entry) => ({ ...entry }));
-}
-
-function addFinancialBurden(label, debt, payment) {
+function createFinancialBurden(label, debt, payment) {
     const normalizedLabel = String(label ?? "").trim();
     const normalizedDebt = Number(debt);
     const normalizedPayment = Number(payment);
@@ -24,48 +17,61 @@ function addFinancialBurden(label, debt, payment) {
         throw new Error("Financial Burden: регулярный платеж не может быть отрицательным.");
     }
 
-    const entry = {
-        id: `financial-burden-${nextId++}`,
-        label: normalizedLabel,
-        amount: normalizedPayment,
-        debt: normalizedDebt,
-        payment: normalizedPayment
+    return {
+        entry: {
+            label: normalizedLabel,
+            amount: normalizedPayment,
+            debt: normalizedDebt,
+            payment: normalizedPayment
+        },
+        event: {
+            type: "finance.financial.burden.changed",
+            occurredAt: Date.now(),
+            payload: {
+                operation: "created"
+            }
+        }
     };
-
-    entries.push(entry);
-    return { ...entry };
 }
 
-function updateFinancialBurden(id, label, debt, payment) {
-    const normalizedLabel = String(label ?? "").trim();
-    const normalizedDebt = Number(debt);
-    const normalizedPayment = Number(payment);
+function updateFinancialBurden(existingEntry, label, debt, payment) {
+    if (!existingEntry) return false;
 
-    if (!normalizedLabel) throw new Error("Financial Burden: название записи обязательно.");
-    if (!Number.isFinite(normalizedDebt) || normalizedDebt <= 0) {
-        throw new Error("Financial Burden: сумма долга должна быть больше нуля.");
-    }
-    if (!Number.isFinite(normalizedPayment) || normalizedPayment < 0) {
-        throw new Error("Financial Burden: регулярный платеж не может быть отрицательным.");
-    }
+    const result = createFinancialBurden(label, debt, payment);
 
-    const entry = entries.find((item) => item.id === id);
-    if (!entry) return false;
-
-    entry.label = normalizedLabel;
-    entry.amount = normalizedPayment;
-    entry.debt = normalizedDebt;
-    entry.payment = normalizedPayment;
-    return { ...entry };
+    return {
+        entry: {
+            ...result.entry,
+            id: existingEntry.id
+        },
+        event: {
+            ...result.event,
+            payload: {
+                operation: "updated",
+                entryId: existingEntry.id
+            }
+        }
+    };
 }
 
-function removeFinancialBurden(id) {
-    const index = entries.findIndex((entry) => entry.id === id);
+function removeFinancialBurden(existingEntry) {
+    if (!existingEntry) return false;
 
-    if (index === -1) return false;
-
-    entries.splice(index, 1);
-    return true;
+    return {
+        entry: { ...existingEntry },
+        event: {
+            type: "finance.financial.burden.changed",
+            occurredAt: Date.now(),
+            payload: {
+                operation: "deleted",
+                entryId: existingEntry.id
+            }
+        }
+    };
 }
 
-export { listFinancialBurden, addFinancialBurden, updateFinancialBurden, removeFinancialBurden };
+export {
+    createFinancialBurden,
+    updateFinancialBurden,
+    removeFinancialBurden
+};
