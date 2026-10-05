@@ -1,8 +1,7 @@
-// finance.js — Version 3.0
+// finance.js — Version 3.1
 
 import {
     listAssets,
-    calculateAssetsTotal,
     addAsset,
     removeAsset,
     updateAsset
@@ -141,10 +140,6 @@ function getFinancialStabilityIndex() {
         mandatoryExpenses: listMandatoryExpenses(),
         financialCushion: listFinancialCushion()
     });
-}
-
-function getAssetsTotal() {
-    return calculateAssetsTotal();
 }
 
 export {
