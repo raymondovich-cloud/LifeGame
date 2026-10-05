@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 3.1
+// source/presentation/finance/finance.js — Version 3.2
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -156,6 +156,14 @@ function createEntryRow(root, subblock, entry) {
         amount.textContent = formatAmount(entry.amount);
 
         trailingGroup.append(amount, pinIndicator);
+    }
+
+    if (subblock.id === "assets") {
+        const liquidity = document.createElement("span");
+        liquidity.className = "finance-entry-liquidity";
+        liquidity.textContent =
+            entry.liquidity === "illiquid" ? "Неликвидно" : "Ликвидно";
+        labelGroup.appendChild(liquidity);
     }
 
     content.append(labelGroup, trailingGroup);
@@ -712,6 +720,15 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
                             }
 
                             if (subblock.id === "assets") {
+                                const liquidity = row.querySelector(".finance-entry-liquidity");
+
+                                if (liquidity) {
+                                    liquidity.textContent =
+                                        updated.liquidity === "illiquid"
+                                            ? "Неликвидно"
+                                            : "Ликвидно";
+                                }
+
                                 refreshAssetsSummary(root);
                             }
                         },
