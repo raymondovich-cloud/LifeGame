@@ -1,44 +1,39 @@
-// source/presentation/profile/profile.js — Version 1.4
-// Responsibility: render authenticated profile and connect profile editing to Application.
+// source/presentation/profile/profile.js — Version 1.5
+// Responsibility: render the Profile Life Quality placeholder and profile settings.
 
-function createInfoRow(index, value, action, ariaLabel, onClick = null) {
+function createSettingsRow(label, value, action = null) {
     const row = document.createElement("div");
-    row.className = "preview-subblock";
-    row.setAttribute("aria-label", ariaLabel);
-    const indexElement = document.createElement("span");
-    indexElement.className = "preview-subblock-index";
-    indexElement.textContent = index;
-    const valueElement = document.createElement("span");
-    valueElement.className = "preview-subblock-name";
-    valueElement.textContent = value;
-    const actionElement = document.createElement("span");
-    actionElement.className = "preview-subblock-action";
-    actionElement.textContent = action;
-    row.append(indexElement, valueElement, actionElement);
+    row.className = "profile-settings-row";
 
-    if (typeof onClick === "function") {
-        row.classList.add("profile-editable-row");
+    const labelElement = document.createElement("span");
+    labelElement.className = "profile-settings-label";
+    labelElement.textContent = label;
+
+    const valueElement = document.createElement("span");
+    valueElement.className = "profile-settings-value";
+    valueElement.textContent = value;
+
+    row.append(labelElement, valueElement);
+
+    if (typeof action === "function") {
+        row.classList.add("profile-settings-row--editable");
         row.tabIndex = 0;
         row.setAttribute("role", "button");
-        row.addEventListener("click", onClick);
+        row.addEventListener("click", action);
         row.addEventListener("keydown", event => {
             if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                onClick();
+                action();
             }
         });
     }
+
     return row;
 }
 
 function createEditRow(values, onSave, onCancel) {
     const row = document.createElement("div");
-    row.className = "preview-subblock profile-edit-row";
-    row.setAttribute("aria-label", "Редактирование профиля");
-
-    const index = document.createElement("span");
-    index.className = "preview-subblock-index";
-    index.textContent = "01";
+    row.className = "profile-settings-edit";
 
     const form = document.createElement("form");
     form.className = "profile-edit-form";
@@ -81,9 +76,10 @@ function createEditRow(values, onSave, onCancel) {
 
     actions.append(cancel, save);
     form.append(fields, message, actions);
-    row.append(index, form);
+    row.appendChild(form);
 
     cancel.addEventListener("click", onCancel);
+
     form.addEventListener("submit", async event => {
         event.preventDefault();
         if (save.disabled) return;
@@ -105,7 +101,209 @@ function createEditRow(values, onSave, onCancel) {
         }
     });
 
-    return { row, focus: () => name.focus() };
+    return {
+        row,
+        focus: () => name.focus()
+    };
+}
+
+function createLifeQualityVisual() {
+    const visual = document.createElement("div");
+    visual.className = "life-quality-visual";
+    visual.setAttribute("role", "img");
+    visual.setAttribute(
+        "aria-label",
+        "Life Quality Index: 760 из 1000"
+    );
+
+    visual.innerHTML = `
+        <svg
+            class="life-quality-gauge"
+            viewBox="0 0 320 190"
+            aria-hidden="true"
+            focusable="false"
+        >
+            <defs>
+                <linearGradient id="life-quality-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#f28a2e"></stop>
+                    <stop offset="100%" stop-color="#ffd08a"></stop>
+                </linearGradient>
+            </defs>
+
+            <path
+                class="life-quality-gauge-track"
+                d="M 45 150 A 115 115 0 0 1 275 150"
+            ></path>
+
+            <path
+                class="life-quality-gauge-value"
+                d="M 45 150 A 115 115 0 0 1 275 150"
+                pathLength="100"
+                stroke-dasharray="76 100"
+            ></path>
+
+            <line x1="45" y1="150" x2="45" y2="141" class="life-quality-gauge-tick"></line>
+            <line x1="102" y1="67" x2="108" y2="74" class="life-quality-gauge-tick"></line>
+            <line x1="160" y1="35" x2="160" y2="45" class="life-quality-gauge-tick"></line>
+            <line x1="218" y1="67" x2="212" y2="74" class="life-quality-gauge-tick"></line>
+            <line x1="275" y1="150" x2="275" y2="141" class="life-quality-gauge-tick"></line>
+
+            <text x="160" y="122" text-anchor="middle" class="life-quality-gauge-score">760</text>
+            <text x="160" y="148" text-anchor="middle" class="life-quality-gauge-max">/ 1000</text>
+        </svg>
+    `;
+
+    return visual;
+}
+
+function createSettingsModal(profile, email, profileApplication, userId, onLogout) {
+    const modal = document.createElement("div");
+    modal.className = "profile-settings-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "profile-settings-title");
+
+    const dialog = document.createElement("div");
+    dialog.className = "profile-settings-dialog";
+
+    const header = document.createElement("div");
+    header.className = "profile-settings-header";
+
+    const title = document.createElement("h2");
+    title.id = "profile-settings-title";
+    title.className = "profile-settings-title";
+    title.textContent = "Настройки";
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "profile-settings-close";
+    close.setAttribute("aria-label", "Закрыть настройки");
+    close.textContent = "×";
+
+    header.append(title, close);
+
+    const content = document.createElement("div");
+    content.className = "profile-settings-content";
+
+    const personal = document.createElement("section");
+    personal.className = "profile-settings-section";
+
+    const personalTitle = document.createElement("h3");
+    personalTitle.className = "profile-settings-section-title";
+    personalTitle.textContent = "Профиль";
+
+    const rows = document.createElement("div");
+    rows.className = "profile-settings-rows";
+
+    let currentProfile = {
+        displayName: profile.displayName || "",
+        birthDate: profile.birthDate || ""
+    };
+
+    function renderRows() {
+        const nameRow = createSettingsRow(
+            "Имя",
+            currentProfile.displayName || "Не указано",
+            startEdit
+        );
+
+        const dateRow = createSettingsRow(
+            "Дата рождения",
+            currentProfile.birthDate || "Не указана",
+            startEdit
+        );
+
+        const emailRow = createSettingsRow(
+            "Email",
+            email || "Account active"
+        );
+
+        rows.replaceChildren(nameRow, dateRow, emailRow);
+    }
+
+    function startEdit() {
+        if (rows.querySelector(".profile-settings-edit")) return;
+
+        const edit = createEditRow(
+            currentProfile,
+            async input => {
+                const updated = await profileApplication.updateProfile(
+                    userId,
+                    input
+                );
+
+                currentProfile = {
+                    displayName: updated.displayName,
+                    birthDate: updated.birthDate
+                };
+
+                renderRows();
+            },
+            renderRows
+        );
+
+        rows.replaceChildren(edit.row);
+        edit.focus();
+    }
+
+    personal.append(personalTitle, rows);
+
+    const account = document.createElement("section");
+    account.className = "profile-settings-section";
+
+    const accountTitle = document.createElement("h3");
+    accountTitle.className = "profile-settings-section-title";
+    accountTitle.textContent = "Аккаунт";
+
+    const logout = document.createElement("button");
+    logout.type = "button";
+    logout.className = "profile-settings-logout";
+    logout.textContent = "Выйти из профиля";
+
+    logout.addEventListener("click", async () => {
+        if (logout.disabled || typeof onLogout !== "function") return;
+
+        logout.disabled = true;
+
+        try {
+            await onLogout();
+            modal.remove();
+        } catch (error) {
+            logout.disabled = false;
+            throw error;
+        }
+    });
+
+    account.append(accountTitle, logout);
+
+    content.append(personal, account);
+    dialog.append(header, content);
+    modal.appendChild(dialog);
+
+    function closeModal() {
+        modal.remove();
+    }
+
+    close.addEventListener("click", closeModal);
+
+    modal.addEventListener("click", event => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    modal.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            closeModal();
+        }
+    });
+
+    renderRows();
+
+    return {
+        modal,
+        focusClose: () => close.focus()
+    };
 }
 
 async function renderProfile(root, session = null, options = {}) {
@@ -118,100 +316,56 @@ async function renderProfile(root, session = null, options = {}) {
         throw new Error("Profile application and authenticated user are required.");
     }
 
-    const section = document.createElement("section");
-    section.className = "module-subblocks";
-
-    const heading = document.createElement("div");
-    heading.className = "module-subblocks-header";
-    heading.innerHTML =
-        '<span class="module-subblocks-label">PROFILE SYSTEM</span>' +
-        "<p>Ваш аккаунт и персональные настройки LifeGame.</p>";
-
-    const card = document.createElement("div");
-    card.className = "preview-subblock-list";
-    card.appendChild(createInfoRow("01", "Загрузка профиля…", "PROFILE", "Profile loading"));
-    section.append(heading, card);
-    root.appendChild(section);
-
-    let profile;
-    try {
-        profile = await profileApplication.getProfile(userId);
-    } catch (error) {
-        card.replaceChildren(createInfoRow("01", "Не удалось загрузить профиль", "ERROR", "Profile loading error"));
-        console.error("LifeGame Profile: profile load failed.", error);
-        return;
-    }
-
-    let currentProfile = {
-        displayName: profile?.displayName || "",
-        birthDate: profile?.birthDate || ""
-    };
+    const profile = await profileApplication.getProfile(userId);
     const email = session?.user?.email || "Account active";
 
-    function renderRows() {
-        const nameRow = createInfoRow(
-            "01",
-            currentProfile.displayName || "Имя не указано",
-            "EDIT",
-            "Display name",
-            startEdit
-        );
-        const dateRow = createInfoRow(
-            "02",
-            currentProfile.birthDate || "Дата рождения не указана",
-            "EDIT",
-            "Birth date",
-            startEdit
-        );
-        const emailRow = createInfoRow("03", email, "ACCOUNT", "Current account");
+    const section = document.createElement("section");
+    section.className = "profile-dashboard";
 
-        const logout = document.createElement("button");
-        logout.type = "button";
-        logout.className = "preview-subblock profile-logout";
-        logout.setAttribute("aria-label", "Выйти из профиля");
-        logout.innerHTML =
-            '<span class="preview-subblock-index">04</span>' +
-            '<span class="preview-subblock-name">Выйти из профиля</span>' +
-            '<span class="preview-subblock-action">LOG OUT</span>';
+    const heading = document.createElement("div");
+    heading.className = "profile-dashboard-header";
 
-        logout.addEventListener("click", async () => {
-            if (typeof onLogout !== "function" || logout.disabled) return;
-            logout.disabled = true;
-            try {
-                await onLogout();
-            } catch (error) {
-                logout.disabled = false;
-                throw error;
-            }
-        });
+    const headingCopy = document.createElement("div");
+    headingCopy.className = "profile-dashboard-copy";
 
-        card.replaceChildren(nameRow, dateRow, emailRow, logout);
-    }
+    const title = document.createElement("h1");
+    title.className = "profile-dashboard-title";
+    title.textContent = "Life Quality Index";
 
-    function startEdit() {
-        if (card.querySelector(".profile-edit-row")) return;
+    const subtitle = document.createElement("p");
+    subtitle.className = "profile-dashboard-subtitle";
+    subtitle.textContent = "Оценка качества вашей жизни";
 
-        const edit = createEditRow(
-            currentProfile,
-            async input => {
-                const updated = await profileApplication.updateProfile(userId, input);
-                currentProfile = {
-                    displayName: updated.displayName,
-                    birthDate: updated.birthDate
-                };
-                renderRows();
-            },
-            renderRows
+    headingCopy.append(title, subtitle);
+
+    const settings = document.createElement("button");
+    settings.type = "button";
+    settings.className = "profile-settings-button";
+    settings.setAttribute("aria-label", "Открыть настройки");
+    settings.setAttribute("title", "Настройки");
+    settings.textContent = "⚙";
+
+    settings.addEventListener("click", () => {
+        if (section.querySelector(".profile-settings-modal")) return;
+
+        const settingsView = createSettingsModal(
+            profile,
+            email,
+            profileApplication,
+            userId,
+            onLogout
         );
 
-        card.replaceChildren(
-            edit.row,
-            createInfoRow("03", email, "ACCOUNT", "Current account")
-        );
-        edit.focus();
-    }
+        section.appendChild(settingsView.modal);
+        settingsView.focusClose();
+    });
 
-    renderRows();
+    heading.append(headingCopy, settings);
+
+    const score = createLifeQualityVisual();
+
+    section.append(heading, score);
+    root.appendChild(section);
 }
 
 export { renderProfile };
