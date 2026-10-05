@@ -145,7 +145,7 @@ function formatSnapshotDate(timestamp) {
     }).format(timestamp ? new Date(timestamp) : new Date()).toUpperCase();
 }
 
-function createLiquidFundsSummary(root, onWriteAttempt = null) {
+function createAssetsSummary(root, onWriteAttempt = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "assets-summary";
 
@@ -384,7 +384,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
     }
 
     if (subblock.id === "assets") {
-        content.appendChild(createLiquidFundsSummary(root, onWriteAttempt));
+        content.appendChild(createAssetsSummary(root, onWriteAttempt));
     }
 
     if (subblock.id !== "financial-stability-index") {
