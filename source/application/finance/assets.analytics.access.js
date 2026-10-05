@@ -1,6 +1,6 @@
-// assets.analytics.access.js — Version 1.0
+// assets.analytics.access.js — Version 1.1
 
-const FREE_MAX_CUSTOM_RANGE_DAYS = 183;
+const FREE_MAX_CUSTOM_RANGE_MONTHS = 6;
 
 let entitlementReader = () => "free";
 
@@ -12,10 +12,6 @@ function configureAssetsAnalyticsAccess({ getEntitlement }) {
     }
 
     entitlementReader = getEntitlement;
-}
-
-function getDaysBetween(startTimestamp, endTimestamp) {
-    return (endTimestamp - startTimestamp) / (24 * 60 * 60 * 1000);
 }
 
 function canAccessAssetsAnalyticsRange({
@@ -39,8 +35,10 @@ function canAccessAssetsAnalyticsRange({
             return false;
         }
 
-        return getDaysBetween(startTimestamp, endTimestamp) <=
-            FREE_MAX_CUSTOM_RANGE_DAYS;
+        const maximumEndDate = new Date(startTimestamp);
+        maximumEndDate.setMonth(maximumEndDate.getMonth() + FREE_MAX_CUSTOM_RANGE_MONTHS);
+
+        return endTimestamp <= maximumEndDate.getTime();
     }
 
     return false;
@@ -49,5 +47,5 @@ function canAccessAssetsAnalyticsRange({
 export {
     configureAssetsAnalyticsAccess,
     canAccessAssetsAnalyticsRange,
-    FREE_MAX_CUSTOM_RANGE_DAYS
+    FREE_MAX_CUSTOM_RANGE_MONTHS
 };
