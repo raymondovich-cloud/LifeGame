@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.8
+// source/presentation/finance/finance.js — Version 2.9
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -24,6 +24,63 @@ function getEntryKey(subblockId, entryId) {
 
 function isEntryPinned(subblockId, entryId) {
     return pinnedEntries.has(getEntryKey(subblockId, entryId));
+}
+
+const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
+
+function countPinnedEntries(subblockId) {
+    return listFinanceEntries(subblockId).filter((entry) =>
+        pinnedEntries.has(getEntryKey(subblockId, entry.id))
+    ).length;
+}
+
+function showPinLimitNotice() {
+    const existing = document.querySelector(".subscription-limit-notice");
+    if (existing) return true;
+
+    const modal = document.createElement("div");
+    modal.className = "subscription-limit-notice";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "subscription-limit-title");
+
+    const dialog = document.createElement("div");
+    dialog.className = "subscription-limit-notice__dialog";
+
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "subscription-limit-notice__eyebrow";
+    eyebrow.textContent = "PRO";
+
+    const title = document.createElement("h2");
+    title.id = "subscription-limit-title";
+    title.className = "subscription-limit-notice__title";
+    title.textContent = "Лимит закреплений";
+
+    const message = document.createElement("p");
+    message.className = "subscription-limit-notice__message";
+    message.textContent = "Расширьте подписку до уровня pro пользователя";
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "subscription-limit-notice__button";
+    closeButton.textContent = "Понятно";
+
+    const close = () => {
+        modal.classList.remove("is-visible");
+        window.setTimeout(() => modal.remove(), 180);
+    };
+
+    closeButton.addEventListener("click", close);
+    modal.addEventListener("click", (event) => {
+        if (event.target === modal) close();
+    });
+
+    dialog.append(eyebrow, title, message, closeButton);
+    modal.appendChild(dialog);
+    document.body.appendChild(modal);
+
+    requestAnimationFrame(() => modal.classList.add("is-visible"));
+    return true;
 }
 
 function toggleEntryPinned(subblockId, entryId) {
@@ -647,6 +704,14 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
                         },
                         () => {
                             deleteFinanceEntryItem(root, row, onWriteAttempt);
+                        },
+                        () => {
+                            if (countPinnedEntries(subblock.id) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                                showPinLimitNotice();
+                                return true;
+                            }
+
+                            return false;
                         }
                     );
                 }
