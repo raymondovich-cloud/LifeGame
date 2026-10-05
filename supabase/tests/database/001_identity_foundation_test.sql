@@ -40,7 +40,7 @@ select results_eq(
     select count(*)::bigint
     from public.profiles
     $$,
-    $
+    $$
 values (2::bigint)$$,
     'Auth user creation automatically bootstraps two profiles'
 );
@@ -50,8 +50,8 @@ select results_eq(
     select count(*)::bigint
     from private.security_events
     where event_type = 'identity.user.registered'
-    $,
-    $
+    $$,
+    $$
 values (2::bigint)$$,
     'Auth user creation records two registration security events'
 );
@@ -60,8 +60,8 @@ select results_eq(
     $$
     select display_name from public.profiles
     where id = '00000000-0000-0000-0000-000000000001'
-    $,
-    $
+    $$,
+    $$
 values ('Test User A'::text)$$,
     'Registration metadata bootstraps User A display name'
 );
@@ -70,8 +70,8 @@ select results_eq(
     $$
     select birth_date from public.profiles
     where id = '00000000-0000-0000-0000-000000000001'
-    $,
-    $
+    $$,
+    $$
 values ('1997-04-27'::date)$$,
     'Registration metadata bootstraps User A birth date'
 );
@@ -102,7 +102,7 @@ select results_eq(
     from pg_policies
     where schemaname = 'public' and tablename = 'profiles'
     $$,
-    $
+    $$
 values (4::bigint)$$,
     'profiles has exactly four operation-specific policies'
 );
@@ -110,7 +110,7 @@ values (4::bigint)$$,
 -- User A.
 select results_eq(
     $$select id from public.profiles order by id$$,
-    $
+    $$
 values ('00000000-0000-0000-0000-000000000001'::uuid)$$,
     'User A can see only User A profile'
 );
@@ -127,7 +127,7 @@ select lives_ok(
 select results_eq(
     $$select display_name from public.profiles
       where id = '00000000-0000-0000-0000-000000000001'$$,
-    $
+    $$
 values ('Test User A Updated'::text)$$,
     'User A update is persisted inside the test transaction'
 );
@@ -135,7 +135,7 @@ values ('Test User A Updated'::text)$$,
 select results_eq(
     $$select count(*)::bigint from public.profiles
       where id = '00000000-0000-0000-0000-000000000002'$$,
-    $
+    $$
 values (0::bigint)$$,
     'User A cannot read User B profile'
 );
@@ -161,7 +161,7 @@ set local role postgres;
 select results_eq(
     $$select count(*)::bigint from public.profiles
       where id = '00000000-0000-0000-0000-000000000002'$$,
-    $
+    $$
 values (1::bigint)$$,
     'User B profile remains unchanged after User A write attempts'
 );
@@ -193,7 +193,7 @@ select set_config(
 
 select results_eq(
     $$select id from public.profiles order by id$$,
-    $
+    $$
 values ('00000000-0000-0000-0000-000000000002'::uuid)$$,
     'User B can see only User B profile'
 );
@@ -210,7 +210,7 @@ select lives_ok(
 select results_eq(
     $$select count(*)::bigint from public.profiles
       where id = '00000000-0000-0000-0000-000000000001'$$,
-    $
+    $$
 values (0::bigint)$$,
     'User B cannot read User A profile'
 );
