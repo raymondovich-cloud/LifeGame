@@ -1,4 +1,6 @@
-// assets.memory.js — Version 2.0
+// assets.memory.js — Version 2.1
+
+import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 const snapshots = [];
 
@@ -7,10 +9,18 @@ function saveAssetsSnapshot(snapshot) {
         throw new Error("LifeGame Memory: invalid Assets snapshot.");
     }
 
+    trace("memory", "finance.assets.snapshot.save.begin", {
+        entryCount: snapshot.entries.length
+    });
+
     snapshots.push({
         occurredAt: snapshot.occurredAt,
         total: Number(snapshot.total) || 0,
         entries: snapshot.entries.map((entry) => ({ ...entry }))
+    });
+
+    trace("memory", "finance.assets.snapshot.save.completed", {
+        entryCount: snapshot.entries.length
     });
 }
 
