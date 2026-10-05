@@ -61,14 +61,14 @@ const FINANCE_OPERATIONS = Object.freeze({
     }
 });
 
-let liquidFundsSnapshotReader = () => null;
+let assetsSnapshotReader = () => null;
 
 function configureAssetsMemory({ getSnapshotAtOrBefore }) {
     if (typeof getSnapshotAtOrBefore !== "function") {
         throw new Error("LifeGame Finance: Assets memory reader is required.");
     }
 
-    liquidFundsSnapshotReader = getSnapshotAtOrBefore;
+    assetsSnapshotReader = getSnapshotAtOrBefore;
 }
 
 function getFinanceOperations(subblockId) {
@@ -137,8 +137,8 @@ function getPeriodStart(period, now) {
 function getAssetsStatistics(period = "week") {
     const now = Date.now();
     const periodStart = getPeriodStart(period, now);
-    const currentSnapshot = liquidFundsSnapshotReader(now);
-    const baselineSnapshot = liquidFundsSnapshotReader(periodStart);
+    const currentSnapshot = assetsSnapshotReader(now);
+    const baselineSnapshot = assetsSnapshotReader(periodStart);
 
     const currentTotal = calculateAssetsTotal();
     const currentEntries = listAssets();
