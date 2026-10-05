@@ -1,4 +1,4 @@
-// root.js — Version 1.5
+// root.js — Version 1.6
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 
@@ -9,6 +9,8 @@ import { createAuthController } from "../../../source/presentation/auth/auth.con
 import { createUserContext } from "../../../source/application/user/user.context.js";
 import { createSupabaseFinanceMemory } from "../../../source/infrastructure/supabase/finance.memory.supabase.js";
 import { createFinanceMemoryPort } from "../../../source/application/finance/finance.memory.port.js";
+import { createProfileApplication } from "../../../source/application/profile/profile.js";
+import { createSupabaseProfileAdapter } from "../../../source/infrastructure/supabase/profile.adapter.js";
 
 function getAuthenticationRedirectUrl() {
     const { origin, pathname } = window.location;
@@ -28,6 +30,8 @@ export function createWebApplication() {
 
     const identityApplication = createIdentityApplication(identityPort);
     const authController = createAuthController(identityApplication);
+    const profileAdapter = createSupabaseProfileAdapter(supabaseClient);
+    const profileApplication = createProfileApplication(profileAdapter);
     const financeMemoryByUser = new Map();
 
     async function createFinanceMemoryForUser(userId) {
@@ -55,6 +59,7 @@ export function createWebApplication() {
 
     return Object.freeze({
         auth: authController,
+        profile: profileApplication,
         finance: Object.freeze({
             createMemoryForUser: createFinanceMemoryForUser
         })
