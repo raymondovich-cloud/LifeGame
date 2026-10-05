@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.0
+// source/presentation/finance/finance.js — Version 4.1
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -7,6 +7,7 @@ import { createAssetsAnalytics } from "../../application/finance/assets.analytic
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
+import { createFinanceDashboard } from "./finance.dashboard.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
@@ -120,6 +121,9 @@ function getFinancialSnapshot(financeApplication, assetsAnalytics) {
         illiquid,
         income: getSectionTotal(financeApplication, "actual-earnings"),
         burden: getSectionTotal(financeApplication, "financial-burden"),
+        burdenPayment: financeApplication
+            .listFinanceEntries("financial-burden")
+            .reduce((total, entry) => total + Number(entry.payment || 0), 0),
         expenses: getSectionTotal(financeApplication, "mandatory-expenses"),
         reserve: getSectionTotal(financeApplication, "financial-cushion")
     };
@@ -815,19 +819,39 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null, finan
 
     const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
 
+    const health = financeApplication.getFinancialStabilityIndex();
+
     page.append(
         intro,
         createHealthBlock(financeApplication),
-        createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt),
-        createStructure(
-            financeApplication,
-            snapshot,
-            root,
-            openSubblockId,
-            onWriteAttempt,
-            assetsAnalytics
-        )
+        createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt)
     );
+
+    if (openSubblockId) {
+        page.append(
+            createStructure(
+                financeApplication,
+                snapshot,
+                root,
+                openSubblockId,
+                onWriteAttempt,
+                assetsAnalytics
+            )
+        );
+    } else {
+        page.append(
+            createFinanceDashboard({
+                snapshot,
+                health,
+                onManage: () => renderFinance(
+                    root,
+                    "assets",
+                    onWriteAttempt,
+                    financeApplication
+                )
+            })
+        );
+    }
 
     root.appendChild(page);
     attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
