@@ -1,4 +1,6 @@
-// source/presentation/finance/finance.js — Version 2.4
+// source/presentation/finance/finance.js — Version 2.5
+
+import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 import {
     listFinanceEntries,
@@ -116,17 +118,60 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
     const activationDistance = 56;
 
     const deleteItem = (item) => {
+        const operationId = beginOperation("finance.delete", {
+            subblockId: item.dataset.subblockId,
+            entryId: item.dataset.entryId
+        });
+
+        trace("ui", "finance.delete.requested", {
+            subblockId: item.dataset.subblockId,
+            entryId: item.dataset.entryId
+        });
+
         const remove = () => {
             item.classList.add("is-deleting");
             item.style.setProperty("--delete-height", item.getBoundingClientRect().height + "px");
 
             window.setTimeout(() => {
-                removeFinanceEntry(item.dataset.subblockId, item.dataset.entryId);
-                finalizeDeletedItem(root, item);
+                try {
+                    trace("ui", "finance.delete.domain_call", {
+                        subblockId: item.dataset.subblockId,
+                        entryId: item.dataset.entryId
+                    });
+
+                    const result = removeFinanceEntry(
+                        item.dataset.subblockId,
+                        item.dataset.entryId
+                    );
+
+                    finalizeDeletedItem(root, item);
+
+                    trace("ui", "finance.delete.ui_finalized", {
+                        subblockId: item.dataset.subblockId,
+                        entryId: item.dataset.entryId,
+                        result
+                    });
+
+                    endOperation(operationId, result ? "completed" : "not_found");
+                } catch (error) {
+                    trace("ui", "finance.delete.failed", {
+                        subblockId: item.dataset.subblockId,
+                        entryId: item.dataset.entryId,
+                        error: error?.message || "unknown"
+                    });
+
+                    item.classList.remove("is-deleting");
+                    endOperation(operationId, "failed");
+                    throw error;
+                }
             }, 230);
         };
 
         if (typeof onWriteAttempt === "function") {
+            trace("ui", "finance.delete.write_guard", {
+                subblockId: item.dataset.subblockId,
+                entryId: item.dataset.entryId
+            });
             onWriteAttempt(remove);
             return;
         }
