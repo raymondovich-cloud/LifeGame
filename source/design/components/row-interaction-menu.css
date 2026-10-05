@@ -1,4 +1,4 @@
-/* row-interaction-menu.css — Version 1.4 */
+/* row-interaction-menu.css — Version 1.5 */
 
 .row-interaction-backdrop {
     position:fixed;
@@ -7,7 +7,7 @@
     display:grid;
     place-items:center;
     padding:var(--space-4);
-    background:rgba(0,0,0,.31);
+    background:rgba(0,0,0,.45);
     backdrop-filter:blur(4px) saturate(.78);
     -webkit-backdrop-filter:blur(4px) saturate(.78);
     opacity:0;
