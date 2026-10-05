@@ -1,4 +1,4 @@
-// finance.js — Version 2.6
+// finance.js — Version 2.7
 
 import {
     listAssets,
@@ -50,16 +50,22 @@ const FINANCE_OPERATIONS = Object.freeze({
 let assetsSnapshotReader = () => null;
 let liquidAssetsReader = () => null;
 let illiquidAssetsReader = () => null;
+let assetsSnapshotsRangeReader = () => [];
+let firstAssetsSnapshotReader = () => null;
 
 function configureAssetsMemory({
     getSnapshotAtOrBefore,
     getLiquidAssetsAtOrBefore,
-    getIlliquidAssetsAtOrBefore
+    getIlliquidAssetsAtOrBefore,
+    getSnapshotsBetween,
+    getFirstSnapshot
 }) {
     if (
         typeof getSnapshotAtOrBefore !== "function" ||
         typeof getLiquidAssetsAtOrBefore !== "function" ||
-        typeof getIlliquidAssetsAtOrBefore !== "function"
+        typeof getIlliquidAssetsAtOrBefore !== "function" ||
+        typeof getSnapshotsBetween !== "function" ||
+        typeof getFirstSnapshot !== "function"
     ) {
         throw new Error("LifeGame Finance: Assets memory readers are required.");
     }
@@ -67,6 +73,8 @@ function configureAssetsMemory({
     assetsSnapshotReader = getSnapshotAtOrBefore;
     liquidAssetsReader = getLiquidAssetsAtOrBefore;
     illiquidAssetsReader = getIlliquidAssetsAtOrBefore;
+    assetsSnapshotsRangeReader = getSnapshotsBetween;
+    firstAssetsSnapshotReader = getFirstSnapshot;
 }
 
 function getFinanceOperations(subblockId) {
@@ -168,6 +176,91 @@ function getPeriodStart(period, now) {
     throw new Error("LifeGame Finance: неизвестный период.");
 }
 
+function getAssetsAnalytics({ startDate, endDate }) {
+    const startTimestamp = new Date(startDate).getTime();
+    const endTimestamp = new Date(endDate).getTime();
+
+    if (
+        !Number.isFinite(startTimestamp) ||
+        !Number.isFinite(endTimestamp) ||
+        startTimestamp > endTimestamp
+    ) {
+        throw new Error("LifeGame Finance: invalid Assets analytics range.");
+    }
+
+    const snapshots = assetsSnapshotsRangeReader(
+        startTimestamp,
+        endTimestamp
+    );
+
+    const baselineSnapshot = assetsSnapshotReader(startTimestamp);
+    const currentSnapshot = assetsSnapshotReader(endTimestamp);
+
+    const currentTotal = currentSnapshot?.total ?? null;
+    const baselineTotal = baselineSnapshot?.total ?? null;
+
+    const hasComparison =
+        baselineTotal !== null &&
+        baselineTotal > 0 &&
+        currentTotal !== null &&
+        Number.isFinite(currentTotal);
+
+    const changeAmount = hasComparison
+        ? currentTotal - baselineTotal
+        : null;
+
+    const changePercent = hasComparison
+        ? Math.round(((changeAmount / baselineTotal) * 100) * 10) / 10
+        : null;
+
+    const currentEntries = currentSnapshot?.entries ?? [];
+    const liquidTotal = currentEntries
+        .filter((entry) => entry?.liquidity === "liquid")
+        .reduce((total, entry) => total + (Number(entry.amount) || 0), 0);
+    const illiquidTotal = currentEntries
+        .filter((entry) => entry?.liquidity === "illiquid")
+        .reduce((total, entry) => total + (Number(entry.amount) || 0), 0);
+    const liquidityTotal = liquidTotal + illiquidTotal;
+
+    return {
+        startDate: startTimestamp,
+        endDate: endTimestamp,
+        baseline: baselineSnapshot
+            ? {
+                occurredAt: baselineSnapshot.occurredAt,
+                total: baselineTotal
+            }
+            : null,
+        current: currentSnapshot
+            ? {
+                occurredAt: currentSnapshot.occurredAt,
+                total: currentTotal
+            }
+            : null,
+        change: {
+            amount: changeAmount,
+            percent: changePercent,
+            hasComparison
+        },
+        dynamics: snapshots.map((snapshot) => ({
+            occurredAt: snapshot.occurredAt,
+            total: snapshot.total
+        })),
+        liquidity: {
+            liquid: liquidTotal,
+            illiquid: illiquidTotal,
+            total: liquidityTotal,
+            liquidPercent: liquidityTotal > 0
+                ? Math.round((liquidTotal / liquidityTotal) * 1000) / 10
+                : null,
+            illiquidPercent: liquidityTotal > 0
+                ? Math.round((illiquidTotal / liquidityTotal) * 1000) / 10
+                : null
+        },
+        composition: currentEntries.map((entry) => ({ ...entry }))
+    };
+}
+
 function getAssetsStatistics(period = "week") {
     const now = Date.now();
     const periodStart = getPeriodStart(period, now);
@@ -212,5 +305,6 @@ export {
     updateFinanceEntry,
     getAssetsTotal,
     getAssetsStatistics,
+    getAssetsAnalytics,
     getFinancialStabilityIndex
 };
