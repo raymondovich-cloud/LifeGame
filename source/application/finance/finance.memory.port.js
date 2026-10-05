@@ -1,37 +1,53 @@
-// finance.memory.port.js — Version 1.0
+// finance.memory.port.js — Version 2.0
+
+const REQUIRED_METHODS = Object.freeze([
+    "listAssets",
+    "saveAsset",
+    "updateAsset",
+    "deleteAsset",
+    "listActualEarnings",
+    "saveActualEarning",
+    "updateActualEarning",
+    "deleteActualEarning",
+    "listFinancialBurden",
+    "saveFinancialBurden",
+    "updateFinancialBurden",
+    "deleteFinancialBurden",
+    "listMandatoryExpenses",
+    "saveMandatoryExpense",
+    "updateMandatoryExpense",
+    "deleteMandatoryExpense",
+    "listFinancialCushion",
+    "saveFinancialCushion",
+    "updateFinancialCushion",
+    "deleteFinancialCushion",
+    "saveAssetsSnapshot",
+    "getAssetsSnapshotAtOrBefore",
+    "getAssetsSnapshotsBetween",
+    "getFirstAssetsSnapshot",
+    "getLatestAssetsSnapshot"
+]);
 
 function createFinanceMemoryPort(implementation) {
-    const requiredMethods = [
-        "listAssets",
-        "saveAsset",
-        "updateAsset",
-        "deleteAsset",
-        "saveAssetsSnapshot",
-        "getAssetsSnapshotAtOrBefore",
-        "getAssetsSnapshotsBetween",
-        "getFirstAssetsSnapshot",
-        "getLatestAssetsSnapshot"
-    ];
+    if (!implementation) {
+        throw new Error("LifeGame Finance Memory Port: implementation is required.");
+    }
 
-    for (const method of requiredMethods) {
-        if (typeof implementation?.[method] !== "function") {
+    for (const method of REQUIRED_METHODS) {
+        if (typeof implementation[method] !== "function") {
             throw new Error(
-                "LifeGame Finance Memory Port: missing method " + method + "."
+                "LifeGame Finance Memory Port: method is required: " + method
             );
         }
     }
 
-    return Object.freeze({
-        listAssets: implementation.listAssets,
-        saveAsset: implementation.saveAsset,
-        updateAsset: implementation.updateAsset,
-        deleteAsset: implementation.deleteAsset,
-        saveAssetsSnapshot: implementation.saveAssetsSnapshot,
-        getAssetsSnapshotAtOrBefore: implementation.getAssetsSnapshotAtOrBefore,
-        getAssetsSnapshotsBetween: implementation.getAssetsSnapshotsBetween,
-        getFirstAssetsSnapshot: implementation.getFirstAssetsSnapshot,
-        getLatestAssetsSnapshot: implementation.getLatestAssetsSnapshot
-    });
+    const port = {};
+
+    for (const method of REQUIRED_METHODS) {
+        port[method] = implementation[method];
+    }
+
+    return Object.freeze(port);
 }
 
 export { createFinanceMemoryPort };
