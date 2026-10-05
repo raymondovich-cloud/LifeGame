@@ -1,4 +1,4 @@
-// entry.edit.js — Version 1.4
+// entry.edit.js — Version 1.5
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
@@ -300,7 +300,6 @@ function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved
             item.classList.remove("is-long-pressing");
             triggerHaptic();
             item.classList.add("is-editing-target");
-            triggerHaptic();
             createRowInteractionMenu(item, showEditor, onPin, onDelete, onPinLimit);
         }, 500);
     });
