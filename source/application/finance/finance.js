@@ -1,29 +1,25 @@
-// finance.js — Version 3.4
+// finance.js — Version 4.0
 
 import {
-    listActualEarnings,
-    addActualEarning,
+    createActualEarning,
     updateActualEarning,
     removeActualEarning
 } from "../../domain/finance/actual.earnings/actual.earnings.js";
 
 import {
-    listFinancialBurden,
-    addFinancialBurden,
+    createFinancialBurden,
     updateFinancialBurden,
     removeFinancialBurden
 } from "../../domain/finance/financial.burden/financial.burden.js";
 
 import {
-    listMandatoryExpenses,
-    addMandatoryExpense,
+    createMandatoryExpense,
     updateMandatoryExpense,
     removeMandatoryExpense
 } from "../../domain/finance/mandatory.expenses/mandatory.expenses.js";
 
 import {
-    listFinancialCushion,
-    addFinancialCushion,
+    createFinancialCushion,
     updateFinancialCushion,
     removeFinancialCushion
 } from "../../domain/finance/financial.cushion/financial.cushion.js";
@@ -38,38 +34,50 @@ import {
 import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
-const FINANCE_OPERATIONS = Object.freeze({
+const COLLECTION_CONFIG = Object.freeze({
     "actual-earnings": {
-        list: listActualEarnings,
-        add: addActualEarning,
-        remove: removeActualEarning,
-        update: updateActualEarning
+        list: "listActualEarnings",
+        save: "saveActualEarning",
+        update: "updateActualEarning",
+        remove: "deleteActualEarning",
+        create: createActualEarning,
+        updateDomain: updateActualEarning,
+        removeDomain: removeActualEarning
     },
     "financial-burden": {
-        list: listFinancialBurden,
-        add: addFinancialBurden,
-        remove: removeFinancialBurden,
-        update: updateFinancialBurden
+        list: "listFinancialBurden",
+        save: "saveFinancialBurden",
+        update: "updateFinancialBurden",
+        remove: "deleteFinancialBurden",
+        create: createFinancialBurden,
+        updateDomain: updateFinancialBurden,
+        removeDomain: removeFinancialBurden
     },
     "mandatory-expenses": {
-        list: listMandatoryExpenses,
-        add: addMandatoryExpense,
-        remove: removeMandatoryExpense,
-        update: updateMandatoryExpense
+        list: "listMandatoryExpenses",
+        save: "saveMandatoryExpense",
+        update: "updateMandatoryExpense",
+        remove: "deleteMandatoryExpense",
+        create: createMandatoryExpense,
+        updateDomain: updateMandatoryExpense,
+        removeDomain: removeMandatoryExpense
     },
     "financial-cushion": {
-        list: listFinancialCushion,
-        add: addFinancialCushion,
-        remove: removeFinancialCushion,
-        update: updateFinancialCushion
+        list: "listFinancialCushion",
+        save: "saveFinancialCushion",
+        update: "updateFinancialCushion",
+        remove: "deleteFinancialCushion",
+        create: createFinancialCushion,
+        updateDomain: updateFinancialCushion,
+        removeDomain: removeFinancialCushion
     }
 });
 
-let assetsMemory = null;
+let financeMemory = null;
 
 function configureAssetsMemory({ memory }) {
     if (!memory) {
-        throw new Error("LifeGame Finance: Assets memory is required.");
+        throw new Error("LifeGame Finance: Finance memory is required.");
     }
 
     const requiredMethods = [
@@ -83,43 +91,49 @@ function configureAssetsMemory({ memory }) {
     for (const method of requiredMethods) {
         if (typeof memory[method] !== "function") {
             throw new Error(
-                "LifeGame Finance: Assets memory method is required: " + method
+                "LifeGame Finance: Finance memory method is required: " + method
             );
         }
     }
 
-    assetsMemory = memory;
+    financeMemory = memory;
 }
 
-function requireAssetsMemory() {
-    if (!assetsMemory) {
-        throw new Error("LifeGame Finance: Assets memory is not configured.");
+function requireFinanceMemory() {
+    if (!financeMemory) {
+        throw new Error("LifeGame Finance: Finance memory is not configured.");
     }
 
-    return assetsMemory;
+    return financeMemory;
 }
 
-function getFinanceOperations(subblockId) {
-    const operations = FINANCE_OPERATIONS[subblockId];
+function getCollectionConfig(subblockId) {
+    const config = COLLECTION_CONFIG[subblockId];
 
-    if (!operations) {
+    if (!config) {
         throw new Error("LifeGame Finance: неизвестный подблок.");
     }
 
-    return operations;
+    return config;
+}
+
+function getMemoryMethod(config, operation) {
+    const memory = requireFinanceMemory();
+    return memory[config[operation]].bind(memory);
 }
 
 function listFinanceEntries(subblockId) {
     if (subblockId === "assets") {
-        return assetsMemory ? assetsMemory.listAssets() : [];
+        return financeMemory ? financeMemory.listAssets() : [];
     }
 
-    return getFinanceOperations(subblockId).list();
+    const config = getCollectionConfig(subblockId);
+    return getMemoryMethod(config, "list")();
 }
 
 function addFinanceEntry(subblockId, label, amount, liquidity) {
     if (subblockId === "assets") {
-        const memory = requireAssetsMemory();
+        const memory = requireFinanceMemory();
         const result = createAsset({ label, amount, liquidity });
         const savedEntry = memory.saveAsset(result.entry);
 
@@ -132,11 +146,16 @@ function addFinanceEntry(subblockId, label, amount, liquidity) {
         return savedEntry;
     }
 
-    return getFinanceOperations(subblockId).add(label, amount);
+    const config = getCollectionConfig(subblockId);
+    const result = subblockId === "financial-burden"
+        ? config.create(label, amount, liquidity)
+        : config.create(label, amount);
+
+    return getMemoryMethod(config, "save")(result.entry);
 }
 
 function addFinancialBurdenEntry(label, debt, payment) {
-    return addFinancialBurden(label, debt, payment);
+    return addFinanceEntry("financial-burden", label, debt, payment);
 }
 
 function updateFinanceEntry(
@@ -148,7 +167,7 @@ function updateFinanceEntry(
     payment = null
 ) {
     if (subblockId === "assets") {
-        const memory = requireAssetsMemory();
+        const memory = requireFinanceMemory();
         const existingAsset = memory
             .listAssets()
             .find((entry) => entry.id === entryId);
@@ -178,32 +197,32 @@ function updateFinanceEntry(
         return savedEntry;
     }
 
-    const operations = getFinanceOperations(subblockId);
-
-    if (typeof operations.update !== "function") {
-        throw new Error(
-            "LifeGame Finance: редактирование этого подблока не поддерживается."
-        );
-    }
-
-    trace("application", "finance.update.begin", { subblockId, entryId });
+    const config = getCollectionConfig(subblockId);
+    const existingEntry = getMemoryMethod(config, "list")()
+        .find((entry) => entry.id === entryId);
 
     const result = subblockId === "financial-burden"
-        ? operations.update(entryId, label, amount, payment)
-        : operations.update(entryId, label, amount, liquidity);
+        ? config.updateDomain(existingEntry, label, amount, payment)
+        : config.updateDomain(existingEntry, label, amount);
+
+    if (!result) {
+        return false;
+    }
+
+    const savedEntry = getMemoryMethod(config, "update")(entryId, result.entry);
 
     trace("application", "finance.update.completed", {
         subblockId,
         entryId,
-        result: Boolean(result)
+        result: Boolean(savedEntry)
     });
 
-    return result;
+    return savedEntry;
 }
 
 function removeFinanceEntry(subblockId, entryId) {
     if (subblockId === "assets") {
-        const memory = requireAssetsMemory();
+        const memory = requireFinanceMemory();
         const existingAsset = memory
             .listAssets()
             .find((entry) => entry.id === entryId);
@@ -229,22 +248,35 @@ function removeFinanceEntry(subblockId, entryId) {
         return true;
     }
 
-    trace("application", "finance.remove.begin", { subblockId, entryId });
+    const config = getCollectionConfig(subblockId);
+    const existingEntry = getMemoryMethod(config, "list")()
+        .find((entry) => entry.id === entryId);
 
-    const result = getFinanceOperations(subblockId).remove(entryId);
+    const result = config.removeDomain(existingEntry);
+
+    if (!result) {
+        return false;
+    }
+
+    const deleted = getMemoryMethod(config, "remove")(entryId);
 
     trace("application", "finance.remove.completed", {
         subblockId,
         entryId,
-        result
+        result: Boolean(deleted)
     });
 
-    return result;
+    return deleted;
 }
 
 function getFinancialStabilityIndex() {
-    const financialBurden = listFinancialBurden();
-    const assetEntries = assetsMemory ? assetsMemory.listAssets() : [];
+    const memory = financeMemory;
+    const financialBurden = memory
+        ? memory.listFinancialBurden()
+        : [];
+    const assetEntries = memory
+        ? memory.listAssets()
+        : [];
 
     const liquidAssets = assetEntries.filter(
         (entry) => entry?.liquidity !== "illiquid"
@@ -258,10 +290,16 @@ function getFinancialStabilityIndex() {
         assets: assetEntries,
         liquidAssets,
         illiquidAssets,
-        actualEarnings: listActualEarnings(),
+        actualEarnings: memory
+            ? memory.listActualEarnings()
+            : [],
         financialBurden,
-        mandatoryExpenses: listMandatoryExpenses(),
-        financialCushion: listFinancialCushion()
+        mandatoryExpenses: memory
+            ? memory.listMandatoryExpenses()
+            : [],
+        financialCushion: memory
+            ? memory.listFinancialCushion()
+            : []
     });
 }
 
