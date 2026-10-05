@@ -1,4 +1,4 @@
-// entry.edit.js — Version 1.2
+// entry.edit.js — Version 1.3
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
@@ -48,7 +48,7 @@ function animateEntryListReflow(entryList, mutate, onDone = null) {
     }, 250);
 }
 
-function createRowInteractionMenu(item, onEdit, onPin, onDelete) {
+function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
     const entryList = item.closest(".finance-entry-list");
     const menu = document.createElement("div");
     menu.className = "row-interaction-menu";
@@ -97,12 +97,22 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete) {
         onPin?.();
     });
 
+    pinButton.addEventListener("contextmenu", (event) => event.preventDefault());
+
     deleteButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         cleanup();
         onDelete?.();
     });
+
+    if (typeof onPinLimit === "function") {
+        pinButton.addEventListener("click", (event) => {
+            if (!item.classList.contains("is-pinned") && onPinLimit()) {
+                event.preventDefault();
+            }
+        }, true);
+    }
 
     animateEntryListReflow(entryList, () => {
         if (entryList) {
@@ -276,7 +286,7 @@ function openEntryEditModal(subblockId, entry, onSaved) {
     });
 }
 
-function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved = null, onPin = null, onDelete = null) {
+function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved = null, onPin = null, onDelete = null, onPinLimit = null) {
     if (!item || !entry || subblockId === "financial-stability-index") return;
 
     let pressTimer = null;
@@ -318,7 +328,7 @@ function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved
             item.classList.remove("is-long-pressing");
             triggerHaptic();
             item.classList.add("is-editing-target");
-            createRowInteractionMenu(item, showEditor, onPin, onDelete);
+            createRowInteractionMenu(item, showEditor, onPin, onDelete, onPinLimit);
         }, 500);
     });
 
