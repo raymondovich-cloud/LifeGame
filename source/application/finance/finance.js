@@ -82,7 +82,11 @@ function validateFinanceMemory(memory) {
         "listActualEarnings", "saveActualEarning", "updateActualEarning", "deleteActualEarning",
         "listFinancialBurden", "saveFinancialBurden", "updateFinancialBurden", "deleteFinancialBurden",
         "listMandatoryExpenses", "saveMandatoryExpense", "updateMandatoryExpense", "deleteMandatoryExpense",
-        "listFinancialCushion", "saveFinancialCushion", "updateFinancialCushion", "deleteFinancialCushion"
+        "listFinancialCushion", "saveFinancialCushion", "updateFinancialCushion", "deleteFinancialCushion",
+        "getAssetsSnapshotAtOrBefore",
+        "getAssetsSnapshotsBetween",
+        "getFirstAssetsSnapshot",
+        "getLatestAssetsSnapshot"
     ];
 
     for (const method of requiredMethods) {
@@ -288,7 +292,11 @@ function getFinancialStabilityIndex() {
         addFinancialBurdenEntry,
         removeFinanceEntry,
         updateFinanceEntry,
-        getFinancialStabilityIndex
+        getFinancialStabilityIndex,
+        getAssetsSnapshotAtOrBefore: financeMemory.getAssetsSnapshotAtOrBefore.bind(financeMemory),
+        getAssetsSnapshotsBetween: financeMemory.getAssetsSnapshotsBetween.bind(financeMemory),
+        getFirstAssetsSnapshot: financeMemory.getFirstAssetsSnapshot.bind(financeMemory),
+        getLatestAssetsSnapshot: financeMemory.getLatestAssetsSnapshot.bind(financeMemory)
     });
 }
 
