@@ -281,13 +281,15 @@ function getFinancialStabilityIndex() {
     });
 }
 
-export {
-    configureAssetsMemory,
-    clearFinanceMemory,
-    listFinanceEntries,
-    addFinanceEntry,
-    addFinancialBurdenEntry,
-    removeFinanceEntry,
-    updateFinanceEntry,
-    getFinancialStabilityIndex
-};
+
+    return Object.freeze({
+        listFinanceEntries,
+        addFinanceEntry,
+        addFinancialBurdenEntry,
+        removeFinanceEntry,
+        updateFinanceEntry,
+        getFinancialStabilityIndex
+    });
+}
+
+export { createFinanceApplication };
