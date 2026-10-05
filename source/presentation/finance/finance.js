@@ -1,20 +1,20 @@
-// source/presentation/finance/finance.js — Version 1.22
+// source/presentation/finance/finance.js — Version 2.0
 
 import {
     listFinanceEntries,
     addFinanceEntry,
     addFinancialBurdenEntry,
     removeFinanceEntry,
-    getLiquidFundsTotal,
-    getLiquidFundsStatistics,
+    getAssetsTotal,
+    getAssetsStatistics,
     getFinancialStabilityIndex
 } from "../../application/finance/finance.js";
 
-import { renderLiquidFundsStatisticsScreen } from "./liquid.funds.statistics.js";
+import { renderLiquidFundsStatisticsScreen } from "./assets.statistics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
-    { id: "liquid-funds", number: "01", title: "Ликвидные средства", description: "Деньги, доступные прямо сейчас", info: "Деньги, которыми вы можете воспользоваться прямо сейчас: наличные, средства на картах и доступные остатки на счетах." },
+    { id: "assets", number: "01", title: "Активы", description: "Имущество и средства, которыми вы владеете", info: "Активы, которыми вы владеете: недвижимость, автомобиль, наличные, средства на картах, счета и другие активы, которые пользователь хочет учитывать в своей финансовой картине." },
     { id: "actual-earnings", number: "02", title: "Фактически заработанно", description: "Реально полученный доход", info: "Доход, который вы фактически получили за выбранный период." },
     { id: "financial-burden", number: "03", title: "Финансовая нагрузка", description: "Обязательства, влияющие на бюджет", info: "Обязательства и регулярные финансовые нагрузки, которые уменьшают доступные средства и влияют на устойчивость." },
     { id: "mandatory-expenses", number: "04", title: "Обязательные траты", description: "Расходы, которые нельзя пропустить", info: "Расходы, которые необходимо оплачивать регулярно независимо от других трат." },
@@ -147,12 +147,12 @@ function formatSnapshotDate(timestamp) {
 
 function createLiquidFundsSummary(root, onWriteAttempt = null) {
     const wrapper = document.createElement("div");
-    wrapper.className = "liquid-funds-summary";
+    wrapper.className = "assets-summary";
 
-    const statistics = getLiquidFundsStatistics("month");
+    const statistics = getAssetsStatistics("month");
 
     const heading = document.createElement("div");
-    heading.className = "liquid-funds-summary-heading";
+    heading.className = "assets-summary-heading";
 
     const title = document.createElement("span");
     title.className = "statistics-meta";
@@ -160,25 +160,25 @@ function createLiquidFundsSummary(root, onWriteAttempt = null) {
 
     const statisticsButton = document.createElement("button");
     statisticsButton.type = "button";
-    statisticsButton.className = "liquid-funds-statistics-trigger";
+    statisticsButton.className = "assets-statistics-trigger";
     statisticsButton.innerHTML =
         '<span>Аналитика</span><span aria-hidden="true">›</span>';
 
     statisticsButton.addEventListener("click", () => {
         renderLiquidFundsStatisticsScreen(
             root,
-            () => renderFinance(root, "liquid-funds", onWriteAttempt)
+            () => renderFinance(root, "assets", onWriteAttempt)
         );
     });
 
     heading.append(title, statisticsButton);
 
     const amountRow = document.createElement("div");
-    amountRow.className = "liquid-funds-total-row";
+    amountRow.className = "assets-total-row";
 
     const amount = document.createElement("span");
-    amount.className = "liquid-funds-total-value";
-    const amountText = formatAmount(getLiquidFundsTotal()) + " ₽";
+    amount.className = "assets-total-value";
+    const amountText = formatAmount(getAssetsTotal()) + " ₽";
     amount.textContent = amountText;
 
     const numericLength = amountText.replace(/\D/g, "").length;
@@ -191,7 +191,7 @@ function createLiquidFundsSummary(root, onWriteAttempt = null) {
     amountRow.appendChild(amount);
 
     const date = document.createElement("span");
-    date.className = "statistics-meta liquid-funds-summary-date";
+    date.className = "statistics-meta assets-summary-date";
     date.textContent = formatSnapshotDate(statistics.currentOccurredAt);
 
     wrapper.append(heading, amountRow, date);
@@ -266,7 +266,7 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     labelInput.className = "input-control";
     labelInput.name = "label";
     labelInput.type = "text";
-    labelInput.placeholder = subblock.id === "liquid-funds" ? "Актив" : "Название";
+    labelInput.placeholder = subblock.id === "assets" ? "Актив" : "Название";
     labelInput.autocomplete = "off";
     labelInput.required = true;
 
@@ -383,7 +383,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
         content.appendChild(createFinancialStabilityIndexPanel());
     }
 
-    if (subblock.id === "liquid-funds") {
+    if (subblock.id === "assets") {
         content.appendChild(createLiquidFundsSummary(root, onWriteAttempt));
     }
 
