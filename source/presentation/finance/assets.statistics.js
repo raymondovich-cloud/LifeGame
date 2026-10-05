@@ -1,6 +1,5 @@
-// assets.statistics.js — Version 3.0
+// assets.statistics.js — Version 3.1
 
-import { getAssetsAnalytics, getAssetsAnalyticsRange } from "../../application/finance/assets.analytics.js";
 import { canAccessAssetsAnalyticsRange } from "../../application/finance/assets.analytics.access.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 
@@ -212,7 +211,7 @@ function renderComposition(container, entries) {
     container.appendChild(section);
 }
 
-function renderAssetsStatisticsScreen(root, onBack) {
+function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
     root.replaceChildren();
 
     let selectedPeriod = "month";
@@ -309,7 +308,7 @@ function renderAssetsStatisticsScreen(root, onBack) {
             };
         }
 
-        return getAssetsAnalyticsRange(selectedPeriod);
+        return assetsAnalytics.getAssetsAnalyticsRange(selectedPeriod);
     }
 
     function render() {
@@ -387,7 +386,7 @@ function renderAssetsStatisticsScreen(root, onBack) {
             return;
         }
 
-        const analytics = getAssetsAnalytics(range);
+        const analytics = assetsAnalytics.getAssetsAnalytics(range);
 
         const currentMetric = createMetric(
             "ТЕКУЩЕЕ СОСТОЯНИЕ",
