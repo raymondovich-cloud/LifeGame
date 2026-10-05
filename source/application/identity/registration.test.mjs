@@ -1,4 +1,5 @@
 // LifeGame 3.0 — Identity Registration Tests
+// Version: 1.1
 // Responsibility: verify the registration boundary before provider integration.
 //
 // These tests deliberately use a fake IdentityPort.
@@ -34,7 +35,9 @@ test('registration rejects missing password', () => {
 test('registration trims email but preserves password exactly', () => {
     const result = validateRegistrationInput({
         email: '  user@example.com  ',
-        password: ' Valid Password 123! '
+        password: ' Valid Password 123! ',
+        displayName: ' Bogdan ',
+        birthDate: '1997-04-12'
     });
 
     assert.equal(result.email, 'user@example.com');
@@ -44,7 +47,9 @@ test('registration trims email but preserves password exactly', () => {
 test('registration does not mutate caller input', () => {
     const input = {
         email: '  user@example.com  ',
-        password: 'ValidPassword123!'
+        password: 'ValidPassword123!',
+        displayName: 'Bogdan',
+        birthDate: '1997-04-12'
     };
 
     const original = { ...input };
@@ -68,12 +73,16 @@ test('registration use case delegates only validated registration data to the po
 
     const result = await useCase.execute({
         email: '  user@example.com  ',
-        password: 'ValidPassword123!'
+        password: 'ValidPassword123!',
+        displayName: 'Bogdan',
+        birthDate: '1997-04-12'
     });
 
     assert.deepEqual(received, {
         email: 'user@example.com',
-        password: 'ValidPassword123!'
+        password: 'ValidPassword123!',
+        displayName: 'Bogdan',
+        birthDate: '1997-04-12'
     });
     assert.deepEqual(result, { accepted: true });
 });
