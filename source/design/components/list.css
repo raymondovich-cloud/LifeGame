@@ -1,4 +1,4 @@
-/* list.css — Version 2.5 */
+/* list.css — Version 2.6 */
 
 .list-empty {
     display:grid;
@@ -209,6 +209,7 @@
     flex:0 0 auto;
     width:.78rem;
     height:.78rem;
+    margin-left:var(--space-1);
     color:var(--color-accent);
     opacity:.9;
 }
@@ -224,6 +225,7 @@
 
 .swipe-delete-item.is-pinned .finance-entry-pin {
     display:inline-flex;
+    order:3;
 }
 
 .finance-entry-label {
