@@ -1,4 +1,4 @@
-// finance.js — Version 2.1
+// finance.js — Version 2.2
 
 import {
     listAssets,
@@ -32,33 +32,14 @@ import {
 } from "../../domain/finance/financial.cushion/financial.cushion.js";
 
 import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
+import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 const FINANCE_OPERATIONS = Object.freeze({
-    "assets": {
-        list: listAssets,
-        add: addAsset,
-        remove: removeAsset
-    },
-    "actual-earnings": {
-        list: listActualEarnings,
-        add: addActualEarning,
-        remove: removeActualEarning
-    },
-    "financial-burden": {
-        list: listFinancialBurden,
-        add: addFinancialBurden,
-        remove: removeFinancialBurden
-    },
-    "mandatory-expenses": {
-        list: listMandatoryExpenses,
-        add: addMandatoryExpense,
-        remove: removeMandatoryExpense
-    },
-    "financial-cushion": {
-        list: listFinancialCushion,
-        add: addFinancialCushion,
-        remove: removeFinancialCushion
-    }
+    "assets": { list: listAssets, add: addAsset, remove: removeAsset },
+    "actual-earnings": { list: listActualEarnings, add: addActualEarning, remove: removeActualEarning },
+    "financial-burden": { list: listFinancialBurden, add: addFinancialBurden, remove: removeFinancialBurden },
+    "mandatory-expenses": { list: listMandatoryExpenses, add: addMandatoryExpense, remove: removeMandatoryExpense },
+    "financial-cushion": { list: listFinancialCushion, add: addFinancialCushion, remove: removeFinancialCushion }
 });
 
 let assetsSnapshotReader = () => null;
@@ -67,7 +48,6 @@ function configureAssetsMemory({ getSnapshotAtOrBefore }) {
     if (typeof getSnapshotAtOrBefore !== "function") {
         throw new Error("LifeGame Finance: Assets memory reader is required.");
     }
-
     assetsSnapshotReader = getSnapshotAtOrBefore;
 }
 
@@ -96,7 +76,17 @@ function addFinancialBurdenEntry(label, debt, payment) {
 }
 
 function removeFinanceEntry(subblockId, entryId) {
-    return getFinanceOperations(subblockId).remove(entryId);
+    trace("application", "finance.remove.begin", { subblockId, entryId });
+
+    const result = getFinanceOperations(subblockId).remove(entryId);
+
+    trace("application", "finance.remove.completed", {
+        subblockId,
+        entryId,
+        result
+    });
+
+    return result;
 }
 
 function getFinancialStabilityIndex() {
@@ -144,7 +134,6 @@ function getAssetsStatistics(period = "week") {
 
     const currentTotal = calculateAssetsTotal();
     const currentEntries = listAssets();
-
     const currentOccurredAt = currentSnapshot?.occurredAt || now;
     const baselineTotal = baselineSnapshot?.total ?? null;
 
@@ -153,10 +142,7 @@ function getAssetsStatistics(period = "week") {
         baselineTotal > 0 &&
         Number.isFinite(currentTotal);
 
-    const changeAmount = hasComparison
-        ? currentTotal - baselineTotal
-        : null;
-
+    const changeAmount = hasComparison ? currentTotal - baselineTotal : null;
     const changePercent = hasComparison
         ? Math.round(((changeAmount / baselineTotal) * 100) * 10) / 10
         : null;
