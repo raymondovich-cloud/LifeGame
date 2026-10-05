@@ -1,8 +1,17 @@
-// entry.edit.js — Version 1.0
+// entry.edit.js — Version 1.1
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
 function triggerHaptic() {
+    const telegramWebApp = typeof window !== "undefined"
+        ? window.Telegram?.WebApp
+        : null;
+
+    if (telegramWebApp?.HapticFeedback?.impactOccurred) {
+        telegramWebApp.HapticFeedback.impactOccurred("light");
+        return;
+    }
+
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
         navigator.vibrate(10);
     }
@@ -39,15 +48,15 @@ function animateEntryListReflow(entryList, mutate, onDone = null) {
     }, 250);
 }
 
-function createContextMenu(item, onEdit) {
+function createRowInteractionMenu(item, onEdit) {
     const entryList = item.closest(".finance-entry-list");
     const menu = document.createElement("div");
-    menu.className = "assets-context-menu";
+    menu.className = "row-interaction-menu";
     menu.setAttribute("role", "menu");
 
     const editButton = document.createElement("button");
     editButton.type = "button";
-    editButton.className = "assets-context-menu__item";
+    editButton.className = "row-interaction-menu__item";
     editButton.textContent = "Редактировать";
     editButton.setAttribute("role", "menuitem");
     menu.appendChild(editButton);
@@ -282,7 +291,7 @@ function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved
             item.classList.remove("is-long-pressing");
             triggerHaptic();
             item.classList.add("is-editing-target");
-            createContextMenu(item, showEditor);
+            createRowInteractionMenu(item, showEditor);
         }, 500);
     });
 
