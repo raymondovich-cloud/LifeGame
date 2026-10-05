@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.5
+// source/presentation/finance/finance.js — Version 2.6
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -14,6 +14,7 @@ import {
 
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
+import { attachAssetEdit } from "./assets.edit.js";
 
 const FINANCE_SUBBLOCKS = Object.freeze([
     { id: "assets", number: "01", title: "Активы", description: "Имущество и средства, которыми вы владеете", info: "Активы, которыми вы владеете: недвижимость, автомобиль, наличные, средства на картах, счета и другие активы, которые пользователь хочет учитывать в своей финансовой картине." },
@@ -582,7 +583,17 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null) {
             entryList.className = "finance-entry-list";
 
             entries.forEach((entry) => {
-                entryList.appendChild(createEntryRow(root, subblock, entry));
+                const row = createEntryRow(root, subblock, entry);
+                entryList.appendChild(row);
+
+                if (subblock.id === "assets") {
+                    attachAssetEdit(
+                        row,
+                        entry,
+                        onWriteAttempt,
+                        () => refreshAssetsSummary(root)
+                    );
+                }
             });
 
             content.appendChild(entryList);
