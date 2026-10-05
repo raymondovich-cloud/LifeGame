@@ -1,14 +1,22 @@
-/* accordion.css — Version 1.12 */
+/* accordion.css — Version 1.13 */
 
-.accordion-list { display:grid; gap:var(--component-gap); overflow-anchor:none; }
+.accordion-list {
+    display:grid;
+    gap:0;
+    overflow-anchor:none;
+}
 
 .accordion-item {
     position:relative;
     overflow:visible;
-    background:var(--surface-section);
-    border:var(--border-subtle);
-    border-radius:var(--radius-card);
+    background:transparent;
+    border:0;
+    border-radius:0;
     box-shadow:none;
+}
+
+.accordion-item + .accordion-item {
+    border-top:var(--border-subtle);
 }
 
 .accordion-header {
@@ -24,24 +32,29 @@
     align-items:center;
     width:100%;
     min-width:0;
-    gap:var(--space-4);
-    padding:var(--space-4) var(--space-4);
+    gap:var(--space-3);
+    padding:var(--space-4) 0;
     color:var(--color-white);
     text-align:left;
     background:transparent;
     border:0;
     cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
 }
 
 .accordion-header > .info-tooltip {
-    margin-right:var(--space-4);
+    margin-right:0;
 }
 
 .accordion-item:not(.is-open) .info-tooltip {
     display:none;
 }
 
-.accordion-trigger:focus-visible { outline:2px solid var(--color-accent); outline-offset:-2px; }
+.accordion-trigger:focus-visible {
+    outline:2px solid var(--color-accent);
+    outline-offset:-2px;
+    border-radius:var(--radius-control);
+}
 
 .accordion-index {
     display:block;
@@ -83,15 +96,15 @@
 .accordion-content {
     max-height:0;
     overflow:hidden;
-    padding:0 var(--space-4);
+    padding:0;
     opacity:0;
-    transform:translateY(-4px);
+    transform:translateY(-3px);
     transition:max-height var(--motion-duration-normal) var(--motion-ease-standard), opacity var(--motion-duration-normal) var(--motion-ease-standard), transform var(--motion-duration-normal) var(--motion-ease-standard), padding var(--motion-duration-normal) var(--motion-ease-standard);
 }
 
 .accordion-content.is-open {
     max-height:80rem;
-    padding:0 var(--space-4) var(--space-4);
+    padding:0 0 var(--space-5);
     opacity:1;
     transform:translateY(0);
 }
