@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 2.9
+// platforms/web/web.js — Version 3.0
 
 import {
     trace,
@@ -16,7 +16,9 @@ import {
     saveAssetsSnapshot,
     getAssetsSnapshotAtOrBefore,
     getLiquidAssetsAtOrBefore,
-    getIlliquidAssetsAtOrBefore
+    getIlliquidAssetsAtOrBefore,
+    getAssetsSnapshotsBetween,
+    getFirstAssetsSnapshot
 } from "../../source/memory/finance/assets.memory.js";
 import { subscribe } from "../../source/core/events/event.bus.js";
 
@@ -29,7 +31,9 @@ function startWeb() {
     configureAssetsMemory({
         getSnapshotAtOrBefore: getAssetsSnapshotAtOrBefore,
         getLiquidAssetsAtOrBefore,
-        getIlliquidAssetsAtOrBefore
+        getIlliquidAssetsAtOrBefore,
+        getSnapshotsBetween: getAssetsSnapshotsBetween,
+        getFirstSnapshot: getFirstAssetsSnapshot
     });
 
     subscribe("finance.assets.state.changed", (event) => {
