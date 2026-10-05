@@ -115,11 +115,7 @@ function createFinanceApplication({ memory }) {
 
 function listFinanceEntries(subblockId) {
     if (subblockId === "assets") {
-        return financeMemory ? financeMemory.listAssets() : [];
-    }
-
-    if (!financeMemory) {
-        return [];
+        return financeMemory.listAssets();
     }
 
     const config = getCollectionConfig(subblockId);
@@ -128,7 +124,7 @@ function listFinanceEntries(subblockId) {
 
 async function addFinanceEntry(subblockId, label, amount, liquidity) {
     if (subblockId === "assets") {
-        const memory = financeMemory;
+        const memory = requireFinanceMemory();
         const result = createAsset({ label, amount, liquidity });
         const mutation = await memory.mutateAsset({
             operation: "create",
