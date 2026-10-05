@@ -1,10 +1,11 @@
-// finance.memory.port.js — Version 2.0
+// finance.memory.port.js — Version 2.1
 
 const REQUIRED_METHODS = Object.freeze([
     "listAssets",
     "saveAsset",
     "updateAsset",
     "deleteAsset",
+    "mutateAsset",
     "listActualEarnings",
     "saveActualEarning",
     "updateActualEarning",
