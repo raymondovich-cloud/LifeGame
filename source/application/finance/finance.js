@@ -124,7 +124,7 @@ function listFinanceEntries(subblockId) {
 
 async function addFinanceEntry(subblockId, label, amount, liquidity) {
     if (subblockId === "assets") {
-        const memory = requireFinanceMemory();
+        const memory = financeMemory;
         const result = createAsset({ label, amount, liquidity });
         const mutation = await memory.mutateAsset({
             operation: "create",
@@ -156,7 +156,7 @@ async function updateFinanceEntry(
     payment = null
 ) {
     if (subblockId === "assets") {
-        const memory = requireFinanceMemory();
+        const memory = financeMemory;
         const existingAsset = memory
             .listAssets()
             .find((entry) => entry.id === entryId);
@@ -206,7 +206,7 @@ async function updateFinanceEntry(
 
 async function removeFinanceEntry(subblockId, entryId) {
     if (subblockId === "assets") {
-        const memory = requireFinanceMemory();
+        const memory = financeMemory;
         const existingAsset = memory
             .listAssets()
             .find((entry) => entry.id === entryId);
