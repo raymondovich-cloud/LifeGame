@@ -1,4 +1,4 @@
-// finance.js — Version 4.0
+// finance.js — Version 5.0
 
 import {
     createActualEarning,
@@ -135,13 +135,13 @@ function listFinanceEntries(subblockId) {
     return getMemoryMethod(config, "list")();
 }
 
-function addFinanceEntry(subblockId, label, amount, liquidity) {
+async function addFinanceEntry(subblockId, label, amount, liquidity) {
     if (subblockId === "assets") {
         const memory = requireFinanceMemory();
         const result = createAsset({ label, amount, liquidity });
-        const savedEntry = memory.saveAsset(result.entry);
+        const savedEntry = await memory.saveAsset(result.entry);
 
-        memory.saveAssetsSnapshot({
+        await memory.saveAssetsSnapshot({
             occurredAt: result.event.occurredAt,
             total: calculateAssetsTotal(memory.listAssets()),
             entries: memory.listAssets()
@@ -155,14 +155,14 @@ function addFinanceEntry(subblockId, label, amount, liquidity) {
         ? config.create(label, amount, liquidity)
         : config.create(label, amount);
 
-    return getMemoryMethod(config, "save")(result.entry);
+    return await getMemoryMethod(config, "save")(result.entry);
 }
 
-function addFinancialBurdenEntry(label, debt, payment) {
+async function addFinancialBurdenEntry(label, debt, payment) {
     return addFinanceEntry("financial-burden", label, debt, payment);
 }
 
-function updateFinanceEntry(
+async function updateFinanceEntry(
     subblockId,
     entryId,
     label,
@@ -186,7 +186,7 @@ function updateFinanceEntry(
             return false;
         }
 
-        const savedEntry = memory.updateAsset(entryId, result.entry);
+        const savedEntry = await memory.updateAsset(entryId, result.entry);
 
         if (!savedEntry) {
             return false;
@@ -213,7 +213,7 @@ function updateFinanceEntry(
         return false;
     }
 
-    const savedEntry = getMemoryMethod(config, "update")(entryId, result.entry);
+    const savedEntry = await getMemoryMethod(config, "update")(entryId, result.entry);
 
     trace("application", "finance.update.completed", {
         subblockId,
@@ -224,7 +224,7 @@ function updateFinanceEntry(
     return savedEntry;
 }
 
-function removeFinanceEntry(subblockId, entryId) {
+async function removeFinanceEntry(subblockId, entryId) {
     if (subblockId === "assets") {
         const memory = requireFinanceMemory();
         const existingAsset = memory
@@ -237,7 +237,7 @@ function removeFinanceEntry(subblockId, entryId) {
             return false;
         }
 
-        const deleted = memory.deleteAsset(entryId);
+        const deleted = await memory.deleteAsset(entryId);
 
         if (!deleted) {
             return false;
@@ -262,7 +262,7 @@ function removeFinanceEntry(subblockId, entryId) {
         return false;
     }
 
-    const deleted = getMemoryMethod(config, "remove")(entryId);
+    const deleted = await getMemoryMethod(config, "remove")(entryId);
 
     trace("application", "finance.remove.completed", {
         subblockId,
