@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 2.3
+// source/presentation/finance/finance.js — Version 2.4
 
 import {
     listFinanceEntries,
@@ -65,6 +65,51 @@ function createEntryRow(root, subblock, entry) {
     return row;
 }
 
+function refreshAssetsSummary(root) {
+    const summary = root.querySelector(".assets-summary");
+    if (!summary) return;
+
+    const amount = summary.querySelector(".assets-total-value");
+    if (!amount) return;
+
+    const amountText = formatAmount(getAssetsTotal()) + " ₽";
+    amount.textContent = amountText;
+
+    const numericLength = amountText.replace(/\D/g, "").length;
+    const fontSize = Math.max(
+        1.45,
+        Math.min(2.6, 2.6 - Math.max(0, numericLength - 7) * 0.12)
+    );
+    amount.style.fontSize = fontSize + "rem";
+
+    const statistics = getAssetsStatistics("month");
+    const date = summary.querySelector(".assets-summary-date");
+
+    if (date) {
+        date.textContent = formatSnapshotDate(statistics.currentOccurredAt);
+    }
+}
+
+function finalizeDeletedItem(root, item) {
+    const subblockId = item.dataset.subblockId;
+    const entryList = item.closest(".finance-entry-list");
+
+    item.remove();
+
+    if (entryList && entryList.children.length === 0) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "list-empty";
+        emptyState.innerHTML =
+            '<span class="list-empty-label">ДАННЫЕ</span>' +
+            "<p>Записей пока нет.</p>";
+        entryList.replaceWith(emptyState);
+    }
+
+    if (subblockId === "assets") {
+        refreshAssetsSummary(root);
+    }
+}
+
 function attachSwipeDelete(root, onWriteAttempt = null) {
     const items = [...root.querySelectorAll(".swipe-delete-item")];
     const maxReveal = 88;
@@ -77,7 +122,7 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
 
             window.setTimeout(() => {
                 removeFinanceEntry(item.dataset.subblockId, item.dataset.entryId);
-                renderFinance(root, item.dataset.subblockId, onWriteAttempt);
+                finalizeDeletedItem(root, item);
             }, 230);
         };
 
@@ -118,7 +163,11 @@ function attachSwipeDelete(root, onWriteAttempt = null) {
             setOffset(0, true);
         };
 
-        action.addEventListener("click", () => deleteItem(item));
+        action.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            deleteItem(item);
+        });
 
         content.addEventListener("pointerdown", (event) => {
             if (event.pointerType === "mouse" && event.button !== 0) return;
