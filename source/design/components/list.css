@@ -1,5 +1,5 @@
 
-/* list.css — Version 1.7 */
+/* list.css — Version 1.8 */
 
 .list-empty {
     display:grid;
@@ -61,6 +61,7 @@
 
 .finance-add-form > .button-control {
     grid-column:3;
+    grid-row:1;
     justify-self:end;
 }
 
