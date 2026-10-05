@@ -93,6 +93,12 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
     pinButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
+
+        if (!item.classList.contains("is-pinned") && typeof onPinLimit === "function" && onPinLimit()) {
+            cleanup();
+            return;
+        }
+
         cleanup();
         onPin?.();
     });
@@ -105,14 +111,6 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
         cleanup();
         onDelete?.();
     });
-
-    if (typeof onPinLimit === "function") {
-        pinButton.addEventListener("click", (event) => {
-            if (!item.classList.contains("is-pinned") && onPinLimit()) {
-                event.preventDefault();
-            }
-        }, true);
-    }
 
     animateEntryListReflow(entryList, () => {
         if (entryList) {
