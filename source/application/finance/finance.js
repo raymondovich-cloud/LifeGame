@@ -1,4 +1,4 @@
-// finance.js — Version 2.9
+// finance.js — Version 3.0
 
 import {
     listAssets,
@@ -147,62 +147,6 @@ function getAssetsTotal() {
     return calculateAssetsTotal();
 }
 
-function getPeriodStart(period, now) {
-    const date = new Date(now);
-
-    if (period === "week") {
-        date.setDate(date.getDate() - 7);
-        return date.getTime();
-    }
-
-    if (period === "month") {
-        date.setMonth(date.getMonth() - 1);
-        return date.getTime();
-    }
-
-    if (period === "year") {
-        date.setFullYear(date.getFullYear() - 1);
-        return date.getTime();
-    }
-
-    throw new Error("LifeGame Finance: неизвестный период.");
-}
-
-function getAssetsStatistics(period = "week") {
-    const now = Date.now();
-    const periodStart = getPeriodStart(period, now);
-    const currentSnapshot = assetsSnapshotReader(now);
-    const baselineSnapshot = assetsSnapshotReader(periodStart);
-
-    const currentTotal = calculateAssetsTotal();
-    const currentEntries = listAssets();
-    const currentOccurredAt = currentSnapshot?.occurredAt || now;
-    const baselineTotal = baselineSnapshot?.total ?? null;
-
-    const hasComparison =
-        baselineTotal !== null &&
-        baselineTotal > 0 &&
-        Number.isFinite(currentTotal);
-
-    const changeAmount = hasComparison ? currentTotal - baselineTotal : null;
-    const changePercent = hasComparison
-        ? Math.round(((changeAmount / baselineTotal) * 100) * 10) / 10
-        : null;
-
-    return {
-        period,
-        periodStart,
-        currentOccurredAt,
-        currentTotal,
-        currentEntries: currentEntries.map((entry) => ({ ...entry })),
-        baselineOccurredAt: baselineSnapshot?.occurredAt || null,
-        baselineTotal,
-        changeAmount,
-        changePercent,
-        hasComparison
-    };
-}
-
 export {
     configureAssetsMemory,
     listFinanceEntries,
@@ -211,6 +155,5 @@ export {
     removeFinanceEntry,
     updateFinanceEntry,
     getAssetsTotal,
-    getAssetsStatistics,
     getFinancialStabilityIndex
 };
