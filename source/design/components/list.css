@@ -1,4 +1,4 @@
-/* list.css — Version 2.7 */
+/* list.css — Version 2.8 */
 
 .list-empty {
     display:grid;
@@ -236,6 +236,13 @@
     color:var(--color-white-soft);
     font-size:var(--font-size-xs);
     text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.finance-entry-liquidity {
+    flex:0 0 auto;
+    color:var(--color-gray);
+    font-size:var(--font-size-2xs);
     white-space:nowrap;
 }
 
