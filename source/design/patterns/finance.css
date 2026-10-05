@@ -1,4 +1,4 @@
-/* finance.css — Version 1.2 */
+/* finance.css — Version 1.3 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -95,3 +95,10 @@
 .finance-dashboard-signal-list{grid-template-columns:repeat(2,minmax(0,1fr))}.finance-dashboard-signal:nth-child(3){padding-left:0;border-left:0;border-top:var(--border-subtle)}.finance-dashboard-signal:nth-child(4){border-top:var(--border-subtle)}
 .finance-dashboard-management{align-items:flex-start}
 }
+
+.finance-data-entry{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);padding:var(--space-5) 0 0}
+.finance-data-entry-copy{display:grid;gap:.25rem;min-width:0}
+.finance-data-entry-copy strong{color:var(--color-white-soft);font-size:var(--font-size-xs);font-weight:var(--font-weight-medium)}
+.finance-data-entry-copy p{margin:0;color:var(--color-gray);font-size:var(--font-size-2xs);line-height:1.4}
+.finance-data-entry .finance-text-action{white-space:nowrap}
+@media (max-width:719px){.finance-data-entry{align-items:flex-start}}
