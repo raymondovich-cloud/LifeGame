@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.1
+// platforms/web/web.js — Version 4.2
 
 import {
     trace,
@@ -11,10 +11,6 @@ import { renderRegistration } from "../../source/presentation/auth/register.js";
 import { renderLogin } from "../../source/presentation/auth/login.js";
 import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { createWebApplication } from "./composition/root.js";
-import {
-    configureAssetsMemory,
-    clearFinanceMemory
-} from "../../source/application/finance/finance.js";
 import {
     configureAssetsAnalyticsMemory,
     clearAssetsAnalyticsMemory
@@ -299,7 +295,7 @@ function startWeb() {
 
         // Remove the active user's in-memory data immediately. The public
         // finance view must never render the previous user's state.
-        clearFinanceMemory();
+        application.finance.clearForUser(activeUserId);
         clearAssetsAnalyticsMemory();
 
         trace("web-shell", "logout.completed", {
@@ -413,7 +409,7 @@ function startWeb() {
         }
 
         if (!isPublic && activeUserId) {
-            const financeMemory = await application.finance.createMemoryForUser(activeUserId);
+            const financeApplication = await application.finance.createApplicationForUser(activeUserId);
 
             if (renderId !== null && renderId !== routeRenderSequence) {
                 trace("web-shell", "shell.render.stale-after-memory", {
@@ -424,14 +420,10 @@ function startWeb() {
                 return;
             }
 
-            configureAssetsMemory({
-                memory: financeMemory
-            });
-
             configureAssetsAnalyticsMemory({
-                getSnapshotAtOrBefore: financeMemory.getAssetsSnapshotAtOrBefore,
-                getSnapshotsBetween: financeMemory.getAssetsSnapshotsBetween,
-                getFirstSnapshot: financeMemory.getFirstAssetsSnapshot
+                getSnapshotAtOrBefore: financeApplication.getAssetsSnapshotAtOrBefore,
+                getSnapshotsBetween: financeApplication.getAssetsSnapshotsBetween,
+                getFirstSnapshot: financeApplication.getFirstAssetsSnapshot
             });
         }
 
