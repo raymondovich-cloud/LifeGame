@@ -314,7 +314,8 @@ function createAddForm(root, subblock, onWriteAttempt = null) {
     error.className = "finance-form-error";
     error.hidden = true;
 
-    wrapper.append(labelInput, amountInput);\n    if (assetTypeInput) wrapper.appendChild(assetTypeInput);
+    wrapper.append(labelInput, amountInput);
+    if (assetTypeInput) wrapper.appendChild(assetTypeInput);
     if (paymentInput) wrapper.appendChild(paymentInput);
     wrapper.append(addButton, error);
 
