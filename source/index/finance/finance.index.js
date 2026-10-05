@@ -1,4 +1,4 @@
-// source/index/finance/finance.index.js — Version 2.1
+// source/index/finance/finance.index.js — Version 2.2
 //
 // FSI 2.1 — Financial Stability Index.
 // This layer calculates derived financial stability only.
@@ -182,7 +182,9 @@ function calculateFinancialTrend(
 
 function calculateFinancialStabilityIndex(financeState = {}) {
     const assetEntries = Array.isArray(financeState.assets) ? financeState.assets : [];
-    const liquidAssetEntries = assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
+    const liquidAssetEntries = Array.isArray(financeState.liquidAssets)
+        ? financeState.liquidAssets
+        : assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
     const liquidFunds = resolveAmount(
         financeState.liquidFundsAmount,
         financeState.liquidFunds ?? liquidAssetEntries
