@@ -404,6 +404,15 @@ function startWeb() {
                 session
             );
         } catch (error) {
+            if (renderId !== routeRenderSequence) {
+                trace("web-shell", "route.error.stale", {
+                    requestedRoute,
+                    renderId,
+                    latestRenderId: routeRenderSequence
+                });
+                return;
+            }
+
             sessionState = "error";
 
             trace("web-shell", "route.session.error", {
