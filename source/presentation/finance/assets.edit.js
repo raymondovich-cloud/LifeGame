@@ -1,4 +1,4 @@
-// assets.edit.js — Version 1.2
+// assets.edit.js — Version 1.3
 
 import { updateFinanceEntry } from "../../application/finance/finance.js";
 
@@ -8,7 +8,47 @@ function triggerHaptic() {
     }
 }
 
+function animateEntryListReflow(entryList, mutate, onDone = null) {
+    if (!entryList) {
+        mutate();
+        onDone?.();
+        return;
+    }
+
+    const rows = [...entryList.querySelectorAll(".swipe-delete-item")];
+    const before = new Map(rows.map((row) => [row, row.getBoundingClientRect().top]));
+
+    mutate();
+
+    const after = new Map(rows.map((row) => [row, row.getBoundingClientRect().top]));
+
+    rows.forEach((row) => {
+        const previousTop = before.get(row);
+        const nextTop = after.get(row);
+        if (previousTop === undefined || nextTop === undefined) return;
+
+        row.style.setProperty(
+            "--context-reflow-y",
+            (previousTop - nextTop) + "px"
+        );
+    });
+
+    requestAnimationFrame(() => {
+        rows.forEach((row) => {
+            row.style.setProperty("--context-reflow-y", "0px");
+        });
+    });
+
+    window.setTimeout(() => {
+        rows.forEach((row) => {
+            row.style.removeProperty("--context-reflow-y");
+        });
+        onDone?.();
+    }, 250);
+}
+
 function createContextMenu(item, onEdit) {
+    const entryList = item.closest(".finance-entry-list");
     const menu = document.createElement("div");
     menu.className = "assets-context-menu";
     menu.setAttribute("role", "menu");
@@ -19,41 +59,40 @@ function createContextMenu(item, onEdit) {
     editButton.textContent = "Редактировать";
     editButton.setAttribute("role", "menuitem");
 
+    menu.appendChild(editButton);
+
+    const cleanup = () => {
+        if (!menu.isConnected) return;
+
+        animateEntryListReflow(
+            entryList,
+            () => {
+                menu.remove();
+            },
+            () => {
+                item.classList.remove("is-editing-target");
+                entryList?.classList.remove("is-context-editing");
+            }
+        );
+    };
+
     editButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        menu.remove();
-        item.classList.remove("is-editing-target");
+        cleanup();
         onEdit();
     });
 
-    menu.appendChild(editButton);
-    document.body.appendChild(menu);
+    const insertMenu = () => {
+        if (entryList) {
+            entryList.insertBefore(menu, item.nextSibling);
+            entryList.classList.add("is-context-editing");
+        } else {
+            document.body.appendChild(menu);
+        }
+    };
 
-    const margin = 12;
-    const gap = 10;
-    const rowRect = item.getBoundingClientRect();
-    const menuRect = menu.getBoundingClientRect();
-
-    let left = rowRect.left;
-    let top = rowRect.bottom + gap;
-
-    if (top + menuRect.height > window.innerHeight - margin) {
-        top = rowRect.top - menuRect.height - gap;
-    }
-
-    left = Math.max(
-        margin,
-        Math.min(left, window.innerWidth - menuRect.width - margin)
-    );
-
-    top = Math.max(
-        margin,
-        Math.min(top, window.innerHeight - menuRect.height - margin)
-    );
-
-    menu.style.left = left + "px";
-    menu.style.top = top + "px";
+    animateEntryListReflow(entryList, insertMenu);
 
     requestAnimationFrame(() => {
         menu.classList.add("is-visible");
@@ -61,8 +100,7 @@ function createContextMenu(item, onEdit) {
 
     const close = (event) => {
         if (!menu.contains(event.target)) {
-            menu.remove();
-            item.classList.remove("is-editing-target");
+            cleanup();
             document.removeEventListener("pointerdown", close, true);
         }
     };
