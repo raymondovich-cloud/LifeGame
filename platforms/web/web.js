@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 3.8
+// platforms/web/web.js — Version 3.9
 
 import {
     trace,
@@ -317,7 +317,7 @@ function startWeb() {
     function renderModule(moduleId, session = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
-            openRegistrationModal();
+            openLoginModal();
             return;
         }
 
