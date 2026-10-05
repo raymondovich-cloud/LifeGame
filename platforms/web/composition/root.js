@@ -1,4 +1,4 @@
-// root.js — Version 1.4
+// root.js — Version 1.5
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 
@@ -7,7 +7,7 @@ import { createSupabaseIdentityAdapter } from "../../../source/infrastructure/id
 import { createLifeGameSupabaseClient } from "../../../source/infrastructure/supabase/supabase.client.js";
 import { createAuthController } from "../../../source/presentation/auth/auth.controller.js";
 import { createUserContext } from "../../../source/application/user/user.context.js";
-import { createFinanceMemory } from "../../../source/memory/finance/finance.memory.js";
+import { createSupabaseFinanceMemory } from "../../../source/infrastructure/supabase/finance.memory.supabase.js";
 import { createFinanceMemoryPort } from "../../../source/application/finance/finance.memory.port.js";
 
 function getAuthenticationRedirectUrl() {
@@ -30,7 +30,7 @@ export function createWebApplication() {
     const authController = createAuthController(identityApplication);
     const financeMemoryByUser = new Map();
 
-    function createFinanceMemoryForUser(userId) {
+    async function createFinanceMemoryForUser(userId) {
         const normalizedUserId = String(userId ?? "").trim();
 
         if (!normalizedUserId) {
@@ -39,7 +39,11 @@ export function createWebApplication() {
 
         if (!financeMemoryByUser.has(normalizedUserId)) {
             const userContext = createUserContext(normalizedUserId);
-            const memory = createFinanceMemory(userContext);
+            const memory = createSupabaseFinanceMemory({
+                client: supabaseClient,
+                userContext
+            });
+            await memory.hydrate();
             financeMemoryByUser.set(
                 normalizedUserId,
                 createFinanceMemoryPort(memory)
