@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 3.6
+// platforms/web/web.js — Version 3.7
 
 import {
     trace,
@@ -378,13 +378,28 @@ function startWeb() {
         }
     }
 
-    async function renderApplicationShell(route, isPublic, session = null) {
+    async function renderApplicationShell(route, isPublic, session = null, renderId = null) {
+        // Set access state before any asynchronous user-memory hydration.
+        // Otherwise a stale public render can leave authenticated Finance rows
+        // with a public write guard, which opens the Create Account modal.
+        publicMode = isPublic;
+        sessionState = isPublic ? "unauthenticated" : "authenticated";
+
         if (!isPublic && session?.user?.id) {
             activeUserId = session.user.id;
         }
 
         if (!isPublic && activeUserId) {
             const financeMemory = await application.finance.createMemoryForUser(activeUserId);
+
+            if (renderId !== null && renderId !== routeRenderSequence) {
+                trace("web-shell", "shell.render.stale-after-memory", {
+                    route,
+                    renderId,
+                    latestRenderId: routeRenderSequence
+                });
+                return;
+            }
 
             configureAssetsMemory({
                 memory: financeMemory
@@ -396,9 +411,6 @@ function startWeb() {
                 getFirstSnapshot: financeMemory.getFirstAssetsSnapshot
             });
         }
-
-        publicMode = isPublic;
-        sessionState = isPublic ? "unauthenticated" : "authenticated";
 
         trace("web-shell", "render", {
             route,
@@ -461,7 +473,9 @@ function startWeb() {
                     isApplicationModule(requestedRoute)
                         ? requestedRoute
                         : DEFAULT_APPLICATION_ROUTE,
-                    false
+                    false,
+                    null,
+                    renderId
                 );
                 return;
             }
@@ -501,7 +515,8 @@ function startWeb() {
                     ? requestedRoute
                     : DEFAULT_APPLICATION_ROUTE,
                 false,
-                session
+                session,
+                renderId
             );
         } catch (error) {
             if (renderId !== routeRenderSequence) {
@@ -525,7 +540,9 @@ function startWeb() {
                     isApplicationModule(requestedRoute)
                         ? requestedRoute
                         : DEFAULT_APPLICATION_ROUTE,
-                    false
+                    false,
+                    null,
+                    renderId
                 );
                 return;
             }
