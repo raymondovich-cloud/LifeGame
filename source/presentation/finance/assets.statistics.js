@@ -33,7 +33,7 @@ function renderAssetsStatisticsScreen(root, onBack) {
 
     const screen = document.createElement("section");
     screen.className = "assets-statistics-screen";
-    screen.setAttribute("aria-label", "Аналитика ликвидных средств");
+    screen.setAttribute("aria-label", "Аналитика активов");
 
     const header = document.createElement("header");
     header.className = "assets-statistics-header";
@@ -41,7 +41,7 @@ function renderAssetsStatisticsScreen(root, onBack) {
     const backButton = document.createElement("button");
     backButton.type = "button";
     backButton.className = "assets-statistics-back";
-    backButton.textContent = "← Ликвидные средства";
+    backButton.textContent = "← Активы";
     backButton.addEventListener("click", () => {
         if (typeof onBack === "function") onBack();
     });
@@ -59,7 +59,7 @@ function renderAssetsStatisticsScreen(root, onBack) {
 
     const description = document.createElement("p");
     description.className = "assets-statistics-description";
-    description.textContent = "Как менялись ваши доступные средства за выбранный период.";
+    description.textContent = "Как менялась стоимость ваших активов за выбранный период.";
 
     heading.append(eyebrow, title, description);
     header.append(backButton, heading);
