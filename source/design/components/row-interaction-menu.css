@@ -1,4 +1,4 @@
-/* row-interaction-menu.css — Version 1.0 */
+/* row-interaction-menu.css — Version 1.1 */
 
 .row-interaction-menu {
     transform-origin:top left;
@@ -13,6 +13,9 @@
     box-shadow:var(--shadow-card),0 0 1.5rem rgba(242,138,46,.08);
     opacity:0;
     transform:translate3d(0,4px,0) scale(.96);
+    display:flex;
+    flex-direction:column;
+    gap:.2rem;
     pointer-events:none;
     transition:
         opacity 180ms var(--motion-ease-standard),
@@ -42,6 +45,22 @@
     outline:none;
 }
 
+.row-interaction-menu__item:nth-child(2) {
+    color:var(--color-white-soft);
+    background:var(--surface-control);
+    border:1px solid var(--color-border);
+}
+
+.row-interaction-menu__item--danger {
+    color:var(--color-danger);
+    background:rgba(255,184,184,.055);
+    border:1px solid rgba(255,184,184,.14);
+}
+
 .row-interaction-menu__item:active {
     background:var(--color-accent-soft);
+}
+
+.row-interaction-menu__item--danger:active {
+    background:rgba(255,184,184,.1);
 }
