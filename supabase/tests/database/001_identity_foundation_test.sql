@@ -1,4 +1,4 @@
--- Version 1.2
+-- Version 1.3
 -- LifeGame 3.0
 -- Identity Foundation — behavioral RLS tests
 --
