@@ -347,7 +347,9 @@ function createAssetsSummary(root, onWriteAttempt = null, financeApplication = n
     const wrapper = document.createElement("div");
     wrapper.className = "assets-summary";
 
-    const statistics = getAssetsAnalytics(getAssetsAnalyticsRange("month"));
+    const statistics = assetsAnalytics
+        ? assetsAnalytics.getAssetsAnalytics(assetsAnalytics.getAssetsAnalyticsRange("month"))
+        : { current: null };
 
     const heading = document.createElement("div");
     heading.className = "assets-summary-heading";
@@ -363,6 +365,11 @@ function createAssetsSummary(root, onWriteAttempt = null, financeApplication = n
         '<span>Аналитика</span><span aria-hidden="true">›</span>';
 
     statisticsButton.addEventListener("click", () => {
+        if (!assetsAnalytics) {
+            if (typeof onWriteAttempt === "function") onWriteAttempt(() => {});
+            return;
+        }
+
         renderAssetsStatisticsScreen(
             root,
             () => renderFinance(root, "assets", onWriteAttempt, financeApplication),
