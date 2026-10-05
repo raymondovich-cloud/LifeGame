@@ -1,4 +1,4 @@
-/* liquidity.switch.css — Version 1.1 */
+/* liquidity.switch.css — Version 1.2 */
 
 .liquidity-switch-field {
     display: grid;
@@ -10,14 +10,14 @@
 
 .liquidity-switch-label {
     color: var(--color-gray);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
 }
 
 .liquidity-switch-state {
-    color: var(--color-white);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
+    color: var(--color-gray);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-normal);
     white-space: nowrap;
     transition: opacity var(--motion-duration-fast) var(--motion-ease-standard);
 }
@@ -70,6 +70,6 @@
     }
 
     .liquidity-switch-state {
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-2xs);
     }
 }
