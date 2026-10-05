@@ -1,6 +1,4 @@
-// entry.edit.js — Version 1.6
-
-import { updateFinanceEntry } from "../../application/finance/finance.js";
+// entry.edit.js — Version 1.7
 
 function triggerHaptic() {
     const telegramWebApp = typeof window !== "undefined"
@@ -107,7 +105,7 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
     requestAnimationFrame(() => backdrop.classList.add("is-visible"));
 }
 
-function openEntryEditModal(subblockId, entry, onSaved) {
+function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
     const modal = document.createElement("div");
     modal.className = "assets-edit-modal";
     modal.setAttribute("role", "dialog");
@@ -232,7 +230,7 @@ function openEntryEditModal(subblockId, entry, onSaved) {
         error.hidden = true;
 
         try {
-            const updated = await updateFinanceEntry(
+            const updated = await financeApplication.updateFinanceEntry(
                 subblockId,
                 entry.id,
                 labelInput.value,
@@ -258,7 +256,7 @@ function openEntryEditModal(subblockId, entry, onSaved) {
     });
 }
 
-function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved = null, onPin = null, onDelete = null, onPinLimit = null) {
+function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, financeApplication = null, onSaved = null, onPin = null, onDelete = null, onPinLimit = null) {
     if (!item || !entry || subblockId === "financial-stability-index") return;
 
     let pressTimer = null;
@@ -275,7 +273,7 @@ function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, onSaved
     };
 
     const showEditor = () => {
-        const open = () => openEntryEditModal(subblockId, entry, onSaved);
+        const open = () => openEntryEditModal(subblockId, entry, onSaved, financeApplication);
         typeof onWriteAttempt === "function" ? onWriteAttempt(open) : open();
     };
 
