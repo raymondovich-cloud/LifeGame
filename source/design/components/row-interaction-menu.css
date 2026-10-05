@@ -1,4 +1,4 @@
-/* row-interaction-menu.css — Version 1.1 */
+/* row-interaction-menu.css — Version 1.2 */
 
 .row-interaction-menu {
     transform-origin:top left;
@@ -45,22 +45,13 @@
     outline:none;
 }
 
-.row-interaction-menu__item:nth-child(2) {
-    color:var(--color-white-soft);
-    background:var(--surface-control);
-    border:1px solid var(--color-border);
-}
-
-.row-interaction-menu__item--danger {
-    color:var(--color-danger);
-    background:rgba(255,184,184,.055);
-    border:1px solid rgba(255,184,184,.14);
+.row-interaction-menu__item {
+    color:var(--color-white);
+    background:var(--gradient-accent-button);
+    border:1px solid transparent;
 }
 
 .row-interaction-menu__item:active {
-    background:var(--color-accent-soft);
-}
-
-.row-interaction-menu__item--danger:active {
-    background:rgba(255,184,184,.1);
+    background:var(--gradient-accent-button);
+    filter:brightness(1.08);
 }
