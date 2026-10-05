@@ -1,8 +1,16 @@
-// assets.memory.js — Version 2.3
+// assets.memory.js — Version 2.4
 
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 const snapshots = [];
+
+function cloneSnapshot(snapshot) {
+    return {
+        occurredAt: snapshot.occurredAt,
+        total: snapshot.total,
+        entries: snapshot.entries.map((entry) => ({ ...entry }))
+    };
+}
 
 function saveAssetsSnapshot(snapshot) {
     if (!snapshot || !snapshot.occurredAt || !Array.isArray(snapshot.entries)) {
@@ -35,13 +43,49 @@ function getAssetsSnapshotAtOrBefore(timestamp) {
         }
     });
 
-    if (!result) return null;
+    return result ? cloneSnapshot(result) : null;
+}
 
-    return {
-        occurredAt: result.occurredAt,
-        total: result.total,
-        entries: result.entries.map((entry) => ({ ...entry }))
-    };
+function getAssetsSnapshotsBetween(startTimestamp, endTimestamp) {
+    if (
+        !Number.isFinite(startTimestamp) ||
+        !Number.isFinite(endTimestamp) ||
+        startTimestamp > endTimestamp
+    ) {
+        throw new Error("LifeGame Memory: invalid Assets snapshot range.");
+    }
+
+    return snapshots
+        .filter((snapshot) =>
+            snapshot.occurredAt >= startTimestamp &&
+            snapshot.occurredAt <= endTimestamp
+        )
+        .sort((left, right) => left.occurredAt - right.occurredAt)
+        .map(cloneSnapshot);
+}
+
+function getLatestAssetsSnapshot() {
+    if (snapshots.length === 0) return null;
+
+    return cloneSnapshot(
+        snapshots.reduce((latest, snapshot) =>
+            !latest || snapshot.occurredAt > latest.occurredAt
+                ? snapshot
+                : latest,
+        null)
+    );
+}
+
+function getFirstAssetsSnapshot() {
+    if (snapshots.length === 0) return null;
+
+    return cloneSnapshot(
+        snapshots.reduce((first, snapshot) =>
+            !first || snapshot.occurredAt < first.occurredAt
+                ? snapshot
+                : first,
+        null)
+    );
 }
 
 function getAssetsByLiquidityAtOrBefore(timestamp, liquidity) {
@@ -65,6 +109,9 @@ function getIlliquidAssetsAtOrBefore(timestamp) {
 export {
     saveAssetsSnapshot,
     getAssetsSnapshotAtOrBefore,
+    getAssetsSnapshotsBetween,
+    getLatestAssetsSnapshot,
+    getFirstAssetsSnapshot,
     getLiquidAssetsAtOrBefore,
     getIlliquidAssetsAtOrBefore
 };
