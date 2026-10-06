@@ -1,4 +1,4 @@
-// version 1.8
+// version 1.9
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -115,14 +115,10 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
         if (typeof profileResult.count === "number") totalUsers = String(profileResult.count);
       }
 
-      const securityResult = await admin
-        .schema("private")
-        .from("security_events")
-        .select("id", {count: "exact", head: true})
-        .gte("occurred_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      const securityResult = await admin.rpc("lifegame_security_events_24h");
 
-      if (!securityResult.error && typeof securityResult.count === "number") {
-        securityEvents24h = String(securityResult.count);
+      if (!securityResult.error && typeof securityResult.data === "number") {
+        securityEvents24h = String(securityResult.data);
       }
     }
 
