@@ -819,7 +819,7 @@ function createAssetsSummary(root, onWriteAttempt = null, financeApplication = n
 
         renderAssetsStatisticsScreen(
             root,
-            () => renderFinance(root, "assets", onWriteAttempt, financeApplication),
+            () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
             assetsAnalytics
         );
     });
@@ -955,7 +955,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
                         },
                         () => {
                             toggleEntryPinned(subblock.id, entry.id);
-                            renderFinance(root, subblock.id, onWriteAttempt, financeApplication);
+                            renderFinanceData(root, subblock.id, onWriteAttempt, financeApplication);
                         },
                         () => {
                             deleteFinanceEntryItem(root, row, onWriteAttempt, financeApplication, assetsAnalytics);
@@ -983,7 +983,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
 
     button.addEventListener("click", () => {
         const nextOpen = button.getAttribute("aria-expanded") !== "true";
-        renderFinance(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
+        renderFinanceData(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
     });
 
     return wrapper;
