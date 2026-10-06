@@ -1,9 +1,10 @@
-// version 2.5
+// version 2.6
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const telegramToken = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const telegramAdminChatId = Deno.env.get("TELEGRAM_ADMIN_CHAT_ID") ?? "";
+const telegramAdminUserId = Deno.env.get("TELEGRAM_ADMIN_USER_ID") ?? "";
 const telegramWebhookSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET") ?? "";
 const registrationWebhookSecret = Deno.env.get("REGISTRATION_WEBHOOK_SECRET") ?? "";
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -43,21 +44,20 @@ async function telegram(method: string, body: Record<string, unknown>) {
 }
 
 async function reply(chatId: number | string, text: string, showKeyboard = false, inlineKeyboard?: Array<Array<{text: string; callback_data: string}>>) {
+  const replyMarkup = inlineKeyboard
+    ? {inline_keyboard: inlineKeyboard}
+    : showKeyboard
+      ? {
+          keyboard: [[{text: "⚙️ Меню администрирования"}]],
+          resize_keyboard: true,
+          is_persistent: true,
+        }
+      : undefined;
+
   return telegram("sendMessage", {
     chat_id: chatId,
     text,
-    ...(showKeyboard ? {
-      reply_markup: {
-        keyboard: [[{text: "⚙️ Меню администрирования"}]],
-        resize_keyboard: true,
-        is_persistent: true,
-      },
-    } : {}),
-    ...(inlineKeyboard ? {
-      reply_markup: {
-        inline_keyboard: inlineKeyboard,
-      },
-    } : {}),
+    ...(replyMarkup ? {reply_markup: replyMarkup} : {}),
   });
 }
 
@@ -279,12 +279,31 @@ async function handleCallbackQuery(update: Record<string, unknown>, request: Req
   const callbackUserId = callbackFrom?.id;
 
   if (callbackId) {
-    await telegram("answerCallbackQuery", {callback_query_id: callbackId});
+    try {
+      await telegram("answerCallbackQuery", {callback_query_id: callbackId});
+    } catch (error) {
+      console.error("Failed to answer callback query:", error);
+    }
   }
 
-  if (!chatId || String(chatId) !== telegramAdminChatId || String(callbackUserId ?? "") !== telegramAdminChatId) {
+  if (!chatId || String(chatId) !== telegramAdminChatId) {
     return new Response("ok", {status: 200});
   }
+
+  if (telegramAdminUserId && String(callbackUserId ?? "") !== telegramAdminUserId) {
+    return new Response("ok", {status: 200});
+  }
+
+  if (!telegramAdminUserId && String(callbackChat?.type ?? "") === "private" &&
+      String(callbackUserId ?? "") !== telegramAdminChatId) {
+    return new Response("ok", {status: 200});
+  }
+
+  console.log("Admin callback:", JSON.stringify({
+    callbackData,
+    chatId: String(chatId),
+    userId: String(callbackUserId ?? ""),
+  }));
 
   if (callbackData === "admin:menu") {
     await reply(chatId, "⚙️ Меню администрирования\\n\\nВыберите раздел:", false, adminMenuKeyboard());
@@ -561,7 +580,8 @@ async function handleSetup(request: Request) {
     telegramWebhookSecretValidCharacters: secretCharacterCheck,
     telegramWebhookSecretLength: secretLength,
     registrationWebhookSecretConfigured: Boolean(registrationWebhookSecret),
-    adminChatIdConfigured: Boolean(telegramAdminChatId)
+    adminChatIdConfigured: Boolean(telegramAdminChatId),
+    adminUserIdConfigured: Boolean(telegramAdminUserId)
   };
   if (!telegramToken || !telegramWebhookSecret) {
     return new Response(JSON.stringify({status: "configuration_incomplete", ...diagnostics}), {status: 200, headers: {"Content-Type": "application/json"}});
