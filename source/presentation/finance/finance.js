@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.6
+// source/presentation/finance/finance.js — Version 4.7
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1166,81 +1166,6 @@ function attachSwipeDelete(root, onWriteAttempt = null, financeApplication = nul
         content.addEventListener("pointerup", finishSwipe);
         content.addEventListener("pointercancel", finishSwipe);
     });
-}
-
-function createBackAction(root, onWriteAttempt, financeApplication) {
-    const back = document.createElement("button");
-    back.type = "button";
-    back.className = "finance-text-action";
-    back.textContent = "← Finance";
-    back.addEventListener("click", () => {
-        renderFinance(root, onWriteAttempt, financeApplication);
-    });
-    return back;
-}
-
-function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
-    if (!root) {
-        throw new Error("LifeGame Finance: presentation root was not found.");
-    }
-
-    root.replaceChildren();
-
-    if (!financeApplication) {
-        renderFinance(root, onWriteAttempt, financeApplication);
-        return;
-    }
-
-    const assetsAnalytics = createAssetsAnalytics({ financeApplication });
-    const page = document.createElement("section");
-    page.className = "finance-workspace finance-data-screen";
-    page.setAttribute("aria-label", "Financial data");
-
-    const header = document.createElement("header");
-    header.className = "finance-workspace-header";
-
-    const headingRow = document.createElement("div");
-    headingRow.className = "finance-block-heading";
-
-    const copy = document.createElement("div");
-    copy.className = "finance-data-screen-copy";
-
-    const eyebrow = document.createElement("span");
-    eyebrow.className = "finance-section-meta";
-    eyebrow.textContent = "DATA";
-
-    const title = document.createElement("h2");
-    title.textContent = "Финансовые данные";
-
-    const description = document.createElement("p");
-    description.textContent = activeSectionId
-        ? "Управление выбранной системой."
-        : "Управление капиталом, доходами, обязательствами и резервом.";
-
-    copy.append(eyebrow, title, description);
-
-    headingRow.append(
-        copy,
-        createBackAction(root, onWriteAttempt, financeApplication)
-    );
-    header.appendChild(headingRow);
-    page.appendChild(header);
-
-    const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
-    page.appendChild(
-        createStructure(
-            financeApplication,
-            snapshot,
-            root,
-            activeSectionId,
-            onWriteAttempt,
-            assetsAnalytics,
-            true
-        )
-    );
-
-    root.appendChild(page);
-    attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
 }
 
 function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
