@@ -179,15 +179,24 @@
     gap:var(--space-4);
 }
 .finance-workspace-header{
+    position:relative;
     padding:var(--space-4) var(--space-4) var(--space-5);
+    overflow:hidden;
     background:var(--gradient-card-premium);
-    border:1px solid transparent;
+    border:var(--border-subtle);
     border-radius:var(--radius-card);
     box-shadow:var(--shadow-soft);
 }
-.finance-workspace-header::after{
+.finance-workspace-header::before{
     position:absolute;
+    top:0;
+    left:8%;
+    right:8%;
+    height:1px;
     pointer-events:none;
+    content:"";
+    background:var(--gradient-accent-line);
+    opacity:.28;
 }
 .finance-health,
 .finance-capital{
