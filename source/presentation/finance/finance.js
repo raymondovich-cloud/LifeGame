@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.7
+// source/presentation/finance/finance.js — Version 4.8
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -633,6 +633,134 @@ function attachSwipeDelete(root, onWriteAttempt = null, financeApplication = nul
         content.addEventListener("pointerup", finishSwipe);
         content.addEventListener("pointercancel", finishSwipe);
     });
+}
+
+
+function formatSnapshotDate(timestamp) {
+    return new Intl.DateTimeFormat("ru-RU", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    }).format(timestamp ? new Date(timestamp) : new Date()).toUpperCase();
+}
+
+function createAssetsSummary(root, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "assets-summary";
+
+    const statistics = assetsAnalytics
+        ? assetsAnalytics.getAssetsAnalytics(assetsAnalytics.getAssetsAnalyticsRange("month"))
+        : { current: null };
+
+    const heading = document.createElement("div");
+    heading.className = "assets-summary-heading";
+
+    const title = document.createElement("span");
+    title.className = "statistics-meta";
+    title.textContent = "СОСТОЯНИЕ";
+
+    const statisticsButton = document.createElement("button");
+    statisticsButton.type = "button";
+    statisticsButton.className = "assets-statistics-trigger";
+    statisticsButton.innerHTML = '<span>Аналитика</span><span aria-hidden="true">›</span>';
+
+    statisticsButton.addEventListener("click", () => {
+        if (!assetsAnalytics) {
+            if (typeof onWriteAttempt === "function") onWriteAttempt(() => {});
+            return;
+        }
+
+        renderAssetsStatisticsScreen(
+            root,
+            () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
+            assetsAnalytics
+        );
+    });
+
+    heading.append(title, statisticsButton);
+
+    const amountRow = document.createElement("div");
+    amountRow.className = "assets-total-row";
+
+    const amount = document.createElement("span");
+    amount.className = "assets-total-value";
+    const amountText = formatAmount(statistics.current?.total ?? 0) + " ₽";
+    amount.textContent = amountText;
+
+    const numericLength = amountText.replace(/\D/g, "").length;
+    const fontSize = Math.max(
+        1.45,
+        Math.min(2.6, 2.6 - Math.max(0, numericLength - 7) * 0.12)
+    );
+    amount.style.fontSize = fontSize + "rem";
+
+    amountRow.appendChild(amount);
+
+    const date = document.createElement("span");
+    date.className = "statistics-meta assets-summary-date";
+    date.textContent = formatSnapshotDate(statistics.current?.occurredAt);
+
+    wrapper.append(heading, amountRow, date);
+    return wrapper;
+}
+
+function createFinancialStabilityIndexPanel(financeApplication) {
+    const result = financeApplication.getFinancialStabilityIndex();
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "financial-stability-index-panel";
+
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "financial-stability-index-eyebrow";
+    eyebrow.textContent = "FSI 2.1";
+
+    const scoreRow = document.createElement("div");
+    scoreRow.className = "financial-stability-index-score-row";
+
+    const value = document.createElement("span");
+    value.className = "financial-stability-index-value";
+    value.textContent = result.value + "/100";
+
+    const category = document.createElement("span");
+    category.className = "financial-stability-index-category";
+    category.textContent = result.category?.label || "—";
+
+    scoreRow.append(value, category);
+
+    const description = document.createElement("p");
+    description.className = "financial-stability-index-description";
+    description.textContent = "Сводная оценка финансовой устойчивости с учётом ликвидности, дохода, долга, резерва и финансового тренда.";
+
+    const components = document.createElement("div");
+    components.className = "financial-stability-index-components";
+
+    [
+        ["Финансовая сила", result.components.financialStrength, "/100"],
+        ["Стабильность", result.components.stabilityFactor, "/1"],
+        ["Финансовая выживаемость", result.diagnostics.survivalMonths, " мес."],
+        ["Покрытие расходов", result.diagnostics.incomeCoverage, "×"],
+        ["Долговая нагрузка", result.diagnostics.debtBurdenRatio, "×"],
+        ["Долговая экспозиция", result.diagnostics.debtExposureRatio, "×"]
+    ].forEach(([name, componentValue, suffix]) => {
+        const item = document.createElement("div");
+        item.className = "financial-stability-index-component";
+
+        const itemName = document.createElement("span");
+        itemName.textContent = name;
+
+        const itemValue = document.createElement("span");
+        itemValue.textContent = componentValue === null || componentValue === undefined
+            ? "—"
+            : (typeof componentValue === "number"
+                ? componentValue.toFixed(1)
+                : componentValue) + suffix;
+
+        item.append(itemName, itemValue);
+        components.appendChild(item);
+    });
+
+    wrapper.append(eyebrow, scoreRow, description, components);
+    return wrapper;
 }
 
 function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
