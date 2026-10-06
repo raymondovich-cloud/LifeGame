@@ -456,3 +456,19 @@
     color:var(--color-gray);
     font-size:var(--font-size-sm);
 }
+
+
+/* Assets summary spacing: align the state/analytics row with the asset name/amount spacing unit. */
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary{
+    gap:var(--assets-block-spacing);
+    margin-bottom:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-heading{
+    gap:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-total-row{
+    padding-top:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-date{
+    margin-top:var(--assets-block-spacing);
+}
