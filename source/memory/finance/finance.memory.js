@@ -18,7 +18,9 @@ function createFinanceMemory(userContext) {
     const collections = new Map(
         COLLECTIONS.map((collection) => [collection, []])
     );
-    const snapshots = new Map(\n        COLLECTIONS.map((collection) => [collection, []])\n    );
+    const snapshots = new Map(
+        COLLECTIONS.map((collection) => [collection, []])
+    );
 
     function cloneEntry(entry) {
         return { ...entry };
@@ -311,7 +313,12 @@ function createFinanceMemory(userContext) {
         saveAsset: (entry) => saveEntry("assets", entry),
         updateAsset: (id, entry) => updateEntry("assets", id, entry),
         deleteAsset: (id) => deleteEntry("assets", id),
-        mutateAsset,\n        mutateFinanceCollection,\n        getCollectionSnapshotAtOrBefore,\n        getCollectionSnapshotsBetween,\n        getFirstCollectionSnapshot,\n        getLatestCollectionSnapshot,
+        mutateAsset,
+        mutateFinanceCollection,
+        getCollectionSnapshotAtOrBefore,
+        getCollectionSnapshotsBetween,
+        getFirstCollectionSnapshot,
+        getLatestCollectionSnapshot,
 
         listActualEarnings: () => listEntries("actual-earnings"),
         saveActualEarning: (entry) => saveEntry("actual-earnings", entry),
