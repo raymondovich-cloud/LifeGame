@@ -1,4 +1,4 @@
-// version 2.4
+// version 2.5
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -91,14 +91,174 @@ function adminSectionKeyboard() {
   return [[{text: "⬅️ Назад в меню", callback_data: "admin:menu"}]];
 }
 
+function usersMenuKeyboard() {
+  return [
+    [{text: "📊 Сводка", callback_data: "users:summary"}],
+    [{text: "🕘 Последние регистрации", callback_data: "users:recent:0"}],
+    [{text: "🔎 Поиск пользователя", callback_data: "users:search"}],
+    [{text: "⬅️ Назад в меню", callback_data: "admin:menu"}],
+  ];
+}
+
+function recentUsersKeyboard(offset: number, hasNext: boolean) {
+  const rows: Array<Array<{text: string; callback_data: string}>> = [];
+  if (offset > 0) rows.push([{text: "⬅️ Назад", callback_data: "users:recent:" + Math.max(0, offset - 5)}]);
+  if (hasNext) rows.push([{text: "Дальше ➡️", callback_data: "users:recent:" + (offset + 5)}]);
+  rows.push([{text: "👥 Меню пользователей", callback_data: "admin:users"}]);
+  return rows;
+}
+
+function userDetailKeyboard(userId: string) {
+  return [[
+    {text: "⬅️ К пользователям", callback_data: "admin:users"},
+  ], [
+    {text: "🔎 Найти другого", callback_data: "users:search"},
+  ]];
+}
+
+async function getUserSummary() {
+  const admin = getAdminClient();
+  if (!admin) return null;
+  const now = Date.now();
+  const periods = [
+    ["24h", 24 * 60 * 60 * 1000],
+    ["7d", 7 * 24 * 60 * 60 * 1000],
+    ["30d", 30 * 24 * 60 * 60 * 1000],
+  ] as const;
+  const total = await admin.from("profiles").select("id", {count: "exact", head: true});
+  const counts = await Promise.all(periods.map(async ([, ms]) => {
+    const result = await admin.from("profiles").select("id", {count: "exact", head: true})
+      .gte("created_at", new Date(now - ms).toISOString());
+    return result.error ? null : result.count;
+  }));
+  return {
+    total: total.error ? null : total.count,
+    last24h: counts[0],
+    last7d: counts[1],
+    last30d: counts[2],
+  };
+}
+
+async function getRecentUsers(offset: number) {
+  const admin = getAdminClient();
+  if (!admin) return null;
+  const {data, error} = await admin.from("profiles")
+    .select("id, display_name, created_at")
+    .order("created_at", {ascending: false})
+    .range(offset, offset + 5);
+  if (error) return null;
+  return {users: data ?? [], hasNext: (data ?? []).length === 6};
+}
+
+async function findUsers(query: string) {
+  const admin = getAdminClient();
+  if (!admin) return [];
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+    const {data} = await admin.from("profiles").select("id, display_name, created_at").eq("id", trimmed).limit(1);
+    return data ?? [];
+  }
+  const {data} = await admin.from("profiles")
+    .select("id, display_name, created_at")
+    .ilike("display_name", "%" + trimmed.replace(/[%_]/g, "") + "%")
+    .order("created_at", {ascending: false})
+    .limit(5);
+  return data ?? [];
+}
+
+function formatUserLine(user: Record<string, unknown>, index?: number) {
+  const prefix = typeof index === "number" ? (index + 1) + ". " : "";
+  const name = typeof user.display_name === "string" && user.display_name.trim()
+    ? user.display_name.trim()
+    : "Без имени";
+  const created = typeof user.created_at === "string" ? formatMoscow(user.created_at) : "неизвестно";
+  return prefix + name + "\\n" + "ID: " + String(user.id) + "\\n" + "Регистрация: " + created;
+}
+
+async function renderUsersSummary(chatId: string) {
+  const summary = await getUserSummary();
+  if (!summary) {
+    await reply(chatId, "👥 Пользователи\\n\\n🔴 Database недоступна.", false, usersMenuKeyboard());
+    return;
+  }
+  await reply(chatId,
+    "👥 Пользователи\\n\\n" +
+    "Всего: " + (summary.total ?? "н/д") + "\\n" +
+    "За 24 часа: +" + (summary.last24h ?? "н/д") + "\\n" +
+    "За 7 дней: +" + (summary.last7d ?? "н/д") + "\\n" +
+    "За 30 дней: +" + (summary.last30d ?? "н/д"),
+    false,
+    usersMenuKeyboard()
+  );
+}
+
+async function renderRecentUsers(chatId: string, offset: number) {
+  const result = await getRecentUsers(offset);
+  if (!result) {
+    await reply(chatId, "👥 Пользователи\\n\\n🔴 Database недоступна.", false, usersMenuKeyboard());
+    return;
+  }
+  if (!result.users.length) {
+    await reply(chatId, "🕘 Последние регистрации\\n\\nБольше регистраций нет.", false, recentUsersKeyboard(offset, false));
+    return;
+  }
+  const text = result.users.map((user, index) => formatUserLine(user as Record<string, unknown>, index)).join("\\n\\n");
+  const userButtons = result.users.map((user) => [{
+    text: "👤 " + (user.display_name?.trim() || "Без имени"),
+    callback_data: "user:view:" + String(user.id),
+  }]);
+  const navigation = recentUsersKeyboard(offset, result.hasNext);
+  await reply(chatId, "🕘 Последние регистрации\\n\\n" + text, false, [...userButtons, ...navigation]);
+}
+
+async function renderUserDetails(chatId: string, userId: string) {
+  const admin = getAdminClient();
+  if (!admin) {
+    await reply(chatId, "👤 Пользователь\\n\\n🔴 Database недоступна.", false, userDetailKeyboard(userId));
+    return;
+  }
+  const {data: profile, error} = await admin.from("profiles")
+    .select("id, display_name, birth_date, created_at, updated_at")
+    .eq("id", userId).maybeSingle();
+  if (error || !profile) {
+    await reply(chatId, "👤 Пользователь\\n\\nПользователь не найден.", false, userDetailKeyboard(userId));
+    return;
+  }
+
+  let authStatus = "неизвестен";
+  try {
+    const authResult = await admin.auth.admin.getUserById(userId);
+    const authUser = authResult.data.user;
+    if (authUser) {
+      authStatus = authUser.banned_until && new Date(authUser.banned_until).getTime() > Date.now()
+        ? "заблокирован"
+        : "активен";
+    }
+  } catch {}
+
+  const name = profile.display_name?.trim() || "Без имени";
+  await reply(chatId,
+    "👤 Пользователь\\n\\n" +
+    "Имя: " + name + "\\n" +
+    "ID: " + profile.id + "\\n" +
+    "Статус: " + authStatus + "\\n" +
+    "Регистрация: " + formatMoscow(profile.created_at) + "\\n" +
+    "Изменён: " + formatMoscow(profile.updated_at) + "\\n" +
+    "Дата рождения: " + (profile.birth_date ?? "не указана"),
+    false,
+    userDetailKeyboard(userId)
+  );
+}
+
 function adminSectionText(section: string) {
   const sections: Record<string, string> = {
-    users: "👥 Пользователи\\n\\nРаздел подготовлен для мониторинга пользователей, регистраций и поиска аккаунтов.",
+    users: "👥 Пользователи\\n\\nВыберите действие:",
     security: "🔐 Безопасность\\n\\nРаздел подготовлен для событий безопасности, неудачных попыток авторизации и подозрительной активности.",
     analytics: "📊 Аналитика\\n\\nРаздел подготовлен для DAU, WAU, MAU, регистраций, retention и динамики продукта.",
     system: "🖥 Система\\n\\nРаздел подготовлен для состояния Database, Edge Functions, Telegram API, latency и ошибок.",
     notifications: "🔔 Уведомления\\n\\nРаздел подготовлен для критических событий, порогов и настроек уведомлений.",
-    about: "ℹ️ О боте\\n\\nLifeGame Admin Bot\\nВерсия: 2.4\\n\\nАдминистративный интерфейс LifeGame.",
+    about: "ℹ️ О боте\\n\\nLifeGame Admin Bot\\nВерсия: 2.5\\n\\nАдминистративный интерфейс LifeGame.",
   };
   return sections[section] ?? "Раздел не найден.";
 }
@@ -128,6 +288,39 @@ async function handleCallbackQuery(update: Record<string, unknown>, request: Req
 
   if (callbackData === "admin:menu") {
     await reply(chatId, "⚙️ Меню администрирования\\n\\nВыберите раздел:", false, adminMenuKeyboard());
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData === "admin:users") {
+    await reply(chatId, adminSectionText("users"), false, usersMenuKeyboard());
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData === "users:summary") {
+    await renderUsersSummary(String(chatId));
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData.startsWith("users:recent:")) {
+    const offset = Math.max(0, Number(callbackData.split(":")[2]) || 0);
+    await renderRecentUsers(String(chatId), offset);
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData === "users:search") {
+    await reply(chatId,
+      "🔎 Поиск пользователя\\n\\n" +
+      "Используй команду:\\n" +
+      "/user <имя или UUID>",
+      false,
+      usersMenuKeyboard()
+    );
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData.startsWith("user:view:")) {
+    const userId = callbackData.slice("user:view:".length);
+    await renderUserDetails(String(chatId), userId);
     return new Response("ok", {status: 200});
   }
 
@@ -203,6 +396,26 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
       "• security events",
       true
     );
+    return new Response("ok", {status: 200});
+  }
+
+  if (text.startsWith("/user")) {
+    const query = text.slice("/user".length).trim();
+    if (!query) {
+      await reply(chatId, "🔎 Поиск пользователя\\n\\nУкажи имя или UUID.\\nПример: /user Bogdan", false, usersMenuKeyboard());
+      return new Response("ok", {status: 200});
+    }
+    const users = await findUsers(query);
+    if (!users.length) {
+      await reply(chatId, "🔎 Поиск пользователя\\n\\nНичего не найдено.", false, usersMenuKeyboard());
+      return new Response("ok", {status: 200});
+    }
+    const keyboard = users.map((user) => [{
+      text: (user.display_name?.trim() || "Без имени") + " · " + String(user.id).slice(0, 8),
+      callback_data: "user:view:" + String(user.id),
+    }]);
+    keyboard.push([{text: "👥 Меню пользователей", callback_data: "admin:users"}]);
+    await reply(chatId, "🔎 Результаты поиска\\n\\nНайдено: " + users.length + "\\n\\nВыберите пользователя:", false, keyboard);
     return new Response("ok", {status: 200});
   }
 
