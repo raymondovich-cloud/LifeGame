@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.11
+// source/presentation/finance/finance.js — Version 4.12
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -875,10 +875,6 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     const intro = document.createElement("header");
     intro.className = "finance-workspace-header";
 
-    const eyebrow = document.createElement("span");
-    eyebrow.className = "finance-section-meta";
-    eyebrow.textContent = "DATA";
-
     const title = document.createElement("h2");
     title.textContent = "Финансовые данные";
 
@@ -895,8 +891,13 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
         renderFinance(root, onWriteAttempt, financeApplication);
     });
 
-    intro.append(eyebrow, title, description, back);
-    page.appendChild(intro);
+    intro.append(title, description);
+
+    const backNavigation = document.createElement("div");
+    backNavigation.className = "finance-data-back";
+    backNavigation.appendChild(back);
+
+    page.append(backNavigation, intro);
 
     if (!financeApplication) {
         root.appendChild(page);
