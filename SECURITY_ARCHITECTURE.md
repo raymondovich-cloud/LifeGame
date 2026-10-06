@@ -1,6 +1,6 @@
 # LifeGame 3.0 — Security Architecture
 
-Version: 1.0
+Version: 1.1
 Status: APPROVED
 Date: 2026-10-01
 
@@ -32,7 +32,7 @@ Security decisions in this document take precedence over convenience and local i
 
 ## 3. Architectural Position
 
-LifeGame uses six architectural layers plus an independent Design System:
+LifeGame uses the architectural layers and independent Design System defined by `docs/agent.md`:
 
 - source/core
 - source/domain
@@ -40,6 +40,7 @@ LifeGame uses six architectural layers plus an independent Design System:
 - source/presentation
 - source/infrastructure
 - source/memory
+- source/index — calculated-indicator subsystem
 - source/design — independent visual system
 
 Identity follows the same Clean Architecture / DDD boundaries.
@@ -70,11 +71,11 @@ User
  ├── Devices
  └── Security Events
 
-The initial implementation may support email/password while keeping the model extensible for Passkeys, MFA and other authenticators.
+The current implementation supports email/password and is designed to remain extensible for Passkeys, MFA and other authenticators.
 
 ## 5. Authentication Provider
 
-The first production implementation is planned around:
+The current implementation uses:
 
 - Supabase Auth
 - PostgreSQL
@@ -126,9 +127,7 @@ password hash
 
 The original password cannot be recovered from the stored hash.
 
-Password reset uses a short-lived, single-use recovery mechanism.
-
-After a successful password reset, existing sessions should be invalidated or rotated according to the provider's supported security model.
+Password recovery and post-reset session invalidation are PLANNED and require verification against the provider flow before being treated as implemented.
 
 ## 8. Authentication
 
@@ -262,7 +261,7 @@ Security data must never contain raw credentials or encryption keys.
 
 ## 13. Encryption Architecture
 
-LifeGame uses multiple security layers.
+The following is the approved target architecture; application-level encryption is not currently implemented.
 
 TLS
  ↓
@@ -283,6 +282,8 @@ Database/storage encryption at rest protects infrastructure-level storage.
 Application-level encryption protects sensitive user data even when the application requires stronger isolation from database exposure.
 
 ## 14. Envelope Encryption
+
+**Status: PLANNED.**
 
 The planned application-level encryption model is envelope encryption.
 
@@ -310,6 +311,8 @@ Keys must never be committed to Git.
 
 ## 15. Authenticated Encryption
 
+**Status: PLANNED.**
+
 Application-level encryption must provide confidentiality and integrity.
 
 The implementation should use an authenticated encryption construction such as AES-256-GCM or an approved equivalent.
@@ -328,6 +331,8 @@ Domain code must not perform cryptography directly.
 
 ## 16. Email Protection
 
+**Status: PLANNED / REQUIRES VERIFICATION.**
+
 Email is both identity information and a lookup key.
 
 If email is encrypted at application level, the architecture may use:
@@ -343,6 +348,8 @@ This permits account lookup without making plaintext email the primary storage r
 The exact mechanism must be implemented and reviewed separately before production use.
 
 ## 17. Key Management
+
+**Status: PLANNED.**
 
 Key hierarchy:
 
@@ -366,6 +373,8 @@ Rules:
 - Destruction of keys must be treated as a potentially destructive data operation.
 
 ## 18. No Password-Derived Global Encryption Key in V1
+
+**Status: BASELINE / PLANNED implementation constraint.**
 
 LifeGame 3.0 V1 will not make the user's password the sole recovery mechanism for all encrypted LifeGame data.
 
@@ -421,7 +430,9 @@ Audit data must not become a secondary source of sensitive personal information.
 
 ## 21. Brute Force and Abuse Protection
 
-Authentication endpoints must have rate limiting and abuse controls.
+**Status: PARTIAL / REQUIRES VERIFICATION.**
+
+The application maps provider rate-limit errors, but this does not prove a LifeGame-owned multi-dimensional rate-limiting implementation. Provider-level protection remains the authentication boundary unless separately verified.
 
 Protection should consider multiple dimensions, including account/identifier, source/IP, session/device signals where appropriate, and repeated failed attempts.
 
@@ -443,6 +454,8 @@ PENDING_EMAIL_VERIFICATION
 The exact lifecycle rules belong to Identity Domain and Application.
 
 ## 23. Recovery
+
+**Status: PLANNED / REQUIRES VERIFICATION.**
 
 Password recovery:
 
@@ -645,6 +658,8 @@ The following are explicitly prohibited:
 
 ## 34. Implementation Order
 
+The following phases describe the approved security roadmap; they are not a statement that every phase is currently implemented.
+
 ### Phase 1 — Contract
 
 - this document
@@ -754,18 +769,28 @@ It is complete only when:
 - frontend manipulation cannot bypass authorization
 - architecture remains provider-independent at Domain level
 
-## 37. Next Implementation Step
+## 37. Current Security State
 
-The next code step is not Finance modification.
+The current implementation includes:
 
-Create the Identity infrastructure boundary first:
+- Supabase Auth as the authentication provider;
+- Domain, Application, Presentation and Infrastructure Identity boundaries;
+- email/password registration and login;
+- email verification and resend flow;
+- current-session retrieval and logout;
+- PostgreSQL RLS for user-owned data;
+- private security events with restricted client access;
+- security boundary classification in Infrastructure.
 
-source/domain/identity/
-source/application/identity/
-source/presentation/auth/
-source/infrastructure/identity/
-source/infrastructure/security/
+The following remain PLANNED or require verification before production security can be considered complete:
 
-Then implement the authentication provider adapter and database/RLS foundation before building the registration and login UI.
+- application-level encryption;
+- envelope encryption and key management;
+- application-owned session/device management;
+- complete password recovery flow;
+- expanded security event coverage;
+- LifeGame-owned multi-dimensional rate limiting;
+- MFA and Passkeys;
+- advanced audit and suspicious-activity handling.
 
-This document is the security contract against which those changes must be reviewed.
+This document is the security architecture contract. Current implementation status is maintained in `docs/project-state.md` and must be verified against code and tests.
