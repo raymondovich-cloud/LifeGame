@@ -1,4 +1,4 @@
-/* list.css — Version 3.2 */
+/* list.css — Version 3.3 */
 
 .list-empty {
     display:grid;
@@ -144,6 +144,7 @@
     border-radius:var(--radius-control);
     background:var(--gradient-surface);
     box-shadow:none;
+    padding:var(--space-3) var(--space-3);
 }
 
 .finance-data-screen .finance-entry-list .swipe-delete-content::after {
