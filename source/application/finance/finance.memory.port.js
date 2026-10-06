@@ -1,4 +1,4 @@
-// finance.memory.port.js — Version 2.1
+// finance.memory.port.js — Version 2.2
 
 const REQUIRED_METHODS = Object.freeze([
     "listAssets",
@@ -26,7 +26,12 @@ const REQUIRED_METHODS = Object.freeze([
     "getAssetsSnapshotAtOrBefore",
     "getAssetsSnapshotsBetween",
     "getFirstAssetsSnapshot",
-    "getLatestAssetsSnapshot"
+    "getLatestAssetsSnapshot",
+    "mutateFinanceCollection",
+    "getCollectionSnapshotAtOrBefore",
+    "getCollectionSnapshotsBetween",
+    "getFirstCollectionSnapshot",
+    "getLatestCollectionSnapshot"
 ]);
 
 function createFinanceMemoryPort(implementation) {
