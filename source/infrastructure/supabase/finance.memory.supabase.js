@@ -18,7 +18,8 @@ function createSupabaseFinanceMemory({ client, userContext }) {
     const cache = Object.fromEntries(
         Object.keys(COLLECTIONS).map((key) => [key, []])
     );
-    const snapshots = [];\n    const financeSnapshots = new Map();
+    const snapshots = [];
+    const financeSnapshots = new Map();
 
     function normalizeRow(row) {
         if (!row) return row;
@@ -96,7 +97,8 @@ function createSupabaseFinanceMemory({ client, userContext }) {
     async function hydrate() {
         await Promise.all([
             ...Object.keys(COLLECTIONS).map(loadCollection),
-            loadSnapshots(),\n            loadFinanceSnapshots()
+            loadSnapshots(),
+            loadFinanceSnapshots()
         ]);
     }
 
