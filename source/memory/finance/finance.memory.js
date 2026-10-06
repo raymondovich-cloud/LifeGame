@@ -1,4 +1,4 @@
-// finance.memory.js — Version 2.1
+// finance.memory.js — Version 2.2
 
 const COLLECTIONS = Object.freeze([
     "assets",
@@ -18,7 +18,7 @@ function createFinanceMemory(userContext) {
     const collections = new Map(
         COLLECTIONS.map((collection) => [collection, []])
     );
-    const snapshots = [];
+    const snapshots = new Map(\n        COLLECTIONS.map((collection) => [collection, []])\n    );
 
     function cloneEntry(entry) {
         return { ...entry };
@@ -90,6 +90,100 @@ function createFinanceMemory(userContext) {
         return true;
     }
 
+    function getCollectionSnapshotList(collection) {
+        if (!snapshots.has(collection)) {
+            throw new Error("LifeGame Finance Memory: unknown snapshot collection.");
+        }
+        return snapshots.get(collection);
+    }
+
+    function calculateCollectionTotal(collection, entries) {
+        return entries.reduce((total, item) => {
+            if (collection === "financial-burden") {
+                return total + Number(item.debt || item.amount || 0);
+            }
+            return total + Number(item.amount || 0);
+        }, 0);
+    }
+
+    function saveCollectionSnapshot(collection, snapshot) {
+        if (!snapshot || !snapshot.occurredAt || !Array.isArray(snapshot.entries)) {
+            throw new Error("LifeGame Finance Memory: invalid Finance snapshot.");
+        }
+
+        getCollectionSnapshotList(collection).push({
+            occurredAt: snapshot.occurredAt,
+            total: Number(snapshot.total) || 0,
+            entries: cloneEntries(snapshot.entries)
+        });
+    }
+
+    function getCollectionSnapshotAtOrBefore(collection, timestamp) {
+        let result = null;
+        getCollectionSnapshotList(collection).forEach((snapshot) => {
+            if (snapshot.occurredAt <= timestamp && (!result || snapshot.occurredAt > result.occurredAt)) {
+                result = snapshot;
+            }
+        });
+        return result ? cloneSnapshot(result) : null;
+    }
+
+    function getCollectionSnapshotsBetween(collection, startTimestamp, endTimestamp) {
+        if (!Number.isFinite(startTimestamp) || !Number.isFinite(endTimestamp) || startTimestamp > endTimestamp) {
+            throw new Error("LifeGame Finance Memory: invalid snapshot range.");
+        }
+        return getCollectionSnapshotList(collection)
+            .filter((snapshot) => snapshot.occurredAt >= startTimestamp && snapshot.occurredAt <= endTimestamp)
+            .sort((left, right) => left.occurredAt - right.occurredAt)
+            .map(cloneSnapshot);
+    }
+
+    function getFirstCollectionSnapshot(collection) {
+        const list = getCollectionSnapshotList(collection);
+        if (list.length === 0) return null;
+        return cloneSnapshot(list.reduce((first, snapshot) =>
+            !first || snapshot.occurredAt < first.occurredAt ? snapshot : first, null));
+    }
+
+    function getLatestCollectionSnapshot(collection) {
+        const list = getCollectionSnapshotList(collection);
+        if (list.length === 0) return null;
+        return cloneSnapshot(list.reduce((latest, snapshot) =>
+            !latest || snapshot.occurredAt > latest.occurredAt ? snapshot : latest, null));
+    }
+
+    function mutateFinanceCollection({ collection, operation, entry = null, entryId = null, occurredAt = Date.now() }) {
+        if (!COLLECTIONS.includes(collection) || collection === "assets") {
+            throw new Error("LifeGame Finance Memory: invalid Finance collection mutation.");
+        }
+        if (!["create", "update", "delete"].includes(operation)) {
+            throw new Error("LifeGame Finance Memory: invalid Finance mutation.");
+        }
+
+        let savedEntry = null;
+        if (operation === "create") {
+            savedEntry = saveEntry(collection, entry);
+        } else if (operation === "update") {
+            savedEntry = updateEntry(collection, entryId, entry);
+            if (!savedEntry) return false;
+        } else if (!deleteEntry(collection, entryId)) {
+            return false;
+        }
+
+        const currentEntries = listEntries(collection);
+        const snapshot = {
+            occurredAt,
+            total: calculateCollectionTotal(collection, currentEntries),
+            entries: currentEntries
+        };
+        saveCollectionSnapshot(collection, snapshot);
+
+        return {
+            entry: operation === "delete" ? null : savedEntry,
+            snapshot: cloneSnapshot(snapshot)
+        };
+    }
+
     function mutateAsset({ operation, entry = null, entryId = null, occurredAt = Date.now() }) {
         if (!["create", "update", "delete"].includes(operation)) {
             throw new Error("LifeGame Finance Memory: invalid Assets mutation.");
@@ -148,7 +242,7 @@ function createFinanceMemory(userContext) {
             throw new Error("LifeGame Finance Memory: invalid Assets snapshot.");
         }
 
-        snapshots.push({
+        getCollectionSnapshotList("assets").push({
             occurredAt: snapshot.occurredAt,
             total: Number(snapshot.total) || 0,
             entries: cloneEntries(snapshot.entries)
@@ -158,7 +252,7 @@ function createFinanceMemory(userContext) {
     function getAssetsSnapshotAtOrBefore(timestamp) {
         let result = null;
 
-        snapshots.forEach((snapshot) => {
+        getCollectionSnapshotList("assets").forEach((snapshot) => {
             if (snapshot.occurredAt <= timestamp) {
                 if (!result || snapshot.occurredAt > result.occurredAt) {
                     result = snapshot;
@@ -188,10 +282,10 @@ function createFinanceMemory(userContext) {
     }
 
     function getFirstAssetsSnapshot() {
-        if (snapshots.length === 0) return null;
+        if (getCollectionSnapshotList("assets").length === 0) return null;
 
         return cloneSnapshot(
-            snapshots.reduce((first, snapshot) =>
+            getCollectionSnapshotList("assets").reduce((first, snapshot) =>
                 !first || snapshot.occurredAt < first.occurredAt
                     ? snapshot
                     : first,
@@ -200,10 +294,10 @@ function createFinanceMemory(userContext) {
     }
 
     function getLatestAssetsSnapshot() {
-        if (snapshots.length === 0) return null;
+        if (getCollectionSnapshotList("assets").length === 0) return null;
 
         return cloneSnapshot(
-            snapshots.reduce((latest, snapshot) =>
+            getCollectionSnapshotList("assets").reduce((latest, snapshot) =>
                 !latest || snapshot.occurredAt > latest.occurredAt
                     ? snapshot
                     : latest,
@@ -217,7 +311,7 @@ function createFinanceMemory(userContext) {
         saveAsset: (entry) => saveEntry("assets", entry),
         updateAsset: (id, entry) => updateEntry("assets", id, entry),
         deleteAsset: (id) => deleteEntry("assets", id),
-        mutateAsset,
+        mutateAsset,\n        mutateFinanceCollection,\n        getCollectionSnapshotAtOrBefore,\n        getCollectionSnapshotsBetween,\n        getFirstCollectionSnapshot,\n        getLatestCollectionSnapshot,
 
         listActualEarnings: () => listEntries("actual-earnings"),
         saveActualEarning: (entry) => saveEntry("actual-earnings", entry),
