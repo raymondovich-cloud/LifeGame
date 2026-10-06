@@ -1,4 +1,4 @@
-// finance.js — Version 5.3
+// finance.js — Version 5.4
 
 import {
     createActualEarning,
@@ -144,7 +144,14 @@ async function addFinanceEntry(subblockId, label, amount, liquidity) {
         ? config.create(label, amount, liquidity)
         : config.create(label, amount);
 
-    return await getMemoryMethod(config, "save")(result.entry);
+    const mutation = await financeMemory.mutateFinanceCollection({
+        collection: subblockId,
+        operation: "create",
+        entry: result.entry,
+        occurredAt: result.event?.occurredAt || Date.now()
+    });
+
+    return mutation ? mutation.entry : false;
 }
 
 async function addFinancialBurdenEntry(label, debt, payment) {
@@ -197,7 +204,14 @@ async function updateFinanceEntry(
         return false;
     }
 
-    const savedEntry = await getMemoryMethod(config, "update")(entryId, result.entry);
+    const mutation = await financeMemory.mutateFinanceCollection({
+        collection: subblockId,
+        operation: "update",
+        entryId,
+        entry: result.entry,
+        occurredAt: result.event?.occurredAt || Date.now()
+    });
+    const savedEntry = mutation ? mutation.entry : false;
 
     trace("application", "finance.update.completed", {
         subblockId,
@@ -240,7 +254,13 @@ async function removeFinanceEntry(subblockId, entryId) {
         return false;
     }
 
-    const deleted = await getMemoryMethod(config, "remove")(entryId);
+    const mutation = await financeMemory.mutateFinanceCollection({
+        collection: subblockId,
+        operation: "delete",
+        entryId,
+        occurredAt: result.event?.occurredAt || Date.now()
+    });
+    const deleted = Boolean(mutation);
 
     trace("application", "finance.remove.completed", {
         subblockId,
@@ -296,7 +316,7 @@ function getFinancialStabilityIndex() {
         getAssetsSnapshotAtOrBefore: financeMemory.getAssetsSnapshotAtOrBefore.bind(financeMemory),
         getAssetsSnapshotsBetween: financeMemory.getAssetsSnapshotsBetween.bind(financeMemory),
         getFirstAssetsSnapshot: financeMemory.getFirstAssetsSnapshot.bind(financeMemory),
-        getLatestAssetsSnapshot: financeMemory.getLatestAssetsSnapshot.bind(financeMemory)
+        getLatestAssetsSnapshot: financeMemory.getLatestAssetsSnapshot.bind(financeMemory),\n        getCollectionSnapshotAtOrBefore: financeMemory.getCollectionSnapshotAtOrBefore.bind(financeMemory),\n        getCollectionSnapshotsBetween: financeMemory.getCollectionSnapshotsBetween.bind(financeMemory),\n        getFirstCollectionSnapshot: financeMemory.getFirstCollectionSnapshot.bind(financeMemory),\n        getLatestCollectionSnapshot: financeMemory.getLatestCollectionSnapshot.bind(financeMemory)
     });
 }
 
