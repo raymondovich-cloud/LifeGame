@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.19
+// source/presentation/finance/finance.js — Version 4.20
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -281,35 +281,51 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         ["financial-burden", "Нагрузка"],
         ["mandatory-expenses", "Траты"],
         ["financial-cushion", "Подушка"]
-    ];
-
-    chartMetrics.forEach(([id, label]) => {
-        const column = document.createElement("div");
-        column.className = "finance-capital-chart-column";
-
+    ].map(([id, label]) => {
         const change = analyticsSnapshot?.metrics?.[id]?.change;
         const value = change?.hasComparison && Number.isFinite(Number(change.percent))
             ? Number(change.percent)
             : null;
 
+        return { id, label, value };
+    });
+
+    const comparableValues = chartMetrics
+        .map((metric) => metric.value)
+        .filter((value) => value !== null)
+        .map((value) => Math.abs(value));
+    const maxChange = Math.max(...comparableValues, 1);
+
+    chartMetrics.forEach(({ id, label, value }) => {
+        const column = document.createElement("div");
+        column.className = "finance-capital-chart-column";
+
         const labelNode = document.createElement("span");
+        labelNode.className = "finance-capital-chart-label";
         labelNode.textContent = label;
+
+        const metric = document.createElement("strong");
+        metric.className = "finance-capital-chart-value";
+        metric.textContent = value === null
+            ? "—"
+            : formatPercentChange({
+                percent: value,
+                hasComparison: true
+            });
+
+        const barTrack = document.createElement("span");
+        barTrack.className = "finance-capital-chart-track";
+        barTrack.setAttribute("aria-hidden", "true");
 
         const bar = document.createElement("span");
         bar.className = "finance-capital-chart-bar";
-        const barHeight = value === null
-            ? 0
-            : Math.min(100, Math.max(8, Math.abs(value)));
-        bar.style.height = barHeight + "%";
-        bar.setAttribute("aria-hidden", "true");
+        if (value !== null) {
+            bar.classList.add(value >= 0 ? "is-positive" : "is-negative");
+            bar.style.height = Math.max(10, (Math.abs(value) / maxChange) * 100) + "%";
+        }
+        barTrack.appendChild(bar);
 
-        const metric = document.createElement("strong");
-        metric.textContent = value === null ? "—" : formatPercentChange({
-            percent: value,
-            hasComparison: true
-        });
-
-        column.append(labelNode, bar, metric);
+        column.append(labelNode, metric, barTrack);
         chartBars.appendChild(column);
     });
 
