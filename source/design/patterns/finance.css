@@ -1,4 +1,4 @@
-/* finance.css — Version 2.8 */
+/* finance.css — Version 2.9 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -403,39 +403,38 @@
 }
 
 
-/* Assets compact experiment: reduce internal spacing by 40%; row-to-row and button spacing remain unchanged. */
+/* Assets spacing: every internal spacing uses the same unit as the gap between «Название» and «Сумма». */
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"]{
+    --assets-block-spacing:var(--space-2);
+}
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-trigger{
-    gap:calc(var(--space-3) * .6);
-    padding:calc(var(--space-3) * .6) calc(var(--space-4) * .6);
+    gap:var(--assets-block-spacing);
+    padding:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-header > .info-tooltip{
-    margin-right:calc(var(--space-4) * .6);
+    margin-right:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-content.is-open{
-    padding-right:calc(var(--space-4) * .6);
-    padding-bottom:calc(var(--space-5) * .6);
-    padding-left:calc(var(--space-4) * .6);
+    padding-right:var(--assets-block-spacing);
+    padding-bottom:var(--assets-block-spacing);
+    padding-left:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary{
-    gap:calc(var(--space-2) * .6);
-    margin-bottom:calc(var(--space-5) * .6);
+    gap:var(--assets-block-spacing);
+    margin-bottom:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-heading{
-    gap:calc(var(--space-3) * .6);
+    gap:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-total-row{
-    padding-top:calc(var(--space-3) * .6);
+    padding-top:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-date{
-    margin-top:calc(var(--space-1) * .6);
+    margin-top:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list{
-    margin-bottom:calc(var(--space-4) * .6);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .swipe-delete-content{
-    padding-top:calc(var(--space-3) * .6);
-    padding-bottom:calc(var(--space-3) * .6);
+    margin-bottom:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form{
-    padding-top:calc(var(--space-3) * .6);
+    padding-top:var(--assets-block-spacing);
 }
