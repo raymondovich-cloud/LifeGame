@@ -1,4 +1,4 @@
-// version 2.3
+// version 2.4
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -42,7 +42,7 @@ async function telegram(method: string, body: Record<string, unknown>) {
   return typeof responseBody === "string" ? JSON.parse(responseBody) : responseBody;
 }
 
-async function reply(chatId: number | string, text: string, showKeyboard = false) {
+async function reply(chatId: number | string, text: string, showKeyboard = false, inlineKeyboard?: Array<Array<{text: string; callback_data: string}>>) {
   return telegram("sendMessage", {
     chat_id: chatId,
     text,
@@ -51,6 +51,11 @@ async function reply(chatId: number | string, text: string, showKeyboard = false
         keyboard: [[{text: "⚙️ Меню администрирования"}]],
         resize_keyboard: true,
         is_persistent: true,
+      },
+    } : {}),
+    ...(inlineKeyboard ? {
+      reply_markup: {
+        inline_keyboard: inlineKeyboard,
       },
     } : {}),
   });
@@ -71,6 +76,70 @@ const commandDescriptions = [
   ["/help", "показать список команд и их назначение"],
 ] as const;
 
+function adminMenuKeyboard() {
+  return [
+    [{text: "👥 Пользователи", callback_data: "admin:users"}],
+    [{text: "🔐 Безопасность", callback_data: "admin:security"}],
+    [{text: "📊 Аналитика", callback_data: "admin:analytics"}],
+    [{text: "🖥 Система", callback_data: "admin:system"}],
+    [{text: "🔔 Уведомления", callback_data: "admin:notifications"}],
+    [{text: "ℹ️ О боте", callback_data: "admin:about"}],
+  ];
+}
+
+function adminSectionKeyboard() {
+  return [[{text: "⬅️ Назад в меню", callback_data: "admin:menu"}]];
+}
+
+function adminSectionText(section: string) {
+  const sections: Record<string, string> = {
+    users: "👥 Пользователи\\n\\nРаздел подготовлен для мониторинга пользователей, регистраций и поиска аккаунтов.",
+    security: "🔐 Безопасность\\n\\nРаздел подготовлен для событий безопасности, неудачных попыток авторизации и подозрительной активности.",
+    analytics: "📊 Аналитика\\n\\nРаздел подготовлен для DAU, WAU, MAU, регистраций, retention и динамики продукта.",
+    system: "🖥 Система\\n\\nРаздел подготовлен для состояния Database, Edge Functions, Telegram API, latency и ошибок.",
+    notifications: "🔔 Уведомления\\n\\nРаздел подготовлен для критических событий, порогов и настроек уведомлений.",
+    about: "ℹ️ О боте\\n\\nLifeGame Admin Bot\\nВерсия: 2.4\\n\\nАдминистративный интерфейс LifeGame.",
+  };
+  return sections[section] ?? "Раздел не найден.";
+}
+
+async function handleCallbackQuery(update: Record<string, unknown>, request: Request) {
+  const headerSecret = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
+  if (!telegramWebhookSecret || headerSecret !== telegramWebhookSecret) {
+    return new Response("Unauthorized", {status: 401});
+  }
+
+  const callbackQuery = update.callback_query as Record<string, unknown> | undefined;
+  const callbackData = typeof callbackQuery?.data === "string" ? callbackQuery.data : "";
+  const callbackId = typeof callbackQuery?.id === "string" ? callbackQuery.id : "";
+  const callbackMessage = callbackQuery?.message as Record<string, unknown> | undefined;
+  const callbackChat = callbackMessage?.chat as Record<string, unknown> | undefined;
+  const chatId = callbackChat?.id;
+  const callbackFrom = callbackQuery?.from as Record<string, unknown> | undefined;
+  const callbackUserId = callbackFrom?.id;
+
+  if (callbackId) {
+    await telegram("answerCallbackQuery", {callback_query_id: callbackId});
+  }
+
+  if (!chatId || String(chatId) !== telegramAdminChatId || String(callbackUserId ?? "") !== telegramAdminChatId) {
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData === "admin:menu") {
+    await reply(chatId, "⚙️ Меню администрирования\\n\\nВыберите раздел:", false, adminMenuKeyboard());
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData.startsWith("admin:")) {
+    const section = callbackData.slice("admin:".length);
+    await reply(chatId, adminSectionText(section), false, adminSectionKeyboard());
+    return new Response("ok", {status: 200});
+  }
+
+  return new Response("ok", {status: 200});
+}
+
 function formatCommandList() {
   return commandDescriptions.map(([command, description]) => command + " — " + description).join("\n");
 }
@@ -80,6 +149,8 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
   if (!telegramWebhookSecret || headerSecret !== telegramWebhookSecret) {
     return new Response("Unauthorized", {status: 401});
   }
+
+  if (update.callback_query) return await handleCallbackQuery(update, request);
 
   const message = update.message as Record<string, unknown> | undefined;
   const chat = message?.chat as Record<string, unknown> | undefined;
@@ -110,7 +181,18 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
     return new Response("ok", {status: 200});
   }
 
-  if (text === "⚙️ Меню администрирования" || text === "/help") {
+  if (text === "⚙️ Меню администрирования") {
+    await reply(chatId,
+      "🎮 LifeGame Admin\n\n" +
+      "⚙️ Меню администрирования\n\n" +
+      "Выберите раздел:",
+      false,
+      adminMenuKeyboard()
+    );
+    return new Response("ok", {status: 200});
+  }
+
+  if (text === "/help") {
     await reply(chatId,
       "🎮 LifeGame Admin\n\n" +
       "Меню администрирования:\n" +
@@ -118,7 +200,8 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
       "\n\n" +
       "Автоматически:\n" +
       "• новые регистрации\n" +
-      "• security events"
+      "• security events",
+      true
     );
     return new Response("ok", {status: 200});
   }
@@ -276,7 +359,7 @@ async function handleSetup(request: Request) {
   await telegram("setWebhook", {
     url: webhookUrl,
     secret_token: telegramWebhookSecret,
-    allowed_updates: ["message"],
+    allowed_updates: ["message", "callback_query"],
   });
 
   if (telegramAdminChatId) {
