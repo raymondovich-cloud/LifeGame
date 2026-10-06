@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.25
+// source/presentation/finance/finance.js — Version 4.26
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -931,7 +931,7 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     const description = document.createElement("p");
     description.textContent = activeSectionId
         ? "Управление выбранной системой."
-        : "Управление капиталом, доходами, обязательствами и резервом.";
+        : "Фиксируйте капитал, доходы, обязательства и резерв. На их основе система показывает финансовую устойчивость, её динамику и точки для улучшения.";
 
     const back = document.createElement("button");
     back.type = "button";
