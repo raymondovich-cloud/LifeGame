@@ -1,4 +1,4 @@
-// version 1.9
+// version 2.0
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -93,7 +93,7 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
   if (text === "/help") {
     await reply(chatId,
       "🎮 LifeGame Admin\n\n" +
-      "/status — health check основных сервисов\n" +
+      "/status — мониторинг основных сервисов и безопасности\n" +
       "/help — список команд\n\n" +
       "Автоматически:\n" +
       "• новые регистрации\n" +
@@ -105,36 +105,66 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
   if (text === "/status") {
     const admin = getAdminClient();
     let databaseStatus = "🔴 недоступна";
+    let databaseLatency = "н/д";
     let totalUsers = "н/д";
+    let newUsers24h = "н/д";
     let securityEvents24h = "н/д";
+    let authenticationFailures24h = "н/д";
+    let securityNamespaceEvents24h = "н/д";
 
     if (admin) {
+      const databaseStartedAt = Date.now();
       const profileResult = await admin.from("profiles").select("id", {count: "exact", head: true});
+      databaseLatency = String(Date.now() - databaseStartedAt) + " ms";
+
       if (!profileResult.error) {
         databaseStatus = "🟢 доступна";
         if (typeof profileResult.count === "number") totalUsers = String(profileResult.count);
       }
 
-      const securityResult = await admin.rpc("lifegame_security_events_24h");
+      const newUsersResult = await admin
+        .from("profiles")
+        .select("id", {count: "exact", head: true})
+        .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
-      if (!securityResult.error && typeof securityResult.data === "number") {
-        securityEvents24h = String(securityResult.data);
+      if (!newUsersResult.error && typeof newUsersResult.count === "number") {
+        newUsers24h = String(newUsersResult.count);
+      }
+
+      const securityResult = await admin.rpc("lifegame_admin_monitoring_24h");
+      if (!securityResult.error && securityResult.data && typeof securityResult.data === "object") {
+        const monitoring = securityResult.data as Record<string, unknown>;
+        if (typeof monitoring.total_24h === "number") securityEvents24h = String(monitoring.total_24h);
+        if (typeof monitoring.authentication_failed_24h === "number") {
+          authenticationFailures24h = String(monitoring.authentication_failed_24h);
+        }
+        if (typeof monitoring.security_namespace_24h === "number") {
+          securityNamespaceEvents24h = String(monitoring.security_namespace_24h);
+        }
       }
     }
 
     let telegramStatus = "🔴 недоступен";
+    let telegramLatency = "н/д";
     try {
+      const telegramStartedAt = Date.now();
       const me = await telegram("getMe", {});
+      telegramLatency = String(Date.now() - telegramStartedAt) + " ms";
       const ok = Boolean(me && typeof me === "object" && "ok" in me && (me as Record<string, unknown>).ok);
       if (ok) telegramStatus = "🟢 доступен";
     } catch {}
 
     await reply(chatId,
       "⚙️ LifeGame System Status\n\n" +
-      "Database: " + databaseStatus + "\n" +
-      "Telegram API: " + telegramStatus + "\n" +
-      "Users: " + totalUsers + "\n" +
-      "Security events / 24h: " + securityEvents24h + "\n\n" +
+      "Database: " + databaseStatus + " · " + databaseLatency + "\n" +
+      "Telegram API: " + telegramStatus + " · " + telegramLatency + "\n\n" +
+      "👥 Users\n" +
+      "Total: " + totalUsers + "\n" +
+      "New / 24h: +" + newUsers24h + "\n\n" +
+      "🔐 Security / 24h\n" +
+      "Events: " + securityEvents24h + "\n" +
+      "Auth failures: " + authenticationFailures24h + "\n" +
+      "Security namespace: " + securityNamespaceEvents24h + "\n\n" +
       "Проверено: " + formatMoscow(new Date().toISOString())
     );
     return new Response("ok", {status: 200});
