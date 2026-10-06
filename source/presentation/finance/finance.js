@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.15
+// source/presentation/finance/finance.js — Version 4.16
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -264,32 +264,9 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
     caption.className = "finance-capital-caption";
     caption.textContent = "Общая стоимость активов";
 
-    const trends = document.createElement("div");
-    trends.className = "finance-capital-trends";
-
-    [
-        ["assets", "Активы"],
-        ["actual-earnings", "Фактически заработано"],
-        ["financial-burden", "Финансовая нагрузка"],
-        ["mandatory-expenses", "Обязательные траты"],
-        ["financial-cushion", "Финансовая подушка"]
-    ].forEach(([id, label]) => {
-        const item = document.createElement("div");
-        item.className = "finance-capital-trend";
-
-        const name = document.createElement("span");
-        name.textContent = label;
-
-        const metric = document.createElement("strong");
-        metric.textContent = formatPercentChange(analyticsSnapshot?.metrics?.[id]?.change);
-
-        item.append(name, metric);
-        trends.appendChild(item);
-    });
-
     const chart = document.createElement("div");
     chart.className = "finance-capital-chart";
-    chart.setAttribute("aria-label", "Динамика пяти финансовых показателей за месяц");
+    chart.setAttribute("aria-label", "Динамика четырех финансовых показателей за месяц");
 
     const chartTitle = document.createElement("span");
     chartTitle.className = "finance-capital-chart-title";
@@ -302,32 +279,20 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         ["assets", "Активы"],
         ["actual-earnings", "Заработано"],
         ["financial-burden", "Нагрузка"],
-        ["mandatory-expenses", "Траты"],
-        ["financial-cushion", "Подушка"]
+        ["mandatory-expenses", "Траты"]
     ];
 
-    const changes = chartMetrics.map(([id]) => {
-        const change = analyticsSnapshot?.metrics?.[id]?.change;
-        return change?.hasComparison && Number.isFinite(Number(change.percent))
-            ? Number(change.percent)
-            : null;
-    });
-    const finiteChanges = changes.filter((value) => value !== null);
-    const maxAbsChange = Math.max(1, ...finiteChanges.map((value) => Math.abs(value)));
-
-    chartMetrics.forEach(([id, label], index) => {
+    chartMetrics.forEach(([id, label]) => {
         const column = document.createElement("div");
         column.className = "finance-capital-chart-column";
 
-        const value = changes[index];
-        const bar = document.createElement("span");
-        bar.className = "finance-capital-chart-bar";
-        bar.style.height = value === null
-            ? "0%"
-            : Math.max(4, (Math.abs(value) / maxAbsChange) * 100) + "%";
-        if (value !== null && value < 0) {
-            bar.classList.add("is-negative");
-        }
+        const change = analyticsSnapshot?.metrics?.[id]?.change;
+        const value = change?.hasComparison && Number.isFinite(Number(change.percent))
+            ? Number(change.percent)
+            : null;
+
+        const labelNode = document.createElement("span");
+        labelNode.textContent = label;
 
         const metric = document.createElement("strong");
         metric.textContent = value === null ? "—" : formatPercentChange({
@@ -335,15 +300,12 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
             hasComparison: true
         });
 
-        const labelNode = document.createElement("span");
-        labelNode.textContent = label;
-
-        column.append(bar, metric, labelNode);
+        column.append(labelNode, metric);
         chartBars.appendChild(column);
     });
 
     chart.append(chartTitle, chartBars);
-    section.append(header, amount, caption, trends, chart);
+    section.append(header, amount, caption, chart);
     return section;
 }
 
