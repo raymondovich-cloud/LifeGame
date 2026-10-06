@@ -321,7 +321,11 @@ function getFinancialStabilityIndex() {
         getAssetsSnapshotAtOrBefore: financeMemory.getAssetsSnapshotAtOrBefore.bind(financeMemory),
         getAssetsSnapshotsBetween: financeMemory.getAssetsSnapshotsBetween.bind(financeMemory),
         getFirstAssetsSnapshot: financeMemory.getFirstAssetsSnapshot.bind(financeMemory),
-        getLatestAssetsSnapshot: financeMemory.getLatestAssetsSnapshot.bind(financeMemory),\n        getCollectionSnapshotAtOrBefore: financeMemory.getCollectionSnapshotAtOrBefore.bind(financeMemory),\n        getCollectionSnapshotsBetween: financeMemory.getCollectionSnapshotsBetween.bind(financeMemory),\n        getFirstCollectionSnapshot: financeMemory.getFirstCollectionSnapshot.bind(financeMemory),\n        getLatestCollectionSnapshot: financeMemory.getLatestCollectionSnapshot.bind(financeMemory)
+        getLatestAssetsSnapshot: financeMemory.getLatestAssetsSnapshot.bind(financeMemory),
+        getCollectionSnapshotAtOrBefore: financeMemory.getCollectionSnapshotAtOrBefore.bind(financeMemory),
+        getCollectionSnapshotsBetween: financeMemory.getCollectionSnapshotsBetween.bind(financeMemory),
+        getFirstCollectionSnapshot: financeMemory.getFirstCollectionSnapshot.bind(financeMemory),
+        getLatestCollectionSnapshot: financeMemory.getLatestCollectionSnapshot.bind(financeMemory)
     });
 }
 
