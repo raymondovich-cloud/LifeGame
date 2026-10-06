@@ -11,6 +11,15 @@ import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
 
+const FINANCE_DATA_SUBBLOCKS = Object.freeze([
+    { id: "assets", number: "01", title: "Активы", description: "Имущество и средства, которыми вы владеете", info: "Активы, которыми вы владеете: недвижимость, автомобиль, наличные, средства на картах, счета и другие активы, которые пользователь хочет учитывать в своей финансовой картине." },
+    { id: "actual-earnings", number: "02", title: "Фактически заработанно", description: "Реально полученный доход", info: "Доход, который вы фактически получили за выбранный период." },
+    { id: "financial-burden", number: "03", title: "Финансовая нагрузка", description: "Обязательства, влияющие на бюджет", info: "Обязательства и регулярные финансовые нагрузки, которые уменьшают доступные средства и влияют на устойчивость." },
+    { id: "mandatory-expenses", number: "04", title: "Обязательные траты", description: "Расходы, которые нельзя пропустить", info: "Расходы, которые необходимо оплачивать регулярно независимо от других трат." },
+    { id: "financial-cushion", number: "05", title: "Финансовая подушка", description: "Резерв на непредвиденные ситуации", info: "Резерв средств, предназначенный для покрытия непредвиденных расходов и периодов снижения дохода." },
+    { id: "financial-stability-index", number: "06", title: "Индекс финансовой стабильности", description: "Текущая оценка финансовой устойчивости", info: "Сводная оценка финансовой устойчивости, учитывающая силу финансового положения, стабильность, ликвидность, резерв, долговую нагрузку и финансовый тренд." }
+]);
+
 const FINANCE_SECTIONS = Object.freeze([
     {
         id: "assets",
@@ -720,6 +729,267 @@ function createStructure(financeApplication, snapshot, root, activeSectionId, on
     section.append(header, rows);
     return section;
 }
+function createFinancialStabilityIndexPanel(financeApplication) {
+    const result = financeApplication.getFinancialStabilityIndex();
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "financial-stability-index-panel";
+
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "financial-stability-index-eyebrow";
+    eyebrow.textContent = "FSI 2.1";
+
+    const scoreRow = document.createElement("div");
+    scoreRow.className = "financial-stability-index-score-row";
+
+    const value = document.createElement("span");
+    value.className = "financial-stability-index-value";
+    value.textContent = result.value + "/100";
+
+    const category = document.createElement("span");
+    category.className = "financial-stability-index-category";
+    category.textContent = result.category?.label || "—";
+
+    scoreRow.append(value, category);
+
+    const description = document.createElement("p");
+    description.className = "financial-stability-index-description";
+    description.textContent =
+        "Сводная оценка финансовой устойчивости с учётом ликвидности, дохода, долга, резерва и финансового тренда.";
+
+    const components = document.createElement("div");
+    components.className = "financial-stability-index-components";
+
+    [
+        ["Финансовая сила", result.components.financialStrength, "/100"],
+        ["Стабильность", result.components.stabilityFactor, "/1"],
+        ["Финансовая выживаемость", result.diagnostics.survivalMonths, " мес."],
+        ["Покрытие расходов", result.diagnostics.incomeCoverage, "×"],
+        ["Долговая нагрузка", result.diagnostics.debtBurdenRatio, "×"],
+        ["Долговая экспозиция", result.diagnostics.debtExposureRatio, "×"]
+    ].forEach(([name, componentValue, suffix]) => {
+        const item = document.createElement("div");
+        item.className = "financial-stability-index-component";
+
+        const itemName = document.createElement("span");
+        itemName.textContent = name;
+
+        const itemValue = document.createElement("span");
+        itemValue.textContent = componentValue === null || componentValue === undefined
+            ? "—"
+            : (typeof componentValue === "number"
+                ? componentValue.toFixed(1)
+                : componentValue) + suffix;
+
+        item.append(itemName, itemValue);
+        components.appendChild(item);
+    });
+
+    wrapper.append(eyebrow, scoreRow, description, components);
+    return wrapper;
+}
+
+
+function createAssetsSummary(root, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "assets-summary";
+
+    const statistics = assetsAnalytics
+        ? assetsAnalytics.getAssetsAnalytics(assetsAnalytics.getAssetsAnalyticsRange("month"))
+        : { current: null };
+
+    const heading = document.createElement("div");
+    heading.className = "assets-summary-heading";
+
+    const title = document.createElement("span");
+    title.className = "statistics-meta";
+    title.textContent = "СОСТОЯНИЕ";
+
+    const statisticsButton = document.createElement("button");
+    statisticsButton.type = "button";
+    statisticsButton.className = "assets-statistics-trigger";
+    statisticsButton.innerHTML =
+        '<span>Аналитика</span><span aria-hidden="true">›</span>';
+
+    statisticsButton.addEventListener("click", () => {
+        if (!assetsAnalytics) {
+            if (typeof onWriteAttempt === "function") onWriteAttempt(() => {});
+            return;
+        }
+
+        renderAssetsStatisticsScreen(
+            root,
+            () => renderFinance(root, "assets", onWriteAttempt, financeApplication),
+            assetsAnalytics
+        );
+    });
+
+    heading.append(title, statisticsButton);
+
+    const amountRow = document.createElement("div");
+    amountRow.className = "assets-total-row";
+
+    const amount = document.createElement("span");
+    amount.className = "assets-total-value";
+    const amountText = formatAmount(statistics.current?.total ?? 0) + " ₽";
+    amount.textContent = amountText;
+
+    const numericLength = amountText.replace(/\D/g, "").length;
+    const fontSize = Math.max(
+        1.45,
+        Math.min(2.6, 2.6 - Math.max(0, numericLength - 7) * 0.12)
+    );
+    amount.style.fontSize = fontSize + "rem";
+
+    amountRow.appendChild(amount);
+
+    const date = document.createElement("span");
+    date.className = "statistics-meta assets-summary-date";
+    date.textContent = formatSnapshotDate(statistics.current?.occurredAt);
+
+    wrapper.append(heading, amountRow, date);
+    return wrapper;
+}
+
+
+function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
+    const wrapper = document.createElement("article");
+    wrapper.className = "accordion-item finance-subblock" + (isOpen ? " is-open" : "");
+    wrapper.dataset.subblock = subblock.id;
+
+    const button = document.createElement("button");
+    button.className = "accordion-trigger";
+    button.type = "button";
+    button.setAttribute("aria-expanded", String(isOpen));
+    button.setAttribute("aria-controls", subblock.id + "-content");
+
+    button.innerHTML =
+        '<span class="accordion-index">' + subblock.number + "</span>" +
+        '<span class="accordion-title-group">' +
+            '<span class="accordion-title">' + subblock.title + "</span>" +
+            '<span class="accordion-description">' + subblock.description + "</span>" +
+        "</span>";
+
+    const header = document.createElement("div");
+    header.className = "accordion-header";
+
+    const infoTooltip = createInfoTooltip({
+        label: "Информация: " + subblock.title,
+        text: subblock.info
+    });
+
+    header.append(button, infoTooltip);
+
+    const content = document.createElement("div");
+    content.className = "accordion-content" + (isOpen ? " is-open" : "");
+    content.id = subblock.id + "-content";
+    content.hidden = false;
+
+    const entries = subblock.id === "financial-stability-index" || !financeApplication
+        ? []
+        : financeApplication.listFinanceEntries(subblock.id).sort((first, second) => {
+            const firstPinned = isEntryPinned(subblock.id, first.id);
+            const secondPinned = isEntryPinned(subblock.id, second.id);
+            return Number(secondPinned) - Number(firstPinned);
+        });
+
+    if (subblock.id === "financial-stability-index") {
+        if (financeApplication) {
+            content.appendChild(createFinancialStabilityIndexPanel(financeApplication));
+        }
+    }
+
+    if (subblock.id === "assets") {
+        content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication, assetsAnalytics));
+    }
+
+    if (subblock.id !== "financial-stability-index") {
+        if (entries.length === 0) {
+            const emptyState = document.createElement("div");
+            emptyState.className = "list-empty";
+            emptyState.innerHTML =
+                '<span class="list-empty-label">ДАННЫЕ</span>' +
+                "<p>Записей пока нет.</p>";
+            content.appendChild(emptyState);
+        } else {
+            const entryList = document.createElement("div");
+            entryList.className = "finance-entry-list";
+
+            entries.forEach((entry) => {
+                const row = createEntryRow(root, subblock, entry);
+                row.classList.toggle("is-pinned", isEntryPinned(subblock.id, entry.id));
+                entryList.appendChild(row);
+
+                if (subblock.id !== "financial-stability-index") {
+                    attachEntryEdit(
+                        row,
+                        subblock.id,
+                        entry,
+                        onWriteAttempt,
+                        financeApplication,
+                        (updated) => {
+                            const label = row.querySelector(".finance-entry-label");
+                            const amount = row.querySelector(".finance-entry-amount");
+
+                            if (label) label.textContent = updated.label;
+
+                            if (amount) {
+                                amount.textContent = subblock.id === "financial-burden"
+                                    ? "Долг " + formatAmount(updated.debt) +
+                                      " · Платёж " + formatAmount(updated.payment)
+                                    : formatAmount(updated.amount);
+                            }
+
+                            if (subblock.id === "assets") {
+                                const liquidity = row.querySelector(".finance-entry-liquidity");
+
+                                if (liquidity) {
+                                    liquidity.textContent =
+                                        updated.liquidity === "illiquid"
+                                            ? "Неликвидно"
+                                            : "Ликвидно";
+                                }
+
+                                refreshAssetsSummary(root, financeApplication);
+                            }
+                        },
+                        () => {
+                            toggleEntryPinned(subblock.id, entry.id);
+                            renderFinance(root, subblock.id, onWriteAttempt, financeApplication);
+                        },
+                        () => {
+                            deleteFinanceEntryItem(root, row, onWriteAttempt, financeApplication, assetsAnalytics);
+                        },
+                        () => {
+                            if (countPinnedEntries(subblock.id, financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                                showSubscriptionLimitNotice();
+                                return true;
+                            }
+
+                            return false;
+                        }
+                    );
+                }
+            });
+
+            content.appendChild(entryList);
+        }
+    }
+
+    if (subblock.id !== "financial-stability-index") {
+        content.appendChild(createAddForm(root, subblock, onWriteAttempt, financeApplication));
+    }
+    wrapper.append(header, content);
+
+    button.addEventListener("click", () => {
+        const nextOpen = button.getAttribute("aria-expanded") !== "true";
+        renderFinance(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
+    });
+
+    return wrapper;
+}
+
+
 function finalizeDeletedItem(root, item, financeApplication, assetsAnalytics, onWriteAttempt = null) {
     const entryList = item.closest(".finance-entry-list");
     item.remove();
@@ -934,6 +1204,73 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
         )
     );
 
+    root.appendChild(page);
+    attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
+}
+
+function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
+    if (!root) {
+        throw new Error("LifeGame Finance: presentation root was not found.");
+    }
+
+    root.replaceChildren();
+
+    const assetsAnalytics = financeApplication
+        ? createAssetsAnalytics({ financeApplication })
+        : null;
+
+    const page = document.createElement("section");
+    page.className = "finance-workspace finance-data-screen";
+    page.setAttribute("aria-label", "Finance data");
+
+    const intro = document.createElement("header");
+    intro.className = "finance-workspace-header";
+
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "finance-section-meta";
+    eyebrow.textContent = "DATA";
+
+    const title = document.createElement("h2");
+    title.textContent = "Финансовые данные";
+
+    const description = document.createElement("p");
+    description.textContent = activeSectionId
+        ? "Управление выбранной системой."
+        : "Управление капиталом, доходами, обязательствами и резервом.";
+
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "finance-text-action";
+    back.textContent = "← Finance";
+    back.addEventListener("click", () => {
+        renderFinance(root, onWriteAttempt, financeApplication);
+    });
+
+    intro.append(eyebrow, title, description, back);
+    page.appendChild(intro);
+
+    if (!financeApplication) {
+        root.appendChild(page);
+        return;
+    }
+
+    const list = document.createElement("div");
+    list.className = "accordion-list finance-data-accordion";
+
+    FINANCE_DATA_SUBBLOCKS.forEach((subblock) => {
+        list.appendChild(
+            createSubblock(
+                root,
+                subblock,
+                subblock.id === activeSectionId,
+                onWriteAttempt,
+                financeApplication,
+                assetsAnalytics
+            )
+        );
+    });
+
+    page.appendChild(list);
     root.appendChild(page);
     attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
 }
