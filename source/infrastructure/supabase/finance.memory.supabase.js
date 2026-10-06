@@ -1,4 +1,4 @@
-// finance.memory.supabase.js — Version 2.1
+// finance.memory.supabase.js — Version 2.2
 // Responsibility: implement the Finance Memory Port with Supabase persistence and a local runtime cache.
 
 const COLLECTIONS = Object.freeze({
@@ -18,7 +18,7 @@ function createSupabaseFinanceMemory({ client, userContext }) {
     const cache = Object.fromEntries(
         Object.keys(COLLECTIONS).map((key) => [key, []])
     );
-    const snapshots = [];
+    const snapshots = [];\n    const financeSnapshots = new Map();
 
     function normalizeRow(row) {
         if (!row) return row;
@@ -52,6 +52,27 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         cache[key] = (data || []).map(normalizeRow);
     }
 
+    async function loadFinanceSnapshots() {
+        const { data, error } = await client
+            .from("finance_snapshots")
+            .select("*")
+            .eq("user_id", userId)
+            .order("occurred_at", { ascending: true });
+
+        if (error) throw error;
+
+        financeSnapshots.clear();
+        (data || []).forEach((row) => {
+            const list = financeSnapshots.get(row.collection) || [];
+            list.push({
+                occurredAt: new Date(row.occurred_at).getTime(),
+                total: Number(row.total),
+                entries: (row.entries || []).map(normalizeRow)
+            });
+            financeSnapshots.set(row.collection, list);
+        });
+    }
+
     async function loadSnapshots() {
         const { data, error } = await client
             .from("finance_asset_snapshots")
@@ -75,7 +96,7 @@ function createSupabaseFinanceMemory({ client, userContext }) {
     async function hydrate() {
         await Promise.all([
             ...Object.keys(COLLECTIONS).map(loadCollection),
-            loadSnapshots()
+            loadSnapshots(),\n            loadFinanceSnapshots()
         ]);
     }
 
