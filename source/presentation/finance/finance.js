@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.9
+// source/presentation/finance/finance.js — Version 4.10
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -971,10 +971,6 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
 
     const copy = document.createElement("div");
     copy.className = "finance-data-entry-copy";
-
-    const meta = document.createElement("span");
-    meta.className = "finance-section-meta";
-    meta.textContent = "DATA";
 
     const dataTitle = document.createElement("strong");
     dataTitle.textContent = "Управление финансовыми данными";
