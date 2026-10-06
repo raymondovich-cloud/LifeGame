@@ -1,4 +1,4 @@
-// finance.analytics.js — Version 1.0
+// finance.analytics.js — Version 1.1
 
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -107,7 +107,9 @@ function createFinanceAnalytics({ financeApplication }) {
                         endTimestamp
                     );
 
-                const baseline = baselineSnapshot?.total ?? null;
+                const firstInRange = snapshots[0] ?? null;
+                const effectiveBaselineSnapshot = baselineSnapshot ?? firstInRange;
+                const baseline = effectiveBaselineSnapshot?.total ?? null;
                 const current = currentSnapshot?.total ?? null;
 
                 return [metric.id, {
