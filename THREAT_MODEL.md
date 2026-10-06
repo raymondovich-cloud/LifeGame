@@ -1,6 +1,6 @@
 # LifeGame 3.0 — Threat Model
 
-Version: 1.0
+Version: 1.1
 Status: APPROVED
 Date: 2026-10-01
 
@@ -8,7 +8,7 @@ Date: 2026-10-01
 
 This document defines the primary security threats for LifeGame 3.0 and maps each threat to required controls.
 
-It is an implementation contract derived from SECURITY_ARCHITECTURE.md.
+It is a security threat contract derived from SECURITY_ARCHITECTURE.md. It defines required controls and does not imply that every control is currently implemented.
 
 The objective is not to eliminate every theoretical risk. The objective is to identify realistic attack paths, establish explicit security boundaries, and ensure that every important threat has a defined mitigation or an explicitly accepted residual risk.
 
@@ -866,6 +866,8 @@ Full DDoS protection depends on deployment infrastructure and is not solely an a
 
 ## 34. Threat Matrix
 
+`V1` means that the control is required by the V1 security target. It does not mean the control is currently implemented.
+
 | Threat | Severity | Primary Controls | V1 |
 |---|---|---|---|
 | Account takeover | Critical | Auth, sessions, recovery, rate limits | Yes |
@@ -900,6 +902,8 @@ Full DDoS protection depends on deployment infrastructure and is not solely an a
 ---
 
 ## 35. Security Testing Requirements
+
+The following are acceptance requirements. A listed test is not evidence that the corresponding feature is already implemented until the test has actually passed.
 
 Before production authentication is considered complete, test at minimum:
 
@@ -957,6 +961,8 @@ These risks must be reduced where practical and explicitly documented rather tha
 
 ## 37. V1 Security Priorities
 
+These are security priorities/requirements, not a CURRENT implementation inventory.
+
 The first production Identity implementation must prioritize:
 
 1. Secure authentication.
@@ -985,14 +991,35 @@ The security boundary must exist independently of the interface.
 
 ---
 
-## 39. Relationship to SECURITY_ARCHITECTURE.md
+## 39. Current Implementation Boundary
 
-This document complements:
+The currently confirmed security implementation includes:
 
-SECURITY_ARCHITECTURE.md
+- Supabase Auth as the authentication provider;
+- server-side identity handling through the Infrastructure adapter;
+- PostgreSQL RLS for user-owned data;
+- private security events with restricted client access;
+- registration security event creation;
+- client-side separation from Supabase and database infrastructure.
 
-SECURITY_ARCHITECTURE.md defines the architecture.
+Controls that remain PLANNED or require verification include:
 
-THREAT_MODEL.md defines what the architecture must defend against.
+- application-level encryption;
+- envelope encryption and key management;
+- custom session/device management;
+- complete password recovery controls;
+- expanded security event coverage;
+- LifeGame-owned multi-dimensional rate limiting;
+- MFA and Passkeys;
+- advanced suspicious-activity detection;
+- complete backup/recovery security operations.
+
+Current implementation status must be verified against code, tests and `docs/project-state.md`.
+
+## 40. Relationship to SECURITY_ARCHITECTURE.md
+
+SECURITY_ARCHITECTURE.md defines the approved security architecture.
+
+THREAT_MODEL.md defines the threats and required controls that architecture must address.
 
 Future security-sensitive implementation changes must be reviewed against both documents.
