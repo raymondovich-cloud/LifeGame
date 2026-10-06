@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.1 */
+/* statistics.css — Version 3.2 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -458,22 +458,10 @@
 }
 
 
-/* Assets summary spacing: align the state/analytics row with the asset name/amount spacing unit. */
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary{
-    gap:var(--assets-block-spacing);
-    margin-bottom:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-heading{
-    gap:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-total-row{
-    padding-top:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-date{
-    margin-top:var(--assets-block-spacing);
-}
 
-/* Assets management summary: the analytics control uses the same spacing unit as «Название актива» / «Сумма». */
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-statistics-trigger{
-    gap:var(--assets-block-spacing);
-}
+/* Assets summary: every neighboring visual gap is the X reference unit. */
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary{gap:var(--assets-block-spacing);margin-bottom:var(--assets-block-spacing);}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-heading{gap:var(--assets-block-spacing);}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-total-row{padding-top:0;}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-date{margin-top:0;}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-statistics-trigger{gap:var(--assets-block-spacing);}

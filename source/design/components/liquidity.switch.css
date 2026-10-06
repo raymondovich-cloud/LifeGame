@@ -1,4 +1,4 @@
-/* liquidity.switch.css — Version 1.4 */
+/* liquidity.switch.css — Version 1.5 */
 
 .liquidity-switch-field {
     display: grid;
@@ -75,7 +75,5 @@
 }
 
 
-/* Assets form: all switch-field gaps use the same assets spacing unit. */
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .liquidity-switch-field{
-    gap:var(--assets-block-spacing);
-}
+/* Assets form: switch-field uses the same X reference unit as «Название» / «Сумма». */
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .liquidity-switch-field{gap:var(--assets-block-spacing);}

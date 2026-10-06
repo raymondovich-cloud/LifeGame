@@ -1,4 +1,4 @@
-/* list.css — Version 3.6 */
+/* list.css — Version 3.7 */
 
 .list-empty {
     display:grid;
@@ -160,25 +160,6 @@
 .finance-data-screen .finance-entry-list .swipe-delete-content:hover {
     border-color:var(--color-border-strong);
 }
-
-/* Assets rows use the same spacing unit as the «Название» / «Сумма» form gap. */
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .swipe-delete-content{
-    gap:var(--assets-block-spacing);
-    padding:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-label-group{
-    gap:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing{
-    gap:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-pin{
-    margin-left:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing .finance-entry-pin{
-    margin-left:0;
-}
-
 
 .swipe-delete-content {
     position:relative;
@@ -387,36 +368,11 @@
 }
 
 
-/* Assets block: all internal gaps use the same unit as «Название актива» / «Сумма». */
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list{
-    gap:var(--assets-block-spacing);
-    margin-bottom:0;
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list + .finance-add-form{
-    margin-top:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form{
-    gap:var(--assets-block-spacing);
-    padding-top:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form > .button-control{
-    margin-top:0;
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .swipe-delete-content{
-    gap:var(--assets-block-spacing);
-    padding:var(--assets-block-spacing);
-}
+
+/* Assets rows: all internal gaps use the same X reference unit as «Название» / «Сумма». */
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .swipe-delete-content{gap:var(--assets-block-spacing);padding:var(--assets-block-spacing);}
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-label-group,
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing{
-    gap:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-pin{
-    margin-left:var(--assets-block-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing .finance-entry-pin{
-    margin-left:0;
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .list-empty{
-    gap:var(--assets-block-spacing);
-    padding:var(--assets-block-spacing) 0;
-}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing{gap:var(--assets-block-spacing);}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-pin{margin-left:var(--assets-block-spacing);}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing .finance-entry-pin{margin-left:0;}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .list-empty{gap:var(--assets-block-spacing);padding:var(--assets-block-spacing) 0;}
