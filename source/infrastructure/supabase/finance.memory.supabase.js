@@ -454,7 +454,40 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         getAssetsSnapshotAtOrBefore: getSnapshotAtOrBefore,
         getAssetsSnapshotsBetween: getSnapshotsBetween,
         getFirstAssetsSnapshot: getFirstSnapshot,
-        getLatestAssetsSnapshot: getLatestSnapshot
+        getLatestAssetsSnapshot: getLatestSnapshot,
+        mutateFinanceCollection,
+        getCollectionSnapshotAtOrBefore: (collection, timestamp) => {
+            if (collection === "assets") return getSnapshotAtOrBefore(timestamp);
+            const list = financeSnapshots.get(collection) || [];
+            let result = null;
+            list.forEach((snapshot) => {
+                if (snapshot.occurredAt <= timestamp && (!result || snapshot.occurredAt > result.occurredAt)) {
+                    result = snapshot;
+                }
+            });
+            return result ? clone(result) : null;
+        },
+        getCollectionSnapshotsBetween: (collection, startTimestamp, endTimestamp) => {
+            if (collection === "assets") return getSnapshotsBetween(startTimestamp, endTimestamp);
+            return (financeSnapshots.get(collection) || [])
+                .filter((snapshot) => snapshot.occurredAt >= startTimestamp && snapshot.occurredAt <= endTimestamp)
+                .sort((left, right) => left.occurredAt - right.occurredAt)
+                .map(clone);
+        },
+        getFirstCollectionSnapshot: (collection) => {
+            if (collection === "assets") return getFirstSnapshot();
+            const list = financeSnapshots.get(collection) || [];
+            return list.length
+                ? clone(list.reduce((first, snapshot) => !first || snapshot.occurredAt < first.occurredAt ? snapshot : first, null))
+                : null;
+        },
+        getLatestCollectionSnapshot: (collection) => {
+            if (collection === "assets") return getLatestSnapshot();
+            const list = financeSnapshots.get(collection) || [];
+            return list.length
+                ? clone(list.reduce((latest, snapshot) => !latest || snapshot.occurredAt > latest.occurredAt ? snapshot : latest, null))
+                : null;
+        }
     });
 }
 
