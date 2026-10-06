@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.10
+// source/presentation/finance/finance.js — Version 4.11
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -978,7 +978,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
     const dataDescription = document.createElement("p");
     dataDescription.textContent = "Добавление, редактирование и удаление записей.";
 
-    copy.append(meta, dataTitle, dataDescription);
+    copy.append(dataTitle, dataDescription);
 
     const action = document.createElement("button");
     action.type = "button";
