@@ -1,4 +1,4 @@
-/* liquidity.switch.css — Version 1.3 */
+/* liquidity.switch.css — Version 1.4 */
 
 .liquidity-switch-field {
     display: grid;
@@ -75,12 +75,7 @@
 }
 
 
-/* Assets form: keep the switch field's column spacing on the same assets spacing unit. */
+/* Assets form: all switch-field gaps use the same assets spacing unit. */
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .liquidity-switch-field{
     gap:var(--assets-block-spacing);
-}
-@media (max-width:420px){
-    .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .liquidity-switch-field{
-        gap:var(--assets-block-spacing);
-    }
 }

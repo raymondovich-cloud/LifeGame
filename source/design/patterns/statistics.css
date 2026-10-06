@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.0 */
+/* statistics.css — Version 3.1 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -471,4 +471,9 @@
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-date{
     margin-top:var(--assets-block-spacing);
+}
+
+/* Assets management summary: the analytics control uses the same spacing unit as «Название актива» / «Сумма». */
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-statistics-trigger{
+    gap:var(--assets-block-spacing);
 }

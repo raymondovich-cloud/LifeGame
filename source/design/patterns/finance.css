@@ -1,4 +1,4 @@
-/* finance.css — Version 3.0 */
+/* finance.css — Version 3.1 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -440,46 +440,47 @@
 }
 
 
-/* Assets spacing system: every layout spacing in block 01 uses the same unit as «Название актива» / «Сумма». */
+/* Assets block: one spacing unit equals the gap between «Название актива» and «Сумма». */
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"]{
     --assets-block-spacing:var(--space-2);
 }
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-trigger,
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-content.is-open,
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary,
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-heading,
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-total-row,
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-date,
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list,
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form{
-    --assets-layout-spacing:var(--assets-block-spacing);
-}
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-trigger{
-    gap:var(--assets-layout-spacing);
-    padding:var(--assets-layout-spacing);
-}
-.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-content.is-open{
-    padding:var(--assets-layout-spacing);
+    gap:var(--assets-block-spacing);
+    padding:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-header > .info-tooltip{
-    margin-right:var(--assets-layout-spacing);
+    margin-right:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .accordion-content.is-open{
+    padding:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary{
-    gap:var(--assets-layout-spacing);
-    margin-bottom:var(--assets-layout-spacing);
+    gap:var(--assets-block-spacing);
+    margin-bottom:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-heading{
-    gap:var(--assets-layout-spacing);
+    gap:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-statistics-trigger{
+    gap:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-total-row{
-    padding-top:var(--assets-layout-spacing);
+    padding-top:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-date{
-    margin-top:var(--assets-layout-spacing);
+    margin-top:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list{
-    margin-bottom:var(--assets-layout-spacing);
+    gap:var(--assets-block-spacing);
+    margin-bottom:0;
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list + .finance-add-form{
+    margin-top:var(--assets-block-spacing);
 }
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form{
-    padding-top:var(--assets-layout-spacing);
+    gap:var(--assets-block-spacing);
+    padding-top:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form > .button-control{
+    margin-top:0;
 }
