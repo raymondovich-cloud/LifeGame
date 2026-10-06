@@ -1,4 +1,4 @@
-// finance.memory.js — Version 2.2
+// finance.memory.js — Version 2.3
 
 const COLLECTIONS = Object.freeze([
     "assets",
@@ -274,7 +274,7 @@ function createFinanceMemory(userContext) {
             throw new Error("LifeGame Finance Memory: invalid snapshot range.");
         }
 
-        return snapshots
+        return getCollectionSnapshotList("assets")
             .filter((snapshot) =>
                 snapshot.occurredAt >= startTimestamp &&
                 snapshot.occurredAt <= endTimestamp
