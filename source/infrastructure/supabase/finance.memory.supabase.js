@@ -149,6 +149,73 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         };
     }
 
+    async function saveFinanceSnapshot(collection, snapshot) {
+        if (collection === "assets") return saveAssetsSnapshot(snapshot);
+
+        const { data, error } = await client
+            .from("finance_snapshots")
+            .insert({
+                user_id: userId,
+                collection,
+                occurred_at: new Date(snapshot.occurredAt).toISOString(),
+                total: snapshot.total,
+                entries: snapshot.entries
+            })
+            .select("*")
+            .single();
+
+        if (error) throw error;
+
+        const saved = {
+            occurredAt: new Date(data.occurred_at).getTime(),
+            total: Number(data.total),
+            entries: (data.entries || []).map(normalizeRow)
+        };
+        const list = financeSnapshots.get(collection) || [];
+        list.push(saved);
+        financeSnapshots.set(collection, list);
+        return clone(saved);
+    }
+
+    async function mutateFinanceCollection({ collection, operation, entry = null, entryId = null, occurredAt = Date.now() }) {
+        if (collection === "assets") return mutateAsset({ operation, entry, entryId, occurredAt });
+
+        const key = {
+            "actual-earnings": "actualEarnings",
+            "financial-burden": "financialBurden",
+            "mandatory-expenses": "mandatoryExpenses",
+            "financial-cushion": "financialCushion"
+        }[collection];
+
+        if (!key) throw new Error("Supabase Finance Memory: unknown Finance collection.");
+
+        let result;
+        if (operation === "create") result = await save(key, entry);
+        else if (operation === "update") result = await update(key, entryId, entry);
+        else if (operation === "delete") {
+            result = await remove(key, entryId);
+            if (!result) return false;
+        } else {
+            throw new Error("Supabase Finance Memory: invalid Finance mutation.");
+        }
+
+        const entries = list(key);
+        const total = collection === "financial-burden"
+            ? entries.reduce((sum, item) => sum + Number(item.debt || item.amount || 0), 0)
+            : entries.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+        const snapshot = await saveFinanceSnapshot(collection, {
+            occurredAt,
+            total,
+            entries
+        });
+
+        return {
+            entry: operation === "delete" ? null : result,
+            snapshot
+        };
+    }
+
     async function save(key, entry) {
         if (key === "assets") {
             const result = await mutateAsset({
