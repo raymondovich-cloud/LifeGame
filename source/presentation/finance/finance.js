@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.20
+// source/presentation/finance/finance.js — Version 4.21
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -325,7 +325,11 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         }
         barTrack.appendChild(bar);
 
-        column.append(labelNode, metric, barTrack);
+        const chartFooter = document.createElement("div");
+        chartFooter.className = "finance-capital-chart-footer";
+        chartFooter.append(metric, labelNode);
+
+        column.append(barTrack, chartFooter);
         chartBars.appendChild(column);
     });
 
