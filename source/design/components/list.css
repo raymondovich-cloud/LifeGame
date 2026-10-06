@@ -1,4 +1,4 @@
-/* list.css — Version 3.4 */
+/* list.css — Version 3.5 */
 
 .list-empty {
     display:grid;
@@ -384,4 +384,39 @@
 .finance-overview-category {
     color:var(--color-white-soft);
     font-size:var(--font-size-xs);
+}
+
+
+/* Assets block: use one spacing unit between rows, form fields, controls and sections. */
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list{
+    gap:var(--assets-block-spacing);
+    margin-bottom:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list + .finance-add-form{
+    margin-top:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form{
+    gap:var(--assets-block-spacing);
+    padding-top:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form > .button-control{
+    margin-top:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .swipe-delete-content{
+    gap:var(--assets-block-spacing);
+    padding:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-label-group,
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing{
+    gap:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-pin{
+    margin-left:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing .finance-entry-pin{
+    margin-left:0;
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .list-empty{
+    gap:var(--assets-block-spacing);
+    padding:var(--assets-block-spacing) 0;
 }
