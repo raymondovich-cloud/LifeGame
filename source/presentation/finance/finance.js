@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.18
+// source/presentation/finance/finance.js — Version 4.19
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
