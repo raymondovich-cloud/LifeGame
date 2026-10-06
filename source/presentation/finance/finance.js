@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.24
+// source/presentation/finance/finance.js — Version 4.25
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -241,20 +241,7 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
     eyebrow.className = "finance-section-meta";
     eyebrow.textContent = "DYNAMICS";
 
-    const analytics = document.createElement("button");
-    analytics.type = "button";
-    analytics.className = "finance-text-action";
-    analytics.textContent = "Аналитика →";
-    analytics.addEventListener("click", () => {
-        if (!assetsAnalytics) return;
-        renderAssetsStatisticsScreen(
-            root,
-            () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
-            assetsAnalytics
-        );
-    });
-
-    header.append(eyebrow, analytics);
+    header.appendChild(eyebrow);
 
     const amount = document.createElement("div");
     amount.className = "finance-capital-value";
