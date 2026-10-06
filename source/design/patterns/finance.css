@@ -1,4 +1,4 @@
-/* finance.css — Version 2.1 */
+/* finance.css — Version 2.2 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -291,7 +291,7 @@
 
 .finance-capital-chart-bars{
     display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
+    grid-template-columns:repeat(5,minmax(0,1fr));
     gap:var(--space-2);
 }
 
