@@ -1,4 +1,6 @@
-// assets.statistics.js — Version 3.3
+// assets.statistics.js — Version 3.4
+
+import { attachEntryEdit } from "./entry.edit.js";
 
 function formatAmount(amount) {
     if (amount === null || amount === undefined || !Number.isFinite(Number(amount))) return "—";
@@ -93,7 +95,75 @@ function renderComposition(container, entries) {
     container.appendChild(section);
 }
 
-function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
+function attachAnalyticsSwipeDelete(root, row, onDelete) {
+    const content = row.querySelector(".swipe-delete-content");
+    const action = row.querySelector(".swipe-delete-action");
+    if (!content || !action || typeof onDelete !== "function") return;
+    let startX = 0, currentX = 0, startY = 0, tracking = false, opened = false;
+    const setOffset = (offset, animated = false) => {
+        content.style.setProperty("--swipe-offset", offset + "px");
+        content.classList.toggle("is-swiping", !animated);
+    };
+    const open = () => { opened = true; row.classList.add("is-delete-ready"); setOffset(-88, true); };
+    const close = () => { opened = false; row.classList.remove("is-delete-ready"); setOffset(0, true); };
+    action.addEventListener("click", (event) => { event.preventDefault(); event.stopPropagation(); onDelete(); });
+    content.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        startX = event.clientX; currentX = startX; startY = event.clientY; tracking = true;
+        content.classList.add("is-swiping"); content.setPointerCapture?.(event.pointerId);
+    });
+    content.addEventListener("pointermove", (event) => {
+        if (!tracking) return;
+        currentX = event.clientX;
+        const deltaX = currentX - startX; const deltaY = event.clientY - startY;
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) { tracking = false; close(); return; }
+        if (deltaX < -8 || opened) { const base = opened ? -88 : 0; setOffset(Math.min(0, Math.max(deltaX + base, -88))); }
+    });
+    const finishSwipe = () => {
+        if (!tracking) return; tracking = false; content.classList.remove("is-swiping");
+        const distance = currentX - startX;
+        if (opened && distance > 28) { close(); return; }
+        if (!opened && distance <= -56) { open(); return; }
+        opened ? open() : close();
+    };
+    content.addEventListener("pointerup", finishSwipe);
+    content.addEventListener("pointercancel", finishSwipe);
+}
+
+function createAnalyticsAssetRow(root, entry, financeApplication, onWriteAttempt, interaction) {
+    const row = document.createElement("div");
+    row.className = "swipe-delete-item";
+    row.dataset.entryId = entry.id;
+    row.dataset.subblockId = "assets";
+    row.classList.toggle("is-pinned", interaction?.isPinned?.(entry.id) === true);
+    const action = document.createElement("button");
+    action.type = "button"; action.className = "swipe-delete-action";
+    action.setAttribute("aria-label", "Удалить " + entry.label); action.textContent = "Удалить";
+    const content = document.createElement("div");
+    content.className = "swipe-delete-content assets-statistics-history-row";
+    const main = document.createElement("div"); main.className = "assets-analytics-composition-main";
+    const label = document.createElement("span"); label.textContent = entry.label;
+    const liquidity = document.createElement("span"); liquidity.className = "assets-analytics-composition-type";
+    liquidity.textContent = entry.liquidity === "illiquid" ? "Неликвидный" : "Ликвидный";
+    const value = document.createElement("div"); value.className = "assets-analytics-composition-value";
+    const amount = document.createElement("strong"); amount.textContent = formatAmount(entry.amount) + " ₽";
+    const percent = document.createElement("span");
+    const currentTotal = Number(interaction?.currentTotal ?? 0);
+    const entryPercent = currentTotal > 0 ? Math.round((Number(entry.amount) / currentTotal) * 1000) / 10 : null;
+    percent.textContent = entryPercent === null ? "—" : entryPercent + "%";
+    main.append(label, liquidity); value.append(amount, percent); content.append(main, value); row.append(action, content);
+    const rerender = () => { if (typeof interaction?.onChanged === "function") interaction.onChanged(); };
+    attachEntryEdit(row, "assets", entry, onWriteAttempt, financeApplication,
+        () => rerender(),
+        () => { interaction?.onPin?.(entry.id); rerender(); },
+        () => { interaction?.onDelete?.(entry.id); },
+        () => typeof interaction?.onPinLimit === "function" ? interaction.onPinLimit(entry.id) : false
+    );
+    attachAnalyticsSwipeDelete(root, row, () => interaction?.onDelete?.(entry.id));
+    return row;
+}
+
+function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics, financeApplication = null, onWriteAttempt = null, interaction = null) {
     root.replaceChildren();
 
     const backButton = document.createElement("button");
@@ -201,34 +271,15 @@ function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
         composition.appendChild(empty);
     } else {
         analytics.composition.forEach((entry) => {
-            const row = document.createElement("div");
-            row.className = "assets-statistics-history-row";
-
-            const main = document.createElement("div");
-            main.className = "assets-analytics-composition-main";
-
-            const label = document.createElement("span");
-            label.textContent = entry.label;
-
-            const liquidity = document.createElement("span");
-            liquidity.className = "assets-analytics-composition-type";
-            liquidity.textContent = entry.liquidity === "illiquid" ? "Неликвидный" : "Ликвидный";
-
-            const value = document.createElement("div");
-            value.className = "assets-analytics-composition-value";
-
-            const amount = document.createElement("strong");
-            amount.textContent = formatAmount(entry.amount) + " ₽";
-
-            const percent = document.createElement("span");
-            const entryPercent = currentTotal > 0
-                ? Math.round((Number(entry.amount) / currentTotal) * 1000) / 10
-                : null;
-            percent.textContent = entryPercent === null ? "—" : entryPercent + "%";
-
-            main.append(label, liquidity);
-            value.append(amount, percent);
-            row.append(main, value);
+            const row = createAnalyticsAssetRow(
+                root, entry, financeApplication, onWriteAttempt, {
+                    ...interaction,
+                    currentTotal,
+                    onChanged: interaction?.onChanged || (() => renderAssetsStatisticsScreen(
+                        root, onBack, assetsAnalytics, financeApplication, onWriteAttempt, interaction
+                    ))
+                }
+            );
             composition.appendChild(row);
         });
     }

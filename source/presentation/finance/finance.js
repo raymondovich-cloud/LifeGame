@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.28
+// source/presentation/finance/finance.js — Version 4.29
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -722,11 +722,45 @@ function createAssetsSummary(root, onWriteAttempt = null, financeApplication = n
             return;
         }
 
-        renderAssetsStatisticsScreen(
+        const renderAnalytics = () => renderAssetsStatisticsScreen(
             root,
             () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
-            assetsAnalytics
+            assetsAnalytics,
+            financeApplication,
+            onWriteAttempt,
+            {
+                isPinned: (entryId) => isEntryPinned("assets", entryId),
+                onChanged: renderAnalytics,
+                onPin: (entryId) => {
+                    toggleEntryPinned("assets", entryId);
+                },
+                onDelete: (entryId) => {
+                    const remove = async () => {
+                        const result = await financeApplication.removeFinanceEntry("assets", entryId);
+                        if (!result) return;
+
+                        pinnedEntries.delete(getEntryKey("assets", entryId));
+                        renderAnalytics();
+                    };
+
+                    if (typeof onWriteAttempt === "function") {
+                        onWriteAttempt(remove);
+                    } else {
+                        remove();
+                    }
+                },
+                onPinLimit: (entryId) => {
+                    if (isEntryPinned("assets", entryId)) return false;
+                    if (countPinnedEntries("assets", financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                        showSubscriptionLimitNotice();
+                        return true;
+                    }
+                    return false;
+                }
+            }
         );
+
+        renderAnalytics();
     });
 
     heading.append(title, statisticsButton);
