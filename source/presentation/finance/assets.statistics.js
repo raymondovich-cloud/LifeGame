@@ -1,15 +1,4 @@
-// assets.statistics.js — Version 3.2
-
-import { canAccessAssetsAnalyticsRange } from "../../application/finance/assets.analytics.access.js";
-import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
-
-const PERIODS = Object.freeze([
-    { id: "week", label: "Неделя" },
-    { id: "month", label: "Месяц" },
-    { id: "year", label: "Год" },
-    { id: "custom", label: "Свой период" },
-    { id: "all-time", label: "Всё время" }
-]);
+// assets.statistics.js — Version 3.3
 
 function formatAmount(amount) {
     if (amount === null || amount === undefined || !Number.isFinite(Number(amount))) return "—";
@@ -20,113 +9,6 @@ function formatDate(timestamp) {
     return timestamp
         ? new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(timestamp))
         : "—";
-}
-
-function toDateInputValue(timestamp) {
-    if (!timestamp) return "";
-    const date = new Date(timestamp);
-    return date.getFullYear() + "-" +
-        String(date.getMonth() + 1).padStart(2, "0") + "-" +
-        String(date.getDate()).padStart(2, "0");
-}
-
-function getDateInputTimestamp(value, endOfDay = false) {
-    if (!value) return NaN;
-    const [year, month, day] = value.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-    date.setHours(endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0, endOfDay ? 999 : 0);
-    return date.getTime();
-}
-
-function createMetric(label, value, detail = "") {
-    const section = document.createElement("section");
-    section.className = "assets-analytics-metric";
-
-    const meta = document.createElement("span");
-    meta.className = "statistics-meta";
-    meta.textContent = label;
-
-    const metricValue = document.createElement("strong");
-    metricValue.className = "statistics-value";
-    metricValue.textContent = value;
-
-    section.append(meta, metricValue);
-
-    if (detail) {
-        const description = document.createElement("span");
-        description.className = "assets-analytics-detail";
-        description.textContent = detail;
-        section.appendChild(description);
-    }
-
-    return section;
-}
-
-function renderDynamicsChart(container, dynamics) {
-    const chart = document.createElement("div");
-    chart.className = "assets-analytics-chart";
-    chart.setAttribute("role", "img");
-    chart.setAttribute("aria-label", "Динамика стоимости активов");
-
-    if (!dynamics.length) {
-        const empty = document.createElement("span");
-        empty.className = "assets-analytics-empty";
-        empty.textContent = "Недостаточно исторических данных.";
-        chart.appendChild(empty);
-        container.appendChild(chart);
-        return;
-    }
-
-    const width = 640;
-    const height = 220;
-    const padding = 18;
-    const values = dynamics.map((point) => Number(point.total) || 0);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const spread = max - min || Math.max(Math.abs(max), 1);
-
-    const points = dynamics.map((point, index) => ({
-        x: dynamics.length === 1
-            ? width / 2
-            : padding + (index / (dynamics.length - 1)) * (width - padding * 2),
-        y: padding + (1 - ((Number(point.total) - min) / spread)) * (height - padding * 2),
-        point
-    }));
-
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
-    svg.setAttribute("preserveAspectRatio", "none");
-    svg.setAttribute("aria-hidden", "true");
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", points.map((point, index) => (index === 0 ? "M" : "L") + " " + point.x + " " + point.y).join(" "));
-    path.setAttribute("fill", "none");
-    path.setAttribute("stroke", "currentColor");
-    path.setAttribute("stroke-width", "3");
-    path.setAttribute("stroke-linecap", "round");
-    path.setAttribute("stroke-linejoin", "round");
-    svg.appendChild(path);
-
-    points.forEach((point) => {
-        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", point.x);
-        circle.setAttribute("cy", point.y);
-        circle.setAttribute("r", "3.5");
-        circle.setAttribute("fill", "currentColor");
-        svg.appendChild(circle);
-    });
-
-    chart.appendChild(svg);
-
-    const range = document.createElement("div");
-    range.className = "assets-analytics-chart-range";
-    const first = document.createElement("span");
-    first.textContent = formatDate(dynamics[0].occurredAt);
-    const last = document.createElement("span");
-    last.textContent = formatDate(dynamics[dynamics.length - 1].occurredAt);
-    range.append(first, last);
-    chart.appendChild(range);
-    container.appendChild(chart);
 }
 
 function renderLiquidity(container, liquidity) {
@@ -214,10 +96,6 @@ function renderComposition(container, entries) {
 function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
     root.replaceChildren();
 
-    let selectedPeriod = "month";
-    let customStart = "";
-    let customEnd = "";
-
     const backButton = document.createElement("button");
     backButton.type = "button";
     backButton.className = "assets-statistics-back";
@@ -233,9 +111,6 @@ function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
     const header = document.createElement("header");
     header.className = "assets-statistics-header";
 
-    const heading = document.createElement("div");
-    heading.className = "assets-statistics-heading";
-
     const eyebrow = document.createElement("span");
     eyebrow.className = "statistics-meta";
     eyebrow.textContent = "FINANCE · 01";
@@ -246,183 +121,119 @@ function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
 
     const description = document.createElement("p");
     description.className = "assets-statistics-description";
-    description.textContent = "Как менялась стоимость ваших активов за выбранный период.";
+    description.textContent = "Состав и распределение текущего капитала.";
 
-    heading.append(eyebrow, title, description);
-    header.append(heading);
-    root.append(backButton, screen);
+    header.append(eyebrow, title, description);
     screen.appendChild(header);
-
-    const selector = document.createElement("div");
-    selector.className = "statistics-period-selector";
-    selector.setAttribute("role", "group");
-    selector.setAttribute("aria-label", "Период аналитики");
-
-    const customControls = document.createElement("section");
-    customControls.className = "assets-analytics-custom-period";
+    root.append(backButton, screen);
 
     const content = document.createElement("div");
     content.className = "assets-analytics-content";
+    screen.appendChild(content);
 
-    function renderCustomControls() {
-        customControls.replaceChildren();
-        customControls.hidden = selectedPeriod !== "custom";
-        if (selectedPeriod !== "custom") return;
+    const range = assetsAnalytics.getAssetsAnalyticsRange("month");
+    const analytics = assetsAnalytics.getAssetsAnalytics(range);
+    const currentTotal = analytics.current?.total ?? 0;
 
-        const startLabel = document.createElement("label");
-        startLabel.className = "assets-analytics-date-field";
-        startLabel.textContent = "От";
+    const overview = document.createElement("section");
+    overview.className = "assets-analytics-overview";
 
-        const startInput = document.createElement("input");
-        startInput.type = "date";
-        startInput.value = customStart;
-        startInput.addEventListener("change", () => {
-            customStart = startInput.value;
-            render();
-        });
+    const overviewLabel = document.createElement("span");
+    overviewLabel.className = "statistics-meta";
+    overviewLabel.textContent = "ОБЩАЯ СТОИМОСТЬ АКТИВОВ";
 
-        const endLabel = document.createElement("label");
-        endLabel.className = "assets-analytics-date-field";
-        endLabel.textContent = "До";
+    const overviewValue = document.createElement("strong");
+    overviewValue.className = "assets-analytics-overview-value";
+    overviewValue.textContent = formatAmount(currentTotal) + " ₽";
 
-        const endInput = document.createElement("input");
-        endInput.type = "date";
-        endInput.value = customEnd;
-        endInput.addEventListener("change", () => {
-            customEnd = endInput.value;
-            render();
-        });
+    const overviewDate = document.createElement("span");
+    overviewDate.className = "assets-analytics-overview-date";
+    overviewDate.textContent = "Срез · " + formatDate(analytics.current?.occurredAt);
 
-        const hint = document.createElement("span");
-        hint.className = "assets-analytics-custom-hint";
-        hint.textContent = "До 6 месяцев для Free";
+    overview.append(overviewLabel, overviewValue, overviewDate);
+    content.appendChild(overview);
 
-        startLabel.appendChild(startInput);
-        endLabel.appendChild(endInput);
-        customControls.append(startLabel, endLabel, hint);
-    }
+    renderLiquidity(content, analytics.liquidity);
 
-    function getSelectedRange() {
-        if (selectedPeriod === "custom") {
-            return {
-                startDate: getDateInputTimestamp(customStart),
-                endDate: getDateInputTimestamp(customEnd, true)
-            };
-        }
+    const distribution = document.createElement("section");
+    distribution.className = "assets-analytics-section assets-analytics-distribution";
 
-        return assetsAnalytics.getAssetsAnalyticsRange(selectedPeriod);
-    }
+    const distributionTitle = document.createElement("span");
+    distributionTitle.className = "statistics-meta";
+    distributionTitle.textContent = "РАСПРЕДЕЛЕНИЕ";
 
-    function render() {
-        selector.replaceChildren();
-        content.replaceChildren();
+    const distributionBar = document.createElement("div");
+    distributionBar.className = "assets-analytics-liquidity-bar";
+    distributionBar.setAttribute("role", "img");
+    distributionBar.setAttribute(
+        "aria-label",
+        "Распределение активов: " +
+            (analytics.liquidity.liquidPercent ?? 0) +
+            "% ликвидные, " +
+            (analytics.liquidity.illiquidPercent ?? 0) +
+            "% неликвидные"
+    );
 
-        PERIODS.forEach((period) => {
-            const button = document.createElement("button");
-            button.type = "button";
-            button.className = "button-control statistics-period-button";
-            button.textContent = period.label;
-            button.setAttribute("aria-pressed", String(selectedPeriod === period.id));
-            if (selectedPeriod === period.id) button.classList.add("is-active");
+    const liquidBar = document.createElement("span");
+    liquidBar.className = "assets-analytics-liquidity-bar__liquid";
+    liquidBar.style.width = (analytics.liquidity.liquidPercent ?? 0) + "%";
 
-            button.addEventListener("click", () => {
-                selectedPeriod = period.id;
+    const illiquidBar = document.createElement("span");
+    illiquidBar.className = "assets-analytics-liquidity-bar__illiquid";
+    illiquidBar.style.width = (analytics.liquidity.illiquidPercent ?? 0) + "%";
 
-                if (selectedPeriod === "custom") {
-                    const now = Date.now();
-                    const start = new Date(now);
-                    start.setMonth(start.getMonth() - 1);
-                    customStart = toDateInputValue(start.getTime());
-                    customEnd = toDateInputValue(now);
-                }
+    distributionBar.append(liquidBar, illiquidBar);
+    distribution.append(distributionTitle, distributionBar);
+    content.appendChild(distribution);
 
-                render();
-            });
+    const composition = document.createElement("section");
+    composition.className = "assets-analytics-section assets-analytics-composition";
 
-            selector.appendChild(button);
-        });
+    const compositionTitle = document.createElement("span");
+    compositionTitle.className = "statistics-meta";
+    compositionTitle.textContent = "АКТИВЫ";
+    composition.appendChild(compositionTitle);
 
-        renderCustomControls();
+    if (!analytics.composition.length) {
+        const empty = document.createElement("span");
+        empty.className = "assets-analytics-empty";
+        empty.textContent = "Активов пока нет.";
+        composition.appendChild(empty);
+    } else {
+        analytics.composition.forEach((entry) => {
+            const row = document.createElement("div");
+            row.className = "assets-statistics-history-row";
 
-        if (selectedPeriod === "all-time" && !canAccessAssetsAnalyticsRange({
-            allTime: true,
-            startDate: 0,
-            endDate: Date.now()
-        })) {
-            const locked = document.createElement("section");
-            locked.className = "assets-analytics-locked";
+            const main = document.createElement("div");
+            main.className = "assets-analytics-composition-main";
 
             const label = document.createElement("span");
-            label.className = "statistics-meta";
-            label.textContent = "PRO";
+            label.textContent = entry.label;
 
-            const title = document.createElement("strong");
-            title.textContent = "Вся история активов";
+            const liquidity = document.createElement("span");
+            liquidity.className = "assets-analytics-composition-type";
+            liquidity.textContent = entry.liquidity === "illiquid" ? "Неликвидный" : "Ликвидный";
 
-            const detail = document.createElement("span");
-            detail.textContent = "Доступно с подпиской Pro.";
+            const value = document.createElement("div");
+            value.className = "assets-analytics-composition-value";
 
-            const action = document.createElement("button");
-            action.type = "button";
-            action.className = "button-control";
-            action.textContent = "Открыть Pro";
-            action.addEventListener("click", showSubscriptionLimitNotice);
+            const amount = document.createElement("strong");
+            amount.textContent = formatAmount(entry.amount) + " ₽";
 
-            locked.append(label, title, detail, action);
-            content.appendChild(locked);
-            return;
-        }
+            const percent = document.createElement("span");
+            const entryPercent = currentTotal > 0
+                ? Math.round((Number(entry.amount) / currentTotal) * 1000) / 10
+                : null;
+            percent.textContent = entryPercent === null ? "—" : entryPercent + "%";
 
-        const range = getSelectedRange();
-
-        if (!Number.isFinite(range.startDate) || !Number.isFinite(range.endDate)) {
-            const empty = document.createElement("section");
-            empty.className = "assets-analytics-empty-state";
-            empty.textContent = "История активов пока недоступна.";
-            content.appendChild(empty);
-            return;
-        }
-
-        if (selectedPeriod === "custom" && !canAccessAssetsAnalyticsRange(range)) {
-            showSubscriptionLimitNotice();
-            return;
-        }
-
-        const analytics = assetsAnalytics.getAssetsAnalytics(range);
-
-        const currentMetric = createMetric(
-            "ТЕКУЩЕЕ СОСТОЯНИЕ",
-            formatAmount(analytics.current?.total) + " ₽",
-            "Срез · " + formatDate(analytics.current?.occurredAt)
-        );
-
-        const changeValue = analytics.change.hasComparison
-            ? (analytics.change.percent >= 0 ? "+" : "") + analytics.change.percent + "%"
-            : "—";
-
-        const changeDetail = analytics.change.hasComparison
-            ? (analytics.change.amount >= 0 ? "+" : "") + formatAmount(analytics.change.amount) + " ₽ за период"
-            : "Недостаточно данных для сравнения.";
-
-        const changeMetric = createMetric("ИЗМЕНЕНИЕ", changeValue, changeDetail);
-
-        const dynamics = document.createElement("section");
-        dynamics.className = "assets-analytics-section";
-
-        const dynamicsTitle = document.createElement("span");
-        dynamicsTitle.className = "statistics-meta";
-        dynamicsTitle.textContent = "ДИНАМИКА";
-        dynamics.appendChild(dynamicsTitle);
-        renderDynamicsChart(dynamics, analytics.dynamics);
-
-        content.append(currentMetric, changeMetric, dynamics);
-        renderLiquidity(content, analytics.liquidity);
-        renderComposition(content, analytics.composition);
+            main.append(label, liquidity);
+            value.append(amount, percent);
+            row.append(main, value);
+            composition.appendChild(row);
+        });
     }
 
-    screen.append(header, selector, customControls, content);
-    root.appendChild(screen);
-    render();
+    content.appendChild(composition);
 }
 
 export { renderAssetsStatisticsScreen };

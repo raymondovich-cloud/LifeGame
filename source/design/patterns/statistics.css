@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.5 */
+/* statistics.css — Version 3.6 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -561,4 +561,70 @@
         padding-left:var(--space-4);
         padding-right:var(--space-4);
     }
+}
+
+
+/* Assets analytics v1: compact capital composition without period controls. */
+.assets-analytics-overview{
+    display:grid;
+    gap:var(--assets-block-spacing, var(--space-2));
+    padding:var(--space-5) 0 var(--space-5);
+    border-top:var(--border-subtle);
+}
+.assets-analytics-overview-value{
+    color:var(--color-white);
+    font-family:var(--font-family-mono);
+    font-size:clamp(2.5rem,12vw,4rem);
+    font-weight:var(--font-weight-semibold);
+    letter-spacing:-.065em;
+    line-height:.92;
+}
+.assets-analytics-overview-date{
+    color:var(--color-gray-dark);
+    font-size:var(--font-size-2xs);
+}
+.assets-analytics-distribution{
+    padding-top:var(--space-5);
+}
+.assets-analytics-distribution .assets-analytics-liquidity-bar{
+    height:.5rem;
+}
+.assets-analytics-composition{
+    padding-bottom:var(--space-2);
+}
+.assets-analytics-composition-main{
+    display:grid;
+    gap:.2rem;
+    min-width:0;
+}
+.assets-analytics-composition-main > span:first-child{
+    overflow:hidden;
+    color:var(--color-white-soft);
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.assets-analytics-composition-type{
+    color:var(--color-gray-dark);
+    font-size:var(--font-size-2xs);
+}
+.assets-analytics-composition-value{
+    display:grid;
+    justify-items:end;
+    gap:.2rem;
+    min-width:5.5rem;
+}
+.assets-analytics-composition-value strong{
+    color:var(--color-white);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+    white-space:nowrap;
+}
+.assets-analytics-composition-value span{
+    color:var(--color-gray);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+}
+.assets-statistics-screen .assets-analytics-content{
+    padding-bottom:var(--space-5);
 }
