@@ -1,4 +1,4 @@
-// finance.analytics.test.mjs — Version 1.0
+// finance.analytics.test.mjs — Version 1.1
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -117,4 +117,36 @@ test("Finance Analytics returns no fabricated percentage when baseline is zero",
 
     assert.equal(result.metrics["actual-earnings"].change.percent, null);
     assert.equal(result.metrics["actual-earnings"].change.hasComparison, false);
+});
+
+
+test("Finance Analytics uses the first snapshot inside the month when no earlier baseline exists", () => {
+    const memory = createFinanceMemory(createUserContext("user-3"));
+    const finance = createFinanceApplication({ memory });
+
+    memory.mutateFinanceCollection({
+        collection: "actual-earnings",
+        operation: "create",
+        entry: { label: "Доход", amount: 10000 },
+        occurredAt: 2000
+    });
+
+    memory.mutateFinanceCollection({
+        collection: "actual-earnings",
+        operation: "update",
+        entryId: memory.listActualEarnings()[0].id,
+        entry: { ...memory.listActualEarnings()[0], amount: 15000 },
+        occurredAt: 3000
+    });
+
+    const analytics = createFinanceAnalytics({ financeApplication: finance });
+    const result = analytics.getFinanceAnalytics({
+        startDate: 1000,
+        endDate: 3000
+    });
+
+    assert.equal(result.metrics["actual-earnings"].baseline, 10000);
+    assert.equal(result.metrics["actual-earnings"].current, 15000);
+    assert.equal(result.metrics["actual-earnings"].change.percent, 50);
+    assert.equal(result.metrics["actual-earnings"].change.hasComparison, true);
 });
