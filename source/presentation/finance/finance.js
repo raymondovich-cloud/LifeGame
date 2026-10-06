@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.14
+// source/presentation/finance/finance.js — Version 4.15
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -287,7 +287,63 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         trends.appendChild(item);
     });
 
-    section.append(header, amount, caption, trends);
+    const chart = document.createElement("div");
+    chart.className = "finance-capital-chart";
+    chart.setAttribute("aria-label", "Динамика пяти финансовых показателей за месяц");
+
+    const chartTitle = document.createElement("span");
+    chartTitle.className = "finance-capital-chart-title";
+    chartTitle.textContent = "Динамика за месяц";
+
+    const chartBars = document.createElement("div");
+    chartBars.className = "finance-capital-chart-bars";
+
+    const chartMetrics = [
+        ["assets", "Активы"],
+        ["actual-earnings", "Заработано"],
+        ["financial-burden", "Нагрузка"],
+        ["mandatory-expenses", "Траты"],
+        ["financial-cushion", "Подушка"]
+    ];
+
+    const changes = chartMetrics.map(([id]) => {
+        const change = analyticsSnapshot?.metrics?.[id]?.change;
+        return change?.hasComparison && Number.isFinite(Number(change.percent))
+            ? Number(change.percent)
+            : null;
+    });
+    const finiteChanges = changes.filter((value) => value !== null);
+    const maxAbsChange = Math.max(1, ...finiteChanges.map((value) => Math.abs(value)));
+
+    chartMetrics.forEach(([id, label], index) => {
+        const column = document.createElement("div");
+        column.className = "finance-capital-chart-column";
+
+        const value = changes[index];
+        const bar = document.createElement("span");
+        bar.className = "finance-capital-chart-bar";
+        bar.style.height = value === null
+            ? "0%"
+            : Math.max(4, (Math.abs(value) / maxAbsChange) * 100) + "%";
+        if (value !== null && value < 0) {
+            bar.classList.add("is-negative");
+        }
+
+        const metric = document.createElement("strong");
+        metric.textContent = value === null ? "—" : formatPercentChange({
+            percent: value,
+            hasComparison: true
+        });
+
+        const labelNode = document.createElement("span");
+        labelNode.textContent = label;
+
+        column.append(bar, metric, labelNode);
+        chartBars.appendChild(column);
+    });
+
+    chart.append(chartTitle, chartBars);
+    section.append(header, amount, caption, trends, chart);
     return section;
 }
 
