@@ -1,4 +1,4 @@
-/* finance.css — Version 1.7 */
+/* finance.css — Version 1.8 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -102,6 +102,16 @@
 .finance-data-entry-copy p{margin:0;color:var(--color-gray);font-size:var(--font-size-2xs);line-height:1.4}
 .finance-data-entry .finance-text-action{white-space:nowrap}
 @media (max-width:719px){.finance-data-entry{align-items:flex-start}}
+
+/* Finance data screen: keeps navigation outside the premium content frame. */
+.finance-data-back{
+    display:flex;
+    align-items:center;
+    min-height:1.25rem;
+}
+.finance-data-back .finance-text-action{
+    padding:0;
+}
 
 /* DATA legacy finance surface: intentionally preserves the pre-experiment card UI. */
 .finance-data-screen .finance-data-accordion{gap:var(--space-3);overflow-anchor:none}
