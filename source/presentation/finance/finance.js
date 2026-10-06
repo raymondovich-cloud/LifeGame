@@ -729,6 +729,41 @@ function createStructure(financeApplication, snapshot, root, activeSectionId, on
     section.append(header, rows);
     return section;
 }
+function formatSnapshotDate(timestamp) {
+    return new Intl.DateTimeFormat("ru-RU", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    }).format(timestamp ? new Date(timestamp) : new Date()).toUpperCase();
+}
+
+
+function refreshAssetsSummary(root, financeApplication, assetsAnalytics) {
+    const summary = root.querySelector(".assets-summary");
+    if (!summary) return;
+
+    const amount = summary.querySelector(".assets-total-value");
+    if (!amount) return;
+
+    const statistics = assetsAnalytics.getAssetsAnalytics(assetsAnalytics.getAssetsAnalyticsRange("month"));
+    const amountText = formatAmount(statistics.current?.total ?? 0) + " ₽";
+    amount.textContent = amountText;
+
+    const numericLength = amountText.replace(/\D/g, "").length;
+    const fontSize = Math.max(
+        1.45,
+        Math.min(2.6, 2.6 - Math.max(0, numericLength - 7) * 0.12)
+    );
+    amount.style.fontSize = fontSize + "rem";
+
+    const date = summary.querySelector(".assets-summary-date");
+
+    if (date) {
+        date.textContent = formatSnapshotDate(statistics.current?.occurredAt);
+    }
+}
+
+
 function createFinancialStabilityIndexPanel(financeApplication) {
     const result = financeApplication.getFinancialStabilityIndex();
 
