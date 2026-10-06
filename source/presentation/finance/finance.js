@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.22
+// source/presentation/finance/finance.js — Version 4.23
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -168,7 +168,7 @@ function createHealthBlock(financeApplication) {
 
     const description = document.createElement("p");
     description.className = "finance-health-description";
-    description.textContent = "Сводная оценка устойчивости вашей финансовой системы.";
+    description.textContent = "Комплексная оценка вашего финансового положения, которая показывает уровень устойчивости системы и помогает понять, насколько уверенно вы справляетесь с текущими расходами и обязательствами.";
 
     const diagnostics = document.createElement("button");
     diagnostics.type = "button";
