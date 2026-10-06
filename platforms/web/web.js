@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.3
+// platforms/web/web.js — Version 4.4
 
 import {
     trace,
@@ -308,7 +308,6 @@ function startWeb() {
         if (moduleId === "finance") {
             renderFinance(
                 moduleContent,
-                null,
                 publicMode ? (action) => openRegistrationModal(action) : null,
                 financeApplication
             );
