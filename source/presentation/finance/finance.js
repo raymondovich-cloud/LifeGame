@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.17
+// source/presentation/finance/finance.js — Version 4.18
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -295,13 +295,21 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         const labelNode = document.createElement("span");
         labelNode.textContent = label;
 
+        const bar = document.createElement("span");
+        bar.className = "finance-capital-chart-bar";
+        const barHeight = value === null
+            ? 0
+            : Math.min(100, Math.max(8, Math.abs(value)));
+        bar.style.height = barHeight + "%";
+        bar.setAttribute("aria-hidden", "true");
+
         const metric = document.createElement("strong");
         metric.textContent = value === null ? "—" : formatPercentChange({
             percent: value,
             hasComparison: true
         });
 
-        column.append(labelNode, metric);
+        column.append(labelNode, bar, metric);
         chartBars.appendChild(column);
     });
 
