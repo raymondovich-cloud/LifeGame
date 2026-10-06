@@ -1,4 +1,4 @@
-/* finance.css — Version 2.6 */
+/* finance.css — Version 2.7 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -302,7 +302,7 @@
 
 .finance-capital-chart-column{
     display:grid;
-    grid-template-rows:auto auto 1fr;
+    grid-template-rows:1fr auto;
     align-items:end;
     gap:.45rem;
     min-width:0;
@@ -317,6 +317,13 @@
     line-height:1.15;
     text-align:center;
     overflow-wrap:anywhere;
+}
+
+.finance-capital-chart-footer{
+    display:grid;
+    gap:.2rem;
+    min-width:0;
+    justify-items:center;
 }
 
 .finance-capital-chart-value{
@@ -370,6 +377,10 @@
     .finance-capital-chart-column{
         height:8rem;
         gap:.3rem;
+    }
+
+    .finance-capital-chart-footer{
+        gap:.15rem;
     }
 
     .finance-capital-chart-label{
