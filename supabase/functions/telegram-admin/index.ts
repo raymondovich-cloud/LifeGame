@@ -42,8 +42,18 @@ async function telegram(method: string, body: Record<string, unknown>) {
   return typeof responseBody === "string" ? JSON.parse(responseBody) : responseBody;
 }
 
-async function reply(chatId: number | string, text: string) {
-  return telegram("sendMessage", {chat_id: chatId, text});
+async function reply(chatId: number | string, text: string, showKeyboard = false) {
+  return telegram("sendMessage", {
+    chat_id: chatId,
+    text,
+    ...(showKeyboard ? {
+      reply_markup: {
+        keyboard: [[{text: "📋 Команды"}]],
+        resize_keyboard: true,
+        is_persistent: true,
+      },
+    } : {}),
+  });
 }
 
 function formatMoscow(value: string | undefined) {
@@ -88,7 +98,7 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
     return new Response("ok", {status: 200});
   }
 
-  if (text === "/start") {
+  if (text === "📋 Команды" || text === "/help") {
     await reply(chatId,
       "🎮 LifeGame Admin Bot\n\n" +
       "🟢 Бот активен\n" +
