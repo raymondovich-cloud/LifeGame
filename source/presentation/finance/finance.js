@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.13
+// source/presentation/finance/finance.js — Version 4.14
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -950,6 +950,9 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
     const assetsAnalytics = financeApplication
         ? createAssetsAnalytics({ financeApplication })
         : null;
+    const financeAnalytics = financeApplication
+        ? createFinanceAnalytics({ financeApplication })
+        : null;
 
     const page = document.createElement("section");
     page.className = "finance-workspace";
@@ -979,7 +982,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
     page.append(
         intro,
         createHealthBlock(financeApplication),
-        createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt)
+        createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt)
     );
 
     const data = document.createElement("section");
