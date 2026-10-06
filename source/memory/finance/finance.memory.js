@@ -155,8 +155,11 @@ function createFinanceMemory(userContext) {
     }
 
     function mutateFinanceCollection({ collection, operation, entry = null, entryId = null, occurredAt = Date.now() }) {
-        if (!COLLECTIONS.includes(collection) || collection === "assets") {
+        if (!COLLECTIONS.includes(collection)) {
             throw new Error("LifeGame Finance Memory: invalid Finance collection mutation.");
+        }
+        if (collection === "assets") {
+            return mutateAsset({ operation, entry, entryId, occurredAt });
         }
         if (!["create", "update", "delete"].includes(operation)) {
             throw new Error("LifeGame Finance Memory: invalid Finance mutation.");
