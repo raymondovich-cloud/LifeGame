@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.6 */
+/* statistics.css — Version 3.7 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -627,4 +627,31 @@
 }
 .assets-statistics-screen .assets-analytics-content{
     padding-bottom:var(--space-5);
+}
+
+/* Analytics asset rows: symmetric inner edge and right-side percentage/pin grouping. */
+.assets-statistics-screen .assets-analytics-composition .swipe-delete-content{
+    padding:var(--space-3) var(--assets-block-spacing, var(--space-3));
+}
+.assets-statistics-screen .assets-analytics-composition .assets-analytics-composition-main{
+    align-self:center;
+}
+.assets-statistics-screen .assets-analytics-composition .assets-analytics-composition-value{
+    align-items:end;
+}
+.assets-statistics-screen .assets-analytics-composition .assets-analytics-composition-meta{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:var(--assets-block-spacing, var(--space-2));
+    min-height:.9rem;
+}
+.assets-statistics-screen .assets-analytics-composition .assets-analytics-composition-meta .finance-entry-pin{
+    display:none;
+    width:.78rem;
+    height:.78rem;
+    margin:0;
+}
+.assets-statistics-screen .assets-analytics-composition .swipe-delete-item.is-pinned .assets-analytics-composition-meta .finance-entry-pin{
+    display:inline-flex;
 }

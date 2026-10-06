@@ -1,4 +1,4 @@
-// assets.statistics.js — Version 3.5
+// assets.statistics.js — Version 3.6
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -136,17 +136,34 @@ function createAnalyticsAssetRow(root, entry, financeApplication, onWriteAttempt
     row.dataset.entryId = entry.id;
     row.dataset.subblockId = "assets";
     row.classList.toggle("is-pinned", interaction?.isPinned?.(entry.id) === true);
+
     const action = document.createElement("button");
     action.type = "button"; action.className = "swipe-delete-action";
     action.setAttribute("aria-label", "Удалить " + entry.label); action.textContent = "Удалить";
+
     const content = document.createElement("div");
     content.className = "swipe-delete-content assets-statistics-history-row";
+
     const main = document.createElement("div"); main.className = "assets-analytics-composition-main";
     const label = document.createElement("span"); label.textContent = entry.label;
-    const liquidity = document.createElement("span"); liquidity.className = "assets-analytics-composition-type";
+
+    const liquidity = document.createElement("span");
+    liquidity.className = "assets-analytics-composition-type";
     liquidity.textContent = entry.liquidity === "illiquid" ? "Неликвидный" : "Ликвидный";
-    const value = document.createElement("div"); value.className = "assets-analytics-composition-value";
-    const amount = document.createElement("strong"); amount.textContent = formatAmount(entry.amount) + " ₽";
+
+    const value = document.createElement("div");
+    value.className = "assets-analytics-composition-value";
+
+    const amount = document.createElement("strong");
+    amount.textContent = formatAmount(entry.amount) + " ₽";
+
+    const meta = document.createElement("div");
+    meta.className = "assets-analytics-composition-meta";
+
+    const percent = document.createElement("span");
+    const currentTotal = Number(interaction?.currentTotal ?? 0);
+    const entryPercent = currentTotal > 0 ? Math.round((Number(entry.amount) / currentTotal) * 1000) / 10 : null;
+    percent.textContent = entryPercent === null ? "—" : entryPercent + "%";
 
     const pin = document.createElement("span");
     pin.className = "finance-entry-pin";
@@ -156,11 +173,12 @@ function createAnalyticsAssetRow(root, entry, financeApplication, onWriteAttempt
             '<path d="M5.2 1.8h5.6l-.7 3.2 2.1 2.1v1.1H8.9v4.1l-.9 1.7-.9-1.7V8.2H3.8V7.1l2.1-2.1z"></path>' +
         "</svg>";
 
-    const percent = document.createElement("span");
-    const currentTotal = Number(interaction?.currentTotal ?? 0);
-    const entryPercent = currentTotal > 0 ? Math.round((Number(entry.amount) / currentTotal) * 1000) / 10 : null;
-    percent.textContent = entryPercent === null ? "—" : entryPercent + "%";
-    main.append(label, liquidity); value.append(amount, percent, pin); content.append(main, value); row.append(action, content);
+    main.append(label, liquidity);
+    meta.append(percent, pin);
+    value.append(amount, meta);
+    content.append(main, value);
+    row.append(action, content);
+
     const rerender = () => { if (typeof interaction?.onChanged === "function") interaction.onChanged(); };
     attachEntryEdit(row, "assets", entry, onWriteAttempt, financeApplication,
         () => rerender(),
@@ -279,7 +297,16 @@ function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics, financeAppl
         empty.textContent = "Активов пока нет.";
         composition.appendChild(empty);
     } else {
-        analytics.composition.forEach((entry) => {
+        const compositionEntries = analytics.composition
+            .map((entry, index) => ({
+                entry,
+                index,
+                pinned: interaction?.isPinned?.(entry.id) === true
+            }))
+            .sort((first, second) => Number(second.pinned) - Number(first.pinned) || first.index - second.index)
+            .map((item) => item.entry);
+
+        compositionEntries.forEach((entry) => {
             const row = createAnalyticsAssetRow(
                 root, entry, financeApplication, onWriteAttempt, {
                     ...interaction,
