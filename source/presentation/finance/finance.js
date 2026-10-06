@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.3
+// source/presentation/finance/finance.js — Version 4.4
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -227,7 +227,7 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
         if (!assetsAnalytics) return;
         renderAssetsStatisticsScreen(
             root,
-            () => renderFinance(root, "assets", onWriteAttempt, financeApplication),
+            () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
             assetsAnalytics
         );
     });
@@ -294,7 +294,7 @@ function createStructureRow(root, section, total, count, active, onWriteAttempt,
     trailing.append(value, arrow);
     row.append(main, trailing);
     row.addEventListener("click", () => {
-        renderFinance(root, active ? null : section.id, onWriteAttempt, financeApplication);
+        renderFinanceData(root, active ? null : section.id, onWriteAttempt, financeApplication);
     });
     return row;
 }
@@ -374,7 +374,7 @@ function createEntryRow(root, section, entry, onWriteAttempt, financeApplication
         },
         () => {
             toggleEntryPinned(section.id, entry.id);
-            renderFinance(root, section.id, onWriteAttempt, financeApplication);
+            renderFinanceData(root, section.id, onWriteAttempt, financeApplication);
         },
         () => {
             deleteFinanceEntryItem(root, row, onWriteAttempt, financeApplication, assetsAnalytics);
@@ -752,7 +752,82 @@ function attachSwipeDelete(root, onWriteAttempt = null, financeApplication = nul
     });
 }
 
-function renderFinance(root, openSubblockId = null, onWriteAttempt = null, financeApplication = null) {
+function createBackAction(root, onWriteAttempt, financeApplication) {
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "finance-text-action";
+    back.textContent = "← Finance";
+    back.addEventListener("click", () => {
+        renderFinance(root, onWriteAttempt, financeApplication);
+    });
+    return back;
+}
+
+function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
+    if (!root) {
+        throw new Error("LifeGame Finance: presentation root was not found.");
+    }
+
+    root.replaceChildren();
+
+    if (!financeApplication) {
+        renderFinance(root, onWriteAttempt, financeApplication);
+        return;
+    }
+
+    const assetsAnalytics = createAssetsAnalytics({ financeApplication });
+    const page = document.createElement("section");
+    page.className = "finance-workspace finance-data-screen";
+    page.setAttribute("aria-label", "Financial data");
+
+    const header = document.createElement("header");
+    header.className = "finance-workspace-header";
+
+    const headingRow = document.createElement("div");
+    headingRow.className = "finance-block-heading";
+
+    const copy = document.createElement("div");
+    copy.className = "finance-data-screen-copy";
+
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "finance-section-meta";
+    eyebrow.textContent = "DATA";
+
+    const title = document.createElement("h2");
+    title.textContent = "Финансовые данные";
+
+    const description = document.createElement("p");
+    description.textContent = activeSectionId
+        ? "Управление записями выбранного направления."
+        : "Добавление, редактирование и удаление записей.";
+
+    copy.append(eyebrow, title, description);
+
+    headingRow.append(
+        copy,
+        createBackAction(root, onWriteAttempt, financeApplication)
+    );
+    header.appendChild(headingRow);
+    page.appendChild(header);
+
+    const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
+    page.appendChild(
+        createStructure(
+            financeApplication,
+            snapshot,
+            root,
+            activeSectionId,
+            onWriteAttempt,
+            assetsAnalytics,
+            true
+        )
+    );
+
+    root.appendChild(page);
+    attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
+}
+
+function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -788,60 +863,43 @@ function renderFinance(root, openSubblockId = null, onWriteAttempt = null, finan
         return;
     }
 
-    const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
-
-    const health = financeApplication.getFinancialStabilityIndex();
-
     page.append(
         intro,
         createHealthBlock(financeApplication),
         createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt)
     );
 
-    if (openSubblockId) {
-        page.append(
-            createStructure(
-                financeApplication,
-                snapshot,
-                root,
-                openSubblockId,
-                onWriteAttempt,
-                assetsAnalytics
-            )
-        );
-    } else {
-        const data = document.createElement("section");
-        data.className = "finance-data-entry";
+    const data = document.createElement("section");
+    data.className = "finance-data-entry";
 
-        const copy = document.createElement("div");
-        copy.className = "finance-data-entry-copy";
+    const copy = document.createElement("div");
+    copy.className = "finance-data-entry-copy";
 
-        const meta = document.createElement("span");
-        meta.className = "finance-section-meta";
-        meta.textContent = "DATA";
+    const meta = document.createElement("span");
+    meta.className = "finance-section-meta";
+    meta.textContent = "DATA";
 
-        const title = document.createElement("strong");
-        title.textContent = "Управление финансовыми данными";
+    const dataTitle = document.createElement("strong");
+    dataTitle.textContent = "Управление финансовыми данными";
 
-        const description = document.createElement("p");
-        description.textContent = "Добавление, редактирование и удаление записей.";
+    const dataDescription = document.createElement("p");
+    dataDescription.textContent = "Добавление, редактирование и удаление записей.";
 
-        copy.append(meta, title, description);
+    copy.append(meta, dataTitle, dataDescription);
 
-        const action = document.createElement("button");
-        action.type = "button";
-        action.className = "finance-text-action";
-        action.textContent = "Открыть →";
-        action.addEventListener("click", () => {
-            renderFinance(root, "assets", onWriteAttempt, financeApplication);
-        });
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "finance-text-action";
+    action.textContent = "Открыть →";
+    action.addEventListener("click", () => {
+        renderFinanceData(root, null, onWriteAttempt, financeApplication);
+    });
 
-        data.append(copy, action);
-        page.appendChild(data);
-    }
+    data.append(copy, action);
+    page.appendChild(data);
 
     root.appendChild(page);
     attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
 }
 
-export { renderFinance, attachSwipeDelete, deleteFinanceEntryItem };
+export { renderFinance, renderFinanceData, attachSwipeDelete, deleteFinanceEntryItem };
