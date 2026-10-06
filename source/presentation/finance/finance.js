@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.16
+// source/presentation/finance/finance.js — Version 4.17
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -266,7 +266,7 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     const chart = document.createElement("div");
     chart.className = "finance-capital-chart";
-    chart.setAttribute("aria-label", "Динамика четырех финансовых показателей за месяц");
+    chart.setAttribute("aria-label", "Динамика пяти финансовых показателей за месяц");
 
     const chartTitle = document.createElement("span");
     chartTitle.className = "finance-capital-chart-title";
@@ -279,7 +279,8 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         ["assets", "Активы"],
         ["actual-earnings", "Заработано"],
         ["financial-burden", "Нагрузка"],
-        ["mandatory-expenses", "Траты"]
+        ["mandatory-expenses", "Траты"],
+        ["financial-cushion", "Подушка"]
     ];
 
     chartMetrics.forEach(([id, label]) => {
