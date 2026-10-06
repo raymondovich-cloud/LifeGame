@@ -498,7 +498,7 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
                     );
                 }
 
-                renderFinance(root, section.id, onWriteAttempt, financeApplication);
+                renderFinanceData(root, section.id, onWriteAttempt, financeApplication);
             } catch (formError) {
                 error.textContent = formError.message;
                 error.hidden = false;
@@ -620,7 +620,7 @@ function finalizeDeletedItem(root, item, financeApplication, assetsAnalytics, on
         entryList.appendChild(empty);
     }
 
-    renderFinance(root, item.dataset.subblockId, onWriteAttempt, financeApplication);
+    renderFinanceData(root, item.dataset.subblockId, onWriteAttempt, financeApplication);
 }
 
 function deleteFinanceEntryItem(root, item, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
