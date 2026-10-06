@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.21
+// source/presentation/finance/finance.js — Version 4.22
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1017,7 +1017,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
     title.textContent = "Финансовая система";
 
     const description = document.createElement("p");
-    description.textContent = "Одна панель для капитала, доходов, обязательств и резерва.";
+    description.textContent = "Понимайте состояние своих финансов и управляйте ими как единой системой.";
 
     intro.append(eyebrow, title, description);
 
