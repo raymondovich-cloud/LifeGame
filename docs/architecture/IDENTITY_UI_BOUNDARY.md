@@ -1,117 +1,131 @@
+<!-- docs/architecture/IDENTITY_UI_BOUNDARY.md — Version 1.1 -->
+
 # LifeGame 3.0 — Identity UI Boundary
 
-## Status
+**Статус:** CURRENT  
+**Дата проверки:** 06.10.2026
 
-Approved architectural decision.
+## 1. Назначение
 
-## Core rule
+Документ фиксирует фактическую границу Identity/Auth и Profile в текущем Web-приложении.
 
-Registration, authentication, and user Profile are separate concepts.
+Registration, Login и Profile являются разными понятиями:
 
-- Registration is an unauthenticated entry flow.
-- Login is an unauthenticated entry flow.
-- Email verification is part of the identity flow.
-- Profile is an authenticated application section.
-- Profile is not the registration screen.
-- Profile is not the login screen.
-- Identity/Auth is not a Finance/Health navigation module.
+- Registration — создание аккаунта;
+- Login — вход в существующий аккаунт;
+- email verification — часть Identity flow;
+- Profile — раздел аутентифицированного приложения.
 
-## User flow
+## 2. IMPLEMENTED
 
-Unauthenticated:
+### Auth Presentation
 
-Welcome → Create account / Login → Email verification when required → Authenticated application
+В `source/presentation/auth/` реализованы отдельные:
 
-Authenticated:
+- `register.js`;
+- `login.js`.
 
-Finance / Health / Development / Profile
+Они работают через Auth Controller и не обращаются напрямую к Supabase, PostgreSQL, токенам или persistence.
 
-Logout:
+### Web Auth flow
 
-Authenticated application → Logout → Unauthenticated Auth UI
+`platforms/web/web.js` реализует:
 
-## Authentication state boundary
+- проверку текущей сессии;
+- public/authenticated mode;
+- Registration modal;
+- Login modal;
+- переход Registration ↔ Login;
+- обработку email verification;
+- повторную отправку verification email;
+- переход в authenticated application после успешной аутентификации;
+- logout с возвратом в public mode.
 
-The application must distinguish at minimum:
+### Profile
 
-- UNAUTHENTICATED
-- AUTHENTICATED
+После аутентификации:
 
-Future states may include:
+- Profile доступен как отдельный маршрут приложения;
+- `renderProfile()` получает authenticated session;
+- Profile использует Profile Application;
+- Profile не обращается напрямую к Supabase.
 
-- AUTHENTICATION_PENDING
-- EMAIL_VERIFICATION_REQUIRED
-- ACCOUNT_SUSPENDED
+Profile поддерживает текущие операции с display name и birth date.
 
-The authenticated state is authoritative for access to the main application. The browser UI must not be treated as the security boundary.
+### Public Profile route
 
-## Presentation structure
+В public mode переход к Profile не открывает приватный Profile. Web открывает Registration flow.
 
-```text
-source/presentation/
-├── auth/
-│   ├── register.js
-│   ├── login.js
-│   └── ...
-└── profile/
-    └── profile.js
+Это фактическое поведение текущего `platforms/web/web.js`.
+
+## 3. Архитектурная граница
+
+Текущая схема:
+
+```
+Web Presentation
+      ↓
+Auth Controller
+      ↓
+Identity Application
+      ↓
+Identity Domain
+      ↑
+Infrastructure Identity adapter
+      ↓
+Supabase Auth
+
+Web Presentation
+      ↓
+Profile Presentation
+      ↓
+Profile Application
+      ↓
+Profile Infrastructure adapter
+      ↓
+Supabase
 ```
 
-Auth presentation is responsible for entry and identity interactions.
+Конкретные provider/storage детали не должны проникать в Domain и Presentation.
 
-Profile presentation is responsible for the authenticated user's account area.
+## 4. Authentication state
 
-## Navigation rule
+Текущий Web-контур различает:
 
-Profile must only appear as a normal application navigation destination after authentication.
+- unauthenticated/public mode;
+- authenticated mode;
+- внутреннее состояние проверки сессии.
 
-Registration must never be rendered through `moduleId === "profile"`.
+После успешной аутентификации приложение может удерживать authenticated shell до завершения повторной проверки сессии, чтобы кратковременный null session не возвращал пользователя в public mode.
 
-The current registration-under-Profile implementation is considered temporary smoke-test wiring and must be removed before the final authentication UI is implemented.
+Это поведение реализовано в Web composition.
 
-## Architecture rule
+## 5. PLANNED
 
-Identity remains a separate bounded context.
+В текущем коде не следует считать реализованными без отдельного подтверждения:
 
-```text
-Presentation Auth
-      ↓
-Application Identity
-      ↓
-Domain Identity
+- отдельную полноэкранную страницу Registration вместо текущего modal flow;
+- отдельную полноэкранную страницу Login вместо текущего modal flow;
+- отдельный пользовательский session-management UI;
+- device management UI.
 
-Infrastructure Identity
-      ↓
-provider implementation
-```
+## 6. FUTURE
 
-Profile may consume authenticated user information through Application contracts, but Profile must not access Supabase, database tables, tokens, or cryptographic implementations directly.
+Следующие Identity UI возможности не являются текущей реализацией:
 
-## Security rule
+- Passkeys/WebAuthn UI;
+- MFA UI;
+- Telegram Mini App Identity UI;
+- iOS Identity UI;
+- расширенный security dashboard.
 
-Authentication state controls presentation flow, but authorization and data isolation remain server-side responsibilities.
+## 7. Ограничения
 
-No client-side route or UI condition may be treated as sufficient protection for private data.
+- Profile не должен напрямую обращаться к Supabase или базе данных.
+- Auth Presentation не должен реализовывать хранение или криптографию.
+- Client-side UI не является границей авторизации.
+- Registration и Login не должны становиться бизнес-модулями Finance/Health/Development.
 
-## Next implementation order
+## 8. Статус
 
-1. Define provider-independent authentication/session result contracts.
-2. Define authentication state model.
-3. Define Auth/Application routing boundary.
-4. Remove registration from Profile navigation.
-5. Create standalone Registration screen/window.
-6. Create standalone Login screen/window.
-7. Integrate session restoration.
-8. Expose Profile only after authentication.
-9. Add logout transition back to Auth UI.
-10. Add authenticated Profile data flow.
-
-## Explicitly deferred
-
-Do not implement Login by returning raw Supabase responses through Application or Presentation.
-
-Before Login UI, normalize provider-specific authentication results and errors at the Infrastructure boundary.
-
-Do not introduce custom JWT/session infrastructure.
-
-Do not move private identity data into browser-local storage as a substitute for server-side authorization.
+**CURRENT — подтверждено кодом Web, Identity Presentation/Application/Infrastructure и Profile implementation.**
