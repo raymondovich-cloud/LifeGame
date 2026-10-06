@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.4
+// source/presentation/finance/finance.js — Version 4.5
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -600,13 +600,31 @@ function createStructure(financeApplication, snapshot, root, activeSectionId, on
     FINANCE_SECTIONS.forEach((item) => {
         const entries = financeApplication.listFinanceEntries(item.id);
         const total = getSectionTotal(financeApplication, item.id);
-        rows.appendChild(createStructureRow(root, item, total, entries.length, item.id === activeSectionId, onWriteAttempt, financeApplication));
+        rows.appendChild(
+            createStructureRow(
+                root,
+                item,
+                total,
+                entries.length,
+                item.id === activeSectionId,
+                onWriteAttempt,
+                financeApplication
+            )
+        );
+
+        if (item.id === activeSectionId) {
+            rows.appendChild(
+                createDetail(
+                    root,
+                    item,
+                    onWriteAttempt,
+                    financeApplication,
+                    assetsAnalytics
+                )
+            );
+        }
     });
     section.append(header, rows);
-    if (activeSectionId) {
-        const active = getSection(activeSectionId);
-        section.append(createDetail(root, active, onWriteAttempt, financeApplication, assetsAnalytics));
-    }
     return section;
 }
 function finalizeDeletedItem(root, item, financeApplication, assetsAnalytics, onWriteAttempt = null) {
