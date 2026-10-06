@@ -3,7 +3,8 @@
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
-import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";\nimport { createFinanceAnalytics } from "../../application/finance/finance.analytics.js";
+import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";
+import { createFinanceAnalytics } from "../../application/finance/finance.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
