@@ -1,4 +1,4 @@
-// version 2.0
+// version 2.1
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -55,6 +55,16 @@ function formatMoscow(value: string | undefined) {
   }) + " MSK";
 }
 
+const commandDescriptions = [
+  ["/start", "открыть панель LifeGame Admin Bot"],
+  ["/status", "мониторинг Database, Telegram API, пользователей и безопасности"],
+  ["/help", "показать список команд и их назначение"],
+] as const;
+
+function formatCommandList() {
+  return commandDescriptions.map(([command, description]) => command + " — " + description).join("\n");
+}
+
 async function handleTelegramUpdate(update: Record<string, unknown>, request: Request) {
   const headerSecret = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
   if (!telegramWebhookSecret || headerSecret !== telegramWebhookSecret) {
@@ -84,8 +94,7 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
       "🟢 Бот активен\n" +
       "🔔 Регистрации подключены\n\n" +
       "Команды:\n" +
-      "/status — состояние системы\n" +
-      "/help — список команд"
+      formatCommandList()
     );
     return new Response("ok", {status: 200});
   }
@@ -93,8 +102,9 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
   if (text === "/help") {
     await reply(chatId,
       "🎮 LifeGame Admin\n\n" +
-      "/status — мониторинг основных сервисов и безопасности\n" +
-      "/help — список команд\n\n" +
+      "Доступные команды:\n" +
+      formatCommandList() +
+      "\n\n" +
       "Автоматически:\n" +
       "• новые регистрации\n" +
       "• security events"
@@ -258,7 +268,20 @@ async function handleSetup(request: Request) {
     allowed_updates: ["message"],
   });
 
-  return new Response(JSON.stringify({status: "ok", webhookConfigured: true}), {status: 200, headers: {"Content-Type": "application/json"}});
+  if (telegramAdminChatId) {
+    await telegram("setMyCommands", {
+      commands: commandDescriptions.map(([command, description]) => ({
+        command: command.slice(1),
+        description,
+      })),
+      scope: {
+        type: "chat",
+        chat_id: Number(telegramAdminChatId),
+      },
+    });
+  }
+
+  return new Response(JSON.stringify({status: "ok", webhookConfigured: true, commandsConfigured: Boolean(telegramAdminChatId)}), {status: 200, headers: {"Content-Type": "application/json"}});
 }
 
 async function handleWebhookInfo() {
