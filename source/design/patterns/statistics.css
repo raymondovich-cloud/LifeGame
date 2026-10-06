@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.3 */
+/* statistics.css — Version 3.4 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -466,13 +466,13 @@
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-summary-date{margin-top:0;}
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-statistics-trigger{gap:var(--assets-block-spacing);}
 
-/* Assets analytics: use the same visual system as the «Активы» block. */
+/* Assets analytics: reuse the exact premium surface foundation of the «Активы» accordion. */
 .assets-statistics-screen{
     position:relative;
     display:grid;
-    gap:var(--assets-block-spacing, var(--space-2));
-    padding:var(--assets-block-spacing, var(--space-2));
-    overflow:hidden;
+    gap:0;
+    padding:0;
+    overflow:visible;
     background:var(--gradient-card-premium);
     border:1px solid transparent;
     border-radius:var(--radius-card);
@@ -511,93 +511,51 @@
 .assets-statistics-header{
     display:grid;
     gap:var(--assets-block-spacing, var(--space-2));
-    padding:var(--assets-block-spacing, var(--space-2));
+    padding:var(--space-3) var(--space-4);
     border-bottom:var(--border-subtle);
 }
 .assets-statistics-heading{
     display:grid;
     gap:var(--assets-block-spacing, var(--space-2));
 }
-.assets-statistics-title{
-    margin:0;
-    color:var(--color-white);
-    font-size:var(--font-size-section);
-    font-weight:var(--font-weight-semibold);
-    line-height:var(--line-height-snug);
-}
-.assets-statistics-description{
-    margin:0;
-    color:var(--color-gray);
-    font-size:var(--font-size-xs);
-    line-height:1.45;
-}
-.assets-statistics-back{
-    color:var(--color-gray-dark);
-    font-size:var(--font-size-2xs);
-    letter-spacing:normal;
-}
 .statistics-period-selector{
     display:flex;
     align-items:center;
     gap:var(--assets-block-spacing, var(--space-2));
-    padding:var(--assets-block-spacing, var(--space-2));
+    padding:var(--space-3) var(--space-4);
     overflow-x:auto;
     border-bottom:var(--border-subtle);
 }
-.statistics-period-button{
-    min-height:2rem;
-    padding:0 0 var(--assets-block-spacing, var(--space-2));
-    color:var(--color-gray);
-    font-size:var(--font-size-xs);
-    letter-spacing:normal;
+.assets-analytics-custom-period{
+    gap:var(--assets-block-spacing, var(--space-2));
+    padding:var(--assets-block-spacing, var(--space-4));
+    border-bottom:var(--border-subtle);
 }
 .assets-analytics-content{
     display:grid;
     gap:0;
-    padding:0 var(--assets-block-spacing, var(--space-2)) var(--assets-block-spacing, var(--space-2));
+    padding:0 var(--space-4) var(--space-5);
 }
-.assets-analytics-custom-period{
+.assets-statistics-screen .assets-analytics-section,
+.assets-statistics-screen .assets-statistics-metric,
+.assets-statistics-screen .assets-analytics-primary,
+.assets-statistics-screen .assets-statistics-history,
+.assets-statistics-screen .assets-statistics-assets,
+.assets-statistics-screen .assets-analytics-locked{
     gap:var(--assets-block-spacing, var(--space-2));
-    padding:var(--assets-block-spacing, var(--space-2));
-    border-bottom:var(--border-subtle);
-}
-.assets-analytics-date-field{
-    gap:var(--assets-block-spacing, var(--space-2));
-    font-size:var(--font-size-2xs);
-}
-.assets-analytics-section,
-.assets-statistics-metric,
-.assets-analytics-primary,
-.assets-statistics-history,
-.assets-statistics-assets{
-    gap:var(--assets-block-spacing, var(--space-2));
-    padding:var(--assets-block-spacing, var(--space-2)) 0;
-}
-.assets-statistics-history-row,
-.assets-analytics-liquidity-row{
-    gap:var(--assets-block-spacing, var(--space-2));
-    padding:var(--assets-block-spacing, var(--space-2)) 0;
-    font-size:var(--font-size-xs);
-}
-.assets-analytics-section-total,
-.assets-statistics-change{
-    font-size:var(--font-size-lg);
-    font-weight:var(--font-weight-semibold);
-}
-.assets-analytics-detail{
-    font-size:var(--font-size-2xs);
-    line-height:1.45;
-}
-.assets-analytics-chart{
-    gap:var(--assets-block-spacing, var(--space-2));
-}
-.assets-analytics-locked{
-    gap:var(--assets-block-spacing, var(--space-2));
-    padding:var(--assets-block-spacing, var(--space-2)) 0;
 }
 @media (max-width:719px){
     .assets-statistics-screen{
-        gap:var(--assets-block-spacing, var(--space-2));
-        padding:var(--assets-block-spacing, var(--space-2));
+        gap:0;
+        padding:0;
+    }
+    .assets-statistics-header,
+    .statistics-period-selector{
+        padding-left:var(--space-4);
+        padding-right:var(--space-4);
+    }
+    .assets-analytics-content{
+        padding-left:var(--space-4);
+        padding-right:var(--space-4);
     }
 }
