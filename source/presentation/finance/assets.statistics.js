@@ -1,4 +1,4 @@
-// assets.statistics.js — Version 3.4
+// assets.statistics.js — Version 3.5
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -147,11 +147,20 @@ function createAnalyticsAssetRow(root, entry, financeApplication, onWriteAttempt
     liquidity.textContent = entry.liquidity === "illiquid" ? "Неликвидный" : "Ликвидный";
     const value = document.createElement("div"); value.className = "assets-analytics-composition-value";
     const amount = document.createElement("strong"); amount.textContent = formatAmount(entry.amount) + " ₽";
+
+    const pin = document.createElement("span");
+    pin.className = "finance-entry-pin";
+    pin.setAttribute("aria-hidden", "true");
+    pin.innerHTML =
+        '<svg viewBox="0 0 16 16" focusable="false">' +
+            '<path d="M5.2 1.8h5.6l-.7 3.2 2.1 2.1v1.1H8.9v4.1l-.9 1.7-.9-1.7V8.2H3.8V7.1l2.1-2.1z"></path>' +
+        "</svg>";
+
     const percent = document.createElement("span");
     const currentTotal = Number(interaction?.currentTotal ?? 0);
     const entryPercent = currentTotal > 0 ? Math.round((Number(entry.amount) / currentTotal) * 1000) / 10 : null;
     percent.textContent = entryPercent === null ? "—" : entryPercent + "%";
-    main.append(label, liquidity); value.append(amount, percent); content.append(main, value); row.append(action, content);
+    main.append(label, liquidity); value.append(amount, percent, pin); content.append(main, value); row.append(action, content);
     const rerender = () => { if (typeof interaction?.onChanged === "function") interaction.onChanged(); };
     attachEntryEdit(row, "assets", entry, onWriteAttempt, financeApplication,
         () => rerender(),
