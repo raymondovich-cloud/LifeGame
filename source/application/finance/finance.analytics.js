@@ -1,4 +1,4 @@
-// finance.analytics.js — Version 1.1
+// finance.analytics.js — Version 1.2
 
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -58,8 +58,9 @@ function createFinanceAnalytics({ financeApplication }) {
         };
     }
 
-    function calculateChange(baseline, current) {
+    function calculateChange(baseline, current, hasDistinctSnapshots) {
         const hasComparison =
+            hasDistinctSnapshots &&
             baseline !== null &&
             baseline > 0 &&
             current !== null &&
@@ -117,7 +118,15 @@ function createFinanceAnalytics({ financeApplication }) {
                     label: metric.label,
                     baseline,
                     current,
-                    change: calculateChange(baseline, current),
+                    change: calculateChange(
+                        baseline,
+                        current,
+                        Boolean(
+                            effectiveBaselineSnapshot &&
+                            currentSnapshot &&
+                            effectiveBaselineSnapshot.occurredAt !== currentSnapshot.occurredAt
+                        )
+                    ),
                     dynamics: snapshots.map((snapshot) => ({
                         occurredAt: snapshot.occurredAt,
                         total: snapshot.total
