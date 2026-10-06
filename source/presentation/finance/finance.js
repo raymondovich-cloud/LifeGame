@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.5
+// source/presentation/finance/finance.js — Version 4.6
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -551,6 +551,80 @@ function createDetail(root, section, onWriteAttempt, financeApplication, assetsA
             Number(isEntryPinned(section.id, first.id))
         );
 
+    const total = getSectionTotal(financeApplication, section.id);
+    const summary = document.createElement("div");
+    summary.className = "finance-detail-summary";
+
+    const summaryMain = document.createElement("div");
+    summaryMain.className = "finance-detail-summary-main";
+
+    const summaryValue = document.createElement("strong");
+    summaryValue.textContent = formatAmount(total) + " ₽";
+
+    const summaryLabel = document.createElement("span");
+    summaryLabel.textContent = section.id === "financial-burden" ? "Общий долг" : "Итого";
+
+    summaryMain.append(summaryValue, summaryLabel);
+
+    const summaryMeta = document.createElement("div");
+    summaryMeta.className = "finance-detail-summary-meta";
+
+    const count = document.createElement("strong");
+    count.textContent = String(entries.length);
+
+    const countLabel = document.createElement("span");
+    countLabel.textContent = entries.length === 1 ? "запись" : entries.length >= 2 && entries.length <= 4 ? "записи" : "записей";
+
+    summaryMeta.append(count, countLabel);
+
+    summary.append(summaryMain, summaryMeta);
+
+    if (section.id === "assets") {
+        const liquid = entries
+            .filter((entry) => entry?.liquidity !== "illiquid")
+            .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+        const illiquid = entries
+            .filter((entry) => entry?.liquidity === "illiquid")
+            .reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+
+        const split = document.createElement("div");
+        split.className = "finance-detail-secondary";
+
+        [
+            ["Ликвидные", liquid],
+            ["Неликвидные", illiquid]
+        ].forEach(([label, value]) => {
+            const item = document.createElement("div");
+            item.className = "finance-detail-secondary-item";
+
+            const name = document.createElement("span");
+            name.textContent = label;
+
+            const amount = document.createElement("strong");
+            amount.textContent = formatAmount(value) + " ₽";
+
+            item.append(name, amount);
+            split.appendChild(item);
+        });
+
+        summary.appendChild(split);
+    }
+
+    if (section.id === "financial-burden") {
+        const payment = entries.reduce((sum, entry) => sum + Number(entry.payment || 0), 0);
+        const paymentItem = document.createElement("div");
+        paymentItem.className = "finance-detail-secondary-item";
+
+        const paymentLabel = document.createElement("span");
+        paymentLabel.textContent = "Ежемесячные платежи";
+
+        const paymentValue = document.createElement("strong");
+        paymentValue.textContent = formatAmount(payment) + " ₽";
+
+        paymentItem.append(paymentLabel, paymentValue);
+        summary.appendChild(paymentItem);
+    }
+
     const list = document.createElement("div");
     list.className = "finance-entry-list finance-detail-list";
 
@@ -567,14 +641,6 @@ function createDetail(root, section, onWriteAttempt, financeApplication, assetsA
         });
     }
 
-    const summary = document.createElement("div");
-    summary.className = "finance-detail-summary";
-    const summaryValue = document.createElement("strong");
-    summaryValue.textContent = formatAmount(getSectionTotal(financeApplication, section.id)) + " ₽";
-    const summaryCount = document.createElement("span");
-    const summaryCountValue = entries.length;
-    summaryCount.textContent = summaryCountValue + " " + (summaryCountValue === 1 ? "запись" : summaryCountValue >= 2 && summaryCountValue <= 4 ? "записи" : "записей");
-    summary.append(summaryValue, summaryCount);
     const add = createAddForm(root, section, onWriteAttempt, financeApplication);
     detail.append(header, summary, list, add);
     return detail;
@@ -584,22 +650,48 @@ function createStructure(financeApplication, snapshot, root, activeSectionId, on
     const section = document.createElement("section");
     section.className = "finance-structure";
     section.setAttribute("aria-label", "Financial structure");
+
     const header = document.createElement("div");
-    header.className = "finance-block-heading";
-    const title = document.createElement("div");
+    header.className = "finance-structure-header";
+
+    const heading = document.createElement("div");
+    heading.className = "finance-structure-heading";
+
     const eyebrow = document.createElement("span");
     eyebrow.className = "finance-section-meta";
-    eyebrow.textContent = "FINANCIAL STRUCTURE";
+    eyebrow.textContent = "FINANCIAL SYSTEMS";
+
     const description = document.createElement("p");
     description.className = "finance-structure-description";
-    description.textContent = "Выберите направление для управления данными.";
-    title.append(eyebrow, description);
-    header.appendChild(title);
+    description.textContent = "Пять систем. Один финансовый контур.";
+
+    const meta = document.createElement("div");
+    meta.className = "finance-structure-meta";
+
+    const systemCount = document.createElement("strong");
+    systemCount.textContent = FINANCE_SECTIONS.length + " систем";
+
+    const recordCount = document.createElement("span");
+    const totalRecords = FINANCE_SECTIONS.reduce(
+        (total, item) => total + financeApplication.listFinanceEntries(item.id).length,
+        0
+    );
+    recordCount.textContent = totalRecords + " " + (
+        totalRecords === 1 ? "запись" :
+        totalRecords >= 2 && totalRecords <= 4 ? "записи" : "записей"
+    );
+
+    meta.append(systemCount, recordCount);
+    heading.append(eyebrow, description);
+    header.append(heading, meta);
+
     const rows = document.createElement("div");
     rows.className = "finance-structure-list";
+
     FINANCE_SECTIONS.forEach((item) => {
         const entries = financeApplication.listFinanceEntries(item.id);
         const total = getSectionTotal(financeApplication, item.id);
+
         rows.appendChild(
             createStructureRow(
                 root,
@@ -624,6 +716,7 @@ function createStructure(financeApplication, snapshot, root, activeSectionId, on
             );
         }
     });
+
     section.append(header, rows);
     return section;
 }
@@ -816,8 +909,8 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
 
     const description = document.createElement("p");
     description.textContent = activeSectionId
-        ? "Управление записями выбранного направления."
-        : "Добавление, редактирование и удаление записей.";
+        ? "Управление выбранной системой."
+        : "Управление капиталом, доходами, обязательствами и резервом.";
 
     copy.append(eyebrow, title, description);
 
