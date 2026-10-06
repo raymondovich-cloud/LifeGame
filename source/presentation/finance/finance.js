@@ -1,9 +1,9 @@
-// source/presentation/finance/finance.js — Version 4.12
+// source/presentation/finance/finance.js — Version 4.13
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
-import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";
+import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";\nimport { createFinanceAnalytics } from "../../application/finance/finance.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
@@ -214,8 +214,20 @@ function createHealthBlock(financeApplication) {
     return section;
 }
 
-function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt) {
+function formatPercentChange(change) {
+    if (!change || !change.hasComparison || change.percent === null) return "—";
+    const value = Number(change.percent);
+    return (value >= 0 ? "+" : "−") + formatAmount(Math.abs(value)) + "%";
+}
+
+function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt) {
     const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
+    const range = financeAnalytics
+        ? financeAnalytics.getFinanceAnalyticsRange("month")
+        : null;
+    const analyticsSnapshot = range
+        ? financeAnalytics.getFinanceAnalytics(range)
+        : null;
 
     const section = document.createElement("section");
     section.className = "finance-capital";
@@ -251,27 +263,30 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
     caption.className = "finance-capital-caption";
     caption.textContent = "Общая стоимость активов";
 
-    const split = document.createElement("div");
-    split.className = "finance-capital-split";
+    const trends = document.createElement("div");
+    trends.className = "finance-capital-trends";
 
     [
-        ["Ликвидные", snapshot.liquid],
-        ["Неликвидные", snapshot.illiquid]
-    ].forEach(([label, value]) => {
+        ["assets", "Активы"],
+        ["actual-earnings", "Фактически заработано"],
+        ["financial-burden", "Финансовая нагрузка"],
+        ["mandatory-expenses", "Обязательные траты"],
+        ["financial-cushion", "Финансовая подушка"]
+    ].forEach(([id, label]) => {
         const item = document.createElement("div");
-        item.className = "finance-capital-split-item";
+        item.className = "finance-capital-trend";
 
         const name = document.createElement("span");
         name.textContent = label;
 
         const metric = document.createElement("strong");
-        metric.textContent = formatAmount(value) + " ₽";
+        metric.textContent = formatPercentChange(analyticsSnapshot?.metrics?.[id]?.change);
 
         item.append(name, metric);
-        split.appendChild(item);
+        trends.appendChild(item);
     });
 
-    section.append(header, amount, caption, split);
+    section.append(header, amount, caption, trends);
     return section;
 }
 
