@@ -1,4 +1,4 @@
-// assets.statistics.js — Version 3.1
+// assets.statistics.js — Version 3.2
 
 import { canAccessAssetsAnalyticsRange } from "../../application/finance/assets.analytics.access.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
@@ -218,13 +218,6 @@ function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
     let customStart = "";
     let customEnd = "";
 
-    const screen = document.createElement("section");
-    screen.className = "assets-statistics-screen";
-    screen.setAttribute("aria-label", "Аналитика активов");
-
-    const header = document.createElement("header");
-    header.className = "assets-statistics-header";
-
     const backButton = document.createElement("button");
     backButton.type = "button";
     backButton.className = "assets-statistics-back";
@@ -232,6 +225,13 @@ function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
     backButton.addEventListener("click", () => {
         if (typeof onBack === "function") onBack();
     });
+
+    const screen = document.createElement("section");
+    screen.className = "assets-statistics-screen";
+    screen.setAttribute("aria-label", "Аналитика активов");
+
+    const header = document.createElement("header");
+    header.className = "assets-statistics-header";
 
     const heading = document.createElement("div");
     heading.className = "assets-statistics-heading";
@@ -249,7 +249,9 @@ function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics) {
     description.textContent = "Как менялась стоимость ваших активов за выбранный период.";
 
     heading.append(eyebrow, title, description);
-    header.append(backButton, heading);
+    header.append(heading);
+    root.append(backButton, screen);
+    screen.appendChild(header);
 
     const selector = document.createElement("div");
     selector.className = "statistics-period-selector";

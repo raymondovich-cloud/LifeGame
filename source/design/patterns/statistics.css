@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.4 */
+/* statistics.css — Version 3.5 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -467,6 +467,9 @@
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .assets-statistics-trigger{gap:var(--assets-block-spacing);}
 
 /* Assets analytics: reuse the exact premium surface foundation of the «Активы» accordion. */
+.assets-statistics-back{
+    margin:0 0 var(--assets-block-spacing, var(--space-2));
+}
 .assets-statistics-screen{
     position:relative;
     display:grid;
