@@ -635,6 +635,97 @@ function attachSwipeDelete(root, onWriteAttempt = null, financeApplication = nul
     });
 }
 
+function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
+    const wrapper = document.createElement("article");
+    wrapper.className = "accordion-item finance-subblock" + (isOpen ? " is-open" : "");
+    wrapper.dataset.subblock = subblock.id;
+
+    const button = document.createElement("button");
+    button.className = "accordion-trigger";
+    button.type = "button";
+    button.setAttribute("aria-expanded", String(isOpen));
+    button.setAttribute("aria-controls", subblock.id + "-content");
+
+    button.innerHTML =
+        '<span class="accordion-index">' + subblock.number + "</span>" +
+        '<span class="accordion-title-group">' +
+            '<span class="accordion-title">' + subblock.title + "</span>" +
+            '<span class="accordion-description">' + subblock.description + "</span>" +
+        "</span>";
+
+    const header = document.createElement("div");
+    header.className = "accordion-header";
+
+    const infoTooltip = createInfoTooltip({
+        label: "Информация: " + subblock.title,
+        text: subblock.info
+    });
+
+    header.append(button, infoTooltip);
+
+    const content = document.createElement("div");
+    content.className = "accordion-content" + (isOpen ? " is-open" : "");
+    content.id = subblock.id + "-content";
+    content.hidden = false;
+
+    const entries = subblock.id === "financial-stability-index" || !financeApplication
+        ? []
+        : financeApplication.listFinanceEntries(subblock.id).sort((first, second) => {
+            const firstPinned = isEntryPinned(subblock.id, first.id);
+            const secondPinned = isEntryPinned(subblock.id, second.id);
+            return Number(secondPinned) - Number(firstPinned);
+        });
+
+    if (subblock.id === "financial-stability-index") {
+        if (financeApplication) {
+            content.appendChild(createFinancialStabilityIndexPanel(financeApplication));
+        }
+    }
+
+    if (subblock.id === "assets") {
+        content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication, assetsAnalytics));
+    }
+
+    if (subblock.id !== "financial-stability-index") {
+        if (entries.length === 0) {
+            const emptyState = document.createElement("div");
+            emptyState.className = "list-empty";
+            emptyState.innerHTML =
+                '<span class="list-empty-label">ДАННЫЕ</span>' +
+                "<p>Записей пока нет.</p>";
+            content.appendChild(emptyState);
+        } else {
+            const entryList = document.createElement("div");
+            entryList.className = "finance-entry-list";
+
+            entries.forEach((entry) => {
+                const row = createEntryRow(root, subblock, entry, onWriteAttempt, financeApplication, assetsAnalytics);
+                row.classList.toggle("is-pinned", isEntryPinned(subblock.id, entry.id));
+                entryList.appendChild(row);
+
+                if (subblock.id !== "financial-stability-index") {
+
+                }
+            });
+
+            content.appendChild(entryList);
+        }
+    }
+
+    if (subblock.id !== "financial-stability-index") {
+        content.appendChild(createAddForm(root, subblock, onWriteAttempt, financeApplication));
+    }
+    wrapper.append(header, content);
+
+    button.addEventListener("click", () => {
+        const nextOpen = button.getAttribute("aria-expanded") !== "true";
+        renderFinanceData(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
+    });
+
+    return wrapper;
+}
+
+
 function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
