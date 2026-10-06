@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.27
+// source/presentation/finance/finance.js — Version 4.28
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -866,7 +866,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
         content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication, assetsAnalytics));
     }
 
-    if (subblock.id !== "financial-stability-index") {
+    if (subblock.id !== "financial-stability-index" && subblock.id !== "assets") {
         if (entries.length === 0) {
             const emptyState = document.createElement("div");
             emptyState.className = "list-empty";
