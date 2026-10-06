@@ -155,7 +155,7 @@ async function findUsers(query: string) {
   if (!admin) return [];
   const trimmed = query.trim();
   if (!trimmed) return [];
-  if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(trimmed)) {
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
     const {data} = await admin.from("profiles").select("id, display_name, created_at").eq("id", trimmed).limit(1);
     return data ?? [];
   }
@@ -204,7 +204,12 @@ async function renderRecentUsers(chatId: string, offset: number) {
     return;
   }
   const text = result.users.map((user, index) => formatUserLine(user as Record<string, unknown>, index)).join("\\n\\n");
-  await reply(chatId, "🕘 Последние регистрации\\n\\n" + text, false, recentUsersKeyboard(offset, result.hasNext));
+  const userButtons = result.users.map((user) => [{
+    text: "👤 " + (user.display_name?.trim() || "Без имени"),
+    callback_data: "user:view:" + String(user.id),
+  }]);
+  const navigation = recentUsersKeyboard(offset, result.hasNext);
+  await reply(chatId, "🕘 Последние регистрации\\n\\n" + text, false, [...userButtons, ...navigation]);
 }
 
 async function renderUserDetails(chatId: string, userId: string) {
