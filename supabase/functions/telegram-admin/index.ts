@@ -1,4 +1,4 @@
-// version 2.1
+// version 2.2
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -98,18 +98,19 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
     return new Response("ok", {status: 200});
   }
 
-  if (text === "📋 Команды" || text === "/help") {
+  if (text === "/start") {
     await reply(chatId,
       "🎮 LifeGame Admin Bot\n\n" +
       "🟢 Бот активен\n" +
       "🔔 Регистрации подключены\n\n" +
       "Команды:\n" +
-      formatCommandList()
+      formatCommandList(),
+      true
     );
     return new Response("ok", {status: 200});
   }
 
-  if (text === "/help") {
+  if (text === "📋 Команды" || text === "/help") {
     await reply(chatId,
       "🎮 LifeGame Admin\n\n" +
       "Доступные команды:\n" +
