@@ -1,4 +1,4 @@
-/* list.css — Version 3.0 */
+/* list.css — Version 3.1 */
 
 .list-empty {
     display:grid;
@@ -131,6 +131,39 @@
     border-radius:0;
     background:transparent;
     isolation:isolate;
+}
+
+/* DATA finance rows: framed premium treatment, isolated from the main Finance surface. */
+.finance-data-screen .finance-entry-list .swipe-delete-item {
+    overflow:visible;
+    border-radius:var(--radius-control);
+}
+
+.finance-data-screen .finance-entry-list .swipe-delete-content {
+    border:1px solid transparent;
+    border-radius:var(--radius-control);
+    background:
+        linear-gradient(var(--color-surface),var(--color-surface)) padding-box,
+        linear-gradient(135deg,rgba(242,138,46,.42),rgba(255,255,255,.08) 48%,rgba(242,138,46,.2)) border-box;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 10px 28px rgba(0,0,0,.18);
+}
+
+.finance-data-screen .finance-entry-list .swipe-delete-content::after {
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    content:"";
+    border-radius:inherit;
+    background:linear-gradient(110deg,rgba(242,138,46,.08),transparent 34%,rgba(255,255,255,.025) 72%,rgba(242,138,46,.05));
+}
+
+.finance-data-screen .finance-entry-list .finance-entry-pin {
+    width:.86rem;
+    height:.86rem;
+}
+
+.finance-data-screen .finance-entry-list .swipe-delete-content:hover {
+    border-color:rgba(242,138,46,.28);
 }
 
 .swipe-delete-content {
