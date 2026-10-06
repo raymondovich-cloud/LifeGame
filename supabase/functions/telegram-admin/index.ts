@@ -1,4 +1,4 @@
-// version 2.2
+// version 2.3
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -48,7 +48,7 @@ async function reply(chatId: number | string, text: string, showKeyboard = false
     text,
     ...(showKeyboard ? {
       reply_markup: {
-        keyboard: [[{text: "📋 Команды"}]],
+        keyboard: [[{text: "⚙️ Меню администрирования"}]],
         resize_keyboard: true,
         is_persistent: true,
       },
@@ -103,17 +103,17 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
       "🎮 LifeGame Admin Bot\n\n" +
       "🟢 Бот активен\n" +
       "🔔 Регистрации подключены\n\n" +
-      "Команды:\n" +
+      "Меню администрирования:\n" +
       formatCommandList(),
       true
     );
     return new Response("ok", {status: 200});
   }
 
-  if (text === "📋 Команды" || text === "/help") {
+  if (text === "⚙️ Меню администрирования" || text === "/help") {
     await reply(chatId,
       "🎮 LifeGame Admin\n\n" +
-      "Доступные команды:\n" +
+      "Меню администрирования:\n" +
       formatCommandList() +
       "\n\n" +
       "Автоматически:\n" +
