@@ -232,14 +232,14 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     const section = document.createElement("section");
     section.className = "finance-capital";
-    section.setAttribute("aria-label", "Capital");
+    section.setAttribute("aria-label", "Dynamics");
 
     const header = document.createElement("div");
     header.className = "finance-block-heading";
 
     const eyebrow = document.createElement("span");
     eyebrow.className = "finance-section-meta";
-    eyebrow.textContent = "CAPITAL";
+    eyebrow.textContent = "DYNAMICS";
 
     const analytics = document.createElement("button");
     analytics.type = "button";
