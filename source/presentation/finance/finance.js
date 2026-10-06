@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.8
+// source/presentation/finance/finance.js — Version 4.9
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -318,7 +318,10 @@ function createEntryRow(root, section, entry, onWriteAttempt, financeApplication
     const pin = document.createElement("span");
     pin.className = "finance-entry-pin";
     pin.setAttribute("aria-hidden", "true");
-    pin.textContent = "•";
+    pin.innerHTML =
+        '<svg viewBox="0 0 16 16" focusable="false">' +
+            '<path d="M5.2 1.8h5.6l-.7 3.2 2.1 2.1v1.1H8.9v4.1l-.9 1.7-.9-1.7V8.2H3.8V7.1l2.1-2.1z"></path>' +
+        "</svg>";
 
     trailing.append(amount, pin);
     content.append(labelGroup, trailing);
