@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.7 */
+/* statistics.css — Version 3.8 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -654,4 +654,41 @@
 }
 .assets-statistics-screen .assets-analytics-composition .swipe-delete-item.is-pinned .assets-analytics-composition-meta .finance-entry-pin{
     display:inline-flex;
+}
+
+/* Analytics preview/full-list rows: restrained rounded premium gradient border. */
+.assets-statistics-screen .assets-analytics-composition .swipe-delete-item{
+    overflow:visible;
+    border-radius:var(--radius-sm);
+}
+.assets-statistics-screen .assets-analytics-composition .swipe-delete-content{
+    border:1px solid transparent;
+    border-radius:var(--radius-sm);
+    background:
+        var(--gradient-surface) padding-box,
+        linear-gradient(135deg,rgba(242,138,46,.42) 0%,rgba(5,5,5,.92) 42%,rgba(242,138,46,.24) 100%) border-box;
+}
+.assets-statistics-screen .assets-analytics-composition .assets-analytics-composition-meta .finance-entry-pin{
+    color:var(--color-accent);
+}
+.assets-analytics-open-all{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    min-height:2.5rem;
+    margin-top:var(--assets-block-spacing, var(--space-2));
+    padding:0 var(--assets-block-spacing, var(--space-2));
+    border:0;
+    border-radius:var(--radius-sm);
+    background:transparent;
+    color:var(--color-gray);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+    letter-spacing:var(--letter-spacing-wide);
+    text-transform:uppercase;
+}
+.assets-analytics-open-all:hover,
+.assets-analytics-open-all:focus-visible{
+    color:var(--color-white);
 }

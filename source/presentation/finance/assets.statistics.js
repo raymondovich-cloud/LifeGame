@@ -1,4 +1,4 @@
-// assets.statistics.js — Version 3.6
+// assets.statistics.js — Version 3.7
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -190,14 +190,32 @@ function createAnalyticsAssetRow(root, entry, financeApplication, onWriteAttempt
     return row;
 }
 
-function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics, financeApplication = null, onWriteAttempt = null, interaction = null) {
+function getAnalyticsCompositionEntries(entries, interaction) {
+    return entries
+        .map((entry, index) => ({ entry, index, pinned: interaction?.isPinned?.(entry.id) === true }))
+        .sort((first, second) => Number(second.pinned) - Number(first.pinned) || first.index - second.index)
+        .map((item) => item.entry);
+}
+
+function getAnalyticsPreviewEntries(entries, interaction) {
+    const sortedEntries = getAnalyticsCompositionEntries(entries, interaction);
+    const pinned = sortedEntries.filter((entry) => interaction?.isPinned?.(entry.id) === true);
+    const latestUnpinned = sortedEntries.filter((entry) => interaction?.isPinned?.(entry.id) !== true).reverse();
+    return [...pinned, ...latestUnpinned].slice(0, 3);
+}
+
+function renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplication = null, onWriteAttempt = null, interaction = null, mode = "preview") {
     root.replaceChildren();
 
     const backButton = document.createElement("button");
     backButton.type = "button";
     backButton.className = "assets-statistics-back";
-    backButton.textContent = "← Активы";
+    backButton.textContent = mode === "full" ? "← Аналитика" : "← Активы";
     backButton.addEventListener("click", () => {
+        if (mode === "full") {
+            renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplication, onWriteAttempt, interaction, "preview");
+            return;
+        }
         if (typeof onBack === "function") onBack();
     });
 
@@ -297,30 +315,38 @@ function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics, financeAppl
         empty.textContent = "Активов пока нет.";
         composition.appendChild(empty);
     } else {
-        const compositionEntries = analytics.composition
-            .map((entry, index) => ({
-                entry,
-                index,
-                pinned: interaction?.isPinned?.(entry.id) === true
-            }))
-            .sort((first, second) => Number(second.pinned) - Number(first.pinned) || first.index - second.index)
-            .map((item) => item.entry);
+        const compositionEntries = mode === "preview"
+            ? getAnalyticsPreviewEntries(analytics.composition, interaction)
+            : getAnalyticsCompositionEntries(analytics.composition, interaction);
 
         compositionEntries.forEach((entry) => {
-            const row = createAnalyticsAssetRow(
-                root, entry, financeApplication, onWriteAttempt, {
-                    ...interaction,
-                    currentTotal,
-                    onChanged: interaction?.onChanged || (() => renderAssetsStatisticsScreen(
-                        root, onBack, assetsAnalytics, financeApplication, onWriteAttempt, interaction
-                    ))
-                }
-            );
+            const row = createAnalyticsAssetRow(root, entry, financeApplication, onWriteAttempt, {
+                ...interaction,
+                currentTotal,
+                onChanged: () => renderAssetsAnalyticsPage(
+                    root, onBack, assetsAnalytics, financeApplication, onWriteAttempt, interaction, mode
+                )
+            });
             composition.appendChild(row);
         });
+
+        if (mode === "preview" && analytics.composition.length > 3) {
+            const openAll = document.createElement("button");
+            openAll.type = "button";
+            openAll.className = "assets-analytics-open-all";
+            openAll.innerHTML = '<span>Открыть все</span><span aria-hidden="true">→</span>';
+            openAll.addEventListener("click", () => {
+                renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplication, onWriteAttempt, interaction, "full");
+            });
+            composition.appendChild(openAll);
+        }
     }
 
     content.appendChild(composition);
+}
+
+function renderAssetsStatisticsScreen(root, onBack, assetsAnalytics, financeApplication = null, onWriteAttempt = null, interaction = null) {
+    renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplication, onWriteAttempt, interaction, "preview");
 }
 
 export { renderAssetsStatisticsScreen };
