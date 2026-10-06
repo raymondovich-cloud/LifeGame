@@ -1,4 +1,4 @@
-/* finance.css — Version 1.6 */
+/* finance.css — Version 1.7 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -172,3 +172,82 @@
 .finance-data-screen .finance-data-accordion .finance-add-form{padding-top:var(--space-3)}
 .finance-data-screen .finance-data-accordion .finance-entry-list{margin-bottom:var(--space-4)}
 .finance-data-screen .finance-data-accordion .financial-stability-index-panel{margin-top:var(--space-2)}
+
+
+/* Finance primary surface: aligned with the premium management surface. */
+.finance-workspace{
+    gap:var(--space-4);
+}
+.finance-workspace-header{
+    padding:var(--space-4) var(--space-4) var(--space-5);
+    background:var(--gradient-card-premium);
+    border:1px solid transparent;
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-soft);
+}
+.finance-workspace-header::after{
+    position:absolute;
+    pointer-events:none;
+}
+.finance-health,
+.finance-capital{
+    position:relative;
+    padding:var(--space-5) var(--space-4);
+    overflow:hidden;
+    background:var(--gradient-card-premium);
+    border:1px solid transparent;
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-soft);
+}
+.finance-health::after,
+.finance-capital::after{
+    position:absolute;
+    inset:0;
+    padding:1px;
+    pointer-events:none;
+    content:"";
+    background:var(--gradient-accent-line);
+    border-radius:inherit;
+    opacity:.22;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+}
+.finance-health::before,
+.finance-capital::before{
+    position:absolute;
+    top:0;
+    left:8%;
+    right:8%;
+    height:1px;
+    pointer-events:none;
+    content:"";
+    background:var(--gradient-accent-line);
+    opacity:.28;
+}
+.finance-health-diagnostics{
+    position:relative;
+    z-index:1;
+}
+.finance-capital-split{
+    margin-top:var(--space-3);
+}
+.finance-data-entry{
+    margin-top:0;
+    padding:var(--space-4);
+    background:var(--gradient-surface);
+    border:var(--border-subtle);
+    border-radius:var(--radius-card);
+}
+.finance-data-entry .finance-text-action{
+    padding:.5rem 0;
+}
+@media (max-width:719px){
+    .finance-workspace-header,
+    .finance-health,
+    .finance-capital,
+    .finance-data-entry{
+        padding-left:var(--space-4);
+        padding-right:var(--space-4);
+    }
+}
