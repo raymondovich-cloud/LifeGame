@@ -1,4 +1,4 @@
-/* list.css — Version 3.3 */
+/* list.css — Version 3.4 */
 
 .list-empty {
     display:grid;
@@ -159,6 +159,24 @@
 
 .finance-data-screen .finance-entry-list .swipe-delete-content:hover {
     border-color:var(--color-border-strong);
+}
+
+/* Assets rows use the same spacing unit as the «Название» / «Сумма» form gap. */
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .swipe-delete-content{
+    gap:var(--assets-block-spacing);
+    padding:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-label-group{
+    gap:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing{
+    gap:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-pin{
+    margin-left:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-trailing .finance-entry-pin{
+    margin-left:0;
 }
 
 
