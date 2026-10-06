@@ -1,4 +1,4 @@
-// version 2.6
+// version 2.8
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -74,6 +74,7 @@ const commandDescriptions = [
   ["/start", "открыть панель LifeGame Admin Bot"],
   ["/status", "мониторинг Database, Telegram API, пользователей и безопасности"],
   ["/help", "показать список команд и их назначение"],
+  ["/security", "просмотр и фильтрация security events"],
 ] as const;
 
 function adminMenuKeyboard() {
@@ -99,6 +100,154 @@ function usersMenuKeyboard() {
     [{text: "⬅️ Назад в меню", callback_data: "admin:menu"}],
   ];
 }
+
+function securityMenuKeyboard() {
+  return [
+    [{text: "📊 Сводка за 24 часа", callback_data: "security:summary"}],
+    [{text: "🕘 Последние события", callback_data: "security:recent:0"}],
+    [{text: "🔎 Фильтр по типу", callback_data: "security:filter"}],
+    [{text: "⬅️ Назад в меню", callback_data: "admin:menu"}],
+  ];
+}
+
+function recentSecurityKeyboard(offset: number, hasNext: boolean) {
+  const rows: Array<Array<{text: string; callback_data: string}>> = [];
+  if (offset > 0) rows.push([{text: "⬅️ Назад", callback_data: "security:recent:" + Math.max(0, offset - 5)}]);
+  if (hasNext) rows.push([{text: "Дальше ➡️", callback_data: "security:recent:" + (offset + 5)}]);
+  rows.push([{text: "🔐 Меню безопасности", callback_data: "admin:security"}]);
+  return rows;
+}
+
+function securityEventTypeLabel(eventType: string) {
+  if (eventType === "identity.authentication.failed") return "Неудачная авторизация";
+  if (eventType === "identity.user.registered") return "Регистрация пользователя";
+  if (eventType.startsWith("security.")) return "Security event";
+  return "Событие";
+}
+
+function sanitizeSecurityMetadata(metadata: unknown) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return "";
+  const safe = metadata as Record<string, unknown>;
+  const allowedKeys = ["source"];
+  const parts = allowedKeys
+    .filter((key) => typeof safe[key] === "string" || typeof safe[key] === "number" || typeof safe[key] === "boolean")
+    .map((key) => key + ": " + String(safe[key]));
+  return parts.length ? parts.join(", ") : "";
+}
+
+async function getSecuritySummary() {
+  const admin = getAdminClient();
+  if (!admin) return null;
+  const {data, error} = await admin.rpc("lifegame_admin_monitoring_24h");
+  if (error || !data || typeof data !== "object") return null;
+  const monitoring = data as Record<string, unknown>;
+  return {
+    total24h: typeof monitoring.total_24h === "number" ? monitoring.total_24h : null,
+    authenticationFailed24h: typeof monitoring.authentication_failed_24h === "number" ? monitoring.authentication_failed_24h : null,
+    securityNamespace24h: typeof monitoring.security_namespace_24h === "number" ? monitoring.security_namespace_24h : null,
+  };
+}
+
+async function getRecentSecurityEvents(offset: number, eventType?: string) {
+  const admin = getAdminClient();
+  if (!admin) return null;
+  let query = admin.schema("private").from("security_events")
+    .select("id, user_id, event_type, occurred_at, session_id, metadata")
+    .order("occurred_at", {ascending: false})
+    .range(offset, offset + 5);
+  if (eventType) query = query.eq("event_type", eventType);
+  const {data, error} = await query;
+  if (error) return null;
+  return {events: data ?? [], hasNext: (data ?? []).length === 6};
+}
+
+async function renderSecuritySummary(chatId: string) {
+  const summary = await getSecuritySummary();
+  if (!summary) {
+    await reply(chatId, "🔐 Безопасность\\n\\n🔴 Database недоступна.", false, securityMenuKeyboard());
+    return;
+  }
+  await reply(chatId,
+    "🔐 Безопасность\\n\\n" +
+    "События / 24ч: " + (summary.total24h ?? "н/д") + "\\n" +
+    "Неудачные авторизации / 24ч: " + (summary.authenticationFailed24h ?? "н/д") + "\\n" +
+    "security.* / 24ч: " + (summary.securityNamespace24h ?? "н/д") + "\\n\\n" +
+    "Уровень severity в текущей схеме не хранится.",
+    false,
+    securityMenuKeyboard()
+  );
+}
+
+async function renderRecentSecurityEvents(chatId: string, offset: number, eventType?: string) {
+  const result = await getRecentSecurityEvents(offset, eventType);
+  if (!result) {
+    await reply(chatId, "🔐 Безопасность\\n\\n🔴 Database недоступна.", false, securityMenuKeyboard());
+    return;
+  }
+  if (!result.events.length) {
+    await reply(chatId,
+      "🕘 Последние события\\n\\n" +
+      (eventType ? "Для типа «" + eventType + "» событий больше нет." : "Событий нет."),
+      false,
+      recentSecurityKeyboard(offset, false)
+    );
+    return;
+  }
+
+  const eventButtons = result.events.map((event) => [{
+    text: "🔐 " + securityEventTypeLabel(String(event.event_type)),
+    callback_data: "security:view:" + String(event.id),
+  }]);
+
+  const lines = result.events.map((event, index) => {
+    const shortUserId = event.user_id ? String(event.user_id).slice(0, 8) : "system";
+    return (offset + index + 1) + ". " + securityEventTypeLabel(String(event.event_type)) +
+      "\\n" + String(event.event_type) +
+      "\\nПользователь: " + shortUserId +
+      "\\nВремя: " + formatMoscow(String(event.occurred_at));
+  }).join("\\n\\n");
+
+  await reply(chatId,
+    "🕘 Последние события" + (eventType ? " · " + eventType : "") + "\\n\\n" + lines,
+    false,
+    [...eventButtons, ...recentSecurityKeyboard(offset, result.hasNext)]
+  );
+}
+
+async function renderSecurityEventDetails(chatId: string, eventId: string) {
+  const admin = getAdminClient();
+  if (!admin) {
+    await reply(chatId, "🔐 Событие\\n\\n🔴 Database недоступна.", false, securityMenuKeyboard());
+    return;
+  }
+
+  const {data: event, error} = await admin.schema("private").from("security_events")
+    .select("id, user_id, event_type, occurred_at, session_id, metadata")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (error || !event) {
+    await reply(chatId, "🔐 Событие\\n\\nСобытие не найдено.", false, securityMenuKeyboard());
+    return;
+  }
+
+  const shortUserId = event.user_id ? String(event.user_id).slice(0, 8) : "system";
+  const metadata = sanitizeSecurityMetadata(event.metadata);
+  await reply(chatId,
+    "🔐 Security Event\\n\\n" +
+    "Тип: " + String(event.event_type) + "\\n" +
+    "Описание: " + securityEventTypeLabel(String(event.event_type)) + "\\n" +
+    "ID события: " + String(event.id) + "\\n" +
+    "Пользователь: " + shortUserId + "\\n" +
+    "Сессия: " + (event.session_id ? "есть" : "нет") + "\\n" +
+    "Время: " + formatMoscow(String(event.occurred_at)) +
+    (metadata ? "\\nMetadata: " + metadata : "") +
+    "\\n\\nЧувствительные поля metadata не отображаются.",
+    false,
+    [[{text: "⬅️ К безопасности", callback_data: "admin:security"}]]
+  );
+}
+
 
 function recentUsersKeyboard(offset: number, hasNext: boolean) {
   const rows: Array<Array<{text: string; callback_data: string}>> = [];
@@ -258,7 +407,7 @@ function adminSectionText(section: string) {
     analytics: "📊 Аналитика\\n\\nРаздел подготовлен для DAU, WAU, MAU, регистраций, retention и динамики продукта.",
     system: "🖥 Система\\n\\nРаздел подготовлен для состояния Database, Edge Functions, Telegram API, latency и ошибок.",
     notifications: "🔔 Уведомления\\n\\nРаздел подготовлен для критических событий, порогов и настроек уведомлений.",
-    about: "ℹ️ О боте\\n\\nLifeGame Admin Bot\\nВерсия: 2.5\\n\\nАдминистративный интерфейс LifeGame.",
+    about: "ℹ️ О боте\\n\\nLifeGame Admin Bot\\nВерсия: 2.8\\n\\nАдминистративный интерфейс LifeGame.",
   };
   return sections[section] ?? "Раздел не найден.";
 }
@@ -312,6 +461,40 @@ async function handleCallbackQuery(update: Record<string, unknown>, request: Req
 
   if (callbackData === "admin:users") {
     await reply(chatId, adminSectionText("users"), false, usersMenuKeyboard());
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData === "admin:security") {
+    await reply(chatId, "🔐 Безопасность\\n\\nВыберите действие:", false, securityMenuKeyboard());
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData === "security:summary") {
+    await renderSecuritySummary(String(chatId));
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData.startsWith("security:recent:")) {
+    const offset = Math.max(0, Number(callbackData.split(":")[2]) || 0);
+    await renderRecentSecurityEvents(String(chatId), offset);
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData === "security:filter") {
+    await reply(chatId,
+      "🔎 Фильтр по типу\\n\\n" +
+      "Используй команду:\\n" +
+      "/security <event_type>\\n\\n" +
+      "Пример: /security identity.user.registered",
+      false,
+      securityMenuKeyboard()
+    );
+    return new Response("ok", {status: 200});
+  }
+
+  if (callbackData.startsWith("security:view:")) {
+    const eventId = callbackData.slice("security:view:".length);
+    await renderSecurityEventDetails(String(chatId), eventId);
     return new Response("ok", {status: 200});
   }
 
@@ -415,6 +598,16 @@ async function handleTelegramUpdate(update: Record<string, unknown>, request: Re
       "• security events",
       true
     );
+    return new Response("ok", {status: 200});
+  }
+
+  if (text.startsWith("/security")) {
+    const eventType = text.slice("/security".length).trim();
+    if (!eventType) {
+      await reply(chatId, "🔎 Фильтр по типу\\n\\nУкажи event_type.\\nПример: /security identity.user.registered", false, securityMenuKeyboard());
+      return new Response("ok", {status: 200});
+    }
+    await renderRecentSecurityEvents(chatId, 0, eventType);
     return new Response("ok", {status: 200});
   }
 
