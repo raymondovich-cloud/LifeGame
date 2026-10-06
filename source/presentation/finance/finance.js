@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.26
+// source/presentation/finance/finance.js — Version 4.27
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -18,7 +18,6 @@ const FINANCE_DATA_SUBBLOCKS = Object.freeze([
     { id: "financial-burden", number: "03", title: "Финансовая нагрузка", description: "Обязательства, влияющие на бюджет", info: "Обязательства и регулярные финансовые нагрузки, которые уменьшают доступные средства и влияют на устойчивость." },
     { id: "mandatory-expenses", number: "04", title: "Обязательные траты", description: "Расходы, которые нельзя пропустить", info: "Расходы, которые необходимо оплачивать регулярно независимо от других трат." },
     { id: "financial-cushion", number: "05", title: "Финансовая подушка", description: "Резерв на непредвиденные ситуации", info: "Резерв средств, предназначенный для покрытия непредвиденных расходов и периодов снижения дохода." },
-    { id: "financial-stability-index", number: "06", title: "Индекс финансовой стабильности", description: "Текущая оценка финансовой устойчивости", info: "Сводная оценка финансовой устойчивости, учитывающая силу финансового положения, стабильность, ликвидность, резерв, долговую нагрузку и финансовый тренд." }
 ]);
 
 const FINANCE_SECTIONS = Object.freeze([
