@@ -86,7 +86,12 @@ function validateFinanceMemory(memory) {
         "getAssetsSnapshotAtOrBefore",
         "getAssetsSnapshotsBetween",
         "getFirstAssetsSnapshot",
-        "getLatestAssetsSnapshot"
+        "getLatestAssetsSnapshot",
+        "mutateFinanceCollection",
+        "getCollectionSnapshotAtOrBefore",
+        "getCollectionSnapshotsBetween",
+        "getFirstCollectionSnapshot",
+        "getLatestCollectionSnapshot"
     ];
 
     for (const method of requiredMethods) {
