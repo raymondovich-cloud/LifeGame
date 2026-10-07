@@ -1,4 +1,4 @@
-// source/application/finance/finance.diagnosis.js — Version 1.2
+// source/application/finance/finance.diagnosis.js — Version 1.3
 
 const COMPONENT_LABELS = Object.freeze({
     cashFlowSustainability: "денежного потока",
@@ -23,6 +23,100 @@ const COMPONENT_WEAK_LABELS = Object.freeze({
 function percentageChange(current, previous) {
     if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return null;
     return Math.round(((current - previous) / Math.abs(previous)) * 1000) / 10;
+}
+
+function buildFactorReason(key, result) {
+    const diagnostics = result?.diagnostics || {};
+
+    if (key === "cashFlowSustainability") {
+        const income = Number(diagnostics.actualIncome || 0);
+        const outflow = Number(diagnostics.mandatoryOutflow || 0);
+
+        if (outflow > 0 && income < outflow) {
+            return "денежного потока недостаточно для покрытия обязательных расходов и платежей";
+        }
+
+        if (outflow > 0 && income > 0) {
+            return "денежный поток покрывает обязательные расходы, но запас покрытия пока ограничен";
+        }
+
+        return "текущий денежный поток пока недостаточно поддерживает финансовую устойчивость";
+    }
+
+    if (key === "operationalLiquidity") {
+        const months = Number(diagnostics.operationalLiquidityMonths);
+
+        if (Number.isFinite(months) && months < 1) {
+            return "ликвидных средств недостаточно даже для покрытия одного месяца обязательных расходов";
+        }
+
+        if (Number.isFinite(months) && months < 3) {
+            return "ликвидных средств хватит менее чем на три месяца обязательных расходов";
+        }
+
+        return "объём ликвидных средств пока остаётся ограничивающим фактором";
+    }
+
+    if (key === "emergencyResilience") {
+        const months = Number(diagnostics.reserveMonths);
+
+        if (Number.isFinite(months) && months < 1) {
+            return "финансовой подушки недостаточно даже для покрытия одного месяца обязательных расходов";
+        }
+
+        if (Number.isFinite(months) && months < 3) {
+            return "финансовая подушка покрывает менее трёх месяцев обязательных расходов";
+        }
+
+        return "финансовая подушка пока не обеспечивает достаточного запаса прочности";
+    }
+
+    if (key === "debtSustainability") {
+        const dsr = Number(diagnostics.debtServiceRatio);
+        const debtToIncome = Number(diagnostics.debtToIncome);
+
+        if (diagnostics.nonAmortizingCreditProducts > 0) {
+            return "часть кредитных обязательств не имеет устойчивого графика погашения";
+        }
+
+        if (Number.isFinite(dsr) && dsr > 0.5) {
+            return "долговые платежи занимают более половины текущего дохода";
+        }
+
+        if (Number.isFinite(debtToIncome) && debtToIncome > 6) {
+            return "объём долга существенно превышает месячный доход";
+        }
+
+        return "долговая нагрузка пока заметно ограничивает финансовую устойчивость";
+    }
+
+    if (key === "solvencyPosition") {
+        const netWorth = Number(diagnostics.netWorth);
+
+        if (Number.isFinite(netWorth) && netWorth < 0) {
+            return "общая стоимость обязательств превышает стоимость активов";
+        }
+
+        return "чистая финансовая позиция пока не создаёт достаточного запаса прочности";
+    }
+
+    if (key === "productiveCapital") {
+        const principal = Number(diagnostics.productiveCapital || 0);
+
+        if (principal <= 0) {
+            return "капитал пока не формирует наблюдаемый доход от активов";
+        }
+
+        return "доходность продуктивного капитала пока недостаточно влияет на устойчивость системы";
+    }
+
+    const observations = Number(diagnostics.trajectory?.observations || 0);
+
+    if (observations < 3) {
+        return "истории пока недостаточно, чтобы уверенно оценить финансовый тренд";
+    }
+
+    return "финансовый тренд пока не поддерживает устойчивое улучшение системы";
 }
 
 function buildFinancialStabilityDiagnosis(current, previous = null) {
@@ -57,9 +151,23 @@ function buildFinancialStabilityDiagnosis(current, previous = null) {
     const positive = changes.filter((item) => item.weightedDelta > 0.5);
     const negative = changes.filter((item) => item.weightedDelta < -0.5);
 
-    const weakest = Object.entries(current.components || {})
+    const factors = Object.entries(current.components || {})
         .filter(([key]) => Object.prototype.hasOwnProperty.call(COMPONENT_LABELS, key))
-        .sort((a, b) => Number(a[1]) - Number(b[1]))[0];
+        .map(([key, value]) => {
+            const numericValue = Number(value);
+            const weight = Number(weights[key]) || 0;
+            return {
+                key,
+                label: COMPONENT_WEAK_LABELS[key],
+                value: numericValue,
+                weight,
+                weightedDeficit: (100 - numericValue) * weight,
+                reason: buildFactorReason(key, current)
+            };
+        })
+        .sort((a, b) => b.weightedDeficit - a.weightedDeficit);
+
+    const limitingFactor = factors[0] || null;
 
     let trend = "stable";
     if (changePercent !== null) {
@@ -80,9 +188,8 @@ function buildFinancialStabilityDiagnosis(current, previous = null) {
         secondaryPositiveFactor: positive[1] || null,
         primaryNegativeFactor: negative[0] || null,
         secondaryNegativeFactor: negative[1] || null,
-        weakestFactor: weakest
-            ? { key: weakest[0], label: COMPONENT_WEAK_LABELS[weakest[0]], value: Number(weakest[1]) }
-            : null
+        weakestFactor: limitingFactor,
+        limitingFactor
     };
 }
 
