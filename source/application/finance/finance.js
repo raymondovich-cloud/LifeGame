@@ -1,4 +1,4 @@
-// finance.js — Version 6.4
+// finance.js — Version 6.5
 
 import {
     createActualEarning,
@@ -115,10 +115,7 @@ function listFinanceEntries(subblockId) {
     }
 
     const config = getCollectionConfig(subblockId);
-    const entries = getMemoryMethod(config, "list")();
-    if (entries.length > 0) return entries;
-    const snapshot = financeMemory.getLatestCollectionSnapshot(subblockId);
-    return Array.isArray(snapshot?.entries) ? snapshot.entries : [];
+    return getMemoryMethod(config, "list")();
 }
 
 async function addFinanceEntry(subblockId, label, amount, liquidity, options = null) {

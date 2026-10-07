@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.4
+// finance.memory.supabase.integration.test.mjs — Version 1.6
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -73,20 +73,28 @@ test("Finance Supabase persistence survives memory recreation and isolates users
         userContext: { userId: sessionA.userId }
     });
 
-    assert.equal(recreatedMemoryA.listActualEarnings().length, 0);
-    await recreatedMemoryA.hydrate();
+    assert.equal(recreatedMemory.listActualEarnings().length, 0);
+    await recreatedMemory.hydrate();
 
-    assert.deepEqual(recreatedMemoryA.listActualEarnings(), [
-        { id: createdA.id, label: "Persistence test A", amount: 12345 }
+    assert.deepEqual(recreatedMemory.listActualEarnings(), [
+        {
+            id: createdA.id,
+            label: "Persistence test A",
+            amount: 12345,
+            createdAt: createdA.createdAt,
+            createdBy: sessionA.userId
+        }
     ]);
-    assert.deepEqual(recreatedMemoryA.listFinancialBurden(), [
+    assert.deepEqual(recreatedMemory.listFinancialBurden(), [
         {
             id: createdCredit.id,
             label: "Credit persistence",
             debt: 30000,
             payment: 3000,
             isCreditProduct: true,
-            interestRate: 25
+            interestRate: 25,
+            createdAt: createdCredit.createdAt,
+            createdBy: sessionA.userId
         }
     ]);
 
@@ -107,10 +115,22 @@ test("Finance Supabase persistence survives memory recreation and isolates users
     await Promise.all([finalMemoryA.hydrate(), finalMemoryB.hydrate()]);
 
     assert.deepEqual(finalMemoryA.listActualEarnings(), [
-        { id: createdA.id, label: "Persistence test A", amount: 12345 }
+        {
+            id: createdA.id,
+            label: "Persistence test A",
+            amount: 12345,
+            createdAt: createdA.createdAt,
+            createdBy: sessionA.userId
+        }
     ]);
     assert.deepEqual(finalMemoryB.listActualEarnings(), [
-        { id: createdB.id, label: "Persistence test B", amount: 54321 }
+        {
+            id: createdB.id,
+            label: "Persistence test B",
+            amount: 54321,
+            createdAt: createdB.createdAt,
+            createdBy: sessionB.userId
+        }
     ]);
 
     const { data: crossUserRows, error: crossUserError } = await sessionA.client
