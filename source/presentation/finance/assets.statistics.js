@@ -19,7 +19,7 @@ function renderLiquidity(container, liquidity) {
 
     const title = document.createElement("span");
     title.className = "statistics-meta";
-    title.textContent = "ЛИКВИДНОСТЬ";
+    title.textContent = "РАСПРЕДЕЛЕНИЕ ЛИКВИДНЫХ СРЕДСТВ";
 
     const total = document.createElement("span");
     total.className = "assets-analytics-section-total";
