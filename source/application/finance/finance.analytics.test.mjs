@@ -1,4 +1,4 @@
-// finance.analytics.test.mjs — Version 1.1
+// finance.analytics.test.mjs — Version 1.2
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -36,7 +36,9 @@ test("Finance Analytics calculates monthly change for all five indicators", () =
         label: "Кредит",
         debt: 100000,
         payment: 10000,
-        amount: 100000
+        amount: 100000,
+        isCreditProduct: true,
+        interestRate: 25
     }, 1000);
 
     seed("mandatory-expenses", {
