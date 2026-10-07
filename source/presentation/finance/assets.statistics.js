@@ -1,4 +1,4 @@
-// assets.statistics.js — Version 3.8
+// assets.statistics.js — Version 3.9
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -277,10 +277,9 @@ function renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplica
     distributionTitle.className = "statistics-meta";
     distributionTitle.textContent = "РАСПРЕДЕЛЕНИЕ";
 
-    const distributionBar = document.createElement("div");
-    distributionBar.className = "assets-analytics-liquidity-bar";
-    distributionBar.setAttribute("role", "img");
-    distributionBar.setAttribute(
+    const distributionBars = document.createElement("div");
+    distributionBars.className = "assets-analytics-distribution-bars";
+    distributionBars.setAttribute(
         "aria-label",
         "Распределение активов: " +
             (analytics.liquidity.liquidPercent ?? 0) +
@@ -289,16 +288,28 @@ function renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplica
             "% неликвидные"
     );
 
+    const liquidTrack = document.createElement("div");
+    liquidTrack.className = "assets-analytics-liquidity-bar";
+    liquidTrack.setAttribute("role", "img");
+    liquidTrack.setAttribute("aria-label", "Ликвидные активы");
+
     const liquidBar = document.createElement("span");
     liquidBar.className = "assets-analytics-liquidity-bar__liquid";
     liquidBar.style.width = (analytics.liquidity.liquidPercent ?? 0) + "%";
+    liquidTrack.appendChild(liquidBar);
+
+    const illiquidTrack = document.createElement("div");
+    illiquidTrack.className = "assets-analytics-liquidity-bar";
+    illiquidTrack.setAttribute("role", "img");
+    illiquidTrack.setAttribute("aria-label", "Неликвидные активы");
 
     const illiquidBar = document.createElement("span");
-    illiquidBar.className = "assets-analytics-liquidity-bar__illiquid";
+    illiquidBar.className = "assets-analytics-liquidity-bar__liquid";
     illiquidBar.style.width = (analytics.liquidity.illiquidPercent ?? 0) + "%";
+    illiquidTrack.appendChild(illiquidBar);
 
-    distributionBar.append(liquidBar, illiquidBar);
-    distribution.append(distributionBar, distributionTitle);
+    distributionBars.append(liquidTrack, illiquidTrack);
+    distribution.append(distributionBars, distributionTitle);
     content.appendChild(distribution);
 
     const composition = document.createElement("section");
