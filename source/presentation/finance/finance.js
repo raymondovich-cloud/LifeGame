@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 7.7
+// source/presentation/finance/finance.js — Version 7.8
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -243,19 +243,35 @@ function createHealthBlock(financeApplication) {
     diagnosticsPanel.className = "finance-health-diagnostics";
     diagnosticsPanel.hidden = true;
 
-    const explanationFactors = result.explanation?.factors || [];
+    const explanation = result.explanation;
+    if (explanation?.composition) {
+        const composition = document.createElement("p");
+        composition.className = "finance-diagnostic-composition";
+        composition.textContent = explanation.composition;
+        diagnosticsPanel.appendChild(composition);
+    }
+
+    if (explanation?.impact) {
+        const impact = document.createElement("p");
+        impact.className = "finance-diagnostic-impact";
+        impact.textContent = explanation.impact;
+        diagnosticsPanel.appendChild(impact);
+    }
+
+    const explanationFactors = explanation?.factors || [];
     const factorRows = explanationFactors.length
-        ? explanationFactors.slice(0, 4).map((factor) => [factor.title, factor.score, "/100", factor.explanation])
+        ? explanationFactors.map((factor) => [factor.title, factor.score, "/100", factor.explanation])
         : [
             ["Денежный поток", result.components.cashFlow, "/100", null],
             ["Ликвидность", result.components.liquidityResilience, "/100", null],
-            ["Финансовая подушка", result.components.emergencyReserve, "/100", null],
-            ["Устойчивость долга", result.components.debtSustainability, "/100", null],
+            ["Финансовый резерв", result.components.emergencyReserve, "/100", null],
+            ["Долговая устойчивость", result.components.debtSustainability, "/100", null],
             ["Чистая финансовая позиция", result.components.netFinancialPosition, "/100", null],
+            ["Продуктивный капитал", result.components.productiveCapital, "/100", null],
             ["Финансовый тренд", result.components.financialTrend, "/100", null]
         ];
 
-    factorRows.forEach(([label, componentValue, suffixText, explanation]) => {
+    factorRows.forEach(([label, componentValue, suffixText, factorExplanation]) => {
         const row = document.createElement("div");
         row.className = "finance-diagnostic-row";
 
@@ -270,10 +286,10 @@ function createHealthBlock(financeApplication) {
         row.append(name, metric);
         diagnosticsPanel.appendChild(row);
 
-        if (explanation) {
+        if (factorExplanation) {
             const explanationNode = document.createElement("p");
             explanationNode.className = "finance-diagnostic-explanation";
-            explanationNode.textContent = explanation;
+            explanationNode.textContent = factorExplanation;
             diagnosticsPanel.appendChild(explanationNode);
         }
     });
