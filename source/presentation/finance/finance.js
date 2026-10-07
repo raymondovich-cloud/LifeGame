@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 7.2
+// source/presentation/finance/finance.js — Version 7.3
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -677,11 +677,6 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
         const summary = document.createElement("summary");
         summary.className = "finance-progressive-summary";
         summary.textContent = "Дополнительные параметры";
-
-        const hint = document.createElement("span");
-        hint.className = "finance-progressive-hint";
-        hint.textContent = "Тип, ликвидность, резерв и доходность";
-        summary.appendChild(hint);
 
         const advancedBody = document.createElement("div");
         advancedBody.className = "finance-progressive-body";
