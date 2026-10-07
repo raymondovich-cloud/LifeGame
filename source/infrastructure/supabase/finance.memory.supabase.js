@@ -590,15 +590,6 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         deleteMandatoryExpense: (id) =>
             remove("mandatoryExpenses", id),
 
-        listFinancialCushion: () =>
-            list("financialCushion"),
-        saveFinancialCushion: (entry) =>
-            save("financialCushion", entry),
-        updateFinancialCushion: (id, entry) =>
-            update("financialCushion", id, entry),
-        deleteFinancialCushion: (id) =>
-            remove("financialCushion", id),
-
         saveAssetsSnapshot,
         getAssetsSnapshotAtOrBefore: getSnapshotAtOrBefore,
         getAssetsSnapshotsBetween: getSnapshotsBetween,
