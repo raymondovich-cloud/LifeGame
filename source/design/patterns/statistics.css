@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.8 */
+/* statistics.css — Version 3.9 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -585,6 +585,10 @@
 }
 .assets-analytics-distribution{
     padding-top:var(--space-5);
+}
+.assets-analytics-distribution-bars{
+    display:grid;
+    gap:var(--assets-block-spacing, var(--space-2));
 }
 .assets-analytics-distribution .assets-analytics-liquidity-bar{
     height:.5rem;
