@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.30
+// source/presentation/finance/finance.js — Version 4.31
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -964,46 +964,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
     content.id = subblock.id + "-content";
     content.hidden = false;
 
-    const entries = subblock.id === "financial-stability-index" || !financeApplication
-        ? []
-        : financeApplication.listFinanceEntries(subblock.id).sort((first, second) => {
-            const firstPinned = isEntryPinned(subblock.id, first.id);
-            const secondPinned = isEntryPinned(subblock.id, second.id);
-            return Number(secondPinned) - Number(firstPinned);
-        });
-
-    if (subblock.id === "financial-stability-index") {
-        if (financeApplication) {
-            content.appendChild(createFinancialStabilityIndexPanel(financeApplication));
-        }
-    }
-
-    if (subblock.id === "assets") {
-        content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication, assetsAnalytics));
-    }
-
-    if (subblock.id !== "assets" && subblock.id !== "financial-stability-index" && financeAnalytics) {
-        content.appendChild(createSectionSummary(root, subblock, onWriteAttempt, financeApplication, financeAnalytics));
-    }
-
-    if (subblock.id !== "financial-stability-index" && subblock.id !== "assets") {
-        if (entries.length === 0) {
-            const emptyState = document.createElement("div");
-            emptyState.className = "list-empty";
-            emptyState.innerHTML =
-                '<span class="list-empty-label">ДАННЫЕ</span>' +
-                "<p>Записей пока нет.</p>";
-            content.appendChild(emptyState);
-        } else {
-            const entryList = document.createElement("div");
-            entryList.className = "finance-entry-list";
-
-            entries.forEach((entry) => {
-                const row = createEntryRow(root, subblock, entry, onWriteAttempt, financeApplication, assetsAnalytics);
-                row.classList.toggle("is-pinned", isEntryPinned(subblock.id, entry.id));
-                entryList.appendChild(row);
-
-                if (subblock.id !== "financial-stability-index") {
+    if (subblock.id !== "financial-stability-index") {
 
                 }
             });
