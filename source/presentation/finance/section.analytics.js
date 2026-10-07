@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.7
+// section.analytics.js — Version 1.8
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -133,7 +133,119 @@ function attachAnalyticsSwipeDelete(row, onDelete) {
     content.addEventListener("pointercancel", finish);
 }
 
-function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteAttempt, interaction) {
+function renderCreditProductDetails(root, onBack, section, entry, financeAnalytics, financeApplication, onWriteAttempt, interaction) {
+    root.replaceChildren();
+
+    const screen = document.createElement("section");
+    screen.className = "assets-statistics-screen credit-product-details-screen";
+    screen.setAttribute("aria-label", "Кредитный продукт " + entry.label);
+
+    const backButton = document.createElement("button");
+    backButton.type = "button";
+    backButton.className = "assets-statistics-back";
+    backButton.textContent = "← Аналитика";
+    backButton.addEventListener("click", () => {
+        renderSectionAnalyticsScreen(
+            root,
+            onBack,
+            section,
+            financeAnalytics,
+            financeApplication,
+            onWriteAttempt,
+            interaction
+        );
+    });
+
+    const header = document.createElement("header");
+    header.className = "assets-statistics-header";
+
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "statistics-meta";
+    eyebrow.textContent = "FINANCE · " + section.number;
+
+    const title = document.createElement("h2");
+    title.className = "assets-statistics-title";
+    title.textContent = entry.label;
+
+    const type = document.createElement("p");
+    type.className = "assets-statistics-description";
+    type.textContent = "Кредитный продукт";
+
+    header.append(eyebrow, title, type);
+
+    const content = document.createElement("div");
+    content.className = "assets-analytics-content credit-product-details-content";
+
+    const analytics = typeof financeApplication?.calculateCreditProductAnalytics === "function"
+        ? financeApplication.calculateCreditProductAnalytics(entry)
+        : null;
+
+    const overview = document.createElement("section");
+    overview.className = "credit-product-details-overview";
+
+    const overviewLabel = document.createElement("span");
+    overviewLabel.className = "statistics-meta";
+    overviewLabel.textContent = "ОБЩАЯ СУММА ДОЛГА";
+
+    const overviewValue = document.createElement("strong");
+    overviewValue.className = "credit-product-details-overview-value";
+    overviewValue.textContent = formatAmount(entry.debt) + " ₽";
+
+    overview.append(overviewLabel, overviewValue);
+    content.appendChild(overview);
+
+    const details = document.createElement("section");
+    details.className = "credit-product-details-list";
+
+    const addDetail = (labelText, valueText, emphasis = false) => {
+        const row = document.createElement("div");
+        row.className = "credit-product-details-row";
+
+        const label = document.createElement("span");
+        label.textContent = labelText;
+
+        const value = document.createElement("strong");
+        value.textContent = valueText;
+        if (emphasis) value.classList.add("is-emphasis");
+
+        row.append(label, value);
+        details.appendChild(row);
+    };
+
+    addDetail("Регулярный платёж", formatAmount(entry.payment) + " ₽ / мес.");
+    addDetail(
+        "Процентная ставка",
+        Number.isFinite(Number(entry.interestRate))
+            ? formatAmount(entry.interestRate) + "% годовых"
+            : "—"
+    );
+
+    if (analytics?.payoffPossible) {
+        addDetail("Закрытие", "≈ " + analytics.monthsToPayoff + " мес.", true);
+        addDetail("Переплата", formatAmount(analytics.totalInterest) + " ₽");
+        addDetail("Всего будет выплачено", formatAmount(analytics.totalPaid) + " ₽");
+        addDetail("Проценты за первый месяц", formatAmount(analytics.firstMonthInterest) + " ₽");
+    } else {
+        addDetail("Закрытие", "Не рассчитывается");
+        addDetail("Переплата", "—");
+        const warning = document.createElement("p");
+        warning.className = "credit-product-details-warning";
+        warning.textContent = "Регулярный платёж не покрывает начисляемые проценты.";
+        details.appendChild(warning);
+    }
+
+    content.appendChild(details);
+
+    const footer = document.createElement("p");
+    footer.className = "credit-product-details-footnote";
+    footer.textContent = "Расчёт основан на текущем долге, регулярном платеже и процентной ставке.";
+    content.appendChild(footer);
+
+    screen.append(backButton, header, content);
+    root.appendChild(screen);
+}
+
+function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteAttempt, interaction, onOpenCreditDetails) {
     const row = document.createElement("div");
     row.className = "swipe-delete-item";
     row.dataset.entryId = entry.id;
@@ -192,6 +304,25 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
     const refresh = () => {
         if (typeof interaction?.onChanged === "function") interaction.onChanged();
     };
+
+    if (entry.isCreditProduct && sectionId === "financial-burden") {
+        content.addEventListener("click", (event) => {
+            if (row.classList.contains("is-editing-target") || row.classList.contains("is-delete-ready")) return;
+            if (typeof onOpenCreditDetails !== "function") return;
+            event.preventDefault();
+            event.stopPropagation();
+            onOpenCreditDetails(entry);
+        });
+        content.setAttribute("role", "button");
+        content.setAttribute("tabindex", "0");
+        content.setAttribute("aria-label", "Открыть информацию о кредитном продукте " + entry.label);
+        content.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            if (row.classList.contains("is-editing-target") || row.classList.contains("is-delete-ready")) return;
+            event.preventDefault();
+            onOpenCreditDetails(entry);
+        });
+    }
 
     attachEntryEdit(
         row,
@@ -343,7 +474,17 @@ function renderSectionAnalyticsPage(
                     onChanged: () => renderSectionAnalyticsPage(
                         root, onBack, section, financeAnalytics, financeApplication, onWriteAttempt, interaction, mode, fullGroup
                     )
-                }
+                },
+                (creditEntry) => renderCreditProductDetails(
+                    root,
+                    onBack,
+                    section,
+                    creditEntry,
+                    financeAnalytics,
+                    financeApplication,
+                    onWriteAttempt,
+                    interaction
+                )
             ));
         });
 
