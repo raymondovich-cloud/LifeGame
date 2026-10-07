@@ -478,9 +478,50 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
         update();
     }
 
+    let isCreditProduct = false;
+    let creditProductControl = null;
+
     const paymentInput = section.id === "financial-burden"
         ? document.createElement("input")
         : null;
+    const interestRateInput = section.id === "financial-burden"
+        ? document.createElement("input")
+        : null;
+
+    if (section.id === "financial-burden") {
+        creditProductControl = document.createElement("div");
+        creditProductControl.className = "liquidity-switch-field";
+
+        const label = document.createElement("span");
+        label.className = "liquidity-switch-label";
+        label.textContent = "Кредитный продукт";
+
+        const state = document.createElement("span");
+        state.className = "liquidity-switch-state";
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "liquidity-switch";
+        toggle.setAttribute("role", "switch");
+
+        const updateCreditProduct = () => {
+            toggle.setAttribute("aria-checked", String(isCreditProduct));
+            toggle.classList.toggle("is-on", isCreditProduct);
+            state.textContent = isCreditProduct ? "Включён" : "Выключен";
+            paymentInput.hidden = !isCreditProduct;
+            interestRateInput.hidden = !isCreditProduct;
+            paymentInput.required = isCreditProduct;
+            interestRateInput.required = isCreditProduct;
+        };
+
+        toggle.addEventListener("click", () => {
+            isCreditProduct = !isCreditProduct;
+            updateCreditProduct();
+        });
+
+        creditProductControl.append(label, state, toggle);
+        updateCreditProduct();
+    }
 
     if (paymentInput) {
         paymentInput.className = "input-control";
@@ -490,7 +531,23 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
         paymentInput.min = "0";
         paymentInput.step = "0.01";
         paymentInput.placeholder = "Регулярный платёж";
-        paymentInput.required = true;
+        paymentInput.required = false;
+    }
+
+    if (interestRateInput) {
+        interestRateInput.className = "input-control";
+        interestRateInput.name = "interestRate";
+        interestRateInput.type = "number";
+        interestRateInput.inputMode = "decimal";
+        interestRateInput.min = "0";
+        interestRateInput.step = "0.01";
+        interestRateInput.placeholder = "Процентная ставка, % годовых";
+        interestRateInput.required = false;
+    }
+
+    if (section.id === "financial-burden") {
+        paymentInput.hidden = true;
+        interestRateInput.hidden = true;
     }
 
     const submit = document.createElement("button");
@@ -504,7 +561,9 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
 
     form.append(labelInput, amountInput);
     if (liquidityControl) form.appendChild(liquidityControl);
+    if (creditProductControl) form.appendChild(creditProductControl);
     if (paymentInput) form.appendChild(paymentInput);
+    if (interestRateInput) form.appendChild(interestRateInput);
     form.append(submit, error);
 
     form.addEventListener("submit", async (event) => {
@@ -517,7 +576,9 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
                     await financeApplication.addFinancialBurdenEntry(
                         labelInput.value,
                         amountInput.value,
-                        paymentInput.value
+                        isCreditProduct ? paymentInput.value : null,
+                        isCreditProduct,
+                        isCreditProduct ? interestRateInput.value : null
                     );
                 } else {
                     await financeApplication.addFinanceEntry(
