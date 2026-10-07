@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 7.1
+// source/presentation/finance/finance.js — Version 7.2
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -669,12 +669,35 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
     error.hidden = true;
 
     form.append(labelInput, amountInput);
-    if (assetTypeControl) form.appendChild(assetTypeControl);
-    if (liquidityControl) form.appendChild(liquidityControl);
-    if (reserveControl) form.appendChild(reserveControl);
-    if (incomeControl) form.appendChild(incomeControl);
-    if (annualYieldRateInput) form.appendChild(annualYieldRateInput);
-    if (incomeControl && annualYieldRateInput) form.appendChild(compoundingSelect);
+
+    if (section.id === "assets") {
+        const advancedDetails = document.createElement("details");
+        advancedDetails.className = "finance-progressive-details";
+
+        const summary = document.createElement("summary");
+        summary.className = "finance-progressive-summary";
+        summary.textContent = "Дополнительные параметры";
+
+        const hint = document.createElement("span");
+        hint.className = "finance-progressive-hint";
+        hint.textContent = "Тип, ликвидность, резерв и доходность";
+        summary.appendChild(hint);
+
+        const advancedBody = document.createElement("div");
+        advancedBody.className = "finance-progressive-body";
+        advancedBody.append(
+            assetTypeControl,
+            liquidityControl,
+            reserveControl,
+            incomeControl,
+            annualYieldRateInput,
+            compoundingSelect
+        );
+
+        advancedDetails.append(summary, advancedBody);
+        form.appendChild(advancedDetails);
+    }
+
     if (creditProductControl) form.appendChild(creditProductControl);
     if (paymentInput) form.appendChild(paymentInput);
     if (interestRateInput) form.appendChild(interestRateInput);
