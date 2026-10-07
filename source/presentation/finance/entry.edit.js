@@ -1,4 +1,4 @@
-// entry.edit.js — Version 3.0
+// entry.edit.js — Version 3.1
 
 function triggerHaptic() {
     const telegramWebApp = typeof window !== "undefined"
@@ -455,12 +455,35 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
 
     actions.append(cancelButton, saveButton);
     form.append(labelInput, amountInput);
-    if (assetTypeSelect) form.appendChild(assetTypeSelect);
-    if (liquidityField) form.appendChild(liquidityField);
-    if (reserveField) form.appendChild(reserveField);
-    if (incomeField) form.appendChild(incomeField);
-    if (annualYieldRateInput) form.appendChild(annualYieldRateInput);
-    if (compoundingSelect) form.appendChild(compoundingSelect);
+
+    if (subblockId === "assets") {
+        const advancedDetails = document.createElement("details");
+        advancedDetails.className = "finance-progressive-details";
+
+        const summary = document.createElement("summary");
+        summary.className = "finance-progressive-summary";
+        summary.textContent = "Дополнительные параметры";
+
+        const hint = document.createElement("span");
+        hint.className = "finance-progressive-hint";
+        hint.textContent = "Тип, ликвидность, резерв и доходность";
+        summary.appendChild(hint);
+
+        const advancedBody = document.createElement("div");
+        advancedBody.className = "finance-progressive-body";
+        advancedBody.append(
+            assetTypeSelect,
+            liquidityField,
+            reserveField,
+            incomeField,
+            annualYieldRateInput,
+            compoundingSelect
+        );
+
+        advancedDetails.append(summary, advancedBody);
+        form.appendChild(advancedDetails);
+    }
+
     if (creditProductField) form.appendChild(creditProductField);
     if (paymentInput) form.appendChild(paymentInput);
     if (interestRateInput) form.appendChild(interestRateInput);
