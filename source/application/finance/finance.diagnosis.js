@@ -1,4 +1,4 @@
-// source/application/finance/finance.diagnosis.js — Version 1.1
+// source/application/finance/finance.diagnosis.js — Version 1.2
 
 const COMPONENT_LABELS = Object.freeze({
     cashFlowSustainability: "денежного потока",
@@ -8,6 +8,16 @@ const COMPONENT_LABELS = Object.freeze({
     solvencyPosition: "чистой финансовой позиции",
     productiveCapital: "продуктивного капитала",
     financialTrajectory: "финансового тренда"
+});
+
+const COMPONENT_WEAK_LABELS = Object.freeze({
+    cashFlowSustainability: "денежный поток",
+    operationalLiquidity: "ликвидные средства",
+    emergencyResilience: "финансовая подушка",
+    debtSustainability: "долговая устойчивость",
+    solvencyPosition: "чистая финансовая позиция",
+    productiveCapital: "продуктивный капитал",
+    financialTrajectory: "финансовый тренд"
 });
 
 function percentageChange(current, previous) {
@@ -71,7 +81,7 @@ function buildFinancialStabilityDiagnosis(current, previous = null) {
         primaryNegativeFactor: negative[0] || null,
         secondaryNegativeFactor: negative[1] || null,
         weakestFactor: weakest
-            ? { key: weakest[0], label: COMPONENT_LABELS[weakest[0]], value: Number(weakest[1]) }
+            ? { key: weakest[0], label: COMPONENT_WEAK_LABELS[weakest[0]], value: Number(weakest[1]) }
             : null
     };
 }
