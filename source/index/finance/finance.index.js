@@ -1,6 +1,6 @@
-// source/index/finance/finance.index.js — Version 4.0
+// source/index/finance/finance.index.js — Version 4.1
 
-// FSI 4.0 — Financial Stability Index.
+// FSI 4.1 — Financial Stability Index.
 // Theory-driven composite model of cash-flow sustainability, operational liquidity,
 // emergency resilience, debt sustainability, solvency, productive capital and trajectory.
 // Scientifically grounded, not empirically calibrated.
@@ -353,7 +353,7 @@ function productiveCapitalScore(assets) {
 
     if (productivePrincipal <= 0) {
         return {
-            score: 0,
+            score: 0.5,
             productivePrincipal: 0,
             projectedAnnualIncome: 0,
             projectedAnnualYield: 0
@@ -366,7 +366,7 @@ function productiveCapitalScore(assets) {
     // The component has only 5% weight because risk and realized yield
     // are not yet observable in the Finance data model.
     return {
-        score: clamp(1 - Math.exp(-Math.max(0, projectedYield) / 0.10)),
+        score: clamp(0.5 + 0.5 * (1 - Math.exp(-Math.max(0, projectedYield) / 0.10))),
         productivePrincipal,
         projectedAnnualIncome,
         projectedAnnualYield: projectedYield
@@ -454,7 +454,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
         resolve(financeState.cushion, financeState.financialCushion)
     );
 
-    const operationalLiquidFunds = Math.max(0, liquidFunds - reserve);
+    const operationalLiquidFunds = liquidFunds;
     const mandatoryOutflow = expenses + payments;
 
     const cashFlowCoverage = mandatoryOutflow > 0
@@ -506,14 +506,19 @@ function calculateFinancialStabilityIndex(financeState = {}) {
         financialTrajectory: trajectory.score
     };
 
-    const value = 100 *
-        components.cashFlowSustainability ** FSI_WEIGHTS.cashFlowSustainability *
-        components.operationalLiquidity ** FSI_WEIGHTS.operationalLiquidity *
-        components.emergencyResilience ** FSI_WEIGHTS.emergencyResilience *
-        components.debtSustainability ** FSI_WEIGHTS.debtSustainability *
-        components.solvencyPosition ** FSI_WEIGHTS.solvencyPosition *
-        components.productiveCapital ** FSI_WEIGHTS.productiveCapital *
-        components.financialTrajectory ** FSI_WEIGHTS.financialTrajectory;
+    // Weighted arithmetic aggregation is used because the component scores
+    // are bounded index scores, not ratio-scale measurements. It preserves
+    // non-compensatory weighting without allowing a zero component to collapse
+    // the entire index to zero.
+    const value = 100 * (
+        components.cashFlowSustainability * FSI_WEIGHTS.cashFlowSustainability +
+        components.operationalLiquidity * FSI_WEIGHTS.operationalLiquidity +
+        components.emergencyResilience * FSI_WEIGHTS.emergencyResilience +
+        components.debtSustainability * FSI_WEIGHTS.debtSustainability +
+        components.solvencyPosition * FSI_WEIGHTS.solvencyPosition +
+        components.productiveCapital * FSI_WEIGHTS.productiveCapital +
+        components.financialTrajectory * FSI_WEIGHTS.financialTrajectory
+    );
 
     const riskFlags = [];
 
@@ -583,7 +588,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
         category: category(finalValue),
 
         methodology: {
-            aggregation: "weighted_geometric_mean",
+            aggregation: "weighted_arithmetic_mean",
             componentFloor: 0,
             scientificallyGrounded: true,
             empiricallyValidated: false,
