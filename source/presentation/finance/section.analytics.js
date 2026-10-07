@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.4
+// section.analytics.js — Version 1.5
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -206,17 +206,18 @@ function renderSectionAnalyticsPage(
     financeApplication,
     onWriteAttempt = null,
     interaction = null,
-    mode = "preview"
+    mode = "preview",
+    fullGroup = null
 ) {
     root.replaceChildren();
 
     const backButton = document.createElement("button");
     backButton.type = "button";
     backButton.className = "assets-statistics-back";
-    backButton.textContent = mode === "full" ? "← Аналитика" : "← " + section.title;
+    backButton.textContent = fullGroup ? "← Аналитика" : "← " + section.title;
     backButton.addEventListener("click", () => {
-        if (mode === "full") {
-            renderSectionAnalyticsPage(root, onBack, section, financeAnalytics, financeApplication, onWriteAttempt, interaction, "preview");
+        if (fullGroup) {
+            renderSectionAnalyticsPage(root, onBack, section, financeAnalytics, financeApplication, onWriteAttempt, interaction, "preview", null);
             return;
         }
         if (typeof onBack === "function") onBack();
@@ -286,7 +287,7 @@ function renderSectionAnalyticsPage(
 
     const entries = financeApplication.listFinanceEntries(section.id);
 
-    const renderEntryGroup = (titleText, groupEntries, emptyText, groupMode) => {
+    const renderEntryGroup = (titleText, groupEntries, emptyText, groupKey) => {
         const history = document.createElement("section");
         history.className = "assets-analytics-section assets-analytics-composition";
 
@@ -304,9 +305,8 @@ function renderSectionAnalyticsPage(
             return;
         }
 
-        const visible = groupMode === "preview"
-            ? getPreviewEntries(groupEntries, interaction)
-            : groupEntries;
+        const expanded = mode === "full" && fullGroup === groupKey;
+        const visible = expanded ? groupEntries : getPreviewEntries(groupEntries, interaction);
 
         visible.forEach((entry) => {
             history.appendChild(createAnalyticsRow(
@@ -324,7 +324,7 @@ function renderSectionAnalyticsPage(
             ));
         });
 
-        if (groupMode === "preview" && groupEntries.length > 3) {
+        if (!expanded && groupEntries.length > 3) {
             const openAll = document.createElement("button");
             openAll.type = "button";
             openAll.className = "assets-analytics-open-all";
@@ -338,7 +338,8 @@ function renderSectionAnalyticsPage(
                     financeApplication,
                     onWriteAttempt,
                     interaction,
-                    mode === "full" ? "full" : "full"
+                    "preview",
+                    groupKey
                 );
             });
             history.appendChild(openAll);
@@ -355,21 +356,21 @@ function renderSectionAnalyticsPage(
             "КРЕДИТНЫЕ ПРОДУКТЫ",
             creditProducts,
             "Кредитных продуктов пока нет.",
-            mode
+            "credit-products"
         );
 
         renderEntryGroup(
             "ДОЛГИ",
             debts,
             "Долгов пока нет.",
-            mode
+            "debts"
         );
     } else {
         renderEntryGroup(
             "ИСТОРИЯ ОПЕРАЦИЙ",
             entries,
             "Записей пока нет.",
-            mode
+            "history"
         );
     }
 }
