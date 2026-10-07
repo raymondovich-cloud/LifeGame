@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 7.3
+// source/presentation/finance/finance.js — Version 7.4
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -160,9 +160,8 @@ function createHealthBlock(financeApplication) {
     category.className = "finance-health-category";
     category.textContent = result.category?.label || "Недостаточно данных";
 
-    const description = document.createElement("p");
-    description.className = "finance-health-description";
-    description.textContent = "Комплексная оценка вашего финансового положения, которая показывает уровень устойчивости системы и помогает понять, насколько уверенно вы справляетесь с текущими расходами и обязательствами.";
+    const healthHeader = document.createElement("div");
+    healthHeader.className = "finance-health-header";
 
     const diagnostics = document.createElement("button");
     diagnostics.type = "button";
@@ -177,6 +176,12 @@ function createHealthBlock(financeApplication) {
             ? "Скрыть диагностику ↑"
             : "Показать диагностику →";
     });
+
+    const description = document.createElement("p");
+    description.className = "finance-health-description";
+    description.textContent = "Расшифровка индекса";
+
+    healthHeader.append(meta, diagnostics);
 
     const diagnosticsPanel = document.createElement("div");
     diagnosticsPanel.className = "finance-health-diagnostics";
@@ -205,7 +210,7 @@ function createHealthBlock(financeApplication) {
         diagnosticsPanel.appendChild(row);
     });
 
-    section.append(meta, valueRow, category, description, diagnostics, diagnosticsPanel);
+    section.append(healthHeader, valueRow, category, description, diagnosticsPanel);
     return section;
 }
 
