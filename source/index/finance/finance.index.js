@@ -473,7 +473,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
         ? payments / income
         : (payments > 0 ? Infinity : 0);
 
-    const dti = income > 0
+    const debtToMonthlyIncome = income > 0
         ? debt / income
         : (debt > 0 ? Infinity : 0);
 
@@ -499,7 +499,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
         emergencyResilience: monthsScore(reserveMonths),
         debtSustainability:
             0.45 * dsrScore(dsr) +
-            0.25 * dtiScore(dti) +
+            0.25 * dtiScore(debtToMonthlyIncome) +
             0.30 * credit.score,
         solvencyPosition: netPositionScore(netWorth, mandatoryOutflow),
         productiveCapital: productiveCapital.score,
@@ -554,7 +554,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
             : [],
         reserve: Array.isArray(financeState.reserveHistory)
             ? financeState.reserveHistory
-            : []
+            : [],
     };
 
     const confidence = dataConfidence({
@@ -584,7 +584,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
     return {
         value: finalValue,
         scale: FSI_LIMITS.maximum,
-        version: "4.0",
+        version: "4.1",
         category: category(finalValue),
 
         methodology: {
@@ -630,7 +630,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
             reserveMonths: round(reserveMonths),
 
             debtServiceRatio: round(dsr, 3),
-            debtToIncome: round(dti),
+            debtToIncome: round(debtToMonthlyIncome),
             netWorth: round(netWorth),
 
             productiveCapital: round(productiveCapital.productivePrincipal),
