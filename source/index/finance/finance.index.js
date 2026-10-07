@@ -1,4 +1,4 @@
-// source/index/finance/finance.index.js — Version 4.1
+// source/index/finance/finance.index.js — Version 4.2
 
 // FSI 4.1 — Financial Stability Index.
 // Theory-driven composite model of cash-flow sustainability, operational liquidity,
@@ -182,6 +182,86 @@ function trajectoryScore(values, direction = "positive") {
         normalizedSlope,
         observations: list.length,
         sufficientHistory: true
+    };
+}
+
+function percentageChange(current, previous) {
+    if (!Number.isFinite(current) || !Number.isFinite(previous) || previous === 0) return null;
+    return round(((current - previous) / Math.abs(previous)) * 100, 1);
+}
+
+function buildFinancialStabilityDiagnosis(current, previous = null) {
+    if (!current) return null;
+
+    const currentValue = Number(current.value);
+    const previousValue = previous ? Number(previous.value) : null;
+    const changePercent = previous
+        ? percentageChange(currentValue, previousValue)
+        : null;
+
+    const componentLabels = {
+        cashFlowSustainability: "денежного потока",
+        operationalLiquidity: "ликвидных средств",
+        emergencyResilience: "финансовой подушки",
+        debtSustainability: "долговой устойчивости",
+        solvencyPosition: "чистой финансовой позиции",
+        productiveCapital: "продуктивного капитала",
+        financialTrajectory: "финансового тренда"
+    };
+
+    const changes = Object.entries(current.components)
+        .filter(([key]) => Object.prototype.hasOwnProperty.call(componentLabels, key))
+        .map(([key, value]) => {
+            const previousValueForComponent = previous?.components?.[key];
+            const delta = Number.isFinite(Number(previousValueForComponent))
+                ? Number(value) - Number(previousValueForComponent)
+                : null;
+            const weight = FSI_WEIGHTS[key] || 0;
+            return {
+                key,
+                label: componentLabels[key],
+                value: Number(value),
+                previous: previousValueForComponent ?? null,
+                delta,
+                weightedDelta: delta === null ? null : delta * weight
+            };
+        })
+        .filter((item) => item.delta !== null)
+        .sort((a, b) => Math.abs(b.weightedDelta) - Math.abs(a.weightedDelta));
+
+    const positive = changes.filter((item) => item.weightedDelta > 0.5);
+    const negative = changes.filter((item) => item.weightedDelta < -0.5);
+
+    const weakest = Object.entries(current.components)
+        .filter(([key]) => Object.prototype.hasOwnProperty.call(componentLabels, key))
+        .sort((a, b) => Number(a[1]) - Number(b[1]))[0];
+
+    let trend = "stable";
+    if (changePercent !== null) {
+        if (changePercent >= 5) trend = "strongly_improving";
+        else if (changePercent >= 1) trend = "improving";
+        else if (changePercent <= -5) trend = "strongly_declining";
+        else if (changePercent <= -1) trend = "declining";
+    }
+
+    return {
+        hasComparison: Boolean(previous),
+        current: currentValue,
+        previous: previousValue,
+        change: currentValue - (previousValue ?? currentValue),
+        changePercent,
+        trend,
+        primaryPositiveFactor: positive[0] || null,
+        secondaryPositiveFactor: positive[1] || null,
+        primaryNegativeFactor: negative[0] || null,
+        secondaryNegativeFactor: negative[1] || null,
+        weakestFactor: weakest
+            ? {
+                key: weakest[0],
+                label: componentLabels[weakest[0]],
+                value: Number(weakest[1])
+            }
+            : null
     };
 }
 
@@ -672,4 +752,4 @@ function calculateFinancialStabilityIndex(financeState = {}) {
     };
 }
 
-export { calculateFinancialStabilityIndex };
+export { calculateFinancialStabilityIndex, buildFinancialStabilityDiagnosis };
