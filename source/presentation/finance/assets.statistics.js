@@ -291,7 +291,7 @@ function renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplica
 
     const compositionTitle = document.createElement("span");
     compositionTitle.className = "statistics-meta";
-    compositionTitle.textContent = "АКТИВЫ";
+    compositionTitle.textContent = "ИСТОРИЯ ОПЕРАЦИЙ";
     composition.appendChild(compositionTitle);
 
     if (!analytics.composition.length) {
