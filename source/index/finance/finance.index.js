@@ -1,11 +1,12 @@
-// source/index/finance/finance.index.js — Version 3.0
+// source/index/finance/finance.index.js — Version 3.1
 //
-// FSI 3.0 — Financial Stability Index.
+// FSI 3.1 — Financial Stability Index.
 // Weighted composite indicator of cash-flow capacity, liquidity resilience,
 // emergency reserve, debt sustainability, net financial position and trend.
 // Scientifically grounded, not empirically validated.
 
 const FSI_LIMITS = Object.freeze({ minimum: 0, maximum: 100 });
+const FSI_COMPONENT_FLOOR = 0.05;
 const FSI_CATEGORIES = Object.freeze([
     { minimum: 0, maximum: 19, key: "critical", label: "Критический" },
     { minimum: 20, maximum: 39, key: "vulnerable", label: "Уязвимый" },
@@ -149,7 +150,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
     const freeLiquid = Math.max(0, liquidFunds - reserve);
 
     const coverage = outflow > 0 ? income / outflow : (income > 0 ? Infinity : 0);
-    const liquidityMonths = outflow > 0 ? freeLiquid / outflow : (freeLiquid > 0 ? Infinity : 0);
+    const liquidityMonths = outflow > 0 ? liquidFunds / outflow : (liquidFunds > 0 ? Infinity : 0);
     const reserveMonths = outflow > 0 ? reserve / outflow : (reserve > 0 ? Infinity : 0);
     const dsr = income > 0 ? payments / income : (payments > 0 ? Infinity : 0);
     const dti = income > 0 ? debt / income : (debt > 0 ? Infinity : 0);
@@ -170,13 +171,17 @@ function calculateFinancialStabilityIndex(financeState = {}) {
         )
     };
 
+    const protectedComponents = Object.fromEntries(
+        Object.entries(components).map(([key, score]) => [key, Math.max(score, FSI_COMPONENT_FLOOR)])
+    );
+
     let value = 100 *
-        components.cashFlow ** FSI_WEIGHTS.cashFlow *
-        components.liquidityResilience ** FSI_WEIGHTS.liquidityResilience *
-        components.emergencyReserve ** FSI_WEIGHTS.emergencyReserve *
-        components.debtSustainability ** FSI_WEIGHTS.debtSustainability *
-        components.netFinancialPosition ** FSI_WEIGHTS.netFinancialPosition *
-        components.financialTrend ** FSI_WEIGHTS.financialTrend;
+        protectedComponents.cashFlow ** FSI_WEIGHTS.cashFlow *
+        protectedComponents.liquidityResilience ** FSI_WEIGHTS.liquidityResilience *
+        protectedComponents.emergencyReserve ** FSI_WEIGHTS.emergencyReserve *
+        protectedComponents.debtSustainability ** FSI_WEIGHTS.debtSustainability *
+        protectedComponents.netFinancialPosition ** FSI_WEIGHTS.netFinancialPosition *
+        protectedComponents.financialTrend ** FSI_WEIGHTS.financialTrend;
 
     const gates = [];
     if (outflow > 0 && income < outflow) {
@@ -204,10 +209,11 @@ function calculateFinancialStabilityIndex(financeState = {}) {
     return {
         value: finalValue,
         scale: FSI_LIMITS.maximum,
-        version: "3.0",
+        version: "3.1",
         category: category(finalValue),
         methodology: {
-            aggregation: "weighted_geometric_mean",
+            aggregation: "weighted_geometric_mean_with_component_floor",
+            componentFloor: FSI_COMPONENT_FLOOR,
             scientificallyGrounded: true,
             empiricallyValidated: false,
             weights: FSI_WEIGHTS
@@ -228,6 +234,7 @@ function calculateFinancialStabilityIndex(financeState = {}) {
             totalDebt: round(debt),
             cashFlowCoverage: round(coverage),
             liquidityMonths: round(liquidityMonths),
+            liquidityCoverageFunds: round(liquidFunds),
             reserveMonths: round(reserveMonths),
             debtServiceRatio: round(dsr, 3),
             debtToIncome: round(dti),
