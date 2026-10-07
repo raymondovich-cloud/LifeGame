@@ -1,4 +1,4 @@
-// assets.test.mjs — Version 1.0
+// assets.test.mjs — Version 2.0
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -20,7 +20,12 @@ test("Assets Domain creates a stateless asset result", () => {
     assert.deepEqual(result.entry, {
         label: "Квартира",
         amount: 5000000,
-        liquidity: "illiquid"
+        liquidity: "illiquid",
+        assetType: "cash",
+        isReserve: false,
+        incomeEnabled: false,
+        annualYieldRate: null,
+        compoundingFrequency: "none"
     });
     assert.equal(result.event.type, "finance.assets.changed");
     assert.equal(result.event.payload.operation, "created");
@@ -62,7 +67,12 @@ test("Assets Domain updates supplied state without owning it", () => {
         id: "asset-1",
         label: "Счёт",
         amount: 120000,
-        liquidity: "illiquid"
+        liquidity: "illiquid",
+        assetType: "cash",
+        isReserve: false,
+        incomeEnabled: false,
+        annualYieldRate: null,
+        compoundingFrequency: "none"
     });
     assert.deepEqual(existing, {
         id: "asset-1",
@@ -93,4 +103,23 @@ test("Assets total is calculated from supplied state", () => {
         ]),
         350
     );
+});
+
+
+test("Assets Domain supports reserve and income-producing parameters", () => {
+    const result = createAsset({
+        label: "Вклад",
+        amount: 500000,
+        liquidity: "liquid",
+        assetType: "bank-deposit",
+        isReserve: true,
+        incomeEnabled: true,
+        annualYieldRate: 16,
+        compoundingFrequency: "monthly"
+    });
+
+    assert.equal(result.entry.isReserve, true);
+    assert.equal(result.entry.assetType, "bank-deposit");
+    assert.equal(result.entry.annualYieldRate, 16);
+    assert.equal(result.entry.compoundingFrequency, "monthly");
 });
