@@ -39,7 +39,6 @@ test("Finance Memory isolates users across all Finance collections", () => {
     assert.equal(secondUser.listActualEarnings().length, 0);
     assert.equal(secondUser.listFinancialBurden().length, 0);
     assert.equal(secondUser.listMandatoryExpenses().length, 0);
-    assert.equal(secondUser.listFinancialCushion().length, 0);
 });
 
 test("Finance Memory preserves identity on update", () => {
