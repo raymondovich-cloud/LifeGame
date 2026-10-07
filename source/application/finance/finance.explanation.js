@@ -1,4 +1,4 @@
-// source/application/finance/finance.explanation.js — Version 2.1
+// source/application/finance/finance.explanation.js — Version 2.2
 
 // Explanation engine for FSI.
 // The engine does not store user-specific phrases.
@@ -8,36 +8,92 @@
 const FACTOR_META = Object.freeze({
     cashFlowSustainability: {
         title: "Денежный поток",
+        cases: {
+            nominative: "денежный поток",
+            genitive: "денежного потока",
+            dative: "денежному потоку",
+            accusative: "денежный поток",
+            instrumental: "денежным потоком",
+            prepositional: "денежном потоке"
+        },
         priority: 1,
         weightLabel: "25%"
     },
     operationalLiquidity: {
         title: "Ликвидность",
+        cases: {
+            nominative: "ликвидность",
+            genitive: "ликвидности",
+            dative: "ликвидности",
+            accusative: "ликвидность",
+            instrumental: "ликвидностью",
+            prepositional: "ликвидности"
+        },
         priority: 2,
         weightLabel: "15%"
     },
     emergencyResilience: {
         title: "Финансовый резерв",
+        cases: {
+            nominative: "финансовый резерв",
+            genitive: "финансового резерва",
+            dative: "финансовому резерву",
+            accusative: "финансовый резерв",
+            instrumental: "финансовым резервом",
+            prepositional: "финансовом резерве"
+        },
         priority: 3,
         weightLabel: "15%"
     },
     debtSustainability: {
         title: "Долговая устойчивость",
+        cases: {
+            nominative: "долговая устойчивость",
+            genitive: "долговой устойчивости",
+            dative: "долговой устойчивости",
+            accusative: "долговую устойчивость",
+            instrumental: "долговой устойчивостью",
+            prepositional: "долговой устойчивости"
+        },
         priority: 4,
         weightLabel: "20%"
     },
     solvencyPosition: {
         title: "Чистая финансовая позиция",
+        cases: {
+            nominative: "чистая финансовая позиция",
+            genitive: "чистой финансовой позиции",
+            dative: "чистой финансовой позиции",
+            accusative: "чистую финансовую позицию",
+            instrumental: "чистой финансовой позицией",
+            prepositional: "чистой финансовой позиции"
+        },
         priority: 5,
         weightLabel: "10%"
     },
     productiveCapital: {
         title: "Продуктивный капитал",
+        cases: {
+            nominative: "продуктивный капитал",
+            genitive: "продуктивного капитала",
+            dative: "продуктивному капиталу",
+            accusative: "продуктивный капитал",
+            instrumental: "продуктивным капиталом",
+            prepositional: "продуктивном капитале"
+        },
         priority: 6,
         weightLabel: "5%"
     },
     financialTrajectory: {
         title: "Финансовый тренд",
+        cases: {
+            nominative: "финансовый тренд",
+            genitive: "финансового тренда",
+            dative: "финансовому тренду",
+            accusative: "финансовый тренд",
+            instrumental: "финансовым трендом",
+            prepositional: "финансовом тренде"
+        },
         priority: 7,
         weightLabel: "10%"
     }
@@ -107,6 +163,31 @@ function scoreMeaning(score) {
                         ? "поддерживает индекс на стабильном уровне"
                         : "существенно поддерживает индекс"
     };
+}
+
+function factorCase(key, grammaticalCase = "nominative") {
+    return FACTOR_META[key]?.cases?.[grammaticalCase] || FACTOR_META[key]?.title || "этот фактор";
+}
+
+function semanticState(score) {
+    const level = levelFor(score);
+
+    return level.key === "critical" || level.key === "weak"
+        ? "needsAttention"
+        : level.key === "moderate"
+            ? "developing"
+            : level.key === "stable"
+                ? "stable"
+                : "strength";
+}
+
+function componentStateText(state) {
+    return {
+        needsAttention: "требует усиления",
+        developing: "находится в зоне развития",
+        stable: "поддерживает устойчивость системы",
+        strength: "является сильной стороной системы"
+    }[state];
 }
 
 function componentContribution(score, weight) {
@@ -383,15 +464,15 @@ function buildImpactText(factors) {
 
     if (!limiting) return "Недостаточно данных, чтобы определить влияние факторов.";
 
+    const limitingTitle = factorCase(limiting.key, "nominative");
+    const strongestTitle = strongest ? factorCase(strongest.key, "nominative") : null;
+
     if (strongest && strongest.key !== limiting.key && strongest.score >= 75) {
-        return "Наибольшее ограничение сейчас создаёт " +
-            limiting.title.toLowerCase() + " (" + formatNumber(limiting.score, 1) +
-            "/100), а сильнее всего систему поддерживает " +
-            strongest.title.toLowerCase() + " (" + formatNumber(strongest.score, 1) + "/100).";
+        return "Основная зона для усиления — " + limitingTitle + ". " +
+            "Сильнейшая сторона системы — " + strongestTitle + ".";
     }
 
-    return "Наибольшее влияние на недобор до максимального индекса сейчас оказывает " +
-        limiting.title.toLowerCase() + " (" + formatNumber(limiting.score, 1) + "/100).";
+    return "Основная зона для усиления — " + limitingTitle + ".";
 }
 
 function buildSummary(result, factors) {
@@ -399,28 +480,78 @@ function buildSummary(result, factors) {
         return "Недостаточно данных для построения персонального объяснения индекса.";
     }
 
-    const category = result?.category?.label || "—";
-    const value = numeric(result?.value, 0);
     const limiting = factors[0];
     const strongest = factors.slice().sort((a, b) => b.score - a.score)[0];
+    const limitingState = semanticState(limiting.score);
+    const facts = buildFacts(limiting.key, result);
 
-    let text = "Ваш индекс — " + formatNumber(value, 1) + "/100, уровень «" +
-        category.toLowerCase() + "».";
+    let text = "Основная зона для усиления — " +
+        factorCase(limiting.key, "nominative") + ". ";
 
-    if (limiting) {
-        text += " Наибольший недобор до максимального значения сейчас связан с " +
-            limiting.title.toLowerCase() + " (" +
-            formatNumber(limiting.score, 1) + "/100; вес " +
-            formatNumber(limiting.weight * 100, 0) + "%).";
+    if (limitingState === "needsAttention") {
+        if (limiting.key === "emergencyResilience" && facts.reserve <= 0) {
+            text += "Финансовый резерв отсутствует, поэтому система не имеет отдельного запаса средств для покрытия обязательных расходов при снижении дохода.";
+        } else {
+            text += "Текущее состояние " + factorCase(limiting.key, "genitive") +
+                " заметно ограничивает финансовую устойчивость системы.";
+        }
+    } else if (limitingState === "developing") {
+        text += "Текущее состояние " + factorCase(limiting.key, "genitive") +
+            " оставляет заметный потенциал для повышения финансовой устойчивости.";
+    } else {
+        text += "Текущее состояние " + factorCase(limiting.key, "genitive") +
+            " уже поддерживает систему, но остаётся главным направлением для дальнейшего усиления.";
     }
 
-    if (strongest && strongest.key !== limiting?.key) {
-        text += " Наиболее сильный компонент — " +
-            strongest.title.toLowerCase() + " (" +
-            formatNumber(strongest.score, 1) + "/100).";
+    if (strongest && strongest.key !== limiting.key && strongest.score >= 75) {
+        text += " Сильнейшая сторона системы — " +
+            factorCase(strongest.key, "nominative") + ": " +
+            buildStrongestSemanticText(strongest.key, result) + ".";
     }
 
     return text;
+}
+
+function buildStrongestSemanticText(key, result) {
+    const facts = buildFacts(key, result);
+
+    if (key === "cashFlowSustainability") {
+        if (facts.outflow > 0 && facts.income >= facts.outflow) {
+            return "текущего дохода достаточно для покрытия обязательных расходов";
+        }
+
+        return "денежный поток поддерживает текущую финансовую устойчивость";
+    }
+
+    if (key === "operationalLiquidity") {
+        return Number.isFinite(facts.months)
+            ? "ликвидных средств достаточно для покрытия текущего обязательного оттока"
+            : "ликвидность поддерживает текущую финансовую устойчивость";
+    }
+
+    if (key === "emergencyResilience") {
+        return Number.isFinite(facts.months)
+            ? "резерв создаёт дополнительный запас для покрытия обязательных расходов"
+            : "резерв поддерживает финансовую устойчивость";
+    }
+
+    if (key === "debtSustainability") {
+        return "текущая долговая нагрузка не создаёт сильного давления на систему";
+    }
+
+    if (key === "solvencyPosition") {
+        return facts.netWorth !== null && facts.netWorth >= 0
+            ? "активы покрывают обязательства"
+            : "финансовая позиция поддерживает устойчивость системы";
+    }
+
+    if (key === "productiveCapital") {
+        return facts.principal > 0
+            ? "капитал способен формировать дополнительный финансовый результат"
+            : "система сохраняет потенциал для формирования продуктивного капитала";
+    }
+
+    return "доступная динамика поддерживает финансовую устойчивость системы";
 }
 
 function createFinanceExplanation(result) {
