@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.33
+// source/presentation/finance/finance.js — Version 7.1
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -48,13 +48,6 @@ const FINANCE_SECTIONS = Object.freeze([
         title: "Обязательные траты",
         description: "Расходы, которые нельзя пропустить",
         info: "Регулярные расходы, которые необходимо оплачивать."
-    },
-    {
-        id: "financial-cushion",
-        label: "RESERVE",
-        title: "Финансовая подушка",
-        description: "Резерв на непредвиденные ситуации",
-        info: "Резерв средств для покрытия непредвиденных расходов и периодов снижения дохода."
     }
 ]);
 
@@ -133,7 +126,9 @@ function getFinancialSnapshot(financeApplication, assetsAnalytics) {
             .listFinanceEntries("financial-burden")
             .reduce((total, entry) => total + Number(entry.payment || 0), 0),
         expenses: getSectionTotal(financeApplication, "mandatory-expenses"),
-        reserve: getSectionTotal(financeApplication, "financial-cushion")
+        reserve: assets
+            .filter((entry) => Boolean(entry?.isReserve))
+            .reduce((total, entry) => total + Number(entry.amount || 0), 0)
     };
 }
 
