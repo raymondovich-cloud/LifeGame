@@ -1,4 +1,4 @@
-/* finance.css — Version 3.3 */
+/* finance.css — Version 3.4 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -6,6 +6,8 @@
 .finance-workspace-header p,.finance-structure-description{margin:0;color:var(--color-gray);font-size:var(--font-size-xs);line-height:1.45}
 .finance-section-meta{color:var(--color-gray-dark);font-family:var(--font-family-mono);font-size:var(--font-size-2xs);font-weight:var(--font-weight-medium);letter-spacing:var(--letter-spacing-system);line-height:1.2}
 .finance-health{display:grid;gap:var(--space-2);padding:var(--space-2) 0 var(--space-5);border-bottom:var(--border-subtle)}
+.finance-health-header{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
+.finance-health-header .finance-text-action{margin-left:auto;white-space:nowrap}
 .finance-health-value-row{display:flex;align-items:baseline;gap:.25rem;margin-top:var(--space-1)}
 .finance-health-value{color:var(--color-white);font-family:var(--font-family-mono);font-size:clamp(4rem,19vw,7rem);font-weight:var(--font-weight-semibold);letter-spacing:-.09em;line-height:.84}
 .finance-health-suffix{color:var(--color-gray-dark);font-family:var(--font-family-mono);font-size:var(--font-size-interface)}
