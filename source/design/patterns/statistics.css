@@ -1,4 +1,4 @@
-/* statistics.css — Version 4.3 */
+/* statistics.css — Version 4.4 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -708,4 +708,72 @@
 .assets-analytics-open-all:hover,
 .assets-analytics-open-all:focus-visible{
     color:var(--color-white);
+}
+
+
+/* Credit product details — opened by a normal tap; long press remains row interaction. */
+.credit-product-details-screen .assets-statistics-header{
+    padding-bottom:var(--space-4);
+}
+.credit-product-details-content{
+    padding-top:0;
+}
+.credit-product-details-overview{
+    display:grid;
+    gap:var(--assets-block-spacing, var(--space-2));
+    padding:var(--space-5) 0;
+    border-top:var(--border-subtle);
+}
+.credit-product-details-overview-value{
+    color:var(--color-white);
+    font-family:var(--font-family-mono);
+    font-size:clamp(2.75rem,13vw,4.25rem);
+    font-weight:var(--font-weight-semibold);
+    letter-spacing:-.065em;
+    line-height:.92;
+}
+.credit-product-details-list{
+    display:grid;
+    gap:0;
+    border-top:var(--border-subtle);
+}
+.credit-product-details-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:var(--space-4);
+    min-height:3.25rem;
+    padding:var(--space-3) 0;
+    border-bottom:var(--border-subtle);
+}
+.credit-product-details-row span{
+    color:var(--color-gray);
+    font-size:var(--font-size-sm);
+}
+.credit-product-details-row strong{
+    color:var(--color-white-soft);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-sm);
+    font-weight:var(--font-weight-medium);
+    text-align:right;
+}
+.credit-product-details-row strong.is-emphasis{
+    color:var(--color-accent);
+}
+.credit-product-details-warning{
+    margin:0;
+    padding:var(--space-4) 0 0;
+    color:var(--color-accent);
+    font-size:var(--font-size-sm);
+    line-height:var(--line-height-normal);
+}
+.credit-product-details-footnote{
+    margin:0;
+    padding:var(--space-4) 0 0;
+    color:var(--color-gray-dark);
+    font-size:var(--font-size-2xs);
+    line-height:var(--line-height-normal);
+}
+.assets-statistics-screen .assets-analytics-composition .swipe-delete-content[role="button"]{
+    cursor:pointer;
 }
