@@ -1,4 +1,4 @@
-// finance.analytics.test.mjs — Version 1.2
+// finance.analytics.test.mjs — Version 2.0
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -8,7 +8,7 @@ import { createFinanceApplication } from "./finance.js";
 import { createFinanceAnalytics } from "./finance.analytics.js";
 import { createFinanceMemory } from "../../memory/finance/finance.memory.js";
 
-test("Finance Analytics calculates monthly change for all five indicators", () => {
+test("Finance Analytics calculates monthly change for four indicators", () => {
     const memory = createFinanceMemory(createUserContext("user-1"));
     const finance = createFinanceApplication({ memory });
 
@@ -16,6 +16,16 @@ test("Finance Analytics calculates monthly change for all five indicators", () =
         memory.mutateFinanceCollection({
             collection,
             operation: "create",
+            entry,
+            occurredAt
+        });
+    };
+
+    const update = (collection, entryId, entry, occurredAt) => {
+        memory.mutateFinanceCollection({
+            collection,
+            operation: "update",
+            entryId,
             entry,
             occurredAt
         });
@@ -45,7 +55,6 @@ test("Finance Analytics calculates monthly change for all five indicators", () =
         label: "Аренда",
         amount: 50000
     }, 1000);
-    };
 
     update("assets", memory.listAssets()[0].id, {
         ...memory.listAssets()[0],
@@ -78,7 +87,7 @@ test("Finance Analytics calculates monthly change for all five indicators", () =
     assert.equal(result.metrics["actual-earnings"].change.percent, 73);
     assert.equal(result.metrics["financial-burden"].change.percent, -51);
     assert.equal(result.metrics["mandatory-expenses"].change.percent, 4);
-
+    assert.equal(result.metrics["financial-cushion"], undefined);
 });
 
 test("Finance Analytics returns no fabricated percentage when baseline is zero", () => {
@@ -101,7 +110,6 @@ test("Finance Analytics returns no fabricated percentage when baseline is zero",
     assert.equal(result.metrics["actual-earnings"].change.percent, null);
     assert.equal(result.metrics["actual-earnings"].change.hasComparison, false);
 });
-
 
 test("Finance Analytics uses the first snapshot inside the month when no earlier baseline exists", () => {
     const memory = createFinanceMemory(createUserContext("user-3"));
