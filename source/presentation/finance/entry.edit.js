@@ -1,4 +1,4 @@
-// entry.edit.js — Version 1.7
+// entry.edit.js — Version 1.8
 
 function triggerHaptic() {
     const telegramWebApp = typeof window !== "undefined"
@@ -144,6 +144,10 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
     amountInput.setAttribute("aria-label", subblockId === "financial-burden" ? "Сумма долга" : "Сумма");
 
     const paymentInput = subblockId === "financial-burden" ? document.createElement("input") : null;
+    const interestRateInput = subblockId === "financial-burden" ? document.createElement("input") : null;
+    const creditProductField = subblockId === "financial-burden" ? document.createElement("div") : null;
+    let isCreditProduct = subblockId === "financial-burden" ? Boolean(entry.isCreditProduct) : false;
+
     if (paymentInput) {
         paymentInput.className = "input-control";
         paymentInput.name = "payment";
@@ -152,8 +156,54 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
         paymentInput.min = "0";
         paymentInput.step = "0.01";
         paymentInput.value = String(entry.payment ?? 0);
-        paymentInput.required = true;
+        paymentInput.required = isCreditProduct;
         paymentInput.setAttribute("aria-label", "Регулярный платёж");
+    }
+
+    if (interestRateInput) {
+        interestRateInput.className = "input-control";
+        interestRateInput.name = "interestRate";
+        interestRateInput.type = "number";
+        interestRateInput.inputMode = "decimal";
+        interestRateInput.min = "0";
+        interestRateInput.step = "0.01";
+        interestRateInput.value = entry.interestRate === null || entry.interestRate === undefined ? "" : String(entry.interestRate);
+        interestRateInput.required = isCreditProduct;
+        interestRateInput.setAttribute("aria-label", "Процентная ставка, % годовых");
+    }
+
+    if (creditProductField) {
+        creditProductField.className = "liquidity-switch-field";
+
+        const creditLabel = document.createElement("span");
+        creditLabel.className = "liquidity-switch-label";
+        creditLabel.textContent = "Кредитный продукт";
+
+        const creditState = document.createElement("span");
+        creditState.className = "liquidity-switch-state";
+
+        const creditSwitch = document.createElement("button");
+        creditSwitch.type = "button";
+        creditSwitch.className = "liquidity-switch";
+        creditSwitch.setAttribute("role", "switch");
+
+        const updateCreditProduct = () => {
+            creditSwitch.setAttribute("aria-checked", String(isCreditProduct));
+            creditSwitch.classList.toggle("is-on", isCreditProduct);
+            creditState.textContent = isCreditProduct ? "Включён" : "Выключен";
+            paymentInput.hidden = !isCreditProduct;
+            interestRateInput.hidden = !isCreditProduct;
+            paymentInput.required = isCreditProduct;
+            interestRateInput.required = isCreditProduct;
+        };
+
+        creditSwitch.addEventListener("click", () => {
+            isCreditProduct = !isCreditProduct;
+            updateCreditProduct();
+        });
+
+        creditProductField.append(creditLabel, creditState, creditSwitch);
+        updateCreditProduct();
     }
 
     const liquidityField = subblockId === "assets" ? document.createElement("div") : null;
@@ -209,7 +259,9 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
     actions.append(cancelButton, saveButton);
     form.append(labelInput, amountInput);
     if (liquidityField) form.appendChild(liquidityField);
+    if (creditProductField) form.appendChild(creditProductField);
     if (paymentInput) form.appendChild(paymentInput);
+    if (interestRateInput) form.appendChild(interestRateInput);
     form.append(error, actions);
     dialog.append(title, form);
     modal.appendChild(dialog);
@@ -236,7 +288,9 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
                 labelInput.value,
                 amountInput.value,
                 liquidity,
-                paymentInput?.value ?? null
+                paymentInput?.value ?? null,
+                isCreditProduct,
+                interestRateInput?.value ?? null
             );
 
             if (!updated) throw new Error("Запись не найдена.");
