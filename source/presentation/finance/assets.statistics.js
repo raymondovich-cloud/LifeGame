@@ -1,4 +1,4 @@
-// assets.statistics.js — Version 3.9
+// assets.statistics.js — Version 4.0
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -25,38 +25,53 @@ function renderLiquidity(container, liquidity) {
     total.className = "assets-analytics-section-total";
     total.textContent = formatAmount(liquidity.total) + " ₽";
 
-    const bar = document.createElement("div");
-    bar.className = "assets-analytics-liquidity-bar";
-
-    const liquidBar = document.createElement("span");
-    liquidBar.className = "assets-analytics-liquidity-bar__liquid";
-    liquidBar.style.width = (liquidity.liquidPercent ?? 0) + "%";
-
-    const illiquidBar = document.createElement("span");
-    illiquidBar.className = "assets-analytics-liquidity-bar__illiquid";
-    illiquidBar.style.width = (liquidity.illiquidPercent ?? 0) + "%";
-
-    bar.append(liquidBar, illiquidBar);
-
     const rows = document.createElement("div");
     rows.className = "assets-analytics-liquidity-rows";
 
-    [["Ликвидные", liquidity.liquid, liquidity.liquidPercent], ["Неликвидные", liquidity.illiquid, liquidity.illiquidPercent]]
-        .forEach(([label, amount, percent]) => {
-            const row = document.createElement("div");
-            row.className = "assets-analytics-liquidity-row";
+    const createBar = (percent, label) => {
+        const bar = document.createElement("div");
+        bar.className = "assets-analytics-liquidity-bar";
+        bar.setAttribute("role", "img");
+        bar.setAttribute("aria-label", label);
 
-            const name = document.createElement("span");
-            name.textContent = label;
+        const fill = document.createElement("span");
+        fill.className = "assets-analytics-liquidity-bar__liquid";
+        fill.style.width = (percent ?? 0) + "%";
 
-            const value = document.createElement("span");
-            value.textContent = formatAmount(amount) + " ₽ · " + (percent === null ? "—" : percent + "%");
+        bar.appendChild(fill);
+        return bar;
+    };
 
-            row.append(name, value);
-            rows.appendChild(row);
-        });
+    const createRow = (label, amount, percent) => {
+        const row = document.createElement("div");
+        row.className = "assets-analytics-liquidity-row";
 
-    section.append(title, total, bar, rows);
+        const name = document.createElement("span");
+        name.textContent = label;
+
+        const value = document.createElement("span");
+        value.textContent = formatAmount(amount) + " ₽ · " + (percent === null ? "—" : percent + "%");
+
+        row.append(name, value);
+        return row;
+    };
+
+    const liquidGroup = document.createElement("div");
+    liquidGroup.className = "assets-analytics-liquidity-group assets-analytics-liquidity-group--liquid";
+    liquidGroup.append(
+        createBar(liquidity.liquidPercent, "Ликвидные активы"),
+        createRow("Ликвидные", liquidity.liquid, liquidity.liquidPercent)
+    );
+
+    const illiquidGroup = document.createElement("div");
+    illiquidGroup.className = "assets-analytics-liquidity-group assets-analytics-liquidity-group--illiquid";
+    illiquidGroup.append(
+        createRow("Неликвидные", liquidity.illiquid, liquidity.illiquidPercent),
+        createBar(liquidity.illiquidPercent, "Неликвидные активы")
+    );
+
+    rows.append(liquidGroup, illiquidGroup);
+    section.append(title, total, rows);
     container.appendChild(section);
 }
 
@@ -277,39 +292,7 @@ function renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplica
     distributionTitle.className = "statistics-meta";
     distributionTitle.textContent = "РАСПРЕДЕЛЕНИЕ";
 
-    const distributionBars = document.createElement("div");
-    distributionBars.className = "assets-analytics-distribution-bars";
-    distributionBars.setAttribute(
-        "aria-label",
-        "Распределение активов: " +
-            (analytics.liquidity.liquidPercent ?? 0) +
-            "% ликвидные, " +
-            (analytics.liquidity.illiquidPercent ?? 0) +
-            "% неликвидные"
-    );
-
-    const liquidTrack = document.createElement("div");
-    liquidTrack.className = "assets-analytics-liquidity-bar";
-    liquidTrack.setAttribute("role", "img");
-    liquidTrack.setAttribute("aria-label", "Ликвидные активы");
-
-    const liquidBar = document.createElement("span");
-    liquidBar.className = "assets-analytics-liquidity-bar__liquid";
-    liquidBar.style.width = (analytics.liquidity.liquidPercent ?? 0) + "%";
-    liquidTrack.appendChild(liquidBar);
-
-    const illiquidTrack = document.createElement("div");
-    illiquidTrack.className = "assets-analytics-liquidity-bar";
-    illiquidTrack.setAttribute("role", "img");
-    illiquidTrack.setAttribute("aria-label", "Неликвидные активы");
-
-    const illiquidBar = document.createElement("span");
-    illiquidBar.className = "assets-analytics-liquidity-bar__liquid";
-    illiquidBar.style.width = (analytics.liquidity.illiquidPercent ?? 0) + "%";
-    illiquidTrack.appendChild(illiquidBar);
-
-    distributionBars.append(liquidTrack, illiquidTrack);
-    distribution.append(distributionBars, distributionTitle);
+    distribution.appendChild(distributionTitle);
     content.appendChild(distribution);
 
     const composition = document.createElement("section");
