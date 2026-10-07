@@ -1,4 +1,4 @@
-// entry.edit.js — Version 2.0
+// entry.edit.js — Version 3.0
 
 function triggerHaptic() {
     const telegramWebApp = typeof window !== "undefined"
@@ -298,6 +298,114 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
     const liquidityField = subblockId === "assets" ? document.createElement("div") : null;
     let liquidity = entry.liquidity === "illiquid" ? "illiquid" : "liquid";
 
+    let assetType = entry.assetType || "cash";
+    let isReserve = Boolean(entry.isReserve);
+    let incomeEnabled = Boolean(entry.incomeEnabled);
+    let annualYieldRateInput = null;
+    let compoundingSelect = null;
+    let reserveField = null;
+    let incomeField = null;
+    let assetTypeSelect = null;
+
+    if (subblockId === "assets") {
+        assetTypeSelect = document.createElement("select");
+        assetTypeSelect.className = "input-control";
+        [
+            ["cash", "Денежные средства"],
+            ["bank-account", "Банковский счёт"],
+            ["real-estate", "Недвижимость"],
+            ["vehicle", "Транспорт"],
+            ["bank-deposit", "Банковский вклад"],
+            ["bond", "Облигации"],
+            ["investment", "Инвестиции"],
+            ["other", "Другое"]
+        ].forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            if (value === assetType) option.selected = true;
+            assetTypeSelect.appendChild(option);
+        });
+        assetTypeSelect.addEventListener("change", () => {
+            assetType = assetTypeSelect.value;
+        });
+
+        reserveField = document.createElement("div");
+        reserveField.className = "liquidity-switch-field";
+        const reserveLabel = document.createElement("span");
+        reserveLabel.className = "liquidity-switch-label";
+        reserveLabel.textContent = "Финансовый резерв";
+        const reserveState = document.createElement("span");
+        reserveState.className = "liquidity-switch-state";
+        const reserveToggle = document.createElement("button");
+        reserveToggle.type = "button";
+        reserveToggle.className = "liquidity-switch";
+        reserveToggle.setAttribute("role", "switch");
+        const updateReserve = () => {
+            reserveToggle.setAttribute("aria-checked", String(isReserve));
+            reserveToggle.classList.toggle("is-on", isReserve);
+            reserveState.textContent = isReserve ? "Да" : "Нет";
+        };
+        reserveToggle.addEventListener("click", () => {
+            isReserve = !isReserve;
+            updateReserve();
+        });
+        reserveField.append(reserveLabel, reserveState, reserveToggle);
+        updateReserve();
+
+        incomeField = document.createElement("div");
+        incomeField.className = "liquidity-switch-field";
+        const incomeLabel = document.createElement("span");
+        incomeLabel.className = "liquidity-switch-label";
+        incomeLabel.textContent = "Доходный актив";
+        const incomeState = document.createElement("span");
+        incomeState.className = "liquidity-switch-state";
+        const incomeToggle = document.createElement("button");
+        incomeToggle.type = "button";
+        incomeToggle.className = "liquidity-switch";
+        incomeToggle.setAttribute("role", "switch");
+
+        annualYieldRateInput = document.createElement("input");
+        annualYieldRateInput.className = "input-control";
+        annualYieldRateInput.name = "annualYieldRate";
+        annualYieldRateInput.type = "number";
+        annualYieldRateInput.inputMode = "decimal";
+        annualYieldRateInput.min = "0";
+        annualYieldRateInput.step = "0.01";
+        annualYieldRateInput.value = entry.annualYieldRate ?? "";
+        annualYieldRateInput.placeholder = "Доходность, % годовых";
+
+        compoundingSelect = document.createElement("select");
+        compoundingSelect.className = "input-control";
+        [
+            ["none", "Без капитализации"],
+            ["monthly", "Капитализация ежемесячно"],
+            ["quarterly", "Капитализация ежеквартально"],
+            ["annual", "Капитализация ежегодно"]
+        ].forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            if (value === (entry.compoundingFrequency || "none")) option.selected = true;
+            compoundingSelect.appendChild(option);
+        });
+
+        const updateIncome = () => {
+            incomeToggle.setAttribute("aria-checked", String(incomeEnabled));
+            incomeToggle.classList.toggle("is-on", incomeEnabled);
+            incomeState.textContent = incomeEnabled ? "Включён" : "Выключен";
+            annualYieldRateInput.hidden = !incomeEnabled;
+            compoundingSelect.hidden = !incomeEnabled;
+            annualYieldRateInput.required = incomeEnabled;
+        };
+        incomeToggle.addEventListener("click", () => {
+            incomeEnabled = !incomeEnabled;
+            updateIncome();
+        });
+        incomeField.append(incomeLabel, incomeState, incomeToggle);
+        updateIncome();
+    }
+
     if (liquidityField) {
         liquidityField.className = "assets-edit-modal__liquidity";
 
@@ -347,7 +455,12 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
 
     actions.append(cancelButton, saveButton);
     form.append(labelInput, amountInput);
+    if (assetTypeSelect) form.appendChild(assetTypeSelect);
     if (liquidityField) form.appendChild(liquidityField);
+    if (reserveField) form.appendChild(reserveField);
+    if (incomeField) form.appendChild(incomeField);
+    if (annualYieldRateInput) form.appendChild(annualYieldRateInput);
+    if (compoundingSelect) form.appendChild(compoundingSelect);
     if (creditProductField) form.appendChild(creditProductField);
     if (paymentInput) form.appendChild(paymentInput);
     if (interestRateInput) form.appendChild(interestRateInput);
@@ -379,7 +492,16 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
                 liquidity,
                 paymentInput?.value ?? null,
                 isCreditProduct,
-                interestRateInput?.value ?? null
+                interestRateInput?.value ?? null,
+                subblockId === "assets"
+                    ? {
+                        assetType,
+                        isReserve,
+                        incomeEnabled,
+                        annualYieldRate: incomeEnabled ? annualYieldRateInput.value : null,
+                        compoundingFrequency: incomeEnabled ? compoundingSelect.value : "none"
+                    }
+                    : null
             );
 
             if (!updated) throw new Error("Запись не найдена.");
