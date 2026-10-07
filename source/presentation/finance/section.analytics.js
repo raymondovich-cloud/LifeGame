@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.5
+// section.analytics.js — Version 1.6
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -318,7 +318,7 @@ function renderSectionAnalyticsPage(
                 {
                     ...interaction,
                     onChanged: () => renderSectionAnalyticsPage(
-                        root, onBack, section, financeAnalytics, financeApplication, onWriteAttempt, interaction, mode
+                        root, onBack, section, financeAnalytics, financeApplication, onWriteAttempt, interaction, mode, fullGroup
                     )
                 }
             ));
