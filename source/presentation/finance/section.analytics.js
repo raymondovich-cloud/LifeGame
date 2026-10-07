@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.11
+// section.analytics.js — Version 1.12
 
 import { attachEntryEdit } from "./entry.edit.js";
 
