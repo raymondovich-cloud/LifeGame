@@ -1,4 +1,4 @@
-// source/application/finance/finance.diagnosis.js — Version 1.0
+// source/application/finance/finance.diagnosis.js — Version 1.1
 
 const COMPONENT_LABELS = Object.freeze({
     cashFlowSustainability: "денежного потока",
@@ -8,16 +8,6 @@ const COMPONENT_LABELS = Object.freeze({
     solvencyPosition: "чистой финансовой позиции",
     productiveCapital: "продуктивного капитала",
     financialTrajectory: "финансового тренда"
-});
-
-const FSI_WEIGHTS = Object.freeze({
-    cashFlowSustainability: 0.18,
-    operationalLiquidity: 0.16,
-    emergencyResilience: 0.14,
-    debtSustainability: 0.16,
-    solvencyPosition: 0.12,
-    productiveCapital: 0.12,
-    financialTrajectory: 0.12
 });
 
 function percentageChange(current, previous) {
@@ -32,6 +22,8 @@ function buildFinancialStabilityDiagnosis(current, previous = null) {
         ? percentageChange(Number(current.value), Number(previous.value))
         : null;
 
+    const weights = current?.methodology?.weights || {};
+
     const changes = Object.entries(current.components || {})
         .filter(([key]) => Object.prototype.hasOwnProperty.call(COMPONENT_LABELS, key))
         .map(([key, value]) => {
@@ -39,7 +31,7 @@ function buildFinancialStabilityDiagnosis(current, previous = null) {
             const delta = Number.isFinite(Number(previousValue))
                 ? Number(value) - Number(previousValue)
                 : null;
-            const weight = FSI_WEIGHTS[key] || 0;
+            const weight = Number(weights[key]) || 0;
             return {
                 key,
                 label: COMPONENT_LABELS[key],
