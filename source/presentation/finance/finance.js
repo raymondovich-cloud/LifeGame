@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 7.4
+// source/presentation/finance/finance.js — Version 7.5
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -130,6 +130,58 @@ function getFinancialSnapshot(financeApplication, assetsAnalytics) {
             .filter((entry) => Boolean(entry?.isReserve))
             .reduce((total, entry) => total + Number(entry.amount || 0), 0)
     };
+}
+
+function createAdaptiveDiagnosisText(result) {
+    const diagnosis = result?.diagnosis;
+    if (!diagnosis) return "Недостаточно истории для персональной динамики.";
+
+    if (!diagnosis.hasComparison) {
+        if (diagnosis.weakestFactor) {
+            return "Истории пока недостаточно для сравнения динамики. Текущим ограничивающим фактором остаётся " +
+                diagnosis.weakestFactor.label + ".";
+        }
+        return "Истории пока недостаточно для персональной динамики индекса.";
+    }
+
+    const percent = Math.abs(Number(diagnosis.changePercent || 0));
+    const roundedPercent = Number.isFinite(percent)
+        ? Math.round(percent)
+        : 0;
+
+    let text = "";
+
+    if (diagnosis.changePercent > 0) {
+        text = "За последний месяц индекс вырос на " + roundedPercent + "%.";
+    } else if (diagnosis.changePercent < 0) {
+        text = "За последний месяц индекс снизился на " + roundedPercent + "%.";
+    } else {
+        text = "За последний месяц индекс практически не изменился.";
+    }
+
+    const positive = diagnosis.primaryPositiveFactor;
+    const negative = diagnosis.primaryNegativeFactor;
+    const weakest = diagnosis.weakestFactor;
+
+    if (diagnosis.changePercent > 0 && positive) {
+        text += " Основным фактором улучшения стало изменение " + positive.label + ".";
+        if (diagnosis.secondaryPositiveFactor) {
+            text += " Дополнительную поддержку дало улучшение " +
+                diagnosis.secondaryPositiveFactor.label + ".";
+        }
+    } else if (diagnosis.changePercent < 0 && negative) {
+        text += " Основным фактором снижения стало ухудшение " + negative.label + ".";
+        if (diagnosis.secondaryNegativeFactor) {
+            text += " Дополнительное давление оказало изменение " +
+                diagnosis.secondaryNegativeFactor.label + ".";
+        }
+    }
+
+    if (weakest && weakest.value < 50) {
+        text += " Наиболее слабым звеном системы остаётся " + weakest.label + ".";
+    }
+
+    return text;
 }
 
 function createHealthBlock(financeApplication) {
@@ -1004,7 +1056,7 @@ function createFinancialStabilityIndexPanel(financeApplication) {
 
     const eyebrow = document.createElement("span");
     eyebrow.className = "financial-stability-index-eyebrow";
-    eyebrow.textContent = "FSI 3.0";
+    eyebrow.textContent = "FSI 4.1";
 
     const scoreRow = document.createElement("div");
     scoreRow.className = "financial-stability-index-score-row";
