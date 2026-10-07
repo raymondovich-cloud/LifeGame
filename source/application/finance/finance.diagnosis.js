@@ -1,9 +1,9 @@
-// source/application/finance/finance.diagnosis.js — Version 1.3
+// source/application/finance/finance.diagnosis.js — Version 1.4
 
 const COMPONENT_LABELS = Object.freeze({
     cashFlowSustainability: "денежного потока",
     operationalLiquidity: "ликвидных средств",
-    emergencyResilience: "финансовой подушки",
+    emergencyResilience: "финансового резерва",
     debtSustainability: "долговой устойчивости",
     solvencyPosition: "чистой финансовой позиции",
     productiveCapital: "продуктивного капитала",
@@ -13,7 +13,7 @@ const COMPONENT_LABELS = Object.freeze({
 const COMPONENT_WEAK_LABELS = Object.freeze({
     cashFlowSustainability: "денежный поток",
     operationalLiquidity: "ликвидные средства",
-    emergencyResilience: "финансовая подушка",
+    emergencyResilience: "финансовый резерв",
     debtSustainability: "долговая устойчивость",
     solvencyPosition: "чистая финансовая позиция",
     productiveCapital: "продуктивный капитал",
@@ -61,14 +61,14 @@ function buildFactorReason(key, result) {
         const months = Number(diagnostics.reserveMonths);
 
         if (Number.isFinite(months) && months < 1) {
-            return "финансовой подушки недостаточно даже для покрытия одного месяца обязательных расходов";
+            return "финансового резерва недостаточно даже для покрытия одного месяца обязательных расходов";
         }
 
         if (Number.isFinite(months) && months < 3) {
-            return "финансовая подушка покрывает менее трёх месяцев обязательных расходов";
+            return "финансовый резерв покрывает менее трёх месяцев обязательных расходов";
         }
 
-        return "финансовая подушка пока не обеспечивает достаточного запаса прочности";
+        return "финансовый резерв пока не обеспечивает достаточного запаса прочности";
     }
 
     if (key === "debtSustainability") {
