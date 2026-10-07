@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.8
+// section.analytics.js — Version 1.9
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -8,13 +8,7 @@ function formatAmount(amount) {
 }
 
 function formatFinancialBurdenAmount(entry) {
-    const debt = "Долг " + formatAmount(entry.debt) + " ₽";
-    if (!entry.isCreditProduct) return debt;
-
-    const payment = "Платёж " + formatAmount(entry.payment) + " ₽";
-    const rate = Number(entry.interestRate);
-    const rateText = Number.isFinite(rate) ? " · " + formatAmount(rate) + "% годовых" : "";
-    return debt + " · " + payment + rateText;
+    return "Долг " + formatAmount(entry.debt) + " ₽";
 }
 
 function formatCreditAnalytics(entry, financeApplication) {
@@ -267,14 +261,7 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
     const label = document.createElement("span");
     label.textContent = entry.label;
 
-    const creditAnalytics = document.createElement("span");
-    creditAnalytics.className = "assets-analytics-composition-type";
-    creditAnalytics.textContent = sectionId === "financial-burden"
-        ? formatCreditAnalytics(entry, financeApplication)
-        : "";
-
-    if (creditAnalytics.textContent) main.append(label, creditAnalytics);
-    else main.appendChild(label);
+    main.appendChild(label);
 
     const value = document.createElement("div");
     value.className = "assets-analytics-composition-value";
@@ -335,9 +322,7 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
             amount.textContent = sectionId === "financial-burden"
                 ? formatFinancialBurdenAmount(updated)
                 : formatAmount(updated.amount) + " ₽";
-            creditAnalytics.textContent = sectionId === "financial-burden"
-                ? formatCreditAnalytics(updated, financeApplication)
-                : "";
+
             refresh();
         },
         () => {
