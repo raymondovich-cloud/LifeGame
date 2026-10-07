@@ -1,10 +1,10 @@
-// finance.memory.supabase.js — Version 2.2
+// finance.memory.supabase.js — Version 2.3
 // Responsibility: implement the Finance Memory Port with Supabase persistence and a local runtime cache.
 
 const COLLECTIONS = Object.freeze({
     assets: { table: "finance_assets", fields: ["label", "amount", "liquidity"] },
     actualEarnings: { table: "finance_actual_earnings", fields: ["label", "amount"] },
-    financialBurden: { table: "finance_burdens", fields: ["label", "debt", "payment"] },
+    financialBurden: { table: "finance_burdens", fields: ["label", "debt", "payment", "is_credit_product", "interest_rate"] },
     mandatoryExpenses: { table: "finance_mandatory_expenses", fields: ["label", "amount"] },
     financialCushion: { table: "finance_cushions", fields: ["label", "amount"] }
 });
@@ -25,11 +25,16 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         if (!row) return row;
         const result = { ...row };
 
-        ["amount", "debt", "payment"].forEach((field) => {
+        ["amount", "debt", "payment", "interest_rate"].forEach((field) => {
             if (result[field] !== undefined && result[field] !== null) {
                 result[field] = Number(result[field]);
             }
         });
+
+        if (result.is_credit_product !== undefined && result.is_credit_product !== null) {
+            result.isCreditProduct = Boolean(result.is_credit_product);
+            delete result.is_credit_product;
+        }
 
         delete result.user_id;
         delete result.created_at;
