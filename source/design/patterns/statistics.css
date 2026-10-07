@@ -1,4 +1,4 @@
-/* statistics.css — Version 4.4 */
+/* statistics.css — Version 4.5 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -712,6 +712,53 @@
 
 
 /* Credit product details — opened by a normal tap; long press remains row interaction. */
+.credit-product-details-screen{
+    background:transparent;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+}
+.credit-product-details-screen::before,
+.credit-product-details-screen::after{
+    display:none;
+}
+.credit-product-details-frame{
+    position:relative;
+    overflow:visible;
+    background:var(--gradient-card-premium);
+    border:1px solid transparent;
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22);
+}
+.credit-product-details-frame::after{
+    position:absolute;
+    inset:0;
+    padding:1px;
+    pointer-events:none;
+    content:"";
+    background:linear-gradient(135deg,rgba(242,138,46,.42) 0%,rgba(5,5,5,.92) 42%,rgba(242,138,46,.24) 100%);
+    border-radius:inherit;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+}
+.credit-product-details-frame::before{
+    position:absolute;
+    top:0;
+    left:8%;
+    right:8%;
+    height:1px;
+    pointer-events:none;
+    content:"";
+    background:var(--gradient-accent-line);
+    opacity:.38;
+}
+.credit-product-details-frame .assets-statistics-header,
+.credit-product-details-frame .credit-product-details-content{
+    position:relative;
+    z-index:1;
+}
+
 .credit-product-details-screen .assets-statistics-header{
     padding-bottom:var(--space-4);
 }
