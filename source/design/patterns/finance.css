@@ -418,3 +418,49 @@
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-entry-list + .finance-add-form{margin-top:var(--assets-block-spacing);}
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form{gap:var(--assets-block-spacing);padding-top:0;}
 .finance-data-screen .finance-data-accordion .finance-subblock[data-subblock="assets"] .finance-add-form > .button-control{margin-top:0;}
+
+
+/* Finance sections 02–05: same compact spacing system as the completed Assets block. */
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) {
+    --assets-block-spacing:var(--space-2);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .accordion-trigger {
+    gap:var(--assets-block-spacing);
+    padding:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .accordion-header > .info-tooltip {
+    margin-right:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .accordion-content.is-open {
+    padding:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .finance-section-summary {
+    gap:var(--assets-block-spacing);
+    margin-bottom:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .assets-summary-heading {
+    gap:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .assets-statistics-trigger {
+    gap:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .assets-total-row {
+    padding-top:0;
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .assets-summary-date {
+    margin-top:0;
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .finance-entry-list {
+    gap:var(--assets-block-spacing);
+    margin-bottom:0;
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .finance-entry-list + .finance-add-form {
+    margin-top:var(--assets-block-spacing);
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .finance-add-form {
+    gap:var(--assets-block-spacing);
+    padding-top:0;
+}
+.finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .finance-add-form > .button-control {
+    margin-top:0;
+}
