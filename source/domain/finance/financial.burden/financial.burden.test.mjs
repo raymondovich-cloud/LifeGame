@@ -1,4 +1,4 @@
-// financial.burden.test.mjs — Version 1.0
+// financial.burden.test.mjs — Version 1.1
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -28,4 +28,19 @@ test("Financial Burden Domain is stateless", () => {
     assert.equal(updated.entry.id, "burden-1");
     assert.equal(updated.entry.debt, 450000);
     assert.equal(removeFinancialBurden(null), false);
+});
+
+
+test("Financial Burden supports ordinary obligations without credit fields", () => {
+    const result = createFinancialBurden("Дядя Ваня", 3000, null, false, null);
+    assert.equal(result.entry.isCreditProduct, false);
+    assert.equal(result.entry.payment, null);
+    assert.equal(result.entry.interestRate, null);
+});
+
+test("Financial Burden supports credit products with payment and annual rate", () => {
+    const result = createFinancialBurden("Сбербанк", 30000, 3000, true, 25);
+    assert.equal(result.entry.isCreditProduct, true);
+    assert.equal(result.entry.payment, 3000);
+    assert.equal(result.entry.interestRate, 25);
 });
