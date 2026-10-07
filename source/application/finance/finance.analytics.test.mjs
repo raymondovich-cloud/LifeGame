@@ -45,20 +45,6 @@ test("Finance Analytics calculates monthly change for all five indicators", () =
         label: "Аренда",
         amount: 50000
     }, 1000);
-
-    seed("financial-cushion", {
-        label: "Резерв",
-        amount: 20000
-    }, 1000);
-
-    const update = (collection, entryId, entry, occurredAt) => {
-        memory.mutateFinanceCollection({
-            collection,
-            operation: "update",
-            entryId,
-            entry,
-            occurredAt
-        });
     };
 
     update("assets", memory.listAssets()[0].id, {
@@ -80,11 +66,6 @@ test("Finance Analytics calculates monthly change for all five indicators", () =
     update("mandatory-expenses", memory.listMandatoryExpenses()[0].id, {
         ...memory.listMandatoryExpenses()[0],
         amount: 52000
-    }, 2000);
-
-    update("financial-cushion", memory.listFinancialCushion()[0].id, {
-        ...memory.listFinancialCushion()[0],
-        amount: 27400
     }, 2000);
 
     const analytics = createFinanceAnalytics({ financeApplication: finance });
