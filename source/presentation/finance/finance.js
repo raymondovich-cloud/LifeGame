@@ -231,7 +231,7 @@ function createHealthBlock(financeApplication) {
 
     const description = document.createElement("p");
     description.className = "finance-health-description";
-    description.textContent = "Расшифровка индекса";
+    description.textContent = createAdaptiveDiagnosisText(result);
 
     healthHeader.append(meta, diagnostics);
 
