@@ -1,4 +1,4 @@
-// entry.edit.js — Version 1.9
+// entry.edit.js — Version 2.0
 
 function triggerHaptic() {
     const telegramWebApp = typeof window !== "undefined"
@@ -164,8 +164,8 @@ function openEntryInfoModal(entry) {
     };
 
     content.append(
-        createField("Добавлено", formatEntryDate(entry.createdAt)),
-        createField("Пользователь", entry.creatorName || "Пользователь")
+        createField("Добавлено:", formatEntryDate(entry.createdAt)),
+        createField("Пользователь:", entry.creatorName || "Пользователь")
     );
 
     const actions = document.createElement("div");
