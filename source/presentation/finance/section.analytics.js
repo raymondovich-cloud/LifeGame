@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.0
+// section.analytics.js — Version 1.1
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -27,6 +27,89 @@ function getPreviewEntries(entries, interaction) {
     const latestUnpinned = sorted.filter((entry) => interaction?.isPinned?.(entry.id) !== true).reverse();
 
     return [...pinned, ...latestUnpinned].slice(0, 3);
+}
+
+function attachAnalyticsSwipeDelete(row, onDelete) {
+    const content = row.querySelector(".swipe-delete-content");
+    const action = row.querySelector(".swipe-delete-action");
+    if (!content || !action || typeof onDelete !== "function") return;
+
+    let startX = 0;
+    let currentX = 0;
+    let startY = 0;
+    let tracking = false;
+    let opened = false;
+
+    const setOffset = (offset, animated = false) => {
+        content.style.setProperty("--swipe-offset", offset + "px");
+        content.classList.toggle("is-swiping", !animated);
+    };
+
+    const open = () => {
+        opened = true;
+        row.classList.add("is-delete-ready");
+        setOffset(-88, true);
+    };
+
+    const close = () => {
+        opened = false;
+        row.classList.remove("is-delete-ready");
+        setOffset(0, true);
+    };
+
+    action.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onDelete();
+    });
+
+    content.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        startX = event.clientX;
+        currentX = startX;
+        startY = event.clientY;
+        tracking = true;
+        content.classList.add("is-swiping");
+        content.setPointerCapture?.(event.pointerId);
+    });
+
+    content.addEventListener("pointermove", (event) => {
+        if (!tracking) return;
+        currentX = event.clientX;
+        const deltaX = currentX - startX;
+        const deltaY = event.clientY - startY;
+
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
+            tracking = false;
+            close();
+            return;
+        }
+
+        if (deltaX < -8 || opened) {
+            const base = opened ? -88 : 0;
+            setOffset(Math.min(0, Math.max(deltaX + base, -88)));
+        }
+    });
+
+    const finish = () => {
+        if (!tracking) return;
+        tracking = false;
+        content.classList.remove("is-swiping");
+
+        const distance = currentX - startX;
+        if (opened && distance > 28) {
+            close();
+            return;
+        }
+        if (!opened && distance <= -56) {
+            open();
+            return;
+        }
+        opened ? open() : close();
+    };
+
+    content.addEventListener("pointerup", finish);
+    content.addEventListener("pointercancel", finish);
 }
 
 function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteAttempt, interaction) {
@@ -108,6 +191,7 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
         deleteContent();
     });
 
+    attachAnalyticsSwipeDelete(row, () => interaction?.onDelete?.(entry.id));
     return row;
 }
 
