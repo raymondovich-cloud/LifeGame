@@ -261,7 +261,6 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         ["actual-earnings", "Заработано"],
         ["financial-burden", "Нагрузка"],
         ["mandatory-expenses", "Траты"],
-        ["financial-cushion", "Подушка"]
     ].map(([id, label]) => {
         const change = analyticsSnapshot?.metrics?.[id]?.change;
         const value = change?.hasComparison && Number.isFinite(Number(change.percent))
