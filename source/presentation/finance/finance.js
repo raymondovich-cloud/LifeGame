@@ -964,18 +964,24 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
     content.id = subblock.id + "-content";
     content.hidden = false;
 
-    if (subblock.id !== "financial-stability-index") {
-
-                }
-            });
-
-            content.appendChild(entryList);
+    if (subblock.id === "financial-stability-index") {
+        if (financeApplication) {
+            content.appendChild(createFinancialStabilityIndexPanel(financeApplication));
         }
+    }
+
+    if (subblock.id === "assets") {
+        content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication, assetsAnalytics));
+    }
+
+    if (subblock.id !== "assets" && subblock.id !== "financial-stability-index" && financeAnalytics) {
+        content.appendChild(createSectionSummary(root, subblock, onWriteAttempt, financeApplication, financeAnalytics));
     }
 
     if (subblock.id !== "financial-stability-index") {
         content.appendChild(createAddForm(root, subblock, onWriteAttempt, financeApplication));
     }
+
     wrapper.append(header, content);
 
     button.addEventListener("click", () => {
@@ -985,7 +991,6 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
 
     return wrapper;
 }
-
 
 function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
     if (!root) {
