@@ -1,4 +1,4 @@
-// finance.memory.supabase.js — Version 2.6
+// finance.memory.supabase.js — Version 2.7
 // Responsibility: implement the Finance Memory Port with Supabase persistence and a local runtime cache.
 
 const COLLECTIONS = Object.freeze({
@@ -108,18 +108,47 @@ function createSupabaseFinanceMemory({ client, userContext }) {
             ...(data || []).map((row) => ({
                 occurredAt: new Date(row.occurred_at).getTime(),
                 total: Number(row.total),
-                entries: row.entries || []
+                entries: (row.entries || []).map(normalizeRow)
             }))
         );
     }
 
     async function hydrateCreatorNames() {
-        const creatorIds = [...new Set(
+        const metadataByEntryId = new Map(
             Object.values(cache)
                 .flat()
-                .map((entry) => entry.createdBy)
-                .filter(Boolean)
-        )];
+                .filter((entry) => entry?.id)
+                .map((entry) => [
+                    entry.id,
+                    {
+                        createdAt: entry.createdAt,
+                        createdBy: entry.createdBy,
+                        creatorName: entry.creatorName
+                    }
+                ])
+        );
+
+        snapshots.forEach((snapshot) => {
+            snapshot.entries.forEach((entry) => {
+                const current = metadataByEntryId.get(entry?.id);
+                if (!current) return;
+
+                if (entry.createdAt === undefined && current.createdAt !== undefined) {
+                    entry.createdAt = current.createdAt;
+                }
+                if (entry.createdBy === undefined && current.createdBy !== undefined) {
+                    entry.createdBy = current.createdBy;
+                }
+                if (!entry.creatorName && current.creatorName) {
+                    entry.creatorName = current.creatorName;
+                }
+            });
+        });
+
+        const creatorIds = [...new Set([
+            ...Object.values(cache).flat().map((entry) => entry.createdBy),
+            ...snapshots.flatMap((snapshot) => snapshot.entries.map((entry) => entry.createdBy))
+        ].filter(Boolean))];
 
         if (creatorIds.length === 0) return;
 
@@ -139,6 +168,13 @@ function createSupabaseFinanceMemory({ client, userContext }) {
 
         Object.values(cache).forEach((entries) => {
             entries.forEach((entry) => {
+                const creatorName = names.get(entry.createdBy);
+                if (creatorName) entry.creatorName = creatorName;
+            });
+        });
+
+        snapshots.forEach((snapshot) => {
+            snapshot.entries.forEach((entry) => {
                 const creatorName = names.get(entry.createdBy);
                 if (creatorName) entry.creatorName = creatorName;
             });
