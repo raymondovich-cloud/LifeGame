@@ -1,4 +1,4 @@
-// finance.js — Version 6.0
+// finance.js — Version 6.1
 
 import {
     createActualEarning,
@@ -24,7 +24,7 @@ import {
     removeAsset
 } from "../../domain/finance/assets/assets.js";
 
-import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
+import { calculateFinancialStabilityIndex, buildFinancialStabilityDiagnosis } from "../../index/finance/finance.index.js";
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 import { calculateCreditProduct } from "../../domain/finance/credit.product/credit.product.js";
 
@@ -292,58 +292,129 @@ function getFinancialStabilityIndex() {
     const assetEntries = financeMemory.listAssets();
     const actualEarnings = financeMemory.listActualEarnings();
     const mandatoryExpenses = financeMemory.listMandatoryExpenses();
-    const liquidAssets = assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
-    const illiquidAssets = assetEntries.filter((entry) => entry?.liquidity === "illiquid");
 
-    const history = (collection, resolver) => {
+    function collectionSnapshot(collection, timestamp) {
+        return financeMemory.getCollectionSnapshotAtOrBefore(collection, timestamp);
+    }
+
+    function entriesFromSnapshot(snapshot) {
+        return Array.isArray(snapshot?.entries) ? snapshot.entries : [];
+    }
+
+    function historyUntil(collection, timestamp, resolver) {
         const first = financeMemory.getFirstCollectionSnapshot(collection);
-        const latest = financeMemory.getLatestCollectionSnapshot(collection);
-        if (!first || !latest) return [];
+        if (!first || first.occurredAt > timestamp) return [];
+
         return financeMemory
-            .getCollectionSnapshotsBetween(collection, first.occurredAt, latest.occurredAt)
+            .getCollectionSnapshotsBetween(collection, first.occurredAt, timestamp)
             .map(resolver);
-    };
+    }
 
-    const incomeHistory = history("actual-earnings", (snapshot) => Number(snapshot.total) || 0);
-    const debtHistory = history("financial-burden", (snapshot) =>
-        Array.isArray(snapshot.entries)
-            ? snapshot.entries.reduce((total, entry) => total + Number(entry?.debt || 0), 0)
-            : Number(snapshot.total) || 0
-    );
-    const liquidityHistory = history("assets", (snapshot) =>
-        Array.isArray(snapshot.entries)
-            ? snapshot.entries.reduce(
-                (total, entry) => entry?.liquidity === "illiquid"
-                    ? total
-                    : total + Number(entry?.amount || 0),
-                0
+    function buildStateAt(timestamp, useLiveState = false) {
+        const assetsSnapshot = collectionSnapshot("assets", timestamp);
+        const earningsSnapshot = collectionSnapshot("actual-earnings", timestamp);
+        const burdenSnapshot = collectionSnapshot("financial-burden", timestamp);
+        const expensesSnapshot = collectionSnapshot("mandatory-expenses", timestamp);
+
+        const assets = useLiveState
+            ? assetEntries
+            : entriesFromSnapshot(assetsSnapshot);
+        const actualEarnings = useLiveState
+            ? financeMemory.listActualEarnings()
+            : entriesFromSnapshot(earningsSnapshot);
+        const financialBurden = useLiveState
+            ? financeMemory.listFinancialBurden()
+            : entriesFromSnapshot(burdenSnapshot);
+        const mandatoryExpenses = useLiveState
+            ? financeMemory.listMandatoryExpenses()
+            : entriesFromSnapshot(expensesSnapshot);
+
+        const liquidAssets = assets.filter((entry) => entry?.liquidity !== "illiquid");
+        const illiquidAssets = assets.filter((entry) => entry?.liquidity === "illiquid");
+        const reserveTotal = assets
+            .filter((entry) => entry?.isReserve)
+            .reduce((total, entry) => total + Number(entry?.amount || 0), 0);
+
+        const history = {
+            incomeHistory: historyUntil(
+                "actual-earnings",
+                timestamp,
+                (snapshot) => Number(snapshot.total) || 0
+            ),
+            debtHistory: historyUntil(
+                "financial-burden",
+                timestamp,
+                (snapshot) => Array.isArray(snapshot.entries)
+                    ? snapshot.entries.reduce((total, entry) => total + Number(entry?.debt || 0), 0)
+                    : Number(snapshot.total) || 0
+            ),
+            liquidityHistory: historyUntil(
+                "assets",
+                timestamp,
+                (snapshot) => entriesFromSnapshot(snapshot).reduce(
+                    (total, entry) => entry?.liquidity === "illiquid"
+                        ? total
+                        : total + Number(entry?.amount || 0),
+                    0
+                )
+            ),
+            reserveHistory: historyUntil(
+                "assets",
+                timestamp,
+                (snapshot) => entriesFromSnapshot(snapshot).reduce(
+                    (total, entry) => entry?.isReserve
+                        ? total + Number(entry?.amount || 0)
+                        : total,
+                    0
+                )
             )
-            : 0
-    );
-    const reserveAssets = assetEntries.filter((entry) => entry?.isReserve);
-    const reserveTotal = reserveAssets.reduce((total, entry) => total + Number(entry?.amount || 0), 0);
-    const reserveHistory = history("assets", (snapshot) =>
-        Array.isArray(snapshot.entries)
-            ? snapshot.entries.reduce((total, entry) =>
-                entry?.isReserve ? total + Number(entry?.amount || 0) : total,
-                0
-            )
-            : 0
+        };
+
+        return {
+            assets,
+            liquidAssets,
+            illiquidAssets,
+            actualEarnings,
+            financialBurden,
+            mandatoryExpenses,
+            financialCushion: reserveTotal,
+            ...history
+        };
+    }
+
+    const now = Date.now();
+    const currentState = buildStateAt(now, true);
+    const currentResult = calculateFinancialStabilityIndex(currentState);
+
+    const comparisonDate = new Date(now);
+    comparisonDate.setMonth(comparisonDate.getMonth() - 1);
+    const comparisonTimestamp = comparisonDate.getTime();
+
+    const hasHistoricalBaseline =
+        Boolean(financeMemory.getFirstCollectionSnapshot("assets")) &&
+        Boolean(collectionSnapshot("assets", comparisonTimestamp));
+
+    let previousResult = null;
+
+    if (hasHistoricalBaseline) {
+        const previousState = buildStateAt(comparisonTimestamp, false);
+        const hasAnyPreviousData =
+            previousState.assets.length > 0 ||
+            previousState.actualEarnings.length > 0 ||
+            previousState.financialBurden.length > 0 ||
+            previousState.mandatoryExpenses.length > 0;
+
+        if (hasAnyPreviousData) {
+            previousResult = calculateFinancialStabilityIndex(previousState);
+        }
+    }
+
+    currentResult.diagnosis = buildFinancialStabilityDiagnosis(
+        currentResult,
+        previousResult
     );
 
-    return calculateFinancialStabilityIndex({
-        assets: assetEntries,
-        liquidAssets,
-        illiquidAssets,
-        actualEarnings,
-        financialBurden,
-        mandatoryExpenses,
-        financialCushion: reserveTotal,
-        incomeHistory,
-        debtHistory,
-        liquidityHistory,
-        reserveHistory
-    });
+    return currentResult;
 }
 
 
