@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.9
+// section.analytics.js — Version 1.10
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -235,7 +235,11 @@ function renderCreditProductDetails(root, onBack, section, entry, financeAnalyti
     footer.textContent = "Расчёт основан на текущем долге, регулярном платеже и процентной ставке.";
     content.appendChild(footer);
 
-    screen.append(backButton, header, content);
+    const detailsFrame = document.createElement("div");
+    detailsFrame.className = "credit-product-details-frame";
+    detailsFrame.append(header, content);
+
+    screen.append(backButton, detailsFrame);
     root.appendChild(screen);
 }
 
