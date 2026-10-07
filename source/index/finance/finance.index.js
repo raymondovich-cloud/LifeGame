@@ -1,4 +1,4 @@
-// source/index/finance/finance.index.js — Version 3.1
+// source/index/finance/finance.index.js — Version 3.2
 //
 // FSI 3.1 — Financial Stability Index.
 // Weighted composite indicator of cash-flow capacity, liquidity resilience,
@@ -204,12 +204,12 @@ function calculateFinancialStabilityIndex(financeState = {}) {
     const hasData = [assets, financeState.actualEarnings, financeState.financialBurden,
         financeState.mandatoryExpenses, financeState.financialCushion]
         .some((list) => Array.isArray(list) && list.length > 0);
-    const finalValue = hasData ? round(clamp(value), 1) : 0;
+    const finalValue = hasData ? round(clamp(value, FSI_LIMITS.minimum, FSI_LIMITS.maximum), 1) : 0;
 
     return {
         value: finalValue,
         scale: FSI_LIMITS.maximum,
-        version: "3.1",
+        version: "3.2",
         category: category(finalValue),
         methodology: {
             aggregation: "weighted_geometric_mean_with_component_floor",
