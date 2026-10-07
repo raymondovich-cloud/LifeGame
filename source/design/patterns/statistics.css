@@ -424,6 +424,10 @@
     gap:var(--assets-block-spacing, var(--space-2));
 }
 
+.assets-analytics-liquidity-group .assets-analytics-liquidity-bar {
+    height:.5rem;
+}
+
 .assets-analytics-liquidity-group--liquid {
     padding-bottom:var(--assets-block-spacing, var(--space-2));
 }
