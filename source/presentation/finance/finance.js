@@ -1,8 +1,9 @@
-// source/presentation/finance/finance.js — Version 4.29
+// source/presentation/finance/finance.js — Version 4.30
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
 import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
+import { renderSectionAnalyticsScreen } from "./section.analytics.js";
 import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";
 import { createFinanceAnalytics } from "../../application/finance/finance.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
@@ -849,7 +850,88 @@ function createFinancialStabilityIndexPanel(financeApplication) {
     return wrapper;
 }
 
-function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null) {
+function createSectionSummary(root, subblock, onWriteAttempt, financeApplication, financeAnalytics) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "assets-summary finance-section-summary";
+
+    const heading = document.createElement("div");
+    heading.className = "assets-summary-heading";
+
+    const title = document.createElement("span");
+    title.className = "statistics-meta";
+    title.textContent = "СОСТОЯНИЕ";
+
+    const statisticsButton = document.createElement("button");
+    statisticsButton.type = "button";
+    statisticsButton.className = "assets-statistics-trigger";
+    statisticsButton.innerHTML = '<span>Аналитика</span><span aria-hidden="true">›</span>';
+
+    statisticsButton.addEventListener("click", () => {
+        if (!financeAnalytics) return;
+
+        const renderAnalytics = () => renderSectionAnalyticsScreen(
+            root,
+            () => renderFinanceData(root, subblock.id, onWriteAttempt, financeApplication),
+            subblock,
+            financeAnalytics,
+            financeApplication,
+            onWriteAttempt,
+            {
+                isPinned: (entryId) => isEntryPinned(subblock.id, entryId),
+                onChanged: renderAnalytics,
+                onPin: (entryId) => toggleEntryPinned(subblock.id, entryId),
+                onDelete: (entryId) => {
+                    const remove = async () => {
+                        const result = await financeApplication.removeFinanceEntry(subblock.id, entryId);
+                        if (!result) return;
+                        pinnedEntries.delete(getEntryKey(subblock.id, entryId));
+                        renderAnalytics();
+                    };
+
+                    if (typeof onWriteAttempt === "function") {
+                        onWriteAttempt(remove);
+                    } else {
+                        remove();
+                    }
+                },
+                onPinLimit: () => {
+                    if (countPinnedEntries(subblock.id, financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                        showSubscriptionLimitNotice();
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        );
+
+        renderAnalytics();
+    });
+
+    heading.append(title, statisticsButton);
+
+    const statistics = financeAnalytics.getFinanceAnalytics(
+        financeAnalytics.getFinanceAnalyticsRange("month")
+    );
+    const metric = statistics.metrics[subblock.id];
+
+    const amountRow = document.createElement("div");
+    amountRow.className = "assets-total-row";
+
+    const amount = document.createElement("span");
+    amount.className = "assets-total-value";
+    amount.textContent = formatAmount(metric?.current ?? getSectionTotal(financeApplication, subblock.id)) + " ₽";
+
+    amountRow.appendChild(amount);
+
+    const date = document.createElement("span");
+    date.className = "statistics-meta assets-summary-date";
+    date.textContent = "Срез · " + formatSnapshotDate(metric?.current !== null && metric?.current !== undefined ? statistics.endDate : null);
+
+    wrapper.append(heading, amountRow, date);
+    return wrapper;
+}
+
+function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeApplication = null, assetsAnalytics = null, financeAnalytics = null) {
     const wrapper = document.createElement("article");
     wrapper.className = "accordion-item finance-subblock" + (isOpen ? " is-open" : "");
     wrapper.dataset.subblock = subblock.id;
@@ -898,6 +980,10 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
 
     if (subblock.id === "assets") {
         content.appendChild(createAssetsSummary(root, onWriteAttempt, financeApplication, assetsAnalytics));
+    }
+
+    if (subblock.id !== "assets" && subblock.id !== "financial-stability-index" && financeAnalytics) {
+        content.appendChild(createSectionSummary(root, subblock, onWriteAttempt, financeApplication, financeAnalytics));
     }
 
     if (subblock.id !== "financial-stability-index" && subblock.id !== "assets") {
@@ -950,6 +1036,9 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     const assetsAnalytics = financeApplication
         ? createAssetsAnalytics({ financeApplication })
         : null;
+    const financeAnalytics = financeApplication
+        ? createFinanceAnalytics({ financeApplication })
+        : null;
 
     const page = document.createElement("section");
     page.className = "finance-workspace finance-data-screen";
@@ -998,7 +1087,8 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
                 subblock.id === activeSectionId,
                 onWriteAttempt,
                 financeApplication,
-                assetsAnalytics
+                assetsAnalytics,
+                financeAnalytics
             )
         );
     });
