@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.32
+// source/presentation/finance/finance.js — Version 4.33
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -154,11 +154,11 @@ function createHealthBlock(financeApplication) {
 
     const value = document.createElement("span");
     value.className = "finance-health-value";
-    value.textContent = String(result.value);
+    value.textContent = String(Math.round(Number(result.value || 0) * 10));
 
     const suffix = document.createElement("span");
     suffix.className = "finance-health-suffix";
-    suffix.textContent = "/100";
+    suffix.textContent = "/1000";
 
     valueRow.append(value, suffix);
 
