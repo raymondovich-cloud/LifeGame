@@ -1,4 +1,4 @@
-// finance.js — Version 5.5
+// finance.js — Version 5.6
 
 import {
     createActualEarning,
@@ -32,6 +32,7 @@ import {
 
 import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
+import { calculateCreditProduct } from "../../domain/finance/credit.product/credit.product.js";
 
 const COLLECTION_CONFIG = Object.freeze({
     "actual-earnings": {
@@ -282,6 +283,16 @@ async function removeFinanceEntry(subblockId, entryId) {
     return deleted;
 }
 
+function calculateCreditProductAnalytics(entry) {
+    if (!entry?.isCreditProduct) return null;
+
+    return calculateCreditProduct(
+        entry.debt,
+        entry.payment,
+        entry.interestRate
+    );
+}
+
 function getFinancialStabilityIndex() {
     const memory = financeMemory;
     const financialBurden = memory
@@ -324,6 +335,7 @@ function getFinancialStabilityIndex() {
         removeFinanceEntry,
         updateFinanceEntry,
         getFinancialStabilityIndex,
+        calculateCreditProductAnalytics,
         getAssetsSnapshotAtOrBefore: financeMemory.getAssetsSnapshotAtOrBefore.bind(financeMemory),
         getAssetsSnapshotsBetween: financeMemory.getAssetsSnapshotsBetween.bind(financeMemory),
         getFirstAssetsSnapshot: financeMemory.getFirstAssetsSnapshot.bind(financeMemory),
