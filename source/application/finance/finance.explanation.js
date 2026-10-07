@@ -1,4 +1,4 @@
-// source/application/finance/finance.explanation.js — Version 2.2
+// source/application/finance/finance.explanation.js — Version 2.3
 
 // Explanation engine for FSI.
 // The engine does not store user-specific phrases.
@@ -458,7 +458,11 @@ function buildCompositionText(factors) {
     return "Индекс состоит из семи факторов: " + parts.join(", ") + ".";
 }
 
-function buildImpactText(factors) {
+function buildImpactText(factors, result = null) {
+    if (result?.dataStatus === "insufficient") {
+        return "Персональное влияние финансовых факторов станет доступно после добавления финансовых данных.";
+    }
+
     const limiting = factors[0];
     const strongest = factors.slice().sort((a, b) => b.score - a.score)[0];
 
@@ -476,6 +480,10 @@ function buildImpactText(factors) {
 }
 
 function buildSummary(result, factors) {
+    if (result?.dataStatus === "insufficient") {
+        return "Финансовая система пока не сформирована: данных недостаточно для персональной диагностики.";
+    }
+
     if (!factors.length) {
         return "Недостаточно данных для построения персонального объяснения индекса.";
     }
@@ -557,7 +565,7 @@ function buildStrongestSemanticText(key, result) {
 function createFinanceExplanation(result) {
     if (!result) return null;
 
-    const factors = buildFactorModel(result);
+    const factors = result.dataStatus === "insufficient" ? [] : buildFactorModel(result);
 
     return Object.freeze({
         score: numeric(result.value, 0),
@@ -565,7 +573,7 @@ function createFinanceExplanation(result) {
         category: result.category?.label || "—",
         summary: buildSummary(result, factors),
         composition: buildCompositionText(factors),
-        impact: buildImpactText(factors),
+        impact: buildImpactText(factors, result),
         factors: Object.freeze(factors),
         priority: factors[0]
             ? Object.freeze({
