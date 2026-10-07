@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.3
+// section.analytics.js — Version 1.4
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -239,7 +239,9 @@ function renderSectionAnalyticsPage(
 
     const description = document.createElement("p");
     description.className = "assets-statistics-description";
-    description.textContent = "Состояние и история операций раздела «" + section.title + "».";
+    description.textContent = section.id === "financial-burden"
+        ? "Состав кредитных продуктов и долговой нагрузки."
+        : "Состояние и история операций раздела «" + section.title + "».";
 
     header.append(eyebrow, title, description);
     screen.appendChild(header);
@@ -282,23 +284,30 @@ function renderSectionAnalyticsPage(
     overview.append(overviewLabel, overviewValue, overviewDate);
     content.appendChild(overview);
 
-    const history = document.createElement("section");
-    history.className = "assets-analytics-section assets-analytics-composition";
-
-    const historyTitle = document.createElement("span");
-    historyTitle.className = "statistics-meta";
-    historyTitle.textContent = "ИСТОРИЯ ОПЕРАЦИЙ";
-    history.appendChild(historyTitle);
-
     const entries = financeApplication.listFinanceEntries(section.id);
 
-    if (!entries.length) {
-        const empty = document.createElement("span");
-        empty.className = "assets-analytics-empty";
-        empty.textContent = "Записей пока нет.";
-        history.appendChild(empty);
-    } else {
-        const visible = mode === "preview" ? getPreviewEntries(entries, interaction) : entries;
+    const renderEntryGroup = (titleText, groupEntries, emptyText, groupMode) => {
+        const history = document.createElement("section");
+        history.className = "assets-analytics-section assets-analytics-composition";
+
+        const historyTitle = document.createElement("span");
+        historyTitle.className = "statistics-meta";
+        historyTitle.textContent = titleText;
+        history.appendChild(historyTitle);
+
+        if (!groupEntries.length) {
+            const empty = document.createElement("span");
+            empty.className = "assets-analytics-empty";
+            empty.textContent = emptyText;
+            history.appendChild(empty);
+            content.appendChild(history);
+            return;
+        }
+
+        const visible = groupMode === "preview"
+            ? getPreviewEntries(groupEntries, interaction)
+            : groupEntries;
+
         visible.forEach((entry) => {
             history.appendChild(createAnalyticsRow(
                 root,
@@ -315,21 +324,54 @@ function renderSectionAnalyticsPage(
             ));
         });
 
-        if (mode === "preview" && entries.length > 3) {
+        if (groupMode === "preview" && groupEntries.length > 3) {
             const openAll = document.createElement("button");
             openAll.type = "button";
             openAll.className = "assets-analytics-open-all";
             openAll.innerHTML = '<span>Открыть все</span><span aria-hidden="true">→</span>';
             openAll.addEventListener("click", () => {
                 renderSectionAnalyticsPage(
-                    root, onBack, section, financeAnalytics, financeApplication, onWriteAttempt, interaction, "full"
+                    root,
+                    onBack,
+                    section,
+                    financeAnalytics,
+                    financeApplication,
+                    onWriteAttempt,
+                    interaction,
+                    mode === "full" ? "full" : "full"
                 );
             });
             history.appendChild(openAll);
         }
-    }
 
-    content.appendChild(history);
+        content.appendChild(history);
+    };
+
+    if (section.id === "financial-burden") {
+        const creditProducts = entries.filter((entry) => entry.isCreditProduct === true);
+        const debts = entries.filter((entry) => entry.isCreditProduct !== true);
+
+        renderEntryGroup(
+            "КРЕДИТНЫЕ ПРОДУКТЫ",
+            creditProducts,
+            "Кредитных продуктов пока нет.",
+            mode
+        );
+
+        renderEntryGroup(
+            "ДОЛГИ",
+            debts,
+            "Долгов пока нет.",
+            mode
+        );
+    } else {
+        renderEntryGroup(
+            "ИСТОРИЯ ОПЕРАЦИЙ",
+            entries,
+            "Записей пока нет.",
+            mode
+        );
+    }
 }
 
 function renderSectionAnalyticsScreen(
