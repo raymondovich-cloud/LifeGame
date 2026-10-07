@@ -1,6 +1,6 @@
-// financial.burden.js — Version 2.1
+// financial.burden.js — Version 2.2
 
-function createFinancialBurden(label, debt, payment = null, isCreditProduct = true, interestRate = null) {
+function createFinancialBurden(label, debt, payment = null, isCreditProduct = false, interestRate = null) {
     const normalizedLabel = String(label ?? "").trim();
     const normalizedDebt = Number(debt);
     const normalizedIsCreditProduct = Boolean(isCreditProduct);
