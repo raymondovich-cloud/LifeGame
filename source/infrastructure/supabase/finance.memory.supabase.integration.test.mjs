@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.3
+// finance.memory.supabase.integration.test.mjs — Version 1.4
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -55,7 +55,20 @@ test("Finance Supabase persistence survives memory recreation and isolates users
     assert.equal(createdA.amount, 12345);
     assert.equal(memoryB.listActualEarnings().length, 0);
 
-    const recreatedMemoryA = createSupabaseFinanceMemory({
+    const createdCredit = await memoryA.saveFinancialBurden({
+        label: "Credit persistence",
+        debt: 30000,
+        payment: 3000,
+        isCreditProduct: true,
+        interestRate: 25
+    });
+
+    assert.equal(createdCredit.debt, 30000);
+    assert.equal(createdCredit.payment, 3000);
+    assert.equal(createdCredit.isCreditProduct, true);
+    assert.equal(createdCredit.interestRate, 25);
+
+    const recreatedMemory = createSupabaseFinanceMemory({
         client: sessionA.client,
         userContext: { userId: sessionA.userId }
     });
@@ -65,6 +78,16 @@ test("Finance Supabase persistence survives memory recreation and isolates users
 
     assert.deepEqual(recreatedMemoryA.listActualEarnings(), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
+    ]);
+    assert.deepEqual(recreatedMemoryA.listFinancialBurden(), [
+        {
+            id: createdCredit.id,
+            label: "Credit persistence",
+            debt: 30000,
+            payment: 3000,
+            isCreditProduct: true,
+            interestRate: 25
+        }
     ]);
 
     const createdB = await memoryB.saveActualEarning({
