@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.1
+// section.analytics.js — Version 1.2
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -183,13 +183,6 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
         () => interaction?.onDelete?.(entry.id),
         () => typeof interaction?.onPinLimit === "function" ? interaction.onPinLimit(entry.id) : false
     );
-
-    const deleteContent = () => interaction?.onDelete?.(entry.id);
-    action.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        deleteContent();
-    });
 
     attachAnalyticsSwipeDelete(row, () => interaction?.onDelete?.(entry.id));
     return row;
