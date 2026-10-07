@@ -285,15 +285,6 @@ function renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplica
 
     renderLiquidity(content, analytics.liquidity);
 
-    const distribution = document.createElement("section");
-    distribution.className = "assets-analytics-section assets-analytics-distribution";
-
-    const distributionTitle = document.createElement("span");
-    distributionTitle.className = "statistics-meta";
-    distributionTitle.textContent = "РАСПРЕДЕЛЕНИЕ";
-
-    distribution.appendChild(distributionTitle);
-    content.appendChild(distribution);
 
     const composition = document.createElement("section");
     composition.className = "assets-analytics-section assets-analytics-composition";
