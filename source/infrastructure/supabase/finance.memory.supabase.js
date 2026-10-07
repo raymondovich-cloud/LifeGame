@@ -1,4 +1,4 @@
-// finance.memory.supabase.js — Version 2.3
+// finance.memory.supabase.js — Version 2.4
 // Responsibility: implement the Finance Memory Port with Supabase persistence and a local runtime cache.
 
 const COLLECTIONS = Object.freeze({
@@ -238,6 +238,14 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         const payload = { user_id: userId };
 
         config.fields.forEach((field) => {
+            if (field === "is_credit_product") {
+                payload[field] = entry.isCreditProduct ?? false;
+                return;
+            }
+            if (field === "interest_rate") {
+                payload[field] = entry.interestRate ?? null;
+                return;
+            }
             payload[field] = entry[field];
         });
 
@@ -270,6 +278,14 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         const payload = {};
 
         config.fields.forEach((field) => {
+            if (field === "is_credit_product") {
+                payload[field] = entry.isCreditProduct ?? false;
+                return;
+            }
+            if (field === "interest_rate") {
+                payload[field] = entry.interestRate ?? null;
+                return;
+            }
             payload[field] = entry[field];
         });
 
