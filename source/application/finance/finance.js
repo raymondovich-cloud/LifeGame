@@ -1,4 +1,4 @@
-// finance.js — Version 5.4
+// finance.js — Version 5.5
 
 import {
     createActualEarning,
@@ -131,7 +131,7 @@ function listFinanceEntries(subblockId) {
     return getMemoryMethod(config, "list")();
 }
 
-async function addFinanceEntry(subblockId, label, amount, liquidity) {
+async function addFinanceEntry(subblockId, label, amount, liquidity, options = null) {
     if (subblockId === "assets") {
         const memory = financeMemory;
         const result = createAsset({ label, amount, liquidity });
@@ -146,7 +146,7 @@ async function addFinanceEntry(subblockId, label, amount, liquidity) {
 
     const config = getCollectionConfig(subblockId);
     const result = subblockId === "financial-burden"
-        ? config.create(label, amount, liquidity)
+        ? config.create(label, amount, options?.payment ?? null, options?.isCreditProduct ?? false, options?.interestRate ?? null)
         : config.create(label, amount);
 
     const mutation = await financeMemory.mutateFinanceCollection({
@@ -159,8 +159,12 @@ async function addFinanceEntry(subblockId, label, amount, liquidity) {
     return mutation ? mutation.entry : false;
 }
 
-async function addFinancialBurdenEntry(label, debt, payment) {
-    return addFinanceEntry("financial-burden", label, debt, payment);
+async function addFinancialBurdenEntry(label, debt, payment, isCreditProduct = false, interestRate = null) {
+    return addFinanceEntry("financial-burden", label, debt, null, {
+        payment,
+        isCreditProduct,
+        interestRate
+    });
 }
 
 async function updateFinanceEntry(
@@ -169,7 +173,9 @@ async function updateFinanceEntry(
     label,
     amount,
     liquidity,
-    payment = null
+    payment = null,
+    isCreditProduct = false,
+    interestRate = null
 ) {
     if (subblockId === "assets") {
         const memory = financeMemory;
@@ -202,7 +208,7 @@ async function updateFinanceEntry(
         .find((entry) => entry.id === entryId);
 
     const result = subblockId === "financial-burden"
-        ? config.updateDomain(existingEntry, label, amount, payment)
+        ? config.updateDomain(existingEntry, label, amount, payment, isCreditProduct, interestRate)
         : config.updateDomain(existingEntry, label, amount);
 
     if (!result) {
