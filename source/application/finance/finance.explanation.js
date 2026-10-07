@@ -1,4 +1,4 @@
-// source/application/finance/finance.explanation.js — Version 2.0
+// source/application/finance/finance.explanation.js — Version 2.1
 
 // Explanation engine for FSI.
 // The engine does not store user-specific phrases.
@@ -401,9 +401,26 @@ function buildSummary(result, factors) {
 
     const category = result?.category?.label || "—";
     const value = numeric(result?.value, 0);
+    const limiting = factors[0];
+    const strongest = factors.slice().sort((a, b) => b.score - a.score)[0];
 
-    return "Ваш индекс — " + formatNumber(value, 1) + "/100, уровень «" +
-        category.toLowerCase() + "». " + buildImpactText(factors);
+    let text = "Ваш индекс — " + formatNumber(value, 1) + "/100, уровень «" +
+        category.toLowerCase() + "».";
+
+    if (limiting) {
+        text += " Наибольший недобор до максимального значения сейчас связан с " +
+            limiting.title.toLowerCase() + " (" +
+            formatNumber(limiting.score, 1) + "/100; вес " +
+            formatNumber(limiting.weight * 100, 0) + "%).";
+    }
+
+    if (strongest && strongest.key !== limiting?.key) {
+        text += " Наиболее сильный компонент — " +
+            strongest.title.toLowerCase() + " (" +
+            formatNumber(strongest.score, 1) + "/100).";
+    }
+
+    return text;
 }
 
 function createFinanceExplanation(result) {
