@@ -1,4 +1,4 @@
-// finance.js — Version 5.8
+// finance.js — Version 6.0
 
 import {
     createActualEarning,
@@ -17,12 +17,6 @@ import {
     updateMandatoryExpense,
     removeMandatoryExpense
 } from "../../domain/finance/mandatory.expenses/mandatory.expenses.js";
-
-import {
-    createFinancialCushion,
-    updateFinancialCushion,
-    removeFinancialCushion
-} from "../../domain/finance/financial.cushion/financial.cushion.js";
 
 import {
     createAsset,
@@ -62,15 +56,6 @@ const COLLECTION_CONFIG = Object.freeze({
         updateDomain: updateMandatoryExpense,
         removeDomain: removeMandatoryExpense
     },
-    "financial-cushion": {
-        list: "listFinancialCushion",
-        save: "saveFinancialCushion",
-        update: "updateFinancialCushion",
-        remove: "deleteFinancialCushion",
-        create: createFinancialCushion,
-        updateDomain: updateFinancialCushion,
-        removeDomain: removeFinancialCushion
-    }
 });
 
 function validateFinanceMemory(memory) {
@@ -83,7 +68,6 @@ function validateFinanceMemory(memory) {
         "listActualEarnings", "saveActualEarning", "updateActualEarning", "deleteActualEarning",
         "listFinancialBurden", "saveFinancialBurden", "updateFinancialBurden", "deleteFinancialBurden",
         "listMandatoryExpenses", "saveMandatoryExpense", "updateMandatoryExpense", "deleteMandatoryExpense",
-        "listFinancialCushion", "saveFinancialCushion", "updateFinancialCushion", "deleteFinancialCushion",
         "getAssetsSnapshotAtOrBefore",
         "getAssetsSnapshotsBetween",
         "getFirstAssetsSnapshot",
@@ -138,7 +122,12 @@ function listFinanceEntries(subblockId) {
 async function addFinanceEntry(subblockId, label, amount, liquidity, options = null) {
     if (subblockId === "assets") {
         const memory = financeMemory;
-        const result = createAsset({ label, amount, liquidity });
+        const result = createAsset({
+            label,
+            amount,
+            liquidity,
+            ...(options || {})
+        });
         const mutation = await memory.mutateAsset({
             operation: "create",
             entry: result.entry,
@@ -179,7 +168,8 @@ async function updateFinanceEntry(
     liquidity,
     payment = null,
     isCreditProduct = false,
-    interestRate = null
+    interestRate = null,
+    assetOptions = null
 ) {
     if (subblockId === "assets") {
         const memory = financeMemory;
@@ -190,7 +180,8 @@ async function updateFinanceEntry(
         const result = updateAsset(existingAsset, {
             label,
             amount,
-            liquidity
+            liquidity,
+            ...(assetOptions || {})
         });
 
         if (!result) {
@@ -301,8 +292,6 @@ function getFinancialStabilityIndex() {
     const assetEntries = financeMemory.listAssets();
     const actualEarnings = financeMemory.listActualEarnings();
     const mandatoryExpenses = financeMemory.listMandatoryExpenses();
-    const financialCushion = financeMemory.listFinancialCushion();
-
     const liquidAssets = assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
     const illiquidAssets = assetEntries.filter((entry) => entry?.liquidity === "illiquid");
 
@@ -331,7 +320,16 @@ function getFinancialStabilityIndex() {
             )
             : 0
     );
-    const reserveHistory = history("financial-cushion", (snapshot) => Number(snapshot.total) || 0);
+    const reserveAssets = assetEntries.filter((entry) => entry?.isReserve);
+    const reserveTotal = reserveAssets.reduce((total, entry) => total + Number(entry?.amount || 0), 0);
+    const reserveHistory = history("assets", (snapshot) =>
+        Array.isArray(snapshot.entries)
+            ? snapshot.entries.reduce((total, entry) =>
+                entry?.isReserve ? total + Number(entry?.amount || 0) : total,
+                0
+            )
+            : 0
+    );
 
     return calculateFinancialStabilityIndex({
         assets: assetEntries,
@@ -340,7 +338,7 @@ function getFinancialStabilityIndex() {
         actualEarnings,
         financialBurden,
         mandatoryExpenses,
-        financialCushion,
+        financialCushion: reserveTotal,
         incomeHistory,
         debtHistory,
         liquidityHistory,
