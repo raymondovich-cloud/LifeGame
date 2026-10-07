@@ -1,339 +1,244 @@
-// source/index/finance/finance.index.js — Version 2.2
+// source/index/finance/finance.index.js — Version 3.0
 //
-// FSI 2.1 — Financial Stability Index.
-// This layer calculates derived financial stability only.
-// Domain data remains raw; user state/history must come from Memory/application.
-//
-// Inputs:
-// A = total assets
-// L = liquid funds (only assets explicitly marked liquid)
-// I = average monthly actual income
-// E = essential mandatory monthly expenses
-// D = mandatory monthly debt payments
-// B = total outstanding debt
-// R = emergency reserve (subset of L)
-//
-// O = E + D
-//
-// FSI 2.1 = Financial Strength × Stability Factor
-//
-// Financial Strength:
-// FS = 0.35 Ls + 0.25 Is + 0.20 Rs + 0.10 Ds + 0.10 Bs
-//
-// Ls = 100 × (1 - e^(-LC / 2)), LC = L / O
-// Is = 100 × (1 - e^(-IC / 0.75)), IC = I / O
-// Rs = 100 × (1 - e^(-RC / 2)), RC = R / E
-// Ds = 100 × e^(-DBR / 0.35), DBR = D / I
-// Bs = 100 × e^(-DE / 12), DE = B / I
-//
-// Stability Factor:
-// SF = Fi^0.20 × Fd^0.20 × Fl^0.20 × Fr^0.15 × Fis^0.15 × Ft^0.10
-//
-// Fi  = min(1, IC / 2)
-// Fd  = e^(-DBR / 0.40)
-// Fl  = 1 - e^(-LC / 2)
-// Fr  = 1 - e^(-RC / 2)
-// Fis = e^(-CV), CV = income standard deviation / income mean
-// Ft  = 0.40 Ti + 0.30 Td + 0.30 Tr
-//
-// Income/debt/reserve histories use six monthly observations when supplied.
-// Trend is normalized around 0.50: improving income/reserve raises it;
-// increasing debt lowers it. With insufficient history, neutral 0.50 is used.
-//
-// Survival Months = L / O is returned as a diagnostic and is not part of FSI.
-// Stress tests are also diagnostics and are not part of the current FSI score.
+// FSI 3.0 — Financial Stability Index.
+// Weighted composite indicator of cash-flow capacity, liquidity resilience,
+// emergency reserve, debt sustainability, net financial position and trend.
+// Scientifically grounded, not empirically validated.
 
-const FSI_LIMITS = Object.freeze({
-    minimum: 0,
-    maximum: 100
-});
-
+const FSI_LIMITS = Object.freeze({ minimum: 0, maximum: 100 });
 const FSI_CATEGORIES = Object.freeze([
     { minimum: 0, maximum: 19, key: "critical", label: "Критический" },
-    { minimum: 20, maximum: 39, key: "fragile", label: "Хрупкий" },
+    { minimum: 20, maximum: 39, key: "vulnerable", label: "Уязвимый" },
     { minimum: 40, maximum: 59, key: "unstable", label: "Нестабильный" },
     { minimum: 60, maximum: 74, key: "stable", label: "Стабильный" },
     { minimum: 75, maximum: 89, key: "strong", label: "Сильный" },
     { minimum: 90, maximum: 100, key: "resilient", label: "Устойчивый" }
 ]);
+const FSI_WEIGHTS = Object.freeze({
+    cashFlow: 0.25,
+    liquidityResilience: 0.20,
+    emergencyReserve: 0.15,
+    debtSustainability: 0.20,
+    netFinancialPosition: 0.10,
+    financialTrend: 0.10
+});
 
-function normalizeAmount(value) {
-    const amount = Number(value);
-
-    return Number.isFinite(amount) && amount > 0 ? amount : 0;
+function amount(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : 0;
 }
-
-function sumEntries(entries) {
+function sum(entries, field = "amount") {
     if (!Array.isArray(entries)) return 0;
-
-    return entries.reduce(
-        (total, entry) => total + normalizeAmount(entry?.amount),
-        0
-    );
+    return entries.reduce((total, entry) => total + amount(entry?.[field]), 0);
 }
-
-function sumEntryField(entries, field) {
-    if (!Array.isArray(entries)) return 0;
-
-    return entries.reduce(
-        (total, entry) => total + normalizeAmount(entry?.[field]),
-        0
-    );
+function resolve(value, entries) {
+    return value !== undefined ? amount(value) : sum(entries);
 }
-
-function resolveAmount(value, entries) {
-    if (value !== undefined) return normalizeAmount(value);
-
-    return sumEntries(entries);
+function clamp(value, min = 0, max = 1) {
+    return Math.max(min, Math.min(max, value));
 }
-
-function clamp(value, minimum = 0, maximum = 1) {
-    return Math.max(minimum, Math.min(maximum, value));
+function round(value, digits = 2) {
+    if (!Number.isFinite(value)) return null;
+    const factor = 10 ** digits;
+    return Math.round(value * factor) / factor;
 }
-
-function positiveAverage(values) {
-    const normalized = Array.isArray(values)
-        ? values.map(normalizeAmount).filter((value) => value > 0)
-        : [];
-
-    if (normalized.length === 0) return 0;
-
-    return normalized.reduce((sum, value) => sum + value, 0) / normalized.length;
+function category(value) {
+    return FSI_CATEGORIES.find((item) => value >= item.minimum && value <= item.maximum)
+        || FSI_CATEGORIES[FSI_CATEGORIES.length - 1];
 }
-
-function getCategory(value) {
-    return FSI_CATEGORIES.find(
-        (category) => value >= category.minimum && value <= category.maximum
-    ) || FSI_CATEGORIES[FSI_CATEGORIES.length - 1];
-}
-
-function coverageScore(coverage, divisor) {
+function cashFlowScore(coverage) {
     if (coverage <= 0) return 0;
-
-    return 100 * (1 - Math.exp(-coverage / divisor));
+    if (!Number.isFinite(coverage)) return 1;
+    return clamp(Math.log1p(coverage) / Math.log1p(2.5));
 }
-
-function resolveCoverage(numerator, denominator, zeroDenominatorScore = 0) {
-    if (denominator > 0) return numerator / denominator;
-
-    return numerator > 0 ? Infinity : zeroDenominatorScore;
+function monthsScore(months) {
+    if (!Number.isFinite(months)) return months > 0 ? 1 : 0;
+    if (months <= 0) return 0;
+    if (months < 1) return months * 0.25;
+    if (months < 3) return 0.25 + ((months - 1) / 2) * 0.35;
+    if (months < 6) return 0.60 + ((months - 3) / 3) * 0.30;
+    if (months < 9) return 0.90 + ((months - 6) / 3) * 0.10;
+    return 1;
 }
-
-function calculateIncomeStability(incomeHistory) {
-    const values = Array.isArray(incomeHistory)
-        ? incomeHistory.map(normalizeAmount).filter((value) => value > 0)
-        : [];
-
-    if (values.length < 2) return 0.5;
-
-    const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
-
-    if (mean <= 0) return 0;
-
-    const variance = values.reduce(
-        (sum, value) => sum + ((value - mean) ** 2),
-        0
-    ) / values.length;
-
-    const standardDeviation = Math.sqrt(variance);
-    const coefficientOfVariation = standardDeviation / mean;
-
-    return clamp(Math.exp(-coefficientOfVariation));
+function dsrScore(ratio) {
+    if (!Number.isFinite(ratio)) return ratio === 0 ? 1 : 0;
+    if (ratio <= 0.20) return 1;
+    if (ratio <= 0.35) return 1 - ((ratio - 0.20) / 0.15) * 0.25;
+    if (ratio <= 0.50) return 0.75 - ((ratio - 0.35) / 0.15) * 0.55;
+    if (ratio <= 0.75) return 0.20 - ((ratio - 0.50) / 0.25) * 0.20;
+    return 0;
 }
-
-function normalizeTrend(values, direction = "positive") {
-    const normalized = Array.isArray(values)
-        ? values.map(normalizeAmount).filter((value) => value >= 0)
-        : [];
-
-    if (normalized.length < 2) return 0.5;
-
-    const first = normalized[0];
-    const last = normalized[normalized.length - 1];
-    const mean = normalized.reduce((sum, value) => sum + value, 0) / normalized.length;
-
-    if (mean <= 0) {
-        return direction === "negative" ? 1 : 0.5;
+function dtiScore(ratio) {
+    if (!Number.isFinite(ratio)) return ratio === 0 ? 1 : 0;
+    if (ratio <= 0) return 1;
+    return clamp(1 / (1 + ratio / 6));
+}
+function netPositionScore(netWorth, outflow) {
+    if (outflow <= 0) return netWorth > 0 ? 1 : 0.5;
+    const ratio = netWorth / outflow;
+    if (ratio < 0) return clamp(0.40 * Math.exp(ratio));
+    return clamp(0.40 + 0.60 * (1 - Math.exp(-ratio / 6)));
+}
+function trend(values, direction = "positive") {
+    const list = Array.isArray(values) ? values.map(amount) : [];
+    if (list.length < 2) return 0.5;
+    const mean = list.reduce((a, b) => a + b, 0) / list.length;
+    if (mean <= 0) return 0.5;
+    const change = (list[list.length - 1] - list[0]) / mean;
+    return clamp(0.5 + 0.5 * Math.tanh((direction === "negative" ? -change : change) * 2.5));
+}
+function financialTrend(income, debt, liquidity, reserve) {
+    return 0.30 * trend(income) +
+        0.25 * trend(debt, "negative") +
+        0.25 * trend(liquidity) +
+        0.20 * trend(reserve);
+}
+function creditRisk(entries, income) {
+    const products = Array.isArray(entries) ? entries.filter((e) => e?.isCreditProduct) : [];
+    if (products.length === 0) {
+        return { score: 1, products: 0, nonAmortizingProducts: 0, firstMonthInterest: 0 };
     }
-
-    const relativeChange = (last - first) / mean;
-    const directionalChange = direction === "negative"
-        ? -relativeChange
-        : relativeChange;
-
-    return clamp(0.5 + 0.5 * Math.tanh(directionalChange * 3));
-}
-
-function calculateFinancialTrend(
-    incomeHistory,
-    debtHistory,
-    reserveHistory
-) {
-    const incomeTrend = normalizeTrend(incomeHistory, "positive");
-    const debtTrend = normalizeTrend(debtHistory, "negative");
-    const reserveTrend = normalizeTrend(reserveHistory, "positive");
-
-    return (
-        (0.40 * incomeTrend) +
-        (0.30 * debtTrend) +
-        (0.30 * reserveTrend)
-    );
-}
-
-function calculateFinancialStabilityIndex(financeState = {}) {
-    const assetEntries = Array.isArray(financeState.assets) ? financeState.assets : [];
-    const liquidAssetEntries = Array.isArray(financeState.liquidAssets)
-        ? financeState.liquidAssets
-        : assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
-    const liquidFunds = resolveAmount(
-        financeState.liquidFundsAmount,
-        financeState.liquidFunds ?? liquidAssetEntries
-    );
-
-    const totalDebt = financeState.debts !== undefined
-        ? normalizeAmount(financeState.debts)
-        : sumEntryField(financeState.financialBurden, "debt");
-
-    const incomeHistory = Array.isArray(financeState.incomeHistory)
-        ? financeState.incomeHistory
-        : [];
-
-    const averageIncome = incomeHistory.length > 0
-        ? positiveAverage(incomeHistory)
-        : resolveAmount(financeState.income, financeState.actualEarnings);
-
-    const debtPayments = financeState.payments !== undefined
-        ? normalizeAmount(financeState.payments)
-        : sumEntryField(financeState.financialBurden, "payment");
-
-    const mandatoryExpenses = resolveAmount(
-        financeState.expenses,
-        financeState.mandatoryExpenses
-    );
-
-    const emergencyReserve = Math.min(
-        liquidFunds,
-        resolveAmount(financeState.cushion, financeState.financialCushion)
-    );
-
-    const totalMandatoryOutflow = mandatoryExpenses + debtPayments;
-
-    const liquidityCoverage = resolveCoverage(
-        liquidFunds,
-        totalMandatoryOutflow
-    );
-
-    const incomeCoverage = resolveCoverage(
-        averageIncome,
-        totalMandatoryOutflow
-    );
-
-    const reserveCoverage = resolveCoverage(
-        emergencyReserve,
-        mandatoryExpenses
-    );
-
-    const debtBurdenRatio = averageIncome > 0
-        ? debtPayments / averageIncome
-        : (debtPayments > 0 ? Infinity : 0);
-
-    const debtExposureRatio = averageIncome > 0
-        ? totalDebt / averageIncome
-        : (totalDebt > 0 ? Infinity : 0);
-
-    const liquidityScore = coverageScore(liquidityCoverage, 2);
-    const incomeScore = coverageScore(incomeCoverage, 0.75);
-    const reserveScore = coverageScore(reserveCoverage, 2);
-
-    const debtBurdenScore = Number.isFinite(debtBurdenRatio)
-        ? 100 * Math.exp(-debtBurdenRatio / 0.35)
-        : 0;
-
-    const debtExposureScore = Number.isFinite(debtExposureRatio)
-        ? 100 * Math.exp(-debtExposureRatio / 12)
-        : 0;
-
-    const financialStrength = (
-        (0.35 * liquidityScore) +
-        (0.25 * incomeScore) +
-        (0.20 * reserveScore) +
-        (0.10 * debtBurdenScore) +
-        (0.10 * debtExposureScore)
-    );
-
-    const incomeCoverageFactor = Number.isFinite(incomeCoverage)
-        ? Math.min(1, incomeCoverage / 2)
-        : (averageIncome > 0 ? 1 : 0);
-
-    const debtStabilityFactor = Number.isFinite(debtBurdenRatio)
-        ? Math.exp(-debtBurdenRatio / 0.40)
-        : 0;
-
-    const liquidityProtectionFactor = Number.isFinite(liquidityCoverage)
-        ? 1 - Math.exp(-liquidityCoverage / 2)
-        : (liquidFunds > 0 ? 1 : 0);
-
-    const reserveProtectionFactor = Number.isFinite(reserveCoverage)
-        ? 1 - Math.exp(-reserveCoverage / 2)
-        : (emergencyReserve > 0 ? 1 : 0);
-
-    const incomeStabilityFactor = calculateIncomeStability(incomeHistory);
-
-    const financialTrendFactor = calculateFinancialTrend(
-        incomeHistory,
-        financeState.debtHistory,
-        financeState.reserveHistory
-    );
-
-    const stabilityFactor =
-        (incomeCoverageFactor ** 0.20) *
-        (debtStabilityFactor ** 0.20) *
-        (liquidityProtectionFactor ** 0.20) *
-        (reserveProtectionFactor ** 0.15) *
-        (incomeStabilityFactor ** 0.15) *
-        (financialTrendFactor ** 0.10);
-
-    const value = clamp(
-        financialStrength * stabilityFactor,
-        FSI_LIMITS.minimum,
-        FSI_LIMITS.maximum
-    );
-
-    const roundedValue = Math.round(value * 10) / 10;
-
-    return {
-        value: roundedValue,
-        scale: FSI_LIMITS.maximum,
-        version: "2.1",
-        category: getCategory(roundedValue),
-        components: {
-            financialStrength: Math.round(financialStrength * 10) / 10,
-            stabilityFactor: Math.round(stabilityFactor * 1000) / 1000,
-            liquidityScore: Math.round(liquidityScore * 10) / 10,
-            incomeScore: Math.round(incomeScore * 10) / 10,
-            reserveScore: Math.round(reserveScore * 10) / 10,
-            debtBurdenScore: Math.round(debtBurdenScore * 10) / 10,
-            debtExposureScore: Math.round(debtExposureScore * 10) / 10,
-            incomeStabilityFactor: Math.round(incomeStabilityFactor * 1000) / 1000,
-            financialTrendFactor: Math.round(financialTrendFactor * 1000) / 1000
-        },
-        diagnostics: {
-            survivalMonths: Number.isFinite(liquidityCoverage)
-                ? Math.round(liquidityCoverage * 100) / 100
-                : null,
-            incomeCoverage: Number.isFinite(incomeCoverage)
-                ? Math.round(incomeCoverage * 100) / 100
-                : null,
-            debtBurdenRatio: Number.isFinite(debtBurdenRatio)
-                ? Math.round(debtBurdenRatio * 1000) / 1000
-                : null,
-            debtExposureRatio: Number.isFinite(debtExposureRatio)
-                ? Math.round(debtExposureRatio * 100) / 100
-                : null
+    let weighted = 0;
+    let debtTotal = 0;
+    let interestTotal = 0;
+    let nonAmortizing = 0;
+    products.forEach((entry) => {
+        const debt = amount(entry?.debt);
+        const payment = amount(entry?.payment);
+        const rate = amount(entry?.interestRate);
+        const interest = debt * rate / 100 / 12;
+        debtTotal += debt;
+        interestTotal += interest;
+        if (interest <= 0) {
+            weighted += debt;
+            return;
         }
+        const coverage = payment / interest;
+        if (payment <= interest) nonAmortizing += 1;
+        weighted += debt * (coverage <= 1 ? 0 : clamp(1 - Math.exp(-(coverage - 1) / 2)));
+    });
+    const amortization = debtTotal > 0 ? weighted / debtTotal : 1;
+    const payments = sum(entries, "payment");
+    const service = dsrScore(income > 0 ? payments / income : (payments > 0 ? Infinity : 0));
+    return {
+        score: 0.70 * amortization + 0.30 * service,
+        products: products.length,
+        nonAmortizingProducts: nonAmortizing,
+        firstMonthInterest: interestTotal
     };
 }
 
-export {
-    calculateFinancialStabilityIndex
-};
+function calculateFinancialStabilityIndex(financeState = {}) {
+    const assets = Array.isArray(financeState.assets) ? financeState.assets : [];
+    const liquid = Array.isArray(financeState.liquidAssets)
+        ? financeState.liquidAssets
+        : assets.filter((e) => e?.liquidity !== "illiquid");
+    const illiquid = Array.isArray(financeState.illiquidAssets)
+        ? financeState.illiquidAssets
+        : assets.filter((e) => e?.liquidity === "illiquid");
+
+    const liquidFunds = resolve(financeState.liquidFundsAmount, liquid);
+    const illiquidFunds = resolve(financeState.illiquidFundsAmount, illiquid);
+    const totalAssets = resolve(financeState.totalAssetsAmount, assets);
+    const debt = financeState.debts !== undefined ? amount(financeState.debts) : sum(financeState.financialBurden, "debt");
+    const income = resolve(financeState.income, financeState.actualEarnings);
+    const expenses = resolve(financeState.expenses, financeState.mandatoryExpenses);
+    const payments = financeState.payments !== undefined ? amount(financeState.payments) : sum(financeState.financialBurden, "payment");
+    const reserve = Math.min(liquidFunds, resolve(financeState.cushion, financeState.financialCushion));
+    const outflow = expenses + payments;
+    const freeLiquid = Math.max(0, liquidFunds - reserve);
+
+    const coverage = outflow > 0 ? income / outflow : (income > 0 ? Infinity : 0);
+    const liquidityMonths = outflow > 0 ? freeLiquid / outflow : (freeLiquid > 0 ? Infinity : 0);
+    const reserveMonths = outflow > 0 ? reserve / outflow : (reserve > 0 ? Infinity : 0);
+    const dsr = income > 0 ? payments / income : (payments > 0 ? Infinity : 0);
+    const dti = income > 0 ? debt / income : (debt > 0 ? Infinity : 0);
+    const netWorth = totalAssets - debt;
+    const credit = creditRisk(financeState.financialBurden, income);
+
+    const components = {
+        cashFlow: cashFlowScore(coverage),
+        liquidityResilience: monthsScore(liquidityMonths),
+        emergencyReserve: monthsScore(reserveMonths),
+        debtSustainability: 0.45 * dsrScore(dsr) + 0.25 * dtiScore(dti) + 0.30 * credit.score,
+        netFinancialPosition: netPositionScore(netWorth, outflow),
+        financialTrend: financialTrend(
+            financeState.incomeHistory,
+            financeState.debtHistory,
+            financeState.liquidityHistory,
+            financeState.reserveHistory
+        )
+    };
+
+    let value = 100 *
+        components.cashFlow ** FSI_WEIGHTS.cashFlow *
+        components.liquidityResilience ** FSI_WEIGHTS.liquidityResilience *
+        components.emergencyReserve ** FSI_WEIGHTS.emergencyReserve *
+        components.debtSustainability ** FSI_WEIGHTS.debtSustainability *
+        components.netFinancialPosition ** FSI_WEIGHTS.netFinancialPosition *
+        components.financialTrend ** FSI_WEIGHTS.financialTrend;
+
+    const gates = [];
+    if (outflow > 0 && income < outflow) {
+        value = Math.min(value, 59);
+        gates.push({ key: "cash_flow_deficit", maximumScore: 59 });
+    }
+    if (dsr > 0.50) {
+        value = Math.min(value, 59);
+        gates.push({ key: "high_debt_service", maximumScore: 59 });
+    }
+    if (credit.nonAmortizingProducts > 0) {
+        value = Math.min(value, 39);
+        gates.push({ key: "non_amortizing_credit", maximumScore: 39 });
+    }
+    if (income === 0 && outflow > 0) {
+        value = Math.min(value, 19);
+        gates.push({ key: "no_income_with_obligations", maximumScore: 19 });
+    }
+
+    const hasData = [assets, financeState.actualEarnings, financeState.financialBurden,
+        financeState.mandatoryExpenses, financeState.financialCushion]
+        .some((list) => Array.isArray(list) && list.length > 0);
+    const finalValue = hasData ? round(clamp(value), 1) : 0;
+
+    return {
+        value: finalValue,
+        scale: FSI_LIMITS.maximum,
+        version: "3.0",
+        category: category(finalValue),
+        methodology: {
+            aggregation: "weighted_geometric_mean",
+            scientificallyGrounded: true,
+            empiricallyValidated: false,
+            weights: FSI_WEIGHTS
+        },
+        components: Object.fromEntries(
+            Object.entries(components).map(([key, value]) => [key, round(value * 100, 1)])
+        ),
+        diagnostics: {
+            totalAssets: round(totalAssets),
+            liquidFunds: round(liquidFunds),
+            illiquidFunds: round(illiquidFunds),
+            emergencyReserve: round(reserve),
+            freeLiquidFunds: round(freeLiquid),
+            actualIncome: round(income),
+            mandatoryExpenses: round(expenses),
+            debtPayments: round(payments),
+            mandatoryOutflow: round(outflow),
+            totalDebt: round(debt),
+            cashFlowCoverage: round(coverage),
+            liquidityMonths: round(liquidityMonths),
+            reserveMonths: round(reserveMonths),
+            debtServiceRatio: round(dsr, 3),
+            debtToIncome: round(dti),
+            netWorth: round(netWorth),
+            firstMonthCreditInterest: round(credit.firstMonthInterest),
+            creditProducts: credit.products,
+            nonAmortizingCreditProducts: credit.nonAmortizingProducts,
+            gates
+        },
+        dataStatus: hasData ? "available" : "insufficient"
+    };
+}
+
+export { calculateFinancialStabilityIndex };

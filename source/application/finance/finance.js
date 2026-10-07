@@ -297,36 +297,54 @@ function calculateCreditProductAnalytics(entry) {
 }
 
 function getFinancialStabilityIndex() {
-    const memory = financeMemory;
-    const financialBurden = memory
-        ? memory.listFinancialBurden()
-        : [];
-    const assetEntries = memory
-        ? memory.listAssets()
-        : [];
+    const financialBurden = financeMemory.listFinancialBurden();
+    const assetEntries = financeMemory.listAssets();
+    const actualEarnings = financeMemory.listActualEarnings();
+    const mandatoryExpenses = financeMemory.listMandatoryExpenses();
+    const financialCushion = financeMemory.listFinancialCushion();
 
-    const liquidAssets = assetEntries.filter(
-        (entry) => entry?.liquidity !== "illiquid"
-    );
+    const liquidAssets = assetEntries.filter((entry) => entry?.liquidity !== "illiquid");
+    const illiquidAssets = assetEntries.filter((entry) => entry?.liquidity === "illiquid");
 
-    const illiquidAssets = assetEntries.filter(
-        (entry) => entry?.liquidity === "illiquid"
+    const history = (collection, resolver) => {
+        const first = financeMemory.getFirstCollectionSnapshot(collection);
+        const latest = financeMemory.getLatestCollectionSnapshot(collection);
+        if (!first || !latest) return [];
+        return financeMemory
+            .getCollectionSnapshotsBetween(collection, first.occurredAt, latest.occurredAt)
+            .map(resolver);
+    };
+
+    const incomeHistory = history("actual-earnings", (snapshot) => Number(snapshot.total) || 0);
+    const debtHistory = history("financial-burden", (snapshot) =>
+        Array.isArray(snapshot.entries)
+            ? snapshot.entries.reduce((total, entry) => total + Number(entry?.debt || 0), 0)
+            : Number(snapshot.total) || 0
     );
+    const liquidityHistory = history("assets", (snapshot) =>
+        Array.isArray(snapshot.entries)
+            ? snapshot.entries.reduce(
+                (total, entry) => entry?.liquidity === "illiquid"
+                    ? total
+                    : total + Number(entry?.amount || 0),
+                0
+            )
+            : 0
+    );
+    const reserveHistory = history("financial-cushion", (snapshot) => Number(snapshot.total) || 0);
 
     return calculateFinancialStabilityIndex({
         assets: assetEntries,
         liquidAssets,
         illiquidAssets,
-        actualEarnings: memory
-            ? memory.listActualEarnings()
-            : [],
+        actualEarnings,
         financialBurden,
-        mandatoryExpenses: memory
-            ? memory.listMandatoryExpenses()
-            : [],
-        financialCushion: memory
-            ? memory.listFinancialCushion()
-            : []
+        mandatoryExpenses,
+        financialCushion,
+        incomeHistory,
+        debtHistory,
+        liquidityHistory,
+        reserveHistory
     });
 }
 

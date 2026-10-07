@@ -1,4 +1,4 @@
-/* statistics.css — Version 4.5 */
+/* statistics.css — Version 4.6 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -245,7 +245,7 @@
     text-align:right;
 }
 
-/* FSI 2.1 — primary score with restrained diagnostic detail. */
+/* FSI 3.0 — primary score with restrained diagnostic detail. */
 
 .financial-stability-index-panel {
     display:grid;

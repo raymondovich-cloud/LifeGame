@@ -1,4 +1,4 @@
-<!-- docs/project-state.md — Version 1.5 -->
+<!-- docs/project-state.md — Version 1.6 -->
 
 # LifeGame — текущее состояние проекта
 
@@ -102,7 +102,7 @@ Finance DATA содержит шесть блоков:
 3. Financial burden / Финансовая нагрузка;
 4. Mandatory expenses / Обязательные траты;
 5. Financial cushion / Финансовая подушка;
-6. FSI 2.1 / Financial Stability Index.
+6. FSI 3.0 / Financial Stability Index.
 
 Finance Main и Finance DATA являются разными пользовательскими поверхностями.
 

@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 4.31
+// source/presentation/finance/finance.js — Version 4.32
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -189,12 +189,12 @@ function createHealthBlock(financeApplication) {
     diagnosticsPanel.hidden = true;
 
     [
-        ["Финансовая сила", result.components.financialStrength, "/100"],
-        ["Стабильность", result.components.stabilityFactor, "/1"],
-        ["Выживаемость", result.diagnostics.survivalMonths, " мес."],
-        ["Покрытие расходов", result.diagnostics.incomeCoverage, "×"],
-        ["Долговая нагрузка", result.diagnostics.debtBurdenRatio, "×"],
-        ["Долговая экспозиция", result.diagnostics.debtExposureRatio, "×"]
+        ["Денежный поток", result.components.cashFlow, "/100"],
+        ["Ликвидность", result.components.liquidityResilience, "/100"],
+        ["Финансовая подушка", result.components.emergencyReserve, "/100"],
+        ["Устойчивость долга", result.components.debtSustainability, "/100"],
+        ["Чистая финансовая позиция", result.components.netFinancialPosition, "/100"],
+        ["Финансовый тренд", result.components.financialTrend, "/100"]
     ].forEach(([label, componentValue, suffixText]) => {
         const row = document.createElement("div");
         row.className = "finance-diagnostic-row";
@@ -860,7 +860,7 @@ function createFinancialStabilityIndexPanel(financeApplication) {
 
     const eyebrow = document.createElement("span");
     eyebrow.className = "financial-stability-index-eyebrow";
-    eyebrow.textContent = "FSI 2.1";
+    eyebrow.textContent = "FSI 3.0";
 
     const scoreRow = document.createElement("div");
     scoreRow.className = "financial-stability-index-score-row";
@@ -877,7 +877,7 @@ function createFinancialStabilityIndexPanel(financeApplication) {
 
     const description = document.createElement("p");
     description.className = "financial-stability-index-description";
-    description.textContent = "Сводная оценка финансовой устойчивости с учётом ликвидности, дохода, долга, резерва и финансового тренда.";
+    description.textContent = "Сводная оценка финансовой устойчивости по денежному потоку, ликвидности, резерву, долговой устойчивости, капиталу и финансовому тренду.";
 
     const components = document.createElement("div");
     components.className = "financial-stability-index-components";
