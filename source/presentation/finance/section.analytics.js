@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.10
+// section.analytics.js — Version 1.11
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -491,7 +491,7 @@ function renderSectionAnalyticsPage(
                     financeApplication,
                     onWriteAttempt,
                     interaction,
-                    "preview",
+                    "full",
                     groupKey
                 );
             });
