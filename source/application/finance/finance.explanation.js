@@ -1,258 +1,439 @@
-// source/application/finance/finance.explanation.js — Version 1.1
+// source/application/finance/finance.explanation.js — Version 2.0
+
+// Explanation engine for FSI.
+// The engine does not store user-specific phrases.
+// It derives explanation from component scores, weights, contributions,
+// diagnostics and observed risk signals.
 
 const FACTOR_META = Object.freeze({
     cashFlowSustainability: {
         title: "Денежный поток",
-        priority: 1
+        priority: 1,
+        weightLabel: "25%"
     },
     operationalLiquidity: {
         title: "Ликвидность",
-        priority: 2
+        priority: 2,
+        weightLabel: "15%"
     },
     emergencyResilience: {
-        title: "Финансовая подушка",
-        priority: 3
+        title: "Финансовый резерв",
+        priority: 3,
+        weightLabel: "15%"
     },
     debtSustainability: {
         title: "Долговая устойчивость",
-        priority: 4
+        priority: 4,
+        weightLabel: "20%"
     },
     solvencyPosition: {
         title: "Чистая финансовая позиция",
-        priority: 5
+        priority: 5,
+        weightLabel: "10%"
     },
     productiveCapital: {
         title: "Продуктивный капитал",
-        priority: 6
+        priority: 6,
+        weightLabel: "5%"
     },
     financialTrajectory: {
         title: "Финансовый тренд",
-        priority: 7
+        priority: 7,
+        weightLabel: "10%"
     }
 });
 
-const CATEGORY_COPY = Object.freeze({
-    "Критический": {
-        state: "Финансовая система сейчас уязвима и требует внимания к ключевым ограничениям."
-    },
-    "Уязвимый": {
-        state: "Финансовая система пока остаётся уязвимой к нагрузке и непредвиденным расходам."
-    },
-    "Нестабильный": {
-        state: "Финансовая система уже имеет основу для устойчивости, но несколько факторов пока заметно её ограничивают."
-    },
-    "Стабильный": {
-        state: "Финансовая система в целом устойчива, но отдельные показатели ещё можно усилить."
-    },
-    "Сильный": {
-        state: "Финансовая система находится в хорошем состоянии и имеет высокий запас устойчивости."
-    },
-    "Устойчивый": {
-        state: "Финансовая система находится в очень сильном состоянии; существенных ограничений по текущим данным не выявлено."
-    }
-});
+const LEVELS = Object.freeze([
+    { max: 19.9, key: "critical", label: "критический" },
+    { max: 39.9, key: "weak", label: "слабый" },
+    { max: 59.9, key: "moderate", label: "средний" },
+    { max: 74.9, key: "stable", label: "стабильный" },
+    { max: 89.9, key: "strong", label: "сильный" },
+    { max: 100, key: "excellent", label: "очень сильный" }
+]);
 
-function scoreLevel(score) {
-    const value = Number(score);
-    if (!Number.isFinite(value)) return "unknown";
-    if (value < 20) return "critical";
-    if (value < 40) return "weak";
-    if (value < 60) return "moderate";
-    if (value < 75) return "stable";
-    if (value < 90) return "strong";
-    return "excellent";
+function numeric(value, fallback = null) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
 }
 
-function factorExplanation(factor, result) {
+function formatNumber(value, digits = 0) {
+    const number = numeric(value);
+    if (number === null) return "нет данных";
+
+    return number.toLocaleString("ru-RU", {
+        maximumFractionDigits: digits,
+        minimumFractionDigits: digits
+    });
+}
+
+function formatMoney(value) {
+    const number = numeric(value);
+    return number === null ? "нет данных" : formatNumber(number) + " ₽";
+}
+
+function formatPercent(value, digits = 1) {
+    const number = numeric(value);
+    return number === null ? "нет данных" : formatNumber(number, digits) + "%";
+}
+
+function formatMonths(value) {
+    const number = numeric(value);
+    if (number === null) return "нет данных";
+    return number.toLocaleString("ru-RU", {
+        maximumFractionDigits: 1,
+        minimumFractionDigits: 0
+    });
+}
+
+function levelFor(score) {
+    const value = numeric(score, 0);
+    return LEVELS.find((level) => value <= level.max) || LEVELS[LEVELS.length - 1];
+}
+
+function scoreMeaning(score) {
+    const level = levelFor(score);
+
+    return {
+        key: level.key,
+        label: level.label,
+        text: level.key === "critical"
+            ? "сильно ограничивает индекс"
+            : level.key === "weak"
+                ? "заметно ограничивает индекс"
+                : level.key === "moderate"
+                    ? "ограничивает индекс умеренно"
+                    : level.key === "stable"
+                        ? "поддерживает индекс на стабильном уровне"
+                        : "существенно поддерживает индекс"
+    };
+}
+
+function componentContribution(score, weight) {
+    const safeScore = numeric(score, 0);
+    const safeWeight = numeric(weight, 0);
+
+    return safeScore * safeWeight;
+}
+
+function buildFacts(key, result) {
     const diagnostics = result?.diagnostics || {};
-    const key = factor?.key;
 
     if (key === "cashFlowSustainability") {
-        const income = Number(diagnostics.actualIncome || 0);
-        const outflow = Number(diagnostics.mandatoryOutflow || 0);
+        const income = numeric(diagnostics.actualIncome, 0);
+        const outflow = numeric(diagnostics.mandatoryOutflow, 0);
 
-        if (outflow > 0 && income < outflow) {
-            return "Текущего дохода недостаточно для покрытия обязательных расходов и платежей.";
-        }
-
-        if (outflow > 0 && income >= outflow) {
-            return "Доход покрывает обязательный отток, поэтому текущий денежный поток поддерживает устойчивость системы.";
-        }
-
-        return "По текущим данным обязательный финансовый отток не сформирован, поэтому денежный поток имеет ограниченную диагностическую значимость.";
+        return {
+            income,
+            outflow,
+            coverage: numeric(diagnostics.cashFlowCoverage),
+            sentence:
+                outflow > 0
+                    ? "Доход " + formatMoney(income) +
+                      " при обязательном оттоке " + formatMoney(outflow) + "."
+                    : "Обязательный финансовый отток сейчас не сформирован."
+        };
     }
 
     if (key === "operationalLiquidity") {
-        const months = Number(diagnostics.operationalLiquidityMonths);
+        const liquid = numeric(diagnostics.operationalLiquidFunds, 0);
+        const months = numeric(diagnostics.operationalLiquidityMonths);
 
-        if (Number.isFinite(months) && months < 1) {
-            return "Ликвидных средств недостаточно даже для покрытия одного месяца обязательных расходов.";
-        }
-
-        if (Number.isFinite(months) && months < 3) {
-            return "Ликвидных средств хватит менее чем на три месяца обязательных расходов.";
-        }
-
-        if (Number.isFinite(months)) {
-            return "Ликвидных средств достаточно для покрытия примерно " + months.toFixed(1) + " месяцев обязательных расходов.";
-        }
-
-        return "По текущим данным объём ликвидных средств невозможно точно сопоставить с обязательными расходами.";
+        return {
+            liquid,
+            months,
+            sentence: Number.isFinite(months)
+                ? "Ликвидные средства " + formatMoney(liquid) +
+                  " покрывают около " + formatMonths(months) +
+                  " мес. обязательного оттока."
+                : "Ликвидные средства не удалось сопоставить с обязательным оттоком."
+        };
     }
 
     if (key === "emergencyResilience") {
-        const months = Number(diagnostics.reserveMonths);
+        const reserve = numeric(diagnostics.emergencyReserve, 0);
+        const months = numeric(diagnostics.reserveMonths);
 
-        if (Number.isFinite(months) && months < 1) {
-            return "Финансовой подушки недостаточно даже для покрытия одного месяца обязательных расходов.";
-        }
-
-        if (Number.isFinite(months) && months < 3) {
-            return "Финансовая подушка покрывает менее трёх месяцев обязательных расходов.";
-        }
-
-        if (Number.isFinite(months)) {
-            return "Финансовая подушка покрывает примерно " + months.toFixed(1) + " месяцев обязательных расходов.";
-        }
-
-        return "По текущим данным размер финансовой подушки невозможно точно сопоставить с обязательными расходами.";
+        return {
+            reserve,
+            months,
+            sentence: Number.isFinite(months)
+                ? "Финансовый резерв " + formatMoney(reserve) +
+                  " покрывает около " + formatMonths(months) +
+                  " мес. обязательного оттока."
+                : "Финансовый резерв не удалось сопоставить с обязательным оттоком."
+        };
     }
 
     if (key === "debtSustainability") {
-        const dsr = Number(diagnostics.debtServiceRatio);
-        const debtToIncome = Number(diagnostics.debtToIncome);
+        const debt = numeric(diagnostics.totalDebt, 0);
+        const payment = numeric(diagnostics.debtPayments, 0);
+        const dsr = numeric(diagnostics.debtServiceRatio);
+        const debtToIncome = numeric(diagnostics.debtToIncome);
 
-        if (diagnostics.nonAmortizingCreditProducts > 0) {
-            return "Часть кредитных обязательств не имеет устойчивого графика погашения.";
-        }
-
-        if (Number.isFinite(dsr) && dsr > 0.5) {
-            return "Долговые платежи занимают более половины текущего дохода.";
-        }
-
-        if (Number.isFinite(debtToIncome) && debtToIncome > 6) {
-            return "Объём долга существенно превышает месячный доход.";
-        }
-
-        return "Текущая долговая нагрузка не является главным ограничением финансовой системы.";
+        return {
+            debt,
+            payment,
+            dsr,
+            debtToIncome,
+            nonAmortizing: numeric(diagnostics.nonAmortizingCreditProducts, 0),
+            sentence:
+                "Общий долг " + formatMoney(debt) +
+                ", платежи " + formatMoney(payment) +
+                (dsr !== null ? ", доля платежей в доходе " + formatPercent(dsr * 100) + "." : ".")
+        };
     }
 
     if (key === "solvencyPosition") {
-        const netWorth = Number(diagnostics.netWorth);
+        const assets = numeric(diagnostics.totalAssets, 0);
+        const debt = numeric(diagnostics.totalDebt, 0);
+        const netWorth = numeric(diagnostics.netWorth);
 
-        if (Number.isFinite(netWorth) && netWorth < 0) {
-            return "Общая стоимость обязательств превышает стоимость активов.";
-        }
-
-        if (Number.isFinite(netWorth)) {
-            return "Стоимость активов превышает обязательства, поэтому чистая финансовая позиция поддерживает устойчивость системы.";
-        }
-
-        return "Недостаточно данных для точной оценки чистой финансовой позиции.";
+        return {
+            assets,
+            debt,
+            netWorth,
+            sentence:
+                "Активы " + formatMoney(assets) +
+                " против обязательств " + formatMoney(debt) +
+                (netWorth !== null ? "; чистая позиция " + formatMoney(netWorth) + "." : ".")
+        };
     }
 
     if (key === "productiveCapital") {
-        const principal = Number(diagnostics.productiveCapital || 0);
-        const yieldPercent = Number(diagnostics.projectedAnnualProductiveYield);
+        const principal = numeric(diagnostics.productiveCapital, 0);
+        const income = numeric(diagnostics.projectedAnnualProductiveIncome, 0);
+        const yieldRate = numeric(diagnostics.projectedAnnualProductiveYield);
 
-        if (principal <= 0) {
-            return "Активы пока не формируют наблюдаемый продуктивный капитал, поэтому этот фактор не добавляет существенного запаса к индексу.";
-        }
-
-        if (Number.isFinite(yieldPercent) && yieldPercent > 0) {
-            return "Продуктивный капитал составляет " + principal.toLocaleString("ru-RU") + " ₽ с расчётной доходностью около " + yieldPercent.toFixed(1) + "% годовых.";
-        }
-
-        return "Продуктивный капитал присутствует, но пока не формирует заметного дополнительного вклада в устойчивость системы.";
+        return {
+            principal,
+            income,
+            yieldRate,
+            sentence:
+                principal > 0
+                    ? "Продуктивный капитал " + formatMoney(principal) +
+                      (yieldRate !== null ? " при расчётной доходности " + formatPercent(yieldRate) + "." : ".")
+                    : "Продуктивный капитал пока не сформирован."
+        };
     }
 
-    const observations = Number(diagnostics.trajectory?.observations || 0);
+    const trajectory = diagnostics.trajectory || {};
+    const observations = numeric(trajectory.observations, 0);
 
-    if (observations < 3) {
-        return "Истории пока недостаточно, чтобы уверенно оценить финансовый тренд.";
+    return {
+        observations,
+        incomeSlope: numeric(trajectory.incomeSlope),
+        debtSlope: numeric(trajectory.debtSlope),
+        liquiditySlope: numeric(trajectory.liquiditySlope),
+        reserveSlope: numeric(trajectory.reserveSlope),
+        sentence:
+            observations > 0
+                ? "Для оценки тренда доступно " + formatNumber(observations) + " наблюдений."
+                : "История изменений пока отсутствует."
+    };
+}
+
+function buildFactorExplanation(key, score, result) {
+    const facts = buildFacts(key, result);
+    const meaning = scoreMeaning(score);
+
+    if (key === "cashFlowSustainability") {
+        if (facts.outflow > 0 && facts.income < facts.outflow) {
+            return facts.sentence + " Денежный поток не покрывает обязательный отток — фактор снижает индекс.";
+        }
+
+        if (facts.outflow > 0) {
+            return facts.sentence + " Денежный поток покрывает обязательный отток — фактор поддерживает индекс.";
+        }
+
+        return facts.sentence + " При отсутствии обязательного оттока этот фактор не оказывает сильного ограничивающего воздействия.";
     }
 
-    return "Динамика финансовой системы пока не показывает устойчивого улучшения.";
+    if (key === "operationalLiquidity") {
+        if (facts.months !== null && facts.months < 1) {
+            return facts.sentence + " Запаса ликвидности недостаточно для покрытия месяца обязательного оттока — фактор снижает индекс.";
+        }
+
+        if (facts.months !== null && facts.months < 3) {
+            return facts.sentence + " Небольшой запас ликвидности ограничивает устойчивость — фактор снижает индекс.";
+        }
+
+        return facts.sentence + " Ликвидность обеспечивает текущую устойчивость системы.";
+    }
+
+    if (key === "emergencyResilience") {
+        if (facts.months !== null && facts.months < 1) {
+            return facts.sentence + " Резерв не покрывает даже месяц обязательного оттока — фактор существенно снижает индекс.";
+        }
+
+        if (facts.months !== null && facts.months < 3) {
+            return facts.sentence + " Ограниченный резерв уменьшает способность системы выдерживать непредвиденную нагрузку.";
+        }
+
+        return facts.sentence + " Резерв создаёт дополнительную устойчивость системы.";
+    }
+
+    if (key === "debtSustainability") {
+        if (facts.nonAmortizing > 0) {
+            return facts.sentence + " Есть обязательства без устойчивого погашения — фактор существенно снижает индекс.";
+        }
+
+        if (facts.dsr !== null && facts.dsr > 0.5) {
+            return facts.sentence + " Высокая доля дохода уходит на долговые платежи — фактор снижает индекс.";
+        }
+
+        if (facts.debtToIncome !== null && facts.debtToIncome > 6) {
+            return facts.sentence + " Объём долга значительно превышает месячный доход — фактор ограничивает индекс.";
+        }
+
+        return facts.sentence + " Текущая долговая нагрузка не является сильным ограничением индекса.";
+    }
+
+    if (key === "solvencyPosition") {
+        if (facts.netWorth !== null && facts.netWorth < 0) {
+            return facts.sentence + " Обязательства превышают активы — фактор снижает индекс.";
+        }
+
+        return facts.sentence + " Активы покрывают обязательства — фактор поддерживает индекс.";
+    }
+
+    if (key === "productiveCapital") {
+        if (facts.principal <= 0) {
+            return facts.sentence + " Дополнительный вклад продуктивного капитала в индекс отсутствует.";
+        }
+
+        return facts.sentence + " Этот фактор оценивает способность капитала формировать дополнительный финансовый результат.";
+    }
+
+    if (facts.observations < 3) {
+        return facts.sentence + " Истории недостаточно для надёжной оценки динамики.";
+    }
+
+    const direction = [
+        facts.incomeSlope,
+        facts.liquiditySlope,
+        facts.reserveSlope
+    ].filter((value) => value !== null);
+
+    const debtSlope = facts.debtSlope;
+
+    if (direction.length && direction.every((value) => value > 0) && (debtSlope === null || debtSlope <= 0)) {
+        return facts.sentence + " Доступная динамика указывает на улучшение финансовой системы.";
+    }
+
+    if (direction.some((value) => value < 0) || (debtSlope !== null && debtSlope > 0)) {
+        return facts.sentence + " Доступная динамика содержит признаки ухудшения отдельных финансовых показателей.";
+    }
+
+    return facts.sentence + " Доступная динамика пока не показывает выраженного направления.";
+}
+
+function buildFactorModel(result) {
+    const diagnosis = result?.diagnosis || {};
+    const components = result?.components || {};
+    const weights = result?.methodology?.weights || {};
+
+    return Object.entries(FACTOR_META)
+        .map(([key, meta]) => {
+            const score = numeric(components[key]);
+            const weight = numeric(weights[key], 0);
+            const contribution = componentContribution(score, weight);
+            const maximumContribution = 100 * weight;
+            const deficit = Math.max(0, maximumContribution - contribution);
+            const meaning = scoreMeaning(score);
+            const explanation = buildFactorExplanation(key, score, result);
+
+            return {
+                key,
+                title: meta.title,
+                score,
+                level: meaning.key,
+                levelLabel: meaning.label,
+                weight,
+                weightLabel: meta.weightLabel,
+                contribution: Number(contribution.toFixed(2)),
+                maximumContribution: Number(maximumContribution.toFixed(2)),
+                deficit: Number(deficit.toFixed(2)),
+                explanation,
+                priority: meta.priority,
+                comparisonDelta:
+                    diagnosis?.primaryPositiveFactor?.key === key
+                        ? diagnosis.primaryPositiveFactor.delta
+                        : diagnosis?.primaryNegativeFactor?.key === key
+                            ? diagnosis.primaryNegativeFactor.delta
+                            : null
+            };
+        })
+        .filter((factor) => factor.score !== null)
+        .sort((a, b) => b.deficit - a.deficit || a.priority - b.priority);
+}
+
+function buildCompositionText(factors) {
+    const parts = factors
+        .slice()
+        .sort((a, b) => a.priority - b.priority)
+        .map((factor) => factor.title + " " + formatNumber(factor.weight * 100, 0) + "%");
+
+    return "Индекс состоит из семи факторов: " + parts.join(", ") + ".";
+}
+
+function buildImpactText(factors) {
+    const limiting = factors[0];
+    const strongest = factors.slice().sort((a, b) => b.score - a.score)[0];
+
+    if (!limiting) return "Недостаточно данных, чтобы определить влияние факторов.";
+
+    if (strongest && strongest.key !== limiting.key && strongest.score >= 75) {
+        return "Наибольшее ограничение сейчас создаёт " +
+            limiting.title.toLowerCase() + " (" + formatNumber(limiting.score, 1) +
+            "/100), а сильнее всего систему поддерживает " +
+            strongest.title.toLowerCase() + " (" + formatNumber(strongest.score, 1) + "/100).";
+    }
+
+    return "Наибольшее влияние на недобор до максимального индекса сейчас оказывает " +
+        limiting.title.toLowerCase() + " (" + formatNumber(limiting.score, 1) + "/100).";
 }
 
 function buildSummary(result, factors) {
     if (!factors.length) {
-        return "Недостаточно данных для персональной расшифровки финансового состояния.";
+        return "Недостаточно данных для построения персонального объяснения индекса.";
     }
 
     const category = result?.category?.label || "—";
-    const state = CATEGORY_COPY[category]?.state || "Финансовое состояние рассчитано на основе доступных данных.";
+    const value = numeric(result?.value, 0);
 
-    const strongest = [...factors].sort((a, b) => b.score - a.score)[0];
-    const priority = factors[0];
-
-    if (!priority) return state;
-
-    if (category === "Устойчивый" && priority.score >= 75) {
-        return state + " Все ключевые факторы находятся на высоком уровне.";
-    }
-
-    if (priority.score >= 75) {
-        return state + " Главная зона для дальнейшего усиления — " +
-            priority.title.toLowerCase() + ".";
-    }
-
-    if (strongest && strongest.key !== priority.key && strongest.score >= 75) {
-        return state + " Сильная сторона системы — " +
-            strongest.title.toLowerCase() + ", а главная зона для усиления — " +
-            priority.title.toLowerCase() + ".";
-    }
-
-    return state + " Главная зона для усиления — " +
-        priority.title.toLowerCase() + ": " + priority.explanation;
+    return "Ваш индекс — " + formatNumber(value, 1) + "/100, уровень «" +
+        category.toLowerCase() + "». " + buildImpactText(factors);
 }
 
 function createFinanceExplanation(result) {
     if (!result) return null;
 
-    const diagnosis = result.diagnosis || {};
-    const factors = Object.entries(result.components || {})
-        .filter(([key]) => Object.prototype.hasOwnProperty.call(FACTOR_META, key))
-        .map(([key, value]) => {
-            const score = Number(value);
-            const meta = FACTOR_META[key];
-            const diagnosisFactor = [diagnosis.limitingFactor, diagnosis.weakestFactor]
-                .find((item) => item?.key === key);
-
-            return {
-                key,
-                title: meta.title,
-                score: Number.isFinite(score) ? score : null,
-                level: scoreLevel(score),
-                weight: Number(result.methodology?.weights?.[key]) || 0,
-                weightedDeficit: Number(
-                    diagnosisFactor?.weightedDeficit ??
-                    ((100 - score) * (Number(result.methodology?.weights?.[key]) || 0))
-                ),
-                explanation: factorExplanation({ key, score }, result),
-                priority: meta.priority
-            };
-        })
-        .sort((a, b) => b.weightedDeficit - a.weightedDeficit || a.priority - b.priority);
-
-    const priority = factors[0] || null;
+    const factors = buildFactorModel(result);
 
     return Object.freeze({
-        score: Number(result.value || 0),
+        score: numeric(result.value, 0),
+        scale: numeric(result.scale, 100),
         category: result.category?.label || "—",
         summary: buildSummary(result, factors),
+        composition: buildCompositionText(factors),
+        impact: buildImpactText(factors),
         factors: Object.freeze(factors),
-        priority: priority ? Object.freeze({
-            key: priority.key,
-            title: priority.title,
-            score: priority.score,
-            explanation: priority.explanation
-        }) : null,
+        priority: factors[0]
+            ? Object.freeze({
+                key: factors[0].key,
+                title: factors[0].title,
+                score: factors[0].score,
+                contribution: factors[0].contribution,
+                deficit: factors[0].deficit,
+                explanation: factors[0].explanation
+            })
+            : null,
         comparison: Object.freeze({
-            available: Boolean(diagnosis.hasComparison),
-            change: Number(diagnosis.change || 0),
-            changePercent: diagnosis.changePercent === null ? null : Number(diagnosis.changePercent),
-            trend: diagnosis.trend || "stable"
+            available: Boolean(result?.diagnosis?.hasComparison),
+            change: numeric(result?.diagnosis?.change, 0),
+            changePercent: numeric(result?.diagnosis?.changePercent),
+            trend: result?.diagnosis?.trend || "stable"
         })
     });
 }
