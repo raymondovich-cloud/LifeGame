@@ -1,4 +1,4 @@
-/* statistics.css — Version 4.0 */
+/* statistics.css — Version 4.1 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -433,7 +433,9 @@
 }
 
 .assets-analytics-liquidity-group--illiquid {
+    padding-top:var(--assets-block-spacing, var(--space-2));
     padding-bottom:var(--assets-block-spacing, var(--space-2));
+    border-top:var(--border-subtle);
 }
 
 .assets-analytics-liquidity-row {
