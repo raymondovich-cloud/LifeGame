@@ -1,4 +1,4 @@
-/* statistics.css — Version 3.9 */
+/* statistics.css — Version 4.0 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -416,7 +416,20 @@
 
 .assets-analytics-liquidity-rows {
     display:grid;
-    gap:0;
+    gap:var(--assets-block-spacing, var(--space-2));
+}
+
+.assets-analytics-liquidity-group {
+    display:grid;
+    gap:var(--assets-block-spacing, var(--space-2));
+}
+
+.assets-analytics-liquidity-group--liquid {
+    padding-bottom:var(--assets-block-spacing, var(--space-2));
+}
+
+.assets-analytics-liquidity-group--illiquid {
+    padding-bottom:var(--assets-block-spacing, var(--space-2));
 }
 
 .assets-analytics-liquidity-row {
@@ -586,12 +599,8 @@
 .assets-analytics-distribution{
     padding-top:var(--space-5);
 }
-.assets-analytics-distribution-bars{
-    display:grid;
-    gap:var(--assets-block-spacing, var(--space-2));
-}
-.assets-analytics-distribution .assets-analytics-liquidity-bar{
-    height:.5rem;
+.assets-analytics-distribution .statistics-meta{
+    display:block;
 }
 .assets-analytics-composition{
     padding-bottom:var(--space-2);
