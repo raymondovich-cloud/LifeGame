@@ -1,4 +1,4 @@
-<!-- docs/agent.md — Version 2.5 -->
+<!-- docs/agent.md — Version 2.6 -->
 
 # LifeGame — Agent Rules
 
@@ -216,7 +216,7 @@ Change-файлы не участвуют в обычном версиониро
 
 Официальная терминология финансового индекса проекта:
 
-**FSI 3.0 — Financial Stability Index.**
+**FSI 3.1 — Financial Stability Index.**
 
 Обозначение `IFS 3.0` больше не используется как официальное название.
 
@@ -229,7 +229,7 @@ Finance DATA включает:
 3. Financial burden / Финансовая нагрузка;
 4. Mandatory expenses / Обязательные траты;
 5. Financial cushion / Финансовая подушка;
-6. FSI 3.0 / Financial Stability Index.
+6. FSI 3.1 / Financial Stability Index.
 
 Finance Main и Finance DATA документируются раздельно.
 
