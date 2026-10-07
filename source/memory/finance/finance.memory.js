@@ -1,11 +1,10 @@
-// finance.memory.js — Version 2.3
+// finance.memory.js — Version 3.0
 
 const COLLECTIONS = Object.freeze([
     "assets",
     "actual-earnings",
     "financial-burden",
-    "mandatory-expenses",
-    "financial-cushion"
+    "mandatory-expenses"
 ]);
 
 function createFinanceMemory(userContext) {
@@ -346,15 +345,6 @@ function createFinanceMemory(userContext) {
             updateEntry("mandatory-expenses", id, entry),
         deleteMandatoryExpense: (id) =>
             deleteEntry("mandatory-expenses", id),
-
-        listFinancialCushion: () =>
-            listEntries("financial-cushion"),
-        saveFinancialCushion: (entry) =>
-            saveEntry("financial-cushion", entry),
-        updateFinancialCushion: (id, entry) =>
-            updateEntry("financial-cushion", id, entry),
-        deleteFinancialCushion: (id) =>
-            deleteEntry("financial-cushion", id),
 
         saveAssetsSnapshot,
         getAssetsSnapshotAtOrBefore,
