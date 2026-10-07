@@ -17,7 +17,8 @@ const COLLECTIONS = Object.freeze({
     },
     actualEarnings: { table: "finance_actual_earnings", fields: ["label", "amount"] },
     financialBurden: { table: "finance_burdens", fields: ["label", "debt", "payment", "is_credit_product", "interest_rate"] },
-    mandatoryExpenses: { table: "finance_mandatory_expenses", fields: ["label", "amount"] }});
+    mandatoryExpenses: { table: "finance_mandatory_expenses", fields: ["label", "amount"] }
+});
 
 function createSupabaseFinanceMemory({ client, userContext }) {
     if (!client || !userContext?.userId) {
@@ -233,6 +234,11 @@ function createSupabaseFinanceMemory({ client, userContext }) {
             p_label: entry?.label ?? null,
             p_amount: entry?.amount ?? null,
             p_liquidity: entry?.liquidity ?? null,
+            p_asset_type: entry?.assetType ?? "cash",
+            p_is_reserve: Boolean(entry?.isReserve),
+            p_income_enabled: Boolean(entry?.incomeEnabled),
+            p_annual_yield_rate: entry?.annualYieldRate ?? null,
+            p_compounding_frequency: entry?.compoundingFrequency ?? "none",
             p_occurred_at: new Date(occurredAt).toISOString()
         });
 
