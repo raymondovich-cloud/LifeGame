@@ -391,9 +391,16 @@ function getFinancialStabilityIndex() {
     comparisonDate.setMonth(comparisonDate.getMonth() - 1);
     const comparisonTimestamp = comparisonDate.getTime();
 
-    const hasHistoricalBaseline =
-        Boolean(financeMemory.getFirstCollectionSnapshot("assets")) &&
-        Boolean(collectionSnapshot("assets", comparisonTimestamp));
+    const historicalCollections = [
+        "assets",
+        "actual-earnings",
+        "financial-burden",
+        "mandatory-expenses"
+    ];
+
+    const hasHistoricalBaseline = historicalCollections.some(
+        (collection) => Boolean(collectionSnapshot(collection, comparisonTimestamp))
+    );
 
     let previousResult = null;
 
