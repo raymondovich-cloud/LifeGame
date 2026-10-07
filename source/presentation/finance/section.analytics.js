@@ -1,10 +1,20 @@
-// section.analytics.js — Version 1.2
+// section.analytics.js — Version 1.3
 
 import { attachEntryEdit } from "./entry.edit.js";
 
 function formatAmount(amount) {
     if (amount === null || amount === undefined || !Number.isFinite(Number(amount))) return "—";
     return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(Number(amount));
+}
+
+function formatFinancialBurdenAmount(entry) {
+    const debt = "Долг " + formatAmount(entry.debt) + " ₽";
+    if (!entry.isCreditProduct) return debt;
+
+    const payment = "Платёж " + formatAmount(entry.payment) + " ₽";
+    const rate = Number(entry.interestRate);
+    const rateText = Number.isFinite(rate) ? " · " + formatAmount(rate) + "% годовых" : "";
+    return debt + " · " + payment + rateText;
 }
 
 function formatDate(timestamp) {
@@ -139,7 +149,7 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
 
     const amount = document.createElement("strong");
     amount.textContent = sectionId === "financial-burden"
-        ? "Долг " + formatAmount(entry.debt) + " ₽ · Платёж " + formatAmount(entry.payment) + " ₽"
+        ? formatFinancialBurdenAmount(entry)
         : formatAmount(entry.amount) + " ₽";
 
     const meta = document.createElement("div");
@@ -172,7 +182,7 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
         (updated) => {
             label.textContent = updated.label;
             amount.textContent = sectionId === "financial-burden"
-                ? "Долг " + formatAmount(updated.debt) + " ₽ · Платёж " + formatAmount(updated.payment) + " ₽"
+                ? formatFinancialBurdenAmount(updated)
                 : formatAmount(updated.amount) + " ₽";
             refresh();
         },
