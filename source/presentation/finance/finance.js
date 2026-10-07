@@ -18,7 +18,6 @@ const FINANCE_DATA_SUBBLOCKS = Object.freeze([
     { id: "actual-earnings", number: "02", title: "Фактически заработанно", description: "Реально полученный доход", info: "Доход, который вы фактически получили за выбранный период." },
     { id: "financial-burden", number: "03", title: "Финансовая нагрузка", description: "Обязательства, влияющие на бюджет", info: "Обязательства и регулярные финансовые нагрузки, которые уменьшают доступные средства и влияют на устойчивость." },
     { id: "mandatory-expenses", number: "04", title: "Обязательные траты", description: "Расходы, которые нельзя пропустить", info: "Расходы, которые необходимо оплачивать регулярно независимо от других трат." },
-    { id: "financial-cushion", number: "05", title: "Финансовая подушка", description: "Резерв на непредвиденные ситуации", info: "Резерв средств, предназначенный для покрытия непредвиденных расходов и периодов снижения дохода." },
 ]);
 
 const FINANCE_SECTIONS = Object.freeze([
@@ -445,6 +444,15 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
 
     let assetLiquidity = "liquid";
     let liquidityControl = null;
+    let assetType = "cash";
+    let isReserve = false;
+    let incomeEnabled = false;
+    let annualYieldRateInput = null;
+    let compoundingFrequency = "none";
+    let assetTypeControl = null;
+    let reserveControl = null;
+    let incomeControl = null;
+    let compoundingSelect = null;
 
     if (section.id === "assets") {
         liquidityControl = document.createElement("div");
@@ -476,6 +484,113 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
 
         liquidityControl.append(label, state, toggle);
         update();
+    }
+
+    if (section.id === "assets") {
+        assetTypeControl = document.createElement("select");
+        assetTypeControl.className = "input-control";
+        assetTypeControl.name = "assetType";
+        [
+            ["cash", "Денежные средства"],
+            ["bank-account", "Банковский счёт"],
+            ["real-estate", "Недвижимость"],
+            ["vehicle", "Транспорт"],
+            ["bank-deposit", "Банковский вклад"],
+            ["bond", "Облигации"],
+            ["investment", "Инвестиции"],
+            ["other", "Другое"]
+        ].forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            assetTypeControl.appendChild(option);
+        });
+
+        reserveControl = document.createElement("div");
+        reserveControl.className = "liquidity-switch-field";
+        const reserveLabel = document.createElement("span");
+        reserveLabel.className = "liquidity-switch-label";
+        reserveLabel.textContent = "Финансовый резерв";
+        const reserveState = document.createElement("span");
+        reserveState.className = "liquidity-switch-state";
+        const reserveToggle = document.createElement("button");
+        reserveToggle.type = "button";
+        reserveToggle.className = "liquidity-switch";
+        reserveToggle.setAttribute("role", "switch");
+        const updateReserve = () => {
+            reserveToggle.setAttribute("aria-checked", String(isReserve));
+            reserveToggle.classList.toggle("is-on", isReserve);
+            reserveState.textContent = isReserve ? "Да" : "Нет";
+        };
+        reserveToggle.addEventListener("click", () => {
+            isReserve = !isReserve;
+            updateReserve();
+        });
+        reserveControl.append(reserveLabel, reserveState, reserveToggle);
+        updateReserve();
+
+        incomeControl = document.createElement("div");
+        incomeControl.className = "liquidity-switch-field";
+        const incomeLabel = document.createElement("span");
+        incomeLabel.className = "liquidity-switch-label";
+        incomeLabel.textContent = "Доходный актив";
+        const incomeState = document.createElement("span");
+        incomeState.className = "liquidity-switch-state";
+        const incomeToggle = document.createElement("button");
+        incomeToggle.type = "button";
+        incomeToggle.className = "liquidity-switch";
+        incomeToggle.setAttribute("role", "switch");
+
+        annualYieldRateInput = document.createElement("input");
+        annualYieldRateInput.className = "input-control";
+        annualYieldRateInput.name = "annualYieldRate";
+        annualYieldRateInput.type = "number";
+        annualYieldRateInput.inputMode = "decimal";
+        annualYieldRateInput.min = "0";
+        annualYieldRateInput.step = "0.01";
+        annualYieldRateInput.placeholder = "Доходность, % годовых";
+        annualYieldRateInput.hidden = true;
+
+        compoundingSelect = document.createElement("select");
+        compoundingSelect.className = "input-control";
+        compoundingSelect.name = "compoundingFrequency";
+        [
+            ["none", "Без капитализации"],
+            ["monthly", "Капитализация ежемесячно"],
+            ["quarterly", "Капитализация ежеквартально"],
+            ["annual", "Капитализация ежегодно"]
+        ].forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            compoundingSelect.appendChild(option);
+        });
+        compoundingSelect.hidden = true;
+
+        const updateIncome = () => {
+            incomeToggle.setAttribute("aria-checked", String(incomeEnabled));
+            incomeToggle.classList.toggle("is-on", incomeEnabled);
+            incomeState.textContent = incomeEnabled ? "Включён" : "Выключен";
+            annualYieldRateInput.hidden = !incomeEnabled;
+            compoundingSelect.hidden = !incomeEnabled;
+            annualYieldRateInput.required = incomeEnabled;
+        };
+        incomeToggle.addEventListener("click", () => {
+            incomeEnabled = !incomeEnabled;
+            updateIncome();
+        });
+        incomeControl.append(incomeLabel, incomeState, incomeToggle);
+        updateIncome();
+
+        assetTypeControl.addEventListener("change", () => {
+            if (assetTypeControl.value === "bank-deposit" || assetTypeControl.value === "bond") {
+                incomeEnabled = true;
+                updateIncome();
+            }
+        });
+        assetTypeControl.addEventListener("change", () => {
+            assetType = assetTypeControl.value;
+        });
     }
 
     let isCreditProduct = false;
@@ -560,7 +675,12 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
     error.hidden = true;
 
     form.append(labelInput, amountInput);
+    if (assetTypeControl) form.appendChild(assetTypeControl);
     if (liquidityControl) form.appendChild(liquidityControl);
+    if (reserveControl) form.appendChild(reserveControl);
+    if (incomeControl) form.appendChild(incomeControl);
+    if (annualYieldRateInput) form.appendChild(annualYieldRateInput);
+    if (incomeControl && annualYieldRateInput) form.appendChild(compoundingSelect);
     if (creditProductControl) form.appendChild(creditProductControl);
     if (paymentInput) form.appendChild(paymentInput);
     if (interestRateInput) form.appendChild(interestRateInput);
@@ -585,7 +705,14 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
                         section.id,
                         labelInput.value,
                         amountInput.value,
-                        assetLiquidity
+                        assetLiquidity,
+                        {
+                            assetType,
+                            isReserve,
+                            incomeEnabled,
+                            annualYieldRate: incomeEnabled ? annualYieldRateInput.value : null,
+                            compoundingFrequency: incomeEnabled ? compoundingSelect.value : "none"
+                        }
                     );
                 }
 
