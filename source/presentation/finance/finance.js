@@ -362,7 +362,7 @@ function createEntryRow(root, section, entry, onWriteAttempt, financeApplication
     const amount = document.createElement("span");
     amount.className = "finance-entry-amount";
     amount.textContent = section.id === "financial-burden"
-        ? "Долг " + formatAmount(entry.debt) + " · Платёж " + formatAmount(entry.payment)
+        ? "Долг " + formatAmount(entry.debt) + (entry.isCreditProduct ? " · Платёж " + formatAmount(entry.payment) + " · " + formatAmount(entry.interestRate) + "% годовых" : "")
         : formatAmount(entry.amount) + " ₽";
 
     const pin = document.createElement("span");
@@ -391,7 +391,7 @@ function createEntryRow(root, section, entry, onWriteAttempt, financeApplication
 
             if (updatedAmount) {
                 updatedAmount.textContent = section.id === "financial-burden"
-                    ? "Долг " + formatAmount(updated.debt) + " · Платёж " + formatAmount(updated.payment)
+                    ? "Долг " + formatAmount(updated.debt) + (updated.isCreditProduct ? " · Платёж " + formatAmount(updated.payment) + " · " + formatAmount(updated.interestRate) + "% годовых" : "")
                     : formatAmount(updated.amount) + " ₽";
             }
 
