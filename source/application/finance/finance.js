@@ -1,4 +1,4 @@
-// finance.js — Version 5.7
+// finance.js — Version 5.8
 
 import {
     createActualEarning,
