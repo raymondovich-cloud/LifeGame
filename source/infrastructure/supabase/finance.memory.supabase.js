@@ -185,6 +185,8 @@ function createSupabaseFinanceMemory({ client, userContext }) {
 
         if (operation === "update") {
             const updated = normalizeRow(data.asset);
+            const existing = cache.assets.find((item) => item.id === entryId);
+            if (existing?.creatorName) updated.creatorName = existing.creatorName;
             const index = cache.assets.findIndex((item) => item.id === entryId);
 
             if (index !== -1) cache.assets[index] = updated;
