@@ -1,4 +1,4 @@
-// entry.edit.js — Version 1.8
+// entry.edit.js — Version 1.9
 
 function triggerHaptic() {
     const telegramWebApp = typeof window !== "undefined"
@@ -23,7 +23,7 @@ function triggerHaptic() {
     }
 }
 
-function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
+function createRowInteractionMenu(item, onEdit, onInfo, onPin, onDelete, onPinLimit) {
     const backdrop = document.createElement("div");
     backdrop.className = "row-interaction-backdrop";
     backdrop.setAttribute("role", "presentation");
@@ -39,6 +39,12 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
     editButton.textContent = "Редактировать";
     editButton.setAttribute("role", "menuitem");
 
+    const infoButton = document.createElement("button");
+    infoButton.type = "button";
+    infoButton.className = "row-interaction-menu__item";
+    infoButton.textContent = "Информация";
+    infoButton.setAttribute("role", "menuitem");
+
     const pinButton = document.createElement("button");
     pinButton.type = "button";
     pinButton.className = "row-interaction-menu__item";
@@ -51,7 +57,7 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
     deleteButton.textContent = "Удалить";
     deleteButton.setAttribute("role", "menuitem");
 
-    menu.append(editButton, pinButton, deleteButton);
+    menu.append(editButton, infoButton, pinButton, deleteButton);
     backdrop.appendChild(menu);
     document.body.appendChild(backdrop);
 
@@ -74,6 +80,13 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
         event.stopPropagation();
         cleanup();
         onEdit();
+    });
+
+    infoButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        cleanup();
+        onInfo?.();
     });
 
     pinButton.addEventListener("click", (event) => {
@@ -103,6 +116,82 @@ function createRowInteractionMenu(item, onEdit, onPin, onDelete, onPinLimit) {
     });
 
     requestAnimationFrame(() => backdrop.classList.add("is-visible"));
+}
+
+function formatEntryDate(timestamp) {
+    const date = new Date(Number(timestamp));
+    if (!Number.isFinite(date.getTime())) return "Неизвестно";
+
+    return new Intl.DateTimeFormat("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    }).format(date);
+}
+
+function openEntryInfoModal(entry) {
+    const modal = document.createElement("div");
+    modal.className = "assets-edit-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "entry-info-title");
+
+    const dialog = document.createElement("div");
+    dialog.className = "assets-edit-modal__dialog row-info-modal";
+
+    const title = document.createElement("h2");
+    title.id = "entry-info-title";
+    title.className = "assets-edit-modal__title";
+    title.textContent = "Информация";
+
+    const content = document.createElement("div");
+    content.className = "row-info-modal__content";
+
+    const createField = (label, value) => {
+        const field = document.createElement("div");
+        field.className = "row-info-modal__field";
+
+        const fieldLabel = document.createElement("span");
+        fieldLabel.className = "row-info-modal__label";
+        fieldLabel.textContent = label;
+
+        const fieldValue = document.createElement("span");
+        fieldValue.className = "row-info-modal__value";
+        fieldValue.textContent = value;
+
+        field.append(fieldLabel, fieldValue);
+        return field;
+    };
+
+    content.append(
+        createField("Добавлено", formatEntryDate(entry.createdAt)),
+        createField("Пользователь", entry.creatorName || "Пользователь")
+    );
+
+    const actions = document.createElement("div");
+    actions.className = "assets-edit-modal__actions";
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "button-control";
+    closeButton.textContent = "Закрыть";
+    actions.appendChild(closeButton);
+
+    dialog.append(title, content, actions);
+    modal.appendChild(dialog);
+    document.body.appendChild(modal);
+
+    const close = () => {
+        modal.classList.remove("is-visible");
+        window.setTimeout(() => modal.remove(), 180);
+    };
+
+    closeButton.addEventListener("click", close);
+    modal.addEventListener("click", (event) => {
+        if (event.target === modal) close();
+    });
+
+    requestAnimationFrame(() => modal.classList.add("is-visible"));
 }
 
 function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
@@ -331,6 +420,10 @@ function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, finance
         typeof onWriteAttempt === "function" ? onWriteAttempt(open) : open();
     };
 
+    const showInfo = () => {
+        openEntryInfoModal(entry);
+    };
+
     const cancelPress = () => {
         clearPressTimer();
         item.classList.remove("is-long-pressing");
@@ -352,7 +445,7 @@ function attachEntryEdit(item, subblockId, entry, onWriteAttempt = null, finance
             item.classList.remove("is-long-pressing");
             triggerHaptic();
             item.classList.add("is-editing-target");
-            createRowInteractionMenu(item, showEditor, onPin, onDelete, onPinLimit);
+            createRowInteractionMenu(item, showEditor, showInfo, onPin, onDelete, onPinLimit);
         }, 500);
     });
 
