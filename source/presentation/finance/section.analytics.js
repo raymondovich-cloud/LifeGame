@@ -1,4 +1,4 @@
-// section.analytics.js — Version 1.6
+// section.analytics.js — Version 1.7
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -15,6 +15,17 @@ function formatFinancialBurdenAmount(entry) {
     const rate = Number(entry.interestRate);
     const rateText = Number.isFinite(rate) ? " · " + formatAmount(rate) + "% годовых" : "";
     return debt + " · " + payment + rateText;
+}
+
+function formatCreditAnalytics(entry, financeApplication) {
+    if (!entry?.isCreditProduct || typeof financeApplication?.calculateCreditProductAnalytics !== "function") return "";
+
+    const result = financeApplication.calculateCreditProductAnalytics(entry);
+    if (!result.payoffPossible) return "Платёж не покрывает проценты";
+
+    const months = result.monthsToPayoff;
+    const interest = formatAmount(result.totalInterest) + " ₽";
+    return "Закрытие ~" + months + " мес. · Переплата " + interest;
 }
 
 function formatDate(timestamp) {
@@ -144,6 +155,15 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
     const label = document.createElement("span");
     label.textContent = entry.label;
 
+    const creditAnalytics = document.createElement("span");
+    creditAnalytics.className = "assets-analytics-composition-type";
+    creditAnalytics.textContent = sectionId === "financial-burden"
+        ? formatCreditAnalytics(entry, financeApplication)
+        : "";
+
+    if (creditAnalytics.textContent) main.append(label, creditAnalytics);
+    else main.appendChild(label);
+
     const value = document.createElement("div");
     value.className = "assets-analytics-composition-value";
 
@@ -184,6 +204,9 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
             amount.textContent = sectionId === "financial-burden"
                 ? formatFinancialBurdenAmount(updated)
                 : formatAmount(updated.amount) + " ₽";
+            creditAnalytics.textContent = sectionId === "financial-burden"
+                ? formatCreditAnalytics(updated, financeApplication)
+                : "";
             refresh();
         },
         () => {
