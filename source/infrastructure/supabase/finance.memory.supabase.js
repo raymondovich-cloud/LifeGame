@@ -1,13 +1,23 @@
-// finance.memory.supabase.js — Version 2.7
+// finance.memory.supabase.js — Version 3.0
 // Responsibility: implement the Finance Memory Port with Supabase persistence and a local runtime cache.
 
 const COLLECTIONS = Object.freeze({
-    assets: { table: "finance_assets", fields: ["label", "amount", "liquidity"] },
+    assets: {
+        table: "finance_assets",
+        fields: [
+            "label",
+            "amount",
+            "liquidity",
+            "asset_type",
+            "is_reserve",
+            "income_enabled",
+            "annual_yield_rate",
+            "compounding_frequency"
+        ]
+    },
     actualEarnings: { table: "finance_actual_earnings", fields: ["label", "amount"] },
     financialBurden: { table: "finance_burdens", fields: ["label", "debt", "payment", "is_credit_product", "interest_rate"] },
-    mandatoryExpenses: { table: "finance_mandatory_expenses", fields: ["label", "amount"] },
-    financialCushion: { table: "finance_cushions", fields: ["label", "amount"] }
-});
+    mandatoryExpenses: { table: "finance_mandatory_expenses", fields: ["label", "amount"] }});
 
 function createSupabaseFinanceMemory({ client, userContext }) {
     if (!client || !userContext?.userId) {
@@ -39,6 +49,27 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         if (result.interest_rate !== undefined) {
             result.interestRate = result.interest_rate === null ? null : Number(result.interest_rate);
             delete result.interest_rate;
+        }
+
+        if (result.asset_type !== undefined) {
+            result.assetType = result.asset_type || "cash";
+            delete result.asset_type;
+        }
+        if (result.is_reserve !== undefined) {
+            result.isReserve = Boolean(result.is_reserve);
+            delete result.is_reserve;
+        }
+        if (result.income_enabled !== undefined) {
+            result.incomeEnabled = Boolean(result.income_enabled);
+            delete result.income_enabled;
+        }
+        if (result.annual_yield_rate !== undefined) {
+            result.annualYieldRate = result.annual_yield_rate === null ? null : Number(result.annual_yield_rate);
+            delete result.annual_yield_rate;
+        }
+        if (result.compounding_frequency !== undefined) {
+            result.compoundingFrequency = result.compounding_frequency || "none";
+            delete result.compounding_frequency;
         }
 
         if (result.created_at !== undefined && result.created_at !== null) {
@@ -277,8 +308,7 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         const key = {
             "actual-earnings": "actualEarnings",
             "financial-burden": "financialBurden",
-            "mandatory-expenses": "mandatoryExpenses",
-            "financial-cushion": "financialCushion"
+            "mandatory-expenses": "mandatoryExpenses"
         }[collection];
 
         if (!key) throw new Error("Supabase Finance Memory: unknown Finance collection.");
