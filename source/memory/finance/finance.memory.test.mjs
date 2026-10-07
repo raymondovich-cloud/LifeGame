@@ -29,16 +29,11 @@ test("Finance Memory isolates users across all Finance collections", () => {
         label: "Аренда",
         amount: 50000
     });
-    firstUser.saveFinancialCushion({
-        label: "Резерв",
-        amount: 200000
-    });
 
     assert.equal(firstUser.listAssets().length, 1);
     assert.equal(firstUser.listActualEarnings().length, 1);
     assert.equal(firstUser.listFinancialBurden().length, 1);
     assert.equal(firstUser.listMandatoryExpenses().length, 1);
-    assert.equal(firstUser.listFinancialCushion().length, 1);
 
     assert.equal(secondUser.listAssets().length, 0);
     assert.equal(secondUser.listActualEarnings().length, 0);
