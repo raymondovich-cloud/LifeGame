@@ -1,4 +1,4 @@
-/* statistics.css — Version 4.1 */
+/* statistics.css — Version 4.2 */
 
 /* Internal pattern name remains statistics for architecture compatibility. User-facing language is analytics. */
 
@@ -685,7 +685,7 @@
     border-radius:var(--radius-sm);
     background:
         var(--gradient-surface) padding-box,
-        linear-gradient(135deg,rgba(242,138,46,.42) 0%,rgba(5,5,5,.92) 42%,rgba(242,138,46,.24) 100%) border-box;
+        linear-gradient(135deg,rgba(242,138,46,.16) 0%,rgba(5,5,5,.96) 48%,rgba(242,138,46,.08) 100%) border-box;
 }
 .assets-statistics-screen .assets-analytics-composition .assets-analytics-composition-meta .finance-entry-pin{
     color:var(--color-accent);
