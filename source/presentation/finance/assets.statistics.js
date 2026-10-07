@@ -1,4 +1,4 @@
-// assets.statistics.js — Version 3.7
+// assets.statistics.js — Version 3.8
 
 import { attachEntryEdit } from "./entry.edit.js";
 
@@ -298,7 +298,7 @@ function renderAssetsAnalyticsPage(root, onBack, assetsAnalytics, financeApplica
     illiquidBar.style.width = (analytics.liquidity.illiquidPercent ?? 0) + "%";
 
     distributionBar.append(liquidBar, illiquidBar);
-    distribution.append(distributionTitle, distributionBar);
+    distribution.append(distributionBar, distributionTitle);
     content.appendChild(distribution);
 
     const composition = document.createElement("section");
