@@ -1,4 +1,4 @@
-// entry.edit.js — Version 3.1
+// entry.edit.js — Version 3.2
 
 function triggerHaptic() {
     const telegramWebApp = typeof window !== "undefined"
@@ -463,11 +463,6 @@ function openEntryEditModal(subblockId, entry, onSaved, financeApplication) {
         const summary = document.createElement("summary");
         summary.className = "finance-progressive-summary";
         summary.textContent = "Дополнительные параметры";
-
-        const hint = document.createElement("span");
-        hint.className = "finance-progressive-hint";
-        hint.textContent = "Тип, ликвидность, резерв и доходность";
-        summary.appendChild(hint);
 
         const advancedBody = document.createElement("div");
         advancedBody.className = "finance-progressive-body";
