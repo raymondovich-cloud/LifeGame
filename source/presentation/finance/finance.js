@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 7.5
+// source/presentation/finance/finance.js — Version 7.6
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -134,14 +134,17 @@ function getFinancialSnapshot(financeApplication, assetsAnalytics) {
 
 function createAdaptiveDiagnosisText(result) {
     const diagnosis = result?.diagnosis;
-    if (!diagnosis) return "Недостаточно истории для персональной динамики.";
+    if (!diagnosis) return "Недостаточно данных для персональной диагностики.";
 
     if (!diagnosis.hasComparison) {
-        if (diagnosis.weakestFactor) {
-            return "Истории пока недостаточно для сравнения динамики. Текущим ограничивающим фактором остаётся " +
-                diagnosis.weakestFactor.label + ".";
+        const limiting = diagnosis.limitingFactor || diagnosis.weakestFactor;
+
+        if (limiting?.reason) {
+            return "Пока недостаточно данных, чтобы оценить динамику вашего индекса. " +
+                "Основное ограничение сейчас — " + limiting.reason + ".";
         }
-        return "Истории пока недостаточно для персональной динамики индекса.";
+
+        return "Пока недостаточно данных, чтобы оценить динамику вашего индекса.";
     }
 
     const percent = Math.abs(Number(diagnosis.changePercent || 0));
@@ -161,7 +164,7 @@ function createAdaptiveDiagnosisText(result) {
 
     const positive = diagnosis.primaryPositiveFactor;
     const negative = diagnosis.primaryNegativeFactor;
-    const weakest = diagnosis.weakestFactor;
+    const limiting = diagnosis.limitingFactor;
 
     if (diagnosis.changePercent > 0 && positive) {
         text += " Основным фактором улучшения стало изменение " + positive.label + ".";
@@ -177,8 +180,9 @@ function createAdaptiveDiagnosisText(result) {
         }
     }
 
-    if (weakest && weakest.value < 50) {
-        text += " Наиболее слабым звеном системы остаётся " + weakest.label + ".";
+    if (limiting?.reason && limiting.weightedDeficit > 20) {
+        text += " Сейчас сильнее всего ограничивает результат то, что " +
+            limiting.reason + ".";
     }
 
     return text;
