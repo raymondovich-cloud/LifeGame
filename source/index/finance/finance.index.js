@@ -672,4 +672,4 @@ function calculateFinancialStabilityIndex(financeState = {}) {
     };
 }
 
-export { calculateFinancialStabilityIndex, buildFinancialStabilityDiagnosis };
+export { calculateFinancialStabilityIndex };
