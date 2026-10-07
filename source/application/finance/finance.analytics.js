@@ -1,4 +1,4 @@
-// finance.analytics.js — Version 1.2
+// finance.analytics.js — Version 2.0
 
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -6,8 +6,7 @@ const METRICS = Object.freeze([
     { id: "assets", label: "Активы" },
     { id: "actual-earnings", label: "Фактически заработано" },
     { id: "financial-burden", label: "Финансовая нагрузка" },
-    { id: "mandatory-expenses", label: "Обязательные траты" },
-    { id: "financial-cushion", label: "Финансовая подушка" }
+    { id: "mandatory-expenses", label: "Обязательные траты" }
 ]);
 
 function createFinanceAnalytics({ financeApplication }) {
