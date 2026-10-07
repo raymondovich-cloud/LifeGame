@@ -1,4 +1,4 @@
-// finance.js — Version 6.2
+// finance.js — Version 6.3
 
 import {
     createActualEarning,
@@ -25,6 +25,7 @@ import {
 } from "../../domain/finance/assets/assets.js";
 
 import { calculateFinancialStabilityIndex } from "../../index/finance/finance.index.js";
+import { buildFinancialStabilityDiagnosis } from "./finance.diagnosis.js";
 import { trace } from "../../core/diagnostics/lifecycle.trace.js";
 import { calculateCreditProduct } from "../../domain/finance/credit.product/credit.product.js";
 
@@ -411,7 +412,8 @@ function getFinancialStabilityIndex() {
 
     return {
         ...currentResult,
-        previousResult
+        previousResult,
+        diagnosis: buildFinancialStabilityDiagnosis(currentResult, previousResult)
     };
 }
 
