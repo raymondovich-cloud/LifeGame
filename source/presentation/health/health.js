@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 1.2
+// source/presentation/health/health.js — Version 1.3
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 const FACTOR_LABELS = Object.freeze({
@@ -158,6 +158,15 @@ function createFactForm(application, onSaved) {
 
         summary.append(summaryCopy);
         details.appendChild(summary);
+
+        // Health Data uses the same single-open accordion behavior as Finance Data.
+        details.addEventListener("toggle", () => {
+            if (!details.open) return;
+
+            categories.querySelectorAll(".health-data-category[open]").forEach((item) => {
+                if (item !== details) item.open = false;
+            });
+        });
 
         const content = createElement("div", "health-data-category__content");
 
