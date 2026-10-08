@@ -1,5 +1,5 @@
 {
-  "version": "1.1",
+  "version": "1.2",
   "name": "LifeGame",
   "short_name": "LifeGame",
   "description": "LifeGame — a premium personal system for managing life.",
@@ -9,6 +9,12 @@
   "background_color": "#070707",
   "theme_color": "#070707",
   "icons": [
+    {
+      "src": "./icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "./icons/icon-v2.svg",
       "sizes": "any",
