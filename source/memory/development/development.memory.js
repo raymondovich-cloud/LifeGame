@@ -1,0 +1,5 @@
+// source/memory/development/development.memory.js — Version 1.0
+const CATEGORIES=Object.freeze(["direction","goals","growth","execution","balance"]);
+function clone(v){return structuredClone(v)}
+function createDevelopmentMemory({userId}={}){const id=String(userId??"").trim();if(!id)throw new Error("LifeGame Development: user id is required.");const facts=new Map(CATEGORIES.map(c=>[c,[]]));return Object.freeze({userId:id,listFacts(c){return clone(facts.get(String(c||"").trim())||[])},listAllFacts(){return clone(Object.fromEntries(facts))},saveFact(c,f){const k=String(c||"").trim();if(!facts.has(k))throw new Error("LifeGame Development: invalid fact category.");const e={id:crypto.randomUUID(),userId:id,category:k,recordedAt:f?.recordedAt||Date.now(),...clone(f)};facts.get(k).unshift(e);return clone(e)}})}
+export{CATEGORIES,createDevelopmentMemory};
