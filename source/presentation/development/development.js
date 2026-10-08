@@ -1,4 +1,4 @@
-// source/presentation/development/development.js — Version 1.4
+// source/presentation/development/development.js — Version 1.5
 
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 
