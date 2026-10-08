@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.3
+// platforms/web/web.runtime.js — Version 5.4
 
 import {
     trace,
