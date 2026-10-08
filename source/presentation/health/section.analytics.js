@@ -1,4 +1,4 @@
-// source/presentation/health/section.analytics.js — Version 1.3
+// source/presentation/health/section.analytics.js — Version 1.4
 // Responsibility: render block-level Health analytics.
 
 const PERIODS=Object.freeze([["week","Неделя"],["month","Месяц"],["year","Год"],["custom","Период"]]);
@@ -14,19 +14,27 @@ function formatDate(timestamp) {
 }
 function renderHealthAnalyticsScreen(root,healthAnalytics,section,onBack) {
     root.replaceChildren();
+    const sectionTitle = section?.label || section?.title || "Health";
+    const sectionDescription = section?.description || "";
+    const sectionKey = section?.key || section?.id;
+
+    if (!sectionKey) {
+        throw new Error("LifeGame Health Analytics: section key is required.");
+    }
+
     const page=document.createElement("section");
     page.className="health-analytics-screen";
-    page.setAttribute("aria-label","Аналитика "+section.title);
+    page.setAttribute("aria-label","Аналитика "+sectionTitle);
 
     const back=document.createElement("button");
-    back.type="button"; back.className="health-analytics-back"; back.textContent="← "+section.title;
+    back.type="button"; back.className="health-analytics-back"; back.textContent="← "+sectionTitle;
     back.addEventListener("click",()=>{if(typeof onBack==="function") onBack();});
 
     const frame=document.createElement("div"); frame.className="health-analytics-frame";
     const header=document.createElement("header"); header.className="health-analytics-header";
-    const eyebrow=document.createElement("span"); eyebrow.className="statistics-meta"; eyebrow.textContent="HEALTH · "+section.title.toUpperCase();
+    const eyebrow=document.createElement("span"); eyebrow.className="statistics-meta"; eyebrow.textContent="HEALTH · "+sectionTitle.toUpperCase();
     const title=document.createElement("h2"); title.className="health-analytics-title"; title.textContent="Аналитика";
-    const description=document.createElement("p"); description.className="health-analytics-description"; description.textContent=section.description;
+    const description=document.createElement("p"); description.className="health-analytics-description"; description.textContent=sectionDescription;
     header.append(eyebrow,title,description);
 
     const periods=document.createElement("div"); periods.className="health-analytics-periods";
@@ -50,7 +58,7 @@ function renderHealthAnalyticsScreen(root,healthAnalytics,section,onBack) {
 
         try {
             const range=customRange||healthAnalytics.getHealthAnalyticsRange(period);
-            const analytics=await healthAnalytics.getHealthAnalytics(section.key,range);
+            const analytics=await healthAnalytics.getHealthAnalytics(sectionKey,range);
             if (!analytics || typeof analytics !== "object") {
                 throw new Error("LifeGame Health Analytics: analytics result is invalid.");
             }
