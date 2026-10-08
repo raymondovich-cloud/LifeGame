@@ -1,3 +1,5 @@
+# .github/workflows/database-tests.yml — Version 1.1
+
 name: LifeGame Database Tests
 
 on:
@@ -25,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Application and Finance domain tests
-        run: node --test source/application/identity/registration.test.mjs source/application/identity/login.test.mjs source/application/profile/profile.test.mjs source/application/finance/finance.test.mjs source/application/finance/finance.lifecycle.test.mjs source/application/finance/assets.analytics.test.mjs source/application/finance/finance.analytics.test.mjs source/memory/finance/finance.memory.test.mjs source/domain/finance/financial.burden/financial.burden.test.mjs
+        run: node --test source/application/identity/registration.test.mjs source/application/identity/login.test.mjs source/application/profile/profile.test.mjs source/application/finance/finance.test.mjs source/application/finance/finance.lifecycle.test.mjs source/application/finance/assets.analytics.test.mjs source/application/finance/finance.analytics.test.mjs source/memory/finance/finance.memory.test.mjs source/domain/finance/financial.burden/financial.burden.test.mjs source/index/interaction/interaction.engine.test.mjs
 
       - name: Run Identity and Profile infrastructure tests
         run: node --test source/infrastructure/identity/supabase.identity.mapper.test.mjs source/infrastructure/identity/supabase.identity.adapter.test.mjs source/infrastructure/supabase/profile.adapter.test.mjs
