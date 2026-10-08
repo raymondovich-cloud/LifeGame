@@ -1,4 +1,4 @@
-// finance.js — Version 7.11
+// finance.js — Version 7.12
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1281,7 +1281,8 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
     return wrapper;
 }
 
-function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
+function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null, options = {}) {
+    const showPresentationHeader = options.showPresentationHeader !== false;
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -1299,7 +1300,6 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     page.className = "finance-workspace finance-data-screen";
     page.setAttribute("aria-label", "Finance data");
 
-    const showPresentationHeader = options.showPresentationHeader !== false;
     const intro = document.createElement("header");
     intro.className = "finance-workspace-header";
 
