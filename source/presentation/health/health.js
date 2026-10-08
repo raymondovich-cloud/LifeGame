@@ -433,7 +433,8 @@ function createFactorsBlock(index) {
     return section;
 }
 
-function renderHealthData(container, healthApplication, onBack) {
+function renderHealthData(container, healthApplication, onBack, options = {}) {
+    const showPresentationHeader = options.showPresentationHeader !== false;
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
     }
@@ -453,7 +454,6 @@ function renderHealthData(container, healthApplication, onBack) {
     });
     backNavigation.appendChild(back);
 
-    const showPresentationHeader = options.showPresentationHeader !== false;
     const intro = createElement("header", "finance-workspace-header");
     intro.append(
         createElement("h2", "", "Данные здоровья"),
