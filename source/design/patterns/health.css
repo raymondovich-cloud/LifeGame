@@ -113,3 +113,39 @@
 @media (max-width:719px){
     .health-input__grid{grid-template-columns:1fr}
 }
+
+
+/* Health data screen: separate management surface aligned with Finance data. */
+.health-data-screen .health-data-content{
+    display:grid;
+    gap:var(--space-4);
+}
+.health-data-screen .health-input-host{
+    margin-top:0;
+}
+.health-data-screen .health-input{
+    position:relative;
+    margin:0;
+    padding:var(--space-5) var(--space-4);
+    background:var(--gradient-card-premium);
+    border:1px solid transparent;
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-soft);
+}
+.health-data-screen .health-input::before{
+    position:absolute;
+    top:0;
+    left:8%;
+    right:8%;
+    height:1px;
+    pointer-events:none;
+    content:"";
+    background:var(--gradient-accent-line);
+    opacity:.28;
+}
+@media (max-width:719px){
+    .health-data-screen .health-input{
+        padding-left:var(--space-4);
+        padding-right:var(--space-4);
+    }
+}

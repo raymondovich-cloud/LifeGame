@@ -249,6 +249,51 @@ function createFactorsBlock(index) {
     return section;
 }
 
+function renderHealthData(container, healthApplication, onBack) {
+    if (!healthApplication) {
+        throw new Error("LifeGame Health: application is required.");
+    }
+
+    container.replaceChildren();
+
+    const page = createElement("section", "finance-workspace finance-data-screen health-data-screen");
+    page.setAttribute("aria-label", "Health data");
+
+    const backNavigation = createElement("div", "finance-data-back");
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "finance-text-action";
+    back.textContent = "← Health";
+    back.addEventListener("click", () => {
+        if (typeof onBack === "function") onBack();
+    });
+    backNavigation.appendChild(back);
+
+    const intro = createElement("header", "finance-workspace-header");
+    intro.append(
+        createElement("h2", "", "Данные здоровья"),
+        createElement(
+            "p",
+            "",
+            "Добавляйте и обновляйте показатели, на основе которых система рассчитывает Health Index."
+        )
+    );
+
+    const content = createElement("div", "health-data-content");
+    const formHost = createElement("div", "health-input-host");
+
+    const refreshAndReturn = async () => {
+        await healthApplication.calculateFromMemory();
+        if (typeof onBack === "function") onBack();
+    };
+
+    formHost.appendChild(createFactForm(healthApplication, refreshAndReturn));
+    content.appendChild(formHost);
+
+    page.append(backNavigation, intro, content);
+    container.appendChild(page);
+}
+
 async function renderHealth(container, healthApplication) {
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
@@ -289,19 +334,15 @@ async function renderHealth(container, healthApplication) {
     const action = document.createElement("button");
     action.type = "button";
     action.className = "finance-text-action";
-    action.textContent = "Добавить данные →";
-
-    const formHost = createElement("div", "health-input-host");
-    formHost.hidden = true;
+    action.textContent = "Открыть →";
 
     action.addEventListener("click", () => {
-        formHost.hidden = !formHost.hidden;
-        action.textContent = formHost.hidden
-            ? "Добавить данные →"
-            : "Скрыть ввод ↑";
+        renderHealthData(container, healthApplication, () => {
+            renderHealth(container, healthApplication);
+        });
     });
 
-    dataEntry.append(copy, action, formHost);
+    dataEntry.append(copy, action);
     page.append(intro, healthIndex.section, factorsContainer, dataEntry);
     container.appendChild(page);
 
@@ -328,10 +369,7 @@ async function renderHealth(container, healthApplication) {
         );
     };
 
-    const input = createFactForm(healthApplication, refresh);
-    formHost.appendChild(input);
-
     await refresh();
 }
 
-export { renderHealth };
+export { renderHealth, renderHealthData };
