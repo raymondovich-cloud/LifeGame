@@ -1,5 +1,8 @@
-// source/presentation/health/health.js — Version 1.5
+// source/presentation/health/health.js — Version 1.6
 // Responsibility: render the authenticated Health module and collect manual Health facts.
+
+import { createHealthAnalytics } from "../../application/health/health.analytics.js";
+import { renderHealthAnalyticsScreen } from "./section.analytics.js";
 
 const FACTOR_LABELS = Object.freeze({
     recovery: "Восстановление",
@@ -227,7 +230,26 @@ function createCategoryFactForm(application, section, onSaved) {
     return form;
 }
 
-function createFactForm(application, onSaved) {
+function createAnalyticsAction(container, healthApplication, section, onBack) {
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "finance-text-action health-data-category__analytics";
+    action.textContent = "Аналитика →";
+
+    action.addEventListener("click", () => {
+        const healthAnalytics = createHealthAnalytics({ healthApplication });
+        renderHealthAnalyticsScreen(
+            container,
+            healthAnalytics,
+            section,
+            onBack
+        );
+    });
+
+    return action;
+}
+
+function createFactForm(application, onSaved, container, onAnalyticsBack) {
     const wrapper = createElement("div", "health-input");
 
     const title = createElement("strong", "health-input__title", "Составляющие здоровья");
@@ -279,6 +301,15 @@ function createFactForm(application, onSaved) {
                 )
             );
         }
+
+        content.appendChild(
+            createAnalyticsAction(
+                container,
+                application,
+                section,
+                onAnalyticsBack
+            )
+        );
 
         details.appendChild(content);
         categories.appendChild(details);
@@ -416,7 +447,8 @@ function renderHealthData(container, healthApplication, onBack) {
         if (typeof onBack === "function") onBack();
     };
 
-    formHost.appendChild(createFactForm(healthApplication, refreshAndReturn));
+    const returnToHealthData = () => renderHealthData(container, healthApplication, onBack);
+    formHost.appendChild(createFactForm(healthApplication, refreshAndReturn, container, returnToHealthData));
     content.appendChild(formHost);
 
     page.append(backNavigation, intro, content);
