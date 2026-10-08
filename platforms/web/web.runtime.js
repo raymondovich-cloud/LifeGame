@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.0
+// platforms/web/web.runtime.js — Version 5.1
 
 import {
     trace,
@@ -493,6 +493,26 @@ export async function startWeb() {
             currentSessionState: sessionState,
             renderId
         });
+
+        if (!application) {
+            publicMode = true;
+            sessionState = "unauthenticated";
+            initializeApplicationShell();
+            authRoot.hidden = true;
+            applicationShell.hidden = false;
+
+            const publicRoute = isPublicModule(requestedRoute)
+                ? requestedRoute
+                : DEFAULT_APPLICATION_ROUTE;
+
+            await renderApplicationShell(
+                publicRoute,
+                true,
+                null,
+                renderId
+            );
+            return;
+        }
 
         try {
             const sessionResult = await readSessionWithHydrationRetry();
