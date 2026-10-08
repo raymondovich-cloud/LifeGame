@@ -1,6 +1,7 @@
-// source/application/health/health.js — Version 1.0
+// source/application/health/health.js — Version 1.1
 
 import { calculateHealthIndex } from "../../index/health/health.index.js";
+import { createHealthAggregator } from "./health.aggregator.js";
 
 function validateHealthInput(input) {
     if (input === null || typeof input !== "object") {
@@ -53,7 +54,18 @@ function buildHealthDiagnosis(index) {
     };
 }
 
-function createHealthApplication() {
+function createHealthApplication({ memory = null } = {}) {
+    const aggregator = memory ? createHealthAggregator(memory) : null;
+
+    async function calculateFromMemory(options = {}) {
+        if (!aggregator) {
+            throw new Error("LifeGame Health: memory is required for calculation from stored facts.");
+        }
+
+        const input = await aggregator.aggregate(options);
+        return calculate(input);
+    }
+
     function calculate(input) {
         const healthInput = validateHealthInput(input);
         const index = calculateHealthIndex(healthInput);
@@ -66,7 +78,8 @@ function createHealthApplication() {
     }
 
     return Object.freeze({
-        calculate
+        calculate,
+        calculateFromMemory
     });
 }
 
