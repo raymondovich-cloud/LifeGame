@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 1.3
+// source/presentation/health/health.js — Version 1.4
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 const FACTOR_LABELS = Object.freeze({
@@ -128,73 +128,22 @@ function createCategoryFields(section, inputs) {
     return wrapper;
 }
 
-function createFactForm(application, onSaved) {
-    const form = createElement("form", "health-input");
+function createCategoryFactForm(application, section, onSaved) {
+    const form = createElement("form", "health-input health-data-category-form");
     form.noValidate = true;
 
-    const title = createElement("strong", "health-input__title", "Составляющие здоровья");
-    const description = createElement(
-        "p",
-        "health-input__description",
-        "Выберите составляющую здоровья и измените показатели внутри неё. Эти же категории используются на главном экране Health."
-    );
-
-    const categories = createElement("div", "health-data-categories");
     const inputs = new Map();
-
-    HEALTH_DATA_SECTIONS.forEach((section, index) => {
-        const details = document.createElement("details");
-        details.className = "health-data-category";
-        if (index === 0) details.open = true;
-
-        const summary = document.createElement("summary");
-        summary.className = "health-data-category__summary";
-
-        const summaryCopy = createElement("span", "health-data-category__copy");
-        summaryCopy.append(
-            createElement("strong", "", section.label),
-            createElement("span", "", section.description)
-        );
-
-        summary.append(summaryCopy);
-        details.appendChild(summary);
-
-        // Health Data uses the same single-open accordion behavior as Finance Data.
-        details.addEventListener("toggle", () => {
-            if (!details.open) return;
-
-            categories.querySelectorAll(".health-data-category[open]").forEach((item) => {
-                if (item !== details) item.open = false;
-            });
-        });
-
-        const content = createElement("div", "health-data-category__content");
-
-        if (section.fields.length) {
-            content.appendChild(createCategoryFields(section, inputs));
-        } else {
-            content.appendChild(
-                createElement(
-                    "p",
-                    "health-data-category__pending",
-                    "Категория уже является частью Health Index. Ручные показатели тела подключаются после завершения нормализации Body."
-                )
-            );
-        }
-
-        details.appendChild(content);
-        categories.appendChild(details);
-    });
+    form.appendChild(createCategoryFields(section, inputs));
 
     const submit = document.createElement("button");
     submit.type = "submit";
     submit.className = "button-control";
-    submit.textContent = "Сохранить данные";
+    submit.textContent = "Сохранить";
 
     const status = createElement("p", "health-input__status");
     status.setAttribute("aria-live", "polite");
 
-    form.append(title, description, categories, submit, status);
+    form.append(submit, status);
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -213,44 +162,44 @@ function createFactForm(application, onSaved) {
             const now = Date.now();
             const facts = [];
 
-            const recovery = {
-                recordedAt: now,
-                sleepDurationHours: value("sleep"),
-                subjectiveRecovery: value("recovery")
-            };
-
-            const activity = {
-                recordedAt: now,
-                stepsPerDay: value("steps"),
-                activeMinutesPerWeek: value("activeMinutes")
-            };
-
-            const lifestyle = {
-                recordedAt: now,
-                stress: value("stress"),
-                mood: value("mood"),
-                subjectiveWellbeing: value("wellbeing"),
-                subjectiveQuality: value("nutrition")
-            };
-
-            if (Object.values(recovery).some((item) => item !== null && item !== now)) {
-                facts.push(["recovery", recovery]);
+            if (section.key === "recovery") {
+                facts.push(["recovery", {
+                    recordedAt: now,
+                    sleepDurationHours: value("sleep"),
+                    subjectiveRecovery: value("recovery")
+                }]);
             }
 
-            if (Object.values(activity).some((item) => item !== null && item !== now)) {
-                facts.push(["activity", activity]);
+            if (section.key === "activity") {
+                facts.push(["activity", {
+                    recordedAt: now,
+                    stepsPerDay: value("steps"),
+                    activeMinutesPerWeek: value("activeMinutes")
+                }]);
             }
 
-            if (Object.values(lifestyle).some((item) => item !== null && item !== now)) {
-                facts.push(["lifestyle", lifestyle]);
-            }
-
-            if (value("workout")) {
+            if (section.key === "training" && value("workout")) {
                 facts.push(["activity", {
                     recordedAt: now,
                     type: "workout",
                     workout: true,
                     durationMinutes: value("workoutDuration")
+                }]);
+            }
+
+            if (section.key === "nutrition") {
+                facts.push(["lifestyle", {
+                    recordedAt: now,
+                    subjectiveQuality: value("nutrition")
+                }]);
+            }
+
+            if (section.key === "lifestyle") {
+                facts.push(["lifestyle", {
+                    recordedAt: now,
+                    stress: value("stress"),
+                    mood: value("mood"),
+                    subjectiveWellbeing: value("wellbeing")
                 }]);
             }
 
@@ -275,6 +224,67 @@ function createFactForm(application, onSaved) {
     });
 
     return form;
+}
+
+function createFactForm(application, onSaved) {
+    const wrapper = createElement("div", "health-input");
+
+    const title = createElement("strong", "health-input__title", "Составляющие здоровья");
+    const description = createElement(
+        "p",
+        "health-input__description",
+        "Выберите составляющую здоровья и измените показатели внутри неё. Эти же категории используются на главном экране Health."
+    );
+
+    const categories = createElement("div", "health-data-categories");
+
+    HEALTH_DATA_SECTIONS.forEach((section, index) => {
+        const details = document.createElement("details");
+        details.className = "health-data-category";
+        if (index === 0) details.open = true;
+
+        const summary = createElement("summary", "health-data-category__summary");
+
+        const summaryCopy = createElement("span", "health-data-category__copy");
+        summaryCopy.append(
+            createElement("strong", "", section.label),
+            createElement("span", "", section.description)
+        );
+
+        summary.appendChild(summaryCopy);
+        details.appendChild(summary);
+
+        // Health Data uses the same single-open accordion behavior as Finance Data.
+        details.addEventListener("toggle", () => {
+            if (!details.open) return;
+
+            categories.querySelectorAll(".health-data-category[open]").forEach((item) => {
+                if (item !== details) item.open = false;
+            });
+        });
+
+        const content = createElement("div", "health-data-category__content");
+
+        if (section.fields.length) {
+            content.appendChild(
+                createCategoryFactForm(application, section, onSaved)
+            );
+        } else {
+            content.appendChild(
+                createElement(
+                    "p",
+                    "health-data-category__pending",
+                    "Категория уже является частью Health Index. Ручные показатели тела подключаются после завершения нормализации Body."
+                )
+            );
+        }
+
+        details.appendChild(content);
+        categories.appendChild(details);
+    });
+
+    wrapper.append(title, description, categories);
+    return wrapper;
 }
 
 function createHealthIndexBlock(healthApplication) {
