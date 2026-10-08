@@ -1,4 +1,4 @@
-// root.js — Version 1.8
+// root.js — Version 1.9
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 
@@ -12,7 +12,7 @@ import { createFinanceMemoryPort } from "../../../source/application/finance/fin
 import { createFinanceApplication } from "../../../source/application/finance/finance.js";
 import { createProfileApplication } from "../../../source/application/profile/profile.js";
 import { createSupabaseProfileAdapter } from "../../../source/infrastructure/supabase/profile.adapter.js";
-import { createHealthMemory } from "../../../source/memory/health/health.memory.js";
+import { createSupabaseHealthMemory } from "../../../source/infrastructure/supabase/health.memory.supabase.js";
 import { createHealthMemoryPort } from "../../../source/application/health/health.memory.port.js";
 import { createHealthApplication } from "../../../source/application/health/health.js";
 
@@ -67,7 +67,11 @@ export function createWebApplication() {
 
         if (!healthApplicationByUser.has(normalizedUserId)) {
             const userContext = createUserContext(normalizedUserId);
-            const memory = createHealthMemory(userContext);
+            const memory = createSupabaseHealthMemory({
+                client: supabaseClient,
+                userContext
+            });
+            await memory.hydrate();
             const healthMemory = createHealthMemoryPort(memory);
 
             healthApplicationByUser.set(
