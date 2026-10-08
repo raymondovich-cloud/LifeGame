@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.5
+// platforms/web/web.js — Version 4.6
 
 import {
     trace,
@@ -11,6 +11,7 @@ import { renderRegistration } from "../../source/presentation/auth/register.js";
 import { renderLogin } from "../../source/presentation/auth/login.js";
 import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { renderHealth } from "../../source/presentation/health/health.js";
+import { renderDevelopment } from "../../source/presentation/development/development.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureAssetsAnalyticsAccess } from "../../source/application/finance/assets.analytics.access.js";
 
@@ -286,6 +287,8 @@ function startWeb() {
         // Remove the active user's scoped Application immediately. The public
         // finance view must never render the previous user's state.
         application.finance.clearForUser(activeUserId);
+        application.health.clearForUser(activeUserId);
+        application.development.clearForUser(activeUserId);
         activeUserId = null;
 
         trace("web-shell", "logout.completed", {
@@ -299,7 +302,7 @@ function startWeb() {
         await renderRoute();
     }
 
-    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null) {
+    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
             openLoginModal();
@@ -322,6 +325,15 @@ function startWeb() {
             }
 
             await renderHealth(moduleContent, healthApplication);
+            return;
+        }
+
+        if (moduleId === "development") {
+            if (publicMode) {
+                renderPreviewModule("development");
+                return;
+            }
+            await renderDevelopment(moduleContent, developmentApplication, lifeSystemApplication);
             return;
         }
 
@@ -410,10 +422,14 @@ function startWeb() {
 
         let financeApplication = null;
         let healthApplication = null;
+        let developmentApplication = null;
+        let lifeSystemApplication = null;
 
         if (!isPublic && activeUserId) {
             financeApplication = await application.finance.createApplicationForUser(activeUserId);
             healthApplication = await application.health.createApplicationForUser(activeUserId);
+            developmentApplication = await application.development.createApplicationForUser(activeUserId);
+            lifeSystemApplication = await application.lifeSystem.createApplicationForUser(activeUserId);
 
             if (renderId !== null && renderId !== routeRenderSequence) {
                 trace("web-shell", "shell.render.stale-after-memory", {
@@ -438,7 +454,7 @@ function startWeb() {
         authRoot.hidden = true;
         applicationShell.hidden = false;
 
-        await renderModule(route, session, financeApplication, healthApplication);
+        await renderModule(route, session, financeApplication, healthApplication, developmentApplication, lifeSystemApplication);
     }
 
     async function renderRoute() {
