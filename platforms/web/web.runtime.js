@@ -466,21 +466,6 @@ export async function startWeb() {
             return;
         }
 
-        // Paint a safe authenticated shell immediately.
-        if (route === "finance") {
-            const { renderFinance } = await getPresentation("finance");
-            renderFinance(moduleContent, (action) => openRegistrationModal(action), null);
-        } else if (route === "health") {
-            renderPreviewModule("health");
-        } else if (route === "development") {
-            renderPreviewModule("development");
-        } else if (route === "profile") {
-            renderPreviewModule("profile");
-        } else {
-            const { renderFinance } = await getPresentation("finance");
-            renderFinance(moduleContent, (action) => openRegistrationModal(action), null);
-        }
-
         if (!activeUserId) {
             return;
         }
