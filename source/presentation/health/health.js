@@ -453,6 +453,7 @@ function renderHealthData(container, healthApplication, onBack) {
     });
     backNavigation.appendChild(back);
 
+    const showPresentationHeader = options.showPresentationHeader !== false;
     const intro = createElement("header", "finance-workspace-header");
     intro.append(
         createElement("h2", "", "Данные здоровья"),
@@ -479,7 +480,7 @@ function renderHealthData(container, healthApplication, onBack) {
     container.appendChild(page);
 }
 
-async function renderHealth(container, healthApplication) {
+async function renderHealth(container, healthApplication, options = {}) {
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
     }
@@ -528,7 +529,7 @@ async function renderHealth(container, healthApplication) {
     });
 
     dataEntry.append(copy, action);
-    page.append(intro, healthIndex.section, factorsContainer, dataEntry);
+    page.append(...(showPresentationHeader ? [intro] : []), healthIndex.section, factorsContainer, dataEntry);
     container.appendChild(page);
 
     const refresh = async () => {
