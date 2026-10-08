@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 5.2
+// platforms/web/web.js — Version 5.3
 // Responsibility: boot the browser shell before loading the application runtime.
 //
 // This file intentionally has no static application imports. A failure in a
@@ -125,7 +125,7 @@ function boot() {
 
     renderCurrentRoute();
 
-    import("./web.runtime.js?v=20261008-2020")
+    import("./web.runtime.js?v=20261008-2025")
         .then(({ startWeb }) => startWeb())
         .catch((error) => {
             console.error("LifeGame Web runtime failed to load.", error);
