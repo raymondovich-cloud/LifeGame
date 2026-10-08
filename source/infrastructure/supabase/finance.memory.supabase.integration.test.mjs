@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.5
+// finance.memory.supabase.integration.test.mjs — Version 1.6
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -17,6 +17,10 @@ function createClientForTest() {
     return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
         auth: { autoRefreshToken: false, persistSession: false }
     });
+}
+
+function normalizePersistedEntries(entries) {
+    return entries.map(({ createdAt, createdBy, creatorName, ...entry }) => entry);
 }
 
 async function createTestSession(label) {
@@ -76,10 +80,10 @@ test("Finance Supabase persistence survives memory recreation and isolates users
     assert.equal(recreatedMemory.listActualEarnings().length, 0);
     await recreatedMemory.hydrate();
 
-    assert.deepEqual(recreatedMemory.listActualEarnings(), [
+    assert.deepEqual(normalizePersistedEntries(recreatedMemory.listActualEarnings()), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(recreatedMemory.listFinancialBurden(), [
+    assert.deepEqual(normalizePersistedEntries(recreatedMemory.listFinancialBurden()), [
         {
             id: createdCredit.id,
             label: "Credit persistence",
@@ -106,10 +110,10 @@ test("Finance Supabase persistence survives memory recreation and isolates users
 
     await Promise.all([finalMemoryA.hydrate(), finalMemoryB.hydrate()]);
 
-    assert.deepEqual(finalMemoryA.listActualEarnings(), [
+    assert.deepEqual(normalizePersistedEntries(finalMemoryA.listActualEarnings()), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(finalMemoryB.listActualEarnings(), [
+    assert.deepEqual(normalizePersistedEntries(finalMemoryB.listActualEarnings()), [
         { id: createdB.id, label: "Persistence test B", amount: 54321 }
     ]);
 
