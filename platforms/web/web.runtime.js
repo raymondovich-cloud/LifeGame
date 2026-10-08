@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.4
+// platforms/web/web.runtime.js — Version 5.5
 
 import {
     trace,
@@ -353,21 +353,12 @@ export async function startWeb() {
         }
 
         if (moduleId === "health") {
-            if (publicMode) {
-                renderPreviewModule("health");
-                return;
-            }
-
             const { renderHealth } = await getPresentation("health");
             await renderHealth(moduleContent, healthApplication, { showPresentationHeader: publicMode });
             return;
         }
 
         if (moduleId === "development") {
-            if (publicMode) {
-                renderPreviewModule("development");
-                return;
-            }
             const { renderDevelopment } = await getPresentation("development");
             await renderDevelopment(moduleContent, developmentApplication, lifeSystemApplication, { showPresentationHeader: publicMode });
             return;
@@ -656,8 +647,22 @@ export async function startWeb() {
                     ? requestedRoute
                     : DEFAULT_APPLICATION_ROUTE;
 
-                if (fallbackRoute === "health" || fallbackRoute === "development") {
-                    renderPreviewModule(fallbackRoute);
+                if (fallbackRoute === "health") {
+                    getPresentation("health").then(({ renderHealth }) => renderHealth(moduleContent, null, {
+                        showPresentationHeader: false
+                    })).catch((fallbackError) => {
+                        trace("web-shell", "fallback.health.error", {
+                            error: fallbackError?.message || "unknown"
+                        });
+                    });
+                } else if (fallbackRoute === "development") {
+                    getPresentation("development").then(({ renderDevelopment }) => renderDevelopment(moduleContent, null, null, {
+                        showPresentationHeader: false
+                    })).catch((fallbackError) => {
+                        trace("web-shell", "fallback.development.error", {
+                            error: fallbackError?.message || "unknown"
+                        });
+                    });
                 } else if (fallbackRoute === "profile") {
                     getPresentation("profile").then(({ renderProfile }) => renderProfile(moduleContent, null, {
                         profileApplication: application.profile,
@@ -720,6 +725,10 @@ export async function startWeb() {
 
     installGlobalApi();
     trace("web-shell", "application.start");
+
+    // Public module routes use the same presentation surfaces as the authenticated
+    // product; only the presentation header changes by access mode. The legacy
+    // preview-subblock fallback is intentionally no longer used for Health/Development.
 
     // The composition root includes the Supabase infrastructure. It must not
     // be a static module dependency of the web entrypoint: if the remote SDK
