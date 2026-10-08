@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.2
+// platforms/web/web.runtime.js — Version 5.3
 
 import {
     trace,
@@ -374,8 +374,8 @@ export async function startWeb() {
 
         if (moduleId === "profile") {
             if (publicMode) {
-                renderPreviewModule("profile");
-                openRegistrationModal();
+                moduleContent.replaceChildren();
+                await openLoginModal();
                 return;
             }
 
