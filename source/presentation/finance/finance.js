@@ -1299,6 +1299,7 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     page.className = "finance-workspace finance-data-screen";
     page.setAttribute("aria-label", "Finance data");
 
+    const showPresentationHeader = options.showPresentationHeader !== false;
     const intro = document.createElement("header");
     intro.className = "finance-workspace-header";
 
@@ -1353,7 +1354,7 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
 }
 
-function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
+function renderFinance(root, onWriteAttempt = null, financeApplication = null, options = {}) {
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -1393,7 +1394,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
     }
 
     page.append(
-        intro,
+        ...(showPresentationHeader ? [intro] : []),
         createHealthBlock(financeApplication),
         createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt)
     );
