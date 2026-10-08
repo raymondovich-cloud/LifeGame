@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.8
+// platforms/web/web.js — Version 4.9
 
 import {
     trace,
@@ -398,17 +398,9 @@ function startWeb() {
 
     async function renderApplicationShell(route, isPublic, session = null, renderId = null) {
         if (renderId !== null && renderId !== routeRenderSequence) {
-            trace("web-shell", "shell.render.stale-before-state", {
-                route,
-                renderId,
-                latestRenderId: routeRenderSequence
-            });
             return;
         }
 
-        // Set access state before any asynchronous user-memory hydration.
-        // Otherwise a stale public render can leave authenticated Finance rows
-        // with a public write guard, which opens the Create Account modal.
         publicMode = isPublic;
         sessionState = isPublic ? "unauthenticated" : "authenticated";
 
@@ -420,14 +412,47 @@ function startWeb() {
             activeUserId = session.user.id;
         }
 
-        let financeApplication = null;
-        let healthApplication = null;
-        let developmentApplication = null;
-        let lifeSystemApplication = null;
+        trace("web-shell", "render.shell", {
+            route,
+            access: isPublic ? "public" : "authenticated"
+        });
 
-        if (!isPublic && activeUserId) {
-            // Hydrate only the active module first. Cross-domain services must
-            // never block the application shell from rendering.
+        // Critical rendering rule: the visible application must be painted
+        // before any Supabase/network hydration. A slow or failed database
+        // request must never leave the user with only header + navigation.
+        appRoot.dataset.access = isPublic ? "public" : "authenticated";
+        initializeApplicationShell();
+        authRoot.hidden = true;
+        applicationShell.hidden = false;
+
+        if (isPublic) {
+            await renderModule(route, session);
+            return;
+        }
+
+        // Paint a safe authenticated shell immediately.
+        if (route === "finance") {
+            renderFinance(moduleContent, (action) => openRegistrationModal(action), null);
+        } else if (route === "health") {
+            renderPreviewModule("health");
+        } else if (route === "development") {
+            renderPreviewModule("development");
+        } else if (route === "profile") {
+            renderPreviewModule("profile");
+        } else {
+            renderFinance(moduleContent, (action) => openRegistrationModal(action), null);
+        }
+
+        if (!activeUserId) {
+            return;
+        }
+
+        try {
+            let financeApplication = null;
+            let healthApplication = null;
+            let developmentApplication = null;
+            let lifeSystemApplication = null;
+
             if (route === "finance") {
                 financeApplication = await application.finance.createApplicationForUser(activeUserId);
             } else if (route === "health") {
@@ -438,29 +463,26 @@ function startWeb() {
             }
 
             if (renderId !== null && renderId !== routeRenderSequence) {
-                trace("web-shell", "shell.render.stale-after-memory", {
-                    route,
-                    renderId,
-                    latestRenderId: routeRenderSequence
-                });
                 return;
             }
 
+            await renderModule(
+                route,
+                session,
+                financeApplication,
+                healthApplication,
+                developmentApplication,
+                lifeSystemApplication
+            );
+        } catch (error) {
+            trace("web-shell", "module.hydration.error", {
+                route,
+                error: error?.message || "unknown"
+            });
+
+            // Keep the already-painted module visible. Do not collapse the
+            // application back to an empty shell because persistence failed.
         }
-
-        trace("web-shell", "render", {
-            route,
-            access: isPublic ? "public" : "authenticated",
-            sessionState
-        });
-        appRoot.dataset.access = isPublic ? "public" : "authenticated";
-
-        initializeApplicationShell();
-
-        authRoot.hidden = true;
-        applicationShell.hidden = false;
-
-        await renderModule(route, session, financeApplication, healthApplication, developmentApplication, lifeSystemApplication);
     }
 
     async function renderRoute() {
