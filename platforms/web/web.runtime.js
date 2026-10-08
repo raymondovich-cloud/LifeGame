@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.1
+// platforms/web/web.runtime.js — Version 5.2
 
 import {
     trace,
@@ -154,7 +154,7 @@ export async function startWeb() {
         authRoot.hidden = true;
     }
 
-    function openRegistrationModal(pendingAction = null) {
+    async function openRegistrationModal(pendingAction = null) {
         const originRoute = getCurrentApplicationRoute();
         closeRegistrationModal();
         authRoot.hidden = false;
@@ -197,7 +197,7 @@ export async function startWeb() {
         });
     }
 
-    function openLoginModal(pendingAction = null) {
+    async function openLoginModal(pendingAction = null) {
         const originRoute = getCurrentApplicationRoute();
         closeRegistrationModal();
         authRoot.hidden = false;
@@ -249,11 +249,17 @@ export async function startWeb() {
         const module = modules[moduleId];
 
         if (!module) {
-            renderFinance(
-                moduleContent,
-                null,
-                (action) => openRegistrationModal(action)
-            );
+            getPresentation("finance").then(({ renderFinance }) => {
+                renderFinance(
+                    moduleContent,
+                    null,
+                    (action) => openRegistrationModal(action)
+                );
+            }).catch((error) => {
+                trace("web-shell", "preview.finance.error", {
+                    error: error?.message || "unknown"
+                });
+            });
             return;
         }
 
@@ -462,6 +468,7 @@ export async function startWeb() {
 
         // Paint a safe authenticated shell immediately.
         if (route === "finance") {
+            const { renderFinance } = await getPresentation("finance");
             renderFinance(moduleContent, (action) => openRegistrationModal(action), null);
         } else if (route === "health") {
             renderPreviewModule("health");
@@ -470,6 +477,7 @@ export async function startWeb() {
         } else if (route === "profile") {
             renderPreviewModule("profile");
         } else {
+            const { renderFinance } = await getPresentation("finance");
             renderFinance(moduleContent, (action) => openRegistrationModal(action), null);
         }
 
