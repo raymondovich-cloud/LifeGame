@@ -1,4 +1,5 @@
 // source/presentation/health/health.js — Version 2.0
+// source/presentation/health/health.js — Version 2.1
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -59,6 +60,7 @@ function renderFactor(factor, data) {
 const HEALTH_DATA_SECTIONS = Object.freeze([
     {
         key: "recovery",
+        number: "01",
         info: "Показатели сна и субъективного восстановления, которые используются для оценки качества восстановления организма.",
         label: "Восстановление",
         description: "Сон и субъективное восстановление.",
@@ -69,6 +71,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "activity",
+        number: "02",
         info: "Повседневная двигательная активность: шаги и активные минуты за неделю.",
         label: "Активность",
         description: "Повседневное движение и активность.",
@@ -79,6 +82,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "training",
+        number: "03",
         info: "Факт тренировки и её длительность. Эти данные используются для оценки регулярности тренировочной нагрузки.",
         label: "Тренировки",
         description: "Тренировочная нагрузка. Детальный расчёт нагрузки будет подключён следующим этапом.",
@@ -89,6 +93,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "nutrition",
+        number: "04",
         info: "Субъективная оценка качества питания. Используется как ручной показатель до подключения дополнительных источников данных.",
         label: "Питание",
         description: "Субъективная оценка качества питания.",
@@ -98,6 +103,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "lifestyle",
+        number: "05",
         info: "Субъективные показатели стресса, настроения и самочувствия, отражающие текущее состояние образа жизни.",
         label: "Образ жизни",
         description: "Стресс, настроение и субъективное самочувствие.",
@@ -109,6 +115,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "body",
+        number: "06",
         info: "Телесные показатели будут подключены после завершения слоя нормализации Body.",
         label: "Состояние тела",
         description: "Телесные показатели будут подключены к расчёту Body после завершения соответствующего слоя нормализации.",
@@ -277,13 +284,14 @@ function createFactForm(application, onSaved, container, onAnalyticsBack) {
 
         const summary = createElement("summary", "health-data-category__summary");
 
+        const sectionNumber = createElement("span", "accordion-index", section.number);
         const summaryCopy = createElement("span", "health-data-category__copy");
         summaryCopy.append(
             createElement("strong", "", section.label),
             createElement("span", "", section.description)
         );
 
-        summary.appendChild(summaryCopy);
+        summary.append(sectionNumber, summaryCopy);
 
         const infoTooltip = createInfoTooltip({
             label: "Информация: " + section.label,
