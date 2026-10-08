@@ -25,8 +25,8 @@
 
 ## Версия
 
-platforms/web/web.runtime.js — Version 5.5
+platforms/web/web.runtime.js — Version 5.6
 
 ## Статус
 
-Готово к проверке в браузере.
+Дополнительно исправлено: ошибка проверки auth не блокирует публичные Finance/Health/Development presentation-маршруты.\n\nГотово к проверке в браузере.
