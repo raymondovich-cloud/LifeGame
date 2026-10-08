@@ -1,4 +1,4 @@
-// source/presentation/health/section.analytics.js — Version 1.0
+// source/presentation/health/section.analytics.js — Version 1.1
 // Responsibility: render block-level Health analytics.
 
 const PERIODS=Object.freeze([["week","Неделя"],["month","Месяц"],["year","Год"],["custom","Период"]]);
@@ -32,13 +32,28 @@ function renderHealthAnalyticsScreen(root,healthAnalytics,section,onBack) {
     const periods=document.createElement("div"); periods.className="health-analytics-periods";
     const content=document.createElement("div"); content.className="health-analytics-content";
 
+    const renderError=(error)=>{
+        content.replaceChildren();
+        const empty=document.createElement("p");
+        empty.className="health-analytics-empty";
+        empty.textContent=error?.message||"Не удалось загрузить аналитику.";
+        content.appendChild(empty);
+    };
+
     const render=async(period,customRange=null)=>{
         periods.querySelectorAll("button").forEach((button)=>button.classList.toggle("is-active",button.dataset.period===period));
-        const range=customRange||healthAnalytics.getHealthAnalyticsRange(period);
-        const analytics=await healthAnalytics.getHealthAnalytics(section.key,range);
         content.replaceChildren();
+        const loading=document.createElement("p");
+        loading.className="health-analytics-empty";
+        loading.textContent="Загрузка аналитики…";
+        content.appendChild(loading);
 
-        const overview=document.createElement("section"); overview.className="health-analytics-overview";
+        try {
+            const range=customRange||healthAnalytics.getHealthAnalyticsRange(period);
+            const analytics=await healthAnalytics.getHealthAnalytics(section.key,range);
+            content.replaceChildren();
+
+            const overview=document.createElement("section"); overview.className="health-analytics-overview";
         const overviewLabel=document.createElement("span"); overviewLabel.className="statistics-meta"; overviewLabel.textContent="ДАННЫЕ ЗА ПЕРИОД";
         const overviewValue=document.createElement("strong"); overviewValue.className="health-analytics-overview-value";
         overviewValue.textContent=analytics.observations+" "+(analytics.observations===1?"наблюдение":"наблюдений");
@@ -58,7 +73,17 @@ function renderHealthAnalyticsScreen(root,healthAnalytics,section,onBack) {
             empty.textContent="Показатели для этой аналитики будут подключены после завершения Body.";
             metrics.appendChild(empty);
         }
-        content.appendChild(metrics);
+            content.appendChild(metrics);
+
+            if (analytics.observations === 0) {
+                const empty=document.createElement("p");
+                empty.className="health-analytics-empty";
+                empty.textContent="За выбранный период данных пока нет.";
+                content.appendChild(empty);
+            }
+        } catch (error) {
+            renderError(error);
+        }
     };
 
     PERIODS.forEach(([id,label])=>{
@@ -82,6 +107,6 @@ function renderHealthAnalyticsScreen(root,healthAnalytics,section,onBack) {
     });
 
     frame.append(header,periods,content); page.append(back,frame); root.appendChild(page);
-    render("month");
+    void render("month");
 }
 export {renderHealthAnalyticsScreen};
