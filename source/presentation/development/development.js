@@ -1,4 +1,4 @@
-// source/presentation/development/development.js — Version 1.1
+// source/presentation/development/development.js — Version 1.2
 const FACTORS=Object.freeze([
  {key:"direction",label:"Направление",description:"Ясность курса и актуальность приоритетов.",metrics:[["clarity","Ясность"],["priority","Приоритет"],["review","Актуальность"]]},
  {key:"goals",label:"Цели",description:"Качество целей, прогресс и состояние сроков.",metrics:[["quality","Качество целей"],["progress","Прогресс"],["deadlineHealth","Состояние сроков"],["prioritization","Приоритизация"]]},
@@ -187,17 +187,28 @@ async function renderDevelopment(container,application,lifeSystemApplication=nul
   el("p","","Один контур для направления, целей, роста, действий и устойчивого темпа.")
  );
 
- const hero=el("section","development-index");
- hero.append(el("span","finance-section-meta","DEVELOPMENT HEALTH"));
- const value=el("div","development-index__value","—");
- const status=el("div","development-index__status","Недостаточно данных");
- hero.append(value,status,el("p","development-index__description","Индекс строится из пяти факторов и актуальных данных за последние 28 дней."));
+ const hero=el("section","finance-health");
+ const heroHeader=el("div","finance-health-header");
+ heroHeader.append(el("span","finance-section-meta","DEVELOPMENT HEALTH"));
+ const diagnosisAction=document.createElement("button");
+ diagnosisAction.type="button";diagnosisAction.className="finance-text-action";diagnosisAction.textContent="Показать диагностику →";
+ heroHeader.appendChild(diagnosisAction);
+ hero.appendChild(heroHeader);
+ const valueRow=el("div","finance-health-value-row");
+ const value=el("div","finance-health-value","—");
+ const suffix=el("span","finance-health-suffix","/100");
+ valueRow.append(value,suffix);
+ const status=el("div","finance-health-category","Недостаточно данных");
+ const diagnostics=el("div","finance-health-diagnostics"); diagnostics.hidden=true;
+ diagnosticsAction=diagnosisAction;
+ diagnosticsAction.addEventListener("click",()=>{diagnostics.hidden=!diagnostics.hidden;diagnosticsAction.textContent=diagnostics.hidden?"Показать диагностику →":"Скрыть диагностику ↑";});
+ hero.append(valueRow,status,el("p","finance-health-description","Индекс строится из пяти факторов и актуальных данных за последние 28 дней."),diagnostics);
  
- const factors=el("section","development-factors");
- factors.append(el("span","finance-section-meta","SYSTEM FACTORS"));
- const list=el("div","development-factors__list");factors.appendChild(list);
+ const factors=el("section","finance-structure");
+ factors.append(el("div","finance-block-heading"),el("span","finance-section-meta","SYSTEM FACTORS"));
+ const list=el("div","finance-structure-list");factors.appendChild(list);
 
- const diagnosis=el("section","development-diagnostics");
+ const diagnosis=el("section","finance-capital");
  diagnosis.append(el("span","finance-section-meta","DIAGNOSIS"));
 
  const data=el("section","finance-data-entry");
@@ -220,14 +231,30 @@ async function renderDevelopment(container,application,lifeSystemApplication=nul
  value.textContent=result.index.value===null?"—":score(result.index.value);
  status.textContent=result.index.category?.label||"Недостаточно данных";
 
- FACTORS.forEach(factor=>list.appendChild(renderFactor(factor,result.index.factors?.[factor.key])));
+ FACTORS.forEach(factor=>{
+  const factorData=result.index.factors?.[factor.key];
+  const row=el("div","finance-structure-row");
+  const main=el("div","finance-structure-main");
+  main.append(el("span","finance-structure-label",String(FACTORS.indexOf(factor)+1).padStart(2,"0")),el("span","finance-structure-title",factor.label));
+  const trailing=el("div","finance-structure-trailing");
+  trailing.append(el("strong","",Number.isFinite(Number(factorData?.score))?score(factorData.score)+"/100":"—"));
+  row.append(main,trailing); list.appendChild(row);
+ });
+ const diagMessage=diagnosis.querySelector(".finance-capital-caption");
+ if(diagMessage) diagMessage.textContent=result.diagnosis?.message||"Недостаточно данных.";
 
  const primary=result.diagnosis?.primaryConstraint;
  diagnosis.append(
-  el("h3","",primary?"Главный ограничитель":"Состояние системы"),
-  el("p","",result.diagnosis?.message||"Недостаточно данных."),
-  el("div","development-diagnostics__meta",primary?primary.label+" · "+score(primary.score)+"/100":"Данные ещё формируются")
+  el("div","finance-block-heading"),
+  el("span","finance-section-meta","DIAGNOSIS"),
+  el("h3","finance-capital-value",primary?primary.label:"Состояние системы"),
+  el("p","finance-capital-caption",result.diagnosis?.message||"Недостаточно данных."),
+  el("div","finance-capital-split")
  );
+ const diagnosisMeta=diagnosis.querySelector(".finance-capital-split");
+ diagnosisMeta.appendChild(el("div","finance-capital-split-item"));
+ const diagnosisItem=diagnosisMeta.firstChild;
+ diagnosisItem.append(el("span","",primary?"ОЦЕНКА ОГРАНИЧИТЕЛЯ":"СТАТУС"),el("strong","",primary?score(primary.score)+"/100":"Данные формируются"));
 
  if(system)page.appendChild(createSystemContext(system));
 }
