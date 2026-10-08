@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 1.5 */
+/* source/design/patterns/health.css — Version 1.6 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -178,7 +178,7 @@
     position:relative;
     z-index:1;
     display:grid;
-    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-columns:minmax(0,1fr) auto auto;
     align-items:center;
     gap:var(--space-3);
     min-height:3.5rem;
@@ -311,9 +311,31 @@
 .health-analytics-custom label{display:grid;gap:var(--space-1);color:var(--color-gray);font-size:var(--font-size-xs);letter-spacing:var(--letter-spacing-wide);text-transform:uppercase}
 .health-analytics-custom input{width:100%;min-height:2.75rem;box-sizing:border-box;padding:0 var(--space-3);border:var(--border-subtle);border-radius:var(--radius-sm);background:transparent;color:var(--color-white);font:inherit}
 .health-analytics-custom .button-control{grid-column:1 / -1;width:max-content;min-width:12rem}
-.health-data-category__analytics{width:max-content;margin-top:var(--space-3);padding-left:0;padding-right:0}
+.health-data-category__analytics{
+    width:max-content;
+    margin:0;
+    padding:0;
+    min-height:auto;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    color:var(--color-gray);
+    font-size:var(--font-size-2xs);
+    font-weight:var(--font-weight-medium);
+    letter-spacing:var(--letter-spacing-wide);
+    text-transform:uppercase;
+    white-space:nowrap;
+    justify-self:end;
+    align-self:center;
+}
+.health-data-category__analytics:hover,
+.health-data-category__analytics:focus-visible{
+    color:var(--color-white);
+    background:transparent;
+    box-shadow:none;
+}
 @media (max-width:719px){
     .health-analytics-custom{grid-template-columns:1fr}
     .health-analytics-custom .button-control{width:100%}
-    .health-data-category__analytics{width:100%;justify-content:flex-start}
+    .health-data-category__analytics{width:max-content;justify-content:flex-end}
 }
