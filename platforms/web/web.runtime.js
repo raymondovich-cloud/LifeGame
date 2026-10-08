@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.5
+// platforms/web/web.runtime.js — Version 5.6
 
 import {
     trace,
@@ -617,6 +617,25 @@ export async function startWeb() {
                 renderId
             );
         } catch (error) {
+            // Public module routes must remain available even when the
+            // authentication check itself fails. Auth verification is not a
+            // prerequisite for presentation-only Health/Development/Finance.
+            if (!authenticationEstablished && isPublicModule(requestedRoute)) {
+                sessionState = "unauthenticated";
+                publicMode = true;
+                trace("web-shell", "route.public-auth-check-error", {
+                    requestedRoute,
+                    error: error?.message || "unknown"
+                });
+                await renderApplicationShell(
+                    requestedRoute,
+                    true,
+                    null,
+                    renderId
+                );
+                return;
+            }
+
             if (renderId !== routeRenderSequence) {
                 trace("web-shell", "route.error.stale", {
                     requestedRoute,
