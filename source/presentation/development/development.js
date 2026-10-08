@@ -1,4 +1,6 @@
-// source/presentation/development/development.js — Version 1.2
+// source/presentation/development/development.js — Version 1.3
+
+import { createInfoTooltip } from "../shared/info.tooltip.js";
 const FACTORS=Object.freeze([
  {key:"direction",label:"Направление",description:"Ясность курса и актуальность приоритетов.",metrics:[["clarity","Ясность"],["priority","Приоритет"],["review","Актуальность"]]},
  {key:"goals",label:"Цели",description:"Качество целей, прогресс и состояние сроков.",metrics:[["quality","Качество целей"],["progress","Прогресс"],["deadlineHealth","Состояние сроков"],["prioritization","Приоритизация"]]},
@@ -96,83 +98,92 @@ function createSystemContext(result){
 
 function createDataScreen(application,container,onBack){
  container.replaceChildren();
- const page=el("section","finance-workspace development-data-screen");
+ const page=el("section","finance-workspace finance-data-screen development-data-screen");
+ page.setAttribute("aria-label","Development data");
+
+ const intro=el("header","finance-workspace-header");
+ intro.append(el("span","finance-section-meta","DEVELOPMENT"),el("h2","","Данные развития"),el("p","","Фиксируйте текущее состояние пяти областей. Система использует последние данные за 28 дней."));
  const back=document.createElement("button");
  back.type="button";back.className="finance-text-action";back.textContent="← Development";back.addEventListener("click",onBack);
- const header=el("header","finance-workspace-header");
- header.append(
-  el("span","finance-section-meta","DEVELOPMENT DATA"),
-  el("h2","","Данные развития"),
-  el("p","","Пять независимых областей. Каждая запись сохраняется с датой и участвует в 28-дневном контуре.")
- );
- const groups=el("div","development-data-groups");
+ const backNavigation=el("div","finance-data-back");backNavigation.appendChild(back);
+ page.append(backNavigation,intro);
+
+ const list=el("div","accordion-list finance-data-accordion development-data-accordion");
 
  FACTORS.forEach((factor,index)=>{
-  const details=document.createElement("details");
-  details.className="development-data-group";
-  if(index===0)details.open=true;
+  const article=document.createElement("article");
+  article.className="accordion-item finance-subblock development-data-subblock";
+  article.dataset.subblock=factor.key;
 
-  const summary=document.createElement("summary");
-  summary.className="development-data-group__summary";
-  summary.append(
-   el("span","accordion-index",String(index+1).padStart(2,"0")),
-   el("span","development-data-group__copy",factor.label)
-  );
-  details.appendChild(summary);
+  const trigger=document.createElement("button");
+  trigger.type="button";trigger.className="accordion-trigger";trigger.setAttribute("aria-expanded","false");
+  trigger.innerHTML='<span class="accordion-index">'+String(index+1).padStart(2,"0")+"</span><span class=\"accordion-title-group\"><span class=\"accordion-title\">"+factor.label+"</span><span class=\"accordion-description\">"+factor.description+"</span></span>";
 
-  const body=el("div","development-data-group__body");
-  body.appendChild(el("p","development-data-group__description",factor.description));
-  const grid=el("div","development-data-group__grid");
+  const header=el("div","accordion-header");
+  header.append(trigger,createInfoTooltip({label:"Информация: "+factor.label,text:factor.description}));
+
+  const content=el("div","accordion-content");
+  content.hidden=true;
+  const state=el("div","development-data-state");
+  const form=el("div","development-data-form");
   const inputs=new Map();
+  const records=el("div","development-data-records");
 
-  const currentFacts=application.listFacts?application.listFacts(factor.key):Promise.resolve([]);
-  Promise.resolve(currentFacts).then(facts=>{
-   const latest=facts?.[0]||{};
-   for(const [key] of factor.metrics){
-    const input=inputs.get(key);
-    if(input&&Number.isFinite(Number(latest[key])))input.value=String(latest[key]);
+  function renderState(facts){
+   records.replaceChildren();
+   const latest=facts?.[0];
+   if(!latest){
+    state.textContent="Данных пока нет";
+    return;
    }
-  });
-
+   state.textContent="Последняя запись · "+new Date(Number(latest.recordedAt)).toLocaleDateString("ru-RU");
+   const row=el("div","development-data-record");
+   const values=factor.metrics.map(([key,label])=>latest[key]===undefined?null:[label,latest[key]]).filter(Boolean);
+   row.append(...values.map(([label,value])=>el("span","",label+": "+value)));
+   const actions=el("div","development-data-record-actions");
+   const edit=document.createElement("button");edit.type="button";edit.className="finance-text-action";edit.textContent="Изменить";
+   edit.addEventListener("click",()=>{for(const[key] of factor.metrics){if(inputs.has(key))inputs.get(key).value=latest[key]??"";} form.dataset.editingId=latest.id; form.scrollIntoView({behavior:"smooth",block:"nearest"});});
+   const remove=document.createElement("button");remove.type="button";remove.className="finance-text-action";remove.textContent="Удалить";
+   remove.addEventListener("click",async()=>{if(!application.deleteFact)return;remove.disabled=true;try{await application.deleteFact(factor.key,latest.id);renderRecords();clearForm();}catch(error){state.textContent=error?.message||"Не удалось удалить запись.";}finally{remove.disabled=false;}});
+   actions.append(edit,remove);row.appendChild(actions);records.appendChild(row);
+  }
+  async function renderRecords(){try{renderState(await application.listFacts(factor.key));}catch(error){state.textContent=error?.message||"Не удалось загрузить данные.";}}
+  function clearForm(){for(const input of inputs.values())input.value="";delete form.dataset.editingId;}
   factor.metrics.forEach(([key,label])=>{
-   const labelNode=el("label","development-data-field");
-   labelNode.appendChild(el("span","development-data-field__label",label));
-   const input=document.createElement("input");
-   input.type="number";input.min="0";input.max="100";input.step="1";input.inputMode="numeric";
-   input.className="input-control";input.placeholder="0–100";inputs.set(key,input);
-   labelNode.appendChild(input);grid.appendChild(labelNode);
+   const field=el("label","development-data-field");
+   field.appendChild(el("span","development-data-field__label",label));
+   const input=document.createElement("input");input.type="number";input.min="0";input.max="100";input.step="1";input.inputMode="numeric";input.className="input-control";input.placeholder="0–100";
+   inputs.set(key,input);field.appendChild(input);form.appendChild(field);
   });
-
-  const save=document.createElement("button");
-  save.type="button";save.className="button-control";save.textContent="Сохранить";
-  const status=el("p","development-data-status");
-
+  const controls=el("div","development-data-form-actions");
+  const save=document.createElement("button");save.type="button";save.className="button-control";save.textContent="Сохранить";
+  const cancel=document.createElement("button");cancel.type="button";cancel.className="finance-text-action";cancel.textContent="Очистить";
+  const message=el("p","development-data-status");
+  cancel.addEventListener("click",clearForm);
   save.addEventListener("click",async()=>{
-   save.disabled=true;status.textContent="Сохраняем…";
+   save.disabled=true;message.textContent="Сохраняем…";
    try{
     const payload={};
-    for(const [key,input] of inputs){
-     if(input.value.trim()!==""){
-      const value=Number(input.value);
-      if(!Number.isFinite(value)||value<0||value>100)throw new Error("Каждый показатель должен быть от 0 до 100.");
-      payload[key]=value;
-     }
-    }
+    for(const[key,input] of inputs){if(input.value.trim()!==""){const value=Number(input.value);if(!Number.isFinite(value)||value<0||value>100)throw new Error("Каждый показатель должен быть от 0 до 100.");payload[key]=value;}}
     if(!Object.keys(payload).length)throw new Error("Добавьте хотя бы один показатель.");
-    await application.recordFact(factor.key,payload);
-    status.textContent="Сохранено. Индекс обновится после следующего расчёта.";
-   }catch(error){
-    status.textContent=error?.message||"Не удалось сохранить данные.";
-   }finally{save.disabled=false;}
+    const editingId=form.dataset.editingId;
+    if(editingId)await application.updateFact(factor.key,editingId,payload);else await application.recordFact(factor.key,payload);
+    clearForm();message.textContent=editingId?"Изменения сохранены.":"Данные добавлены.";await renderRecords();
+   }catch(error){message.textContent=error?.message||"Не удалось сохранить данные.";}finally{save.disabled=false;}
   });
-
-  body.append(grid,save,status);
-  details.appendChild(body);
-  groups.appendChild(details);
+  const formTitle=el("span","finance-section-meta","НОВАЯ ЗАПИСЬ");
+  controls.append(save,cancel);
+  form.append(formTitle,controls,message);
+  content.append(state,records,form);
+  article.append(header,content);
+  trigger.addEventListener("click",async()=>{
+   const open=trigger.getAttribute("aria-expanded")!=="true";
+   trigger.setAttribute("aria-expanded",String(open));article.classList.toggle("is-open",open);content.hidden=!open;
+   if(open)await renderRecords();
+  });
+  list.appendChild(article);
  });
-
- page.append(back,header,groups);
- container.appendChild(page);
+ page.appendChild(list);container.appendChild(page);
 }
 
 async function renderDevelopment(container,application,lifeSystemApplication=null){
