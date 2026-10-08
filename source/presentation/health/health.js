@@ -1,4 +1,3 @@
-// source/presentation/health/health.js — Version 2.0
 // source/presentation/health/health.js — Version 2.1
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
