@@ -1,4 +1,4 @@
-// source/presentation/health/section.analytics.js — Version 1.2
+// source/presentation/health/section.analytics.js — Version 1.3
 // Responsibility: render block-level Health analytics.
 
 const PERIODS=Object.freeze([["week","Неделя"],["month","Месяц"],["year","Год"],["custom","Период"]]);
@@ -51,6 +51,9 @@ function renderHealthAnalyticsScreen(root,healthAnalytics,section,onBack) {
         try {
             const range=customRange||healthAnalytics.getHealthAnalyticsRange(period);
             const analytics=await healthAnalytics.getHealthAnalytics(section.key,range);
+            if (!analytics || typeof analytics !== "object") {
+                throw new Error("LifeGame Health Analytics: analytics result is invalid.");
+            }
             content.replaceChildren();
 
             const overview=document.createElement("section"); overview.className="health-analytics-overview";
@@ -107,6 +110,12 @@ function renderHealthAnalyticsScreen(root,healthAnalytics,section,onBack) {
     });
 
     frame.append(header,periods,content); page.append(back,frame); root.appendChild(page);
-    void render("month");
+    // Render the shell synchronously first; data loading must never prevent
+    // the analytics interface from appearing.
+    try {
+        void render("month");
+    } catch (error) {
+        renderError(error);
+    }
 }
 export {renderHealthAnalyticsScreen};
