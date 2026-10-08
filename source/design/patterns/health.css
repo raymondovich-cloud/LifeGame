@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 1.3 */
+/* source/design/patterns/health.css — Version 1.5 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -280,4 +280,40 @@
     .health-data-category-fields{grid-template-columns:1fr}
     .health-data-category__summary,
     .health-data-category__content{padding-left:var(--space-4);padding-right:var(--space-4)}
+}
+
+
+/* Health analytics — block-level analytics surface aligned with Finance analytics. */
+.health-analytics-screen{display:grid;gap:var(--space-2)}
+.health-analytics-back{justify-self:start;margin:0;padding:0;min-height:auto;border:0;background:transparent;color:var(--color-gray-dark);font-size:var(--font-size-xs);font-weight:var(--font-weight-medium);letter-spacing:var(--letter-spacing-wide)}
+.health-analytics-back:hover,.health-analytics-back:focus-visible{color:var(--color-white-soft)}
+.health-analytics-frame{position:relative;display:grid;gap:0;overflow:hidden;background:var(--gradient-card-premium);border:1px solid transparent;border-radius:var(--radius-card);box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22)}
+.health-analytics-frame::after{position:absolute;inset:0;padding:1px;pointer-events:none;content:"";background:linear-gradient(135deg,rgba(242,138,46,.42) 0%,rgba(5,5,5,.92) 42%,rgba(242,138,46,.24) 100%);border-radius:inherit;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.health-analytics-frame::before{position:absolute;top:0;left:8%;right:8%;height:1px;pointer-events:none;content:"";background:var(--gradient-accent-line);opacity:.38}
+.health-analytics-header,.health-analytics-periods,.health-analytics-content{position:relative;z-index:1}
+.health-analytics-header{display:grid;gap:var(--space-2);padding:var(--space-4);border-bottom:var(--border-subtle)}
+.health-analytics-title{margin:0;color:var(--color-white);font-size:var(--font-size-section);font-weight:var(--font-weight-semibold);line-height:var(--line-height-snug)}
+.health-analytics-description{max-width:34rem;margin:0;color:var(--color-gray);font-size:var(--font-size-sm);line-height:var(--line-height-normal)}
+.health-analytics-periods{display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-4);overflow-x:auto;border-bottom:var(--border-subtle)}
+.health-analytics-period{position:relative;width:auto;min-width:max-content;min-height:2.25rem;margin:0;padding:0 0 var(--space-2);border:0;border-radius:0;background:transparent;box-shadow:none;color:var(--color-gray-dark);font-size:var(--font-size-xs);font-weight:var(--font-weight-medium);letter-spacing:var(--letter-spacing-wide)}
+.health-analytics-period:hover,.health-analytics-period:focus-visible{color:var(--color-white-soft);background:transparent;box-shadow:none}
+.health-analytics-period.is-active{color:var(--color-white)}
+.health-analytics-period.is-active::after{position:absolute;right:0;bottom:0;left:0;height:1px;content:"";background:var(--color-accent)}
+.health-analytics-content{display:grid;gap:0;padding:0 var(--space-4) var(--space-5)}
+.health-analytics-overview{display:grid;gap:var(--space-2);padding:var(--space-5) 0;border-top:var(--border-subtle)}
+.health-analytics-overview-value{color:var(--color-white);font-family:var(--font-family-mono);font-size:clamp(2.5rem,12vw,4rem);font-weight:var(--font-weight-semibold);letter-spacing:-.065em;line-height:.92}
+.health-analytics-date{color:var(--color-gray-dark);font-size:var(--font-size-2xs)}
+.health-analytics-metrics{display:grid;gap:0;border-top:var(--border-subtle)}
+.health-analytics-metric{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);min-height:3.25rem;padding:var(--space-3) 0;border-bottom:var(--border-subtle);color:var(--color-white-soft);font-size:var(--font-size-sm)}
+.health-analytics-metric strong{color:var(--color-white);font-family:var(--font-family-mono);font-size:var(--font-size-sm);font-weight:var(--font-weight-medium);text-align:right}
+.health-analytics-empty{margin:0;padding:var(--space-4) 0;color:var(--color-gray);font-size:var(--font-size-sm);line-height:var(--line-height-normal)}
+.health-analytics-custom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);padding:var(--space-3) 0 var(--space-4)}
+.health-analytics-custom label{display:grid;gap:var(--space-1);color:var(--color-gray);font-size:var(--font-size-xs);letter-spacing:var(--letter-spacing-wide);text-transform:uppercase}
+.health-analytics-custom input{width:100%;min-height:2.75rem;box-sizing:border-box;padding:0 var(--space-3);border:var(--border-subtle);border-radius:var(--radius-sm);background:transparent;color:var(--color-white);font:inherit}
+.health-analytics-custom .button-control{grid-column:1 / -1;width:max-content;min-width:12rem}
+.health-data-category__analytics{width:max-content;margin-top:var(--space-3);padding-left:0;padding-right:0}
+@media (max-width:719px){
+    .health-analytics-custom{grid-template-columns:1fr}
+    .health-analytics-custom .button-control{width:100%}
+    .health-data-category__analytics{width:100%;justify-content:flex-start}
 }
