@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 1.4
+// source/presentation/health/health.js — Version 1.5
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 const FACTOR_LABELS = Object.freeze({
@@ -114,6 +114,7 @@ function createCategoryFields(section, inputs) {
         field.appendChild(createElement("span", "health-input__label", label));
 
         const input = document.createElement("input");
+        input.className = "input-control";
         input.type = name === "workout" ? "checkbox" : "number";
         input.name = name;
         input.placeholder = placeholder;
