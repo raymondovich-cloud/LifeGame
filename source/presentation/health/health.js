@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 1.8
+// source/presentation/health/health.js — Version 1.9
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -236,7 +236,9 @@ function createAnalyticsAction(container, healthApplication, section, onBack) {
     action.className = "finance-text-action health-data-category__analytics";
     action.textContent = "Аналитика →";
 
-    action.addEventListener("click", () => {
+    action.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         const healthAnalytics = createHealthAnalytics({ healthApplication });
         renderHealthAnalyticsScreen(
             container,
@@ -288,6 +290,16 @@ function createFactForm(application, onSaved, container, onAnalyticsBack) {
 
         const content = createElement("div", "health-data-category__content");
 
+        const analyticsAction = createAnalyticsAction(
+            container,
+            application,
+            section,
+            onAnalyticsBack
+        );
+        const analyticsRow = createElement("div", "health-data-category__analytics-row");
+        analyticsRow.appendChild(analyticsAction);
+        content.appendChild(analyticsRow);
+
         if (section.fields.length) {
             content.appendChild(
                 createCategoryFactForm(application, section, onSaved)
@@ -301,16 +313,6 @@ function createFactForm(application, onSaved, container, onAnalyticsBack) {
                 )
             );
         }
-
-        const analyticsAction = createAnalyticsAction(
-            container,
-            application,
-            section,
-            onAnalyticsBack
-        );
-        const analyticsRow = createElement("div", "health-data-category__analytics-row");
-        analyticsRow.appendChild(analyticsAction);
-        content.appendChild(analyticsRow);
 
         details.appendChild(content);
         categories.appendChild(details);
