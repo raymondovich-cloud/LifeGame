@@ -1,53 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- platforms/web/icons/icon.svg — Version 1.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">LifeGame</title>
-  <desc id="desc">LifeGame premium gold triangular emblem enclosed by a circular ring.</desc>
-  <defs>
-    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fff36a"/>
-      <stop offset="38%" stop-color="#ffc21a"/>
-      <stop offset="72%" stop-color="#ff8a00"/>
-      <stop offset="100%" stop-color="#ffd83d"/>
-    </linearGradient>
-    <linearGradient id="edge" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffec57"/>
-      <stop offset="50%" stop-color="#ff9a00"/>
-      <stop offset="100%" stop-color="#ffcf25"/>
-    </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="9" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="18"/>
-    </filter>
-    <radialGradient id="bg">
-      <stop offset="0%" stop-color="#17120b"/>
-      <stop offset="62%" stop-color="#090807"/>
-      <stop offset="100%" stop-color="#020202"/>
-    </radialGradient>
-  </defs>
-
-  <rect width="1024" height="1024" rx="190" fill="url(#bg)"/>
-  <rect x="118" y="118" width="788" height="788" rx="155" fill="none" stroke="url(#edge)" stroke-width="8" opacity=".8" filter="url(#soft)"/>
-  <rect x="118" y="118" width="788" height="788" rx="155" fill="none" stroke="url(#edge)" stroke-width="4"/>
-
-  <circle cx="512" cy="512" r="330" fill="none" stroke="url(#gold)" stroke-width="22" opacity=".92" filter="url(#glow)"/>
-  <circle cx="512" cy="512" r="330" fill="none" stroke="#ffad13" stroke-width="5"/>
-
-  <g fill="url(#gold)" stroke="#ffb21a" stroke-width="3" stroke-linejoin="round" filter="url(#glow)">
-    <path d="M512 160 L595 303 L855 710 L756 710 L512 365 L268 710 L169 710 L429 303 Z"/>
-    <path d="M169 720 L855 720 L806 805 L218 805 Z"/>
-  </g>
-
-  <g fill="#050505" stroke="#ff9d00" stroke-width="4" stroke-linejoin="round">
-    <path d="M512 205 L573 313 L792 678 L744 678 L512 340 L280 678 L232 678 L451 313 Z"/>
-    <path d="M232 720 L792 720 L760 775 L264 775 Z"/>
-  </g>
-
-  <text x="512" y="665" text-anchor="middle"
-        font-family="Inter, SF Pro Display, Arial, sans-serif"
-        font-size="88" font-weight="700" letter-spacing="-3"
-        fill="url(#gold)">LifeGame</text>
+<title id="title">LifeGame</title><desc id="desc">LifeGame premium gold triangular emblem enclosed by a circular ring.</desc>
+<defs>
+<linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff36a"/><stop offset="38%" stop-color="#ffc21a"/><stop offset="72%" stop-color="#ff8a00"/><stop offset="100%" stop-color="#ffd83d"/></linearGradient>
+<filter id="glow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="512" cy="512" r="474" fill="none" stroke="url(#gold)" stroke-width="22" opacity=".92" filter="url(#glow)"/>
+<circle cx="512" cy="512" r="474" fill="none" stroke="#ffad13" stroke-width="5"/>
+<g fill="url(#gold)" stroke="#ffb21a" stroke-width="3" stroke-linejoin="round" filter="url(#glow)">
+<path d="M512 120 L595 303 L855 710 L756 710 L512 365 L268 710 L169 710 L429 303 Z"/>
+<path d="M169 720 L855 720 L806 805 L218 805 Z"/>
+</g>
+<g fill="#050505" stroke="#ff9d00" stroke-width="4" stroke-linejoin="round">
+<path d="M512 165 L573 313 L792 678 L744 678 L512 340 L280 678 L232 678 L451 313 Z"/>
+<path d="M232 720 L792 720 L760 775 L264 775 Z"/>
+</g>
+<text x="512" y="665" text-anchor="middle" font-family="Inter, SF Pro Display, Arial, sans-serif" font-size="88" font-weight="700" letter-spacing="-3" fill="url(#gold)">LifeGame</text>
 </svg>
