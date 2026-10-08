@@ -6,12 +6,6 @@ import {
 } from "../../source/core/diagnostics/lifecycle.trace.js";
 
 import { createNavigation } from "../../source/application/navigation/navigation.js";
-import { renderFinance } from "../../source/presentation/finance/finance.js";
-import { renderRegistration } from "../../source/presentation/auth/register.js";
-import { renderLogin } from "../../source/presentation/auth/login.js";
-import { renderProfile } from "../../source/presentation/profile/profile.js";
-import { renderHealth } from "../../source/presentation/health/health.js";
-import { renderDevelopment } from "../../source/presentation/development/development.js";
 import { configureAssetsAnalyticsAccess } from "../../source/application/finance/assets.analytics.access.js";
 
 const APP_ROOT_ID = "app";
@@ -19,6 +13,35 @@ const DEFAULT_APPLICATION_ROUTE = "finance";
 
 export async function startWeb() {
     let application = null;
+    const presentationModulePromises = new Map();
+
+    function loadPresentationModule(name) {
+        if (presentationModulePromises.has(name)) {
+            return presentationModulePromises.get(name);
+        }
+
+        const paths = {
+            finance: "../../source/presentation/finance/finance.js",
+            register: "../../source/presentation/auth/register.js",
+            login: "../../source/presentation/auth/login.js",
+            profile: "../../source/presentation/profile/profile.js",
+            health: "../../source/presentation/health/health.js",
+            development: "../../source/presentation/development/development.js"
+        };
+
+        const path = paths[name];
+        if (!path) {
+            return Promise.reject(new Error("LifeGame Web: unknown presentation module: " + name));
+        }
+
+        const promise = import(path);
+        presentationModulePromises.set(name, promise);
+        return promise;
+    }
+
+    async function getPresentation(name) {
+        return loadPresentationModule(name);
+    }
 
     configureAssetsAnalyticsAccess({
         getEntitlement: () => "free"
@@ -154,6 +177,8 @@ export async function startWeb() {
         modal.appendChild(dialog);
         authRoot.appendChild(modal);
 
+        const { renderRegistration } = await getPresentation("register");
+
         renderRegistration(
             dialog,
             application.auth,
@@ -188,6 +213,8 @@ export async function startWeb() {
 
         modal.appendChild(dialog);
         authRoot.appendChild(modal);
+
+        const { renderLogin } = await getPresentation("login");
 
         renderLogin(
             dialog,
@@ -309,6 +336,7 @@ export async function startWeb() {
         }
 
         if (moduleId === "finance") {
+            const { renderFinance } = await getPresentation("finance");
             renderFinance(
                 moduleContent,
                 publicMode ? (action) => openRegistrationModal(action) : null,
@@ -323,6 +351,7 @@ export async function startWeb() {
                 return;
             }
 
+            const { renderHealth } = await getPresentation("health");
             await renderHealth(moduleContent, healthApplication);
             return;
         }
@@ -332,6 +361,7 @@ export async function startWeb() {
                 renderPreviewModule("development");
                 return;
             }
+            const { renderDevelopment } = await getPresentation("development");
             await renderDevelopment(moduleContent, developmentApplication, lifeSystemApplication);
             return;
         }
@@ -343,6 +373,7 @@ export async function startWeb() {
                 return;
             }
 
+            const { renderProfile } = await getPresentation("profile");
             await renderProfile(moduleContent, session, {
                 profileApplication: application.profile,
                 onLogout: handleLogout
@@ -634,20 +665,26 @@ export async function startWeb() {
                 if (fallbackRoute === "health" || fallbackRoute === "development") {
                     renderPreviewModule(fallbackRoute);
                 } else if (fallbackRoute === "profile") {
-                    renderProfile(moduleContent, null, {
+                    getPresentation("profile").then(({ renderProfile }) => renderProfile(moduleContent, null, {
                         profileApplication: application.profile,
                         onLogout: handleLogout
-                    }).catch((fallbackError) => {
+                    })).catch((fallbackError) => {
                         trace("web-shell", "fallback.profile.error", {
                             error: fallbackError?.message || "unknown"
                         });
                     });
                 } else {
-                    renderFinance(
-                        moduleContent,
-                        (action) => openRegistrationModal(action),
-                        null
-                    );
+                    getPresentation("finance").then(({ renderFinance }) => {
+                        renderFinance(
+                            moduleContent,
+                            (action) => openRegistrationModal(action),
+                            null
+                        );
+                    }).catch((fallbackError) => {
+                        trace("web-shell", "fallback.finance.error", {
+                            error: fallbackError?.message || "unknown"
+                        });
+                    });
                 }
 
                 return;
@@ -697,6 +734,7 @@ export async function startWeb() {
     // screen. Paint the public Finance surface first, then load infrastructure
     // asynchronously. This keeps the UI boot path independent from persistence.
     initializeApplicationShell();
+    const { renderFinance } = await getPresentation("finance");
     renderFinance(
         moduleContent,
         (action) => openRegistrationModal(action),
