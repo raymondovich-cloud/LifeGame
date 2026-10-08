@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 1.8 */
+/* source/design/patterns/health.css — Version 1.9 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -178,7 +178,7 @@
     position:relative;
     z-index:1;
     display:grid;
-    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-columns:auto minmax(0,1fr) auto;
     align-items:center;
     gap:var(--space-3);
     min-height:3.5rem;
