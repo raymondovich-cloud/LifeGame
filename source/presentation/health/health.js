@@ -1,8 +1,9 @@
-// source/presentation/health/health.js — Version 1.9
+// source/presentation/health/health.js — Version 2.0
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
 import { renderHealthAnalyticsScreen } from "./section.analytics.js";
+import { createInfoTooltip } from "../shared/info.tooltip.js";
 
 const FACTOR_LABELS = Object.freeze({
     recovery: "Восстановление",
@@ -58,6 +59,7 @@ function renderFactor(factor, data) {
 const HEALTH_DATA_SECTIONS = Object.freeze([
     {
         key: "recovery",
+        info: "Показатели сна и субъективного восстановления, которые используются для оценки качества восстановления организма.",
         label: "Восстановление",
         description: "Сон и субъективное восстановление.",
         fields: [
@@ -67,6 +69,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "activity",
+        info: "Повседневная двигательная активность: шаги и активные минуты за неделю.",
         label: "Активность",
         description: "Повседневное движение и активность.",
         fields: [
@@ -76,6 +79,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "training",
+        info: "Факт тренировки и её длительность. Эти данные используются для оценки регулярности тренировочной нагрузки.",
         label: "Тренировки",
         description: "Тренировочная нагрузка. Детальный расчёт нагрузки будет подключён следующим этапом.",
         fields: [
@@ -85,6 +89,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "nutrition",
+        info: "Субъективная оценка качества питания. Используется как ручной показатель до подключения дополнительных источников данных.",
         label: "Питание",
         description: "Субъективная оценка качества питания.",
         fields: [
@@ -93,6 +98,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "lifestyle",
+        info: "Субъективные показатели стресса, настроения и самочувствия, отражающие текущее состояние образа жизни.",
         label: "Образ жизни",
         description: "Стресс, настроение и субъективное самочувствие.",
         fields: [
@@ -103,6 +109,7 @@ const HEALTH_DATA_SECTIONS = Object.freeze([
     },
     {
         key: "body",
+        info: "Телесные показатели будут подключены после завершения слоя нормализации Body.",
         label: "Состояние тела",
         description: "Телесные показатели будут подключены к расчёту Body после завершения соответствующего слоя нормализации.",
         fields: []
@@ -277,6 +284,13 @@ function createFactForm(application, onSaved, container, onAnalyticsBack) {
         );
 
         summary.appendChild(summaryCopy);
+
+        const infoTooltip = createInfoTooltip({
+            label: "Информация: " + section.label,
+            text: section.info
+        });
+        summary.appendChild(infoTooltip);
+
         details.appendChild(summary);
 
         // Health Data uses the same single-open accordion behavior as Finance Data.
