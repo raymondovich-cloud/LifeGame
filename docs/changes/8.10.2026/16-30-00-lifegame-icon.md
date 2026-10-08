@@ -9,7 +9,6 @@
 - Круг вынесен за пределы треугольника и визуально объединяет эмблему.
 - Удалён отдельный LG-монограммный знак; внутри треугольника оставлено полное название LifeGame.
 - Добавлена SVG-иконка для сайта и будущего PWA/app-shell.
-- Добавлен PNG app icon 180×180 для iOS Home Screen и растрового PWA-контекста.
 - Обновлены favicon, Apple Touch Icon и manifest-ссылки.
 - Корневой index.html также получил ссылки на иконку.
 
@@ -22,7 +21,6 @@
 - platforms/web/icons/apple-touch-icon.svg
 - favicon.svg
 - apple-touch-icon.svg
-- apple-touch-icon.png
 
 ## Статус
 
