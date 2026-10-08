@@ -1,4 +1,4 @@
-// finance.memory.supabase.js — Version 3.0
+// finance.memory.supabase.js — Version 3.1
 // Responsibility: implement the Finance Memory Port with Supabase persistence and a local runtime cache.
 
 const COLLECTIONS = Object.freeze({
@@ -506,7 +506,7 @@ function createSupabaseFinanceMemory({ client, userContext }) {
 
         snapshots.forEach((snapshot) => {
             if (snapshot.occurredAt <= timestamp) {
-                if (!result || snapshot.occurredAt > result.occurredAt) {
+                if (!result || snapshot.occurredAt >= result.occurredAt) {
                     result = snapshot;
                 }
             }
@@ -550,7 +550,7 @@ function createSupabaseFinanceMemory({ client, userContext }) {
 
         return clone(
             snapshots.reduce((latest, snapshot) =>
-                !latest || snapshot.occurredAt > latest.occurredAt
+                !latest || snapshot.occurredAt >= latest.occurredAt
                     ? snapshot
                     : latest,
             null)
