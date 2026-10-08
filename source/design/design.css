@@ -1,4 +1,4 @@
-/* design.css — Version 1.7 */
+/* design.css — Version 1.8 */
 
 /* Единая точка входа Design System. */
 
@@ -34,6 +34,7 @@
 
 @import "./patterns/dashboard.css";
 @import "./patterns/finance.css";
+@import "./patterns/health.css";
 @import "./patterns/forms.css";
 @import "./patterns/preview.css";
 @import "./patterns/statistics.css";

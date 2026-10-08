@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.4
+// platforms/web/web.js — Version 4.5
 
 import {
     trace,
@@ -10,6 +10,7 @@ import { renderFinance } from "../../source/presentation/finance/finance.js";
 import { renderRegistration } from "../../source/presentation/auth/register.js";
 import { renderLogin } from "../../source/presentation/auth/login.js";
 import { renderProfile } from "../../source/presentation/profile/profile.js";
+import { renderHealth } from "../../source/presentation/health/health.js";
 import { createWebApplication } from "./composition/root.js";
 import { configureAssetsAnalyticsAccess } from "../../source/application/finance/assets.analytics.access.js";
 
@@ -298,7 +299,7 @@ function startWeb() {
         await renderRoute();
     }
 
-    async function renderModule(moduleId, session = null, financeApplication = null) {
+    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
             openLoginModal();
@@ -311,6 +312,16 @@ function startWeb() {
                 publicMode ? (action) => openRegistrationModal(action) : null,
                 financeApplication
             );
+            return;
+        }
+
+        if (moduleId === "health") {
+            if (publicMode) {
+                renderPreviewModule("health");
+                return;
+            }
+
+            await renderHealth(moduleContent, healthApplication);
             return;
         }
 
@@ -398,9 +409,11 @@ function startWeb() {
         }
 
         let financeApplication = null;
+        let healthApplication = null;
 
         if (!isPublic && activeUserId) {
             financeApplication = await application.finance.createApplicationForUser(activeUserId);
+            healthApplication = await application.health.createApplicationForUser(activeUserId);
 
             if (renderId !== null && renderId !== routeRenderSequence) {
                 trace("web-shell", "shell.render.stale-after-memory", {
@@ -425,7 +438,7 @@ function startWeb() {
         authRoot.hidden = true;
         applicationShell.hidden = false;
 
-        await renderModule(route, session, financeApplication);
+        await renderModule(route, session, financeApplication, healthApplication);
     }
 
     async function renderRoute() {

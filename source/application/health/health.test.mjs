@@ -1,74 +1,39 @@
-// source/application/health/health.test.mjs — Version 1.0
+// health.test.mjs — Version 1.1
 
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-    buildHealthDiagnosis,
-    createHealthApplication
-} from "./health.js";
+import { createHealthApplication } from "./health.js";
 
-test("Health Application orchestrates Index and Diagnosis", () => {
-    const application = createHealthApplication();
+function createMemory() {
+    const facts = new Map();
 
-    const result = application.calculate({
-        recovery: {
-            sleepDurationHours: 5,
-            sleepVariabilityMinutes: 120,
-            subjectiveRecovery: 4
+    return {
+        saveFact: async (category, fact) => {
+            const saved = { id: "fact-1", category, ...fact };
+            const list = facts.get(category) || [];
+            list.push(saved);
+            facts.set(category, list);
+            return saved;
         },
-        activity: {
-            activeMinutesPerWeek: 300,
-            stepsPerDay: 10000
-        },
-        training: {
-            trainingsPerWeek: 4,
-            durationScore: 90,
-            regularityScore: 90,
-            loadRecoveryBalanceScore: 90
-        },
-        nutrition: {
-            regularity: 90,
-            regimeAdherence: 90,
-            subjectiveQuality: 90,
-            water: 90
-        },
-        lifestyle: {
-            alcohol: 90,
-            smoking: 90,
-            nicotine: 90,
-            stress: 90,
-            mood: 90,
-            subjectiveWellbeing: 90
-        },
-        body: {
-            weightTrend: 90,
-            bmiContext: 90,
-            restingHeartRate: 90,
-            bloodPressure: 90
-        }
-    });
+        listFacts: async (category) => facts.get(category) || [],
+        getFactsBetween: async () => [],
+        getLatestFact: async () => null,
+        getLatestFacts: async () => ({}),
+        replaceFacts: async () => []
+    };
+}
 
-    assert.equal(typeof result.index.value, "number");
-    assert.equal(result.diagnosis.primaryConstraint.factor, "recovery");
-    assert.match(result.diagnosis.message, /восстановление/i);
-});
+test("Health Application orchestrates calculation from memory", async () => {
+    const memory = createMemory();
+    const application = createHealthApplication({ memory });
+    const result = await application.calculateFromMemory({ now: Date.now() });
 
-test("Health Application preserves insufficient-data state", () => {
-    const application = createHealthApplication();
-
-    const result = application.calculate({
-        recovery: {
-            sleepDurationHours: 8
-        }
-    });
-
-    assert.equal(result.index.status, "insufficient");
+    assert.equal(result.index.value, null);
     assert.equal(result.diagnosis.status, "insufficient");
-    assert.equal(result.diagnosis.primaryConstraint, null);
 });
 
-test("Health Application rejects missing input", () => {
+test("Health Application rejects invalid input", () => {
     const application = createHealthApplication();
 
     assert.throws(
@@ -77,18 +42,47 @@ test("Health Application rejects missing input", () => {
     );
 });
 
-test("Diagnosis is derived from Index constraints, not UI state", () => {
-    const diagnosis = buildHealthDiagnosis({
-        value: 72,
-        constraints: [
-            {
-                factor: "activity",
-                score: 40,
-                constraint: 12
-            }
-        ]
+test("Health Application exposes diagnosis from index constraints", () => {
+    const application = createHealthApplication();
+
+    const result = application.calculate({
+        recovery: {
+            sleepDurationHours: 8,
+            sleepVariabilityMinutes: 20,
+            subjectiveRecovery: 8
+        },
+        activity: {
+            activeMinutesPerWeek: 150,
+            stepsPerDay: 8000
+        },
+        training: {
+            trainingsPerWeek: 3
+        }
     });
 
-    assert.equal(diagnosis.primaryConstraint.factor, "activity");
-    assert.equal(diagnosis.primaryConstraint.score, 40);
+    assert.equal(result.diagnosis.status, "attention");
+    assert.equal(result.diagnosis.primaryConstraint?.factor, "recovery");
+});
+
+test("Health Application records facts through Memory", async () => {
+    const memory = createMemory();
+    const application = createHealthApplication({ memory });
+
+    const saved = await application.recordFact("body", {
+        weightKg: 70,
+        recordedAt: 1234
+    });
+
+    assert.equal(saved.category, "body");
+    assert.equal(saved.weightKg, 70);
+    assert.equal(saved.recordedAt, 1234);
+});
+
+test("Health Application rejects invalid fact categories", async () => {
+    const application = createHealthApplication({ memory: createMemory() });
+
+    await assert.rejects(
+        application.recordFact("medical", { value: 1 }),
+        /invalid health fact category/
+    );
 });

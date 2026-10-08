@@ -1,4 +1,5 @@
-// source/application/health/health.js — Version 1.1
+// health.js — Version 1.2
+// Responsibility: orchestrate Health Memory, Index and Diagnosis for Presentation.
 
 import { calculateHealthIndex } from "../../index/health/health.index.js";
 import { createHealthAggregator } from "./health.aggregator.js";
@@ -66,6 +67,34 @@ function createHealthApplication({ memory = null } = {}) {
         return calculate(input);
     }
 
+    async function recordFact(category, fact) {
+        if (!memory) {
+            throw new Error("LifeGame Health: memory is required to store health facts.");
+        }
+
+        const normalizedCategory = String(category || "").trim();
+        if (!["body", "activity", "recovery", "lifestyle"].includes(normalizedCategory)) {
+            throw new Error("LifeGame Health: invalid health fact category.");
+        }
+
+        if (!fact || typeof fact !== "object" || Array.isArray(fact)) {
+            throw new Error("LifeGame Health: health fact is required.");
+        }
+
+        return memory.saveFact(normalizedCategory, {
+            ...fact,
+            recordedAt: fact.recordedAt || Date.now()
+        });
+    }
+
+    async function listFacts(category) {
+        if (!memory) {
+            throw new Error("LifeGame Health: memory is required to read health facts.");
+        }
+
+        return memory.listFacts(String(category || "").trim());
+    }
+
     function calculate(input) {
         const healthInput = validateHealthInput(input);
         const index = calculateHealthIndex(healthInput);
@@ -79,7 +108,9 @@ function createHealthApplication({ memory = null } = {}) {
 
     return Object.freeze({
         calculate,
-        calculateFromMemory
+        calculateFromMemory,
+        recordFact,
+        listFacts
     });
 }
 
