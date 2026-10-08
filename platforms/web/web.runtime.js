@@ -346,7 +346,8 @@ export async function startWeb() {
             renderFinance(
                 moduleContent,
                 publicMode ? (action) => openRegistrationModal(action) : null,
-                financeApplication
+                financeApplication,
+                { showPresentationHeader: publicMode }
             );
             return;
         }
@@ -358,7 +359,7 @@ export async function startWeb() {
             }
 
             const { renderHealth } = await getPresentation("health");
-            await renderHealth(moduleContent, healthApplication);
+            await renderHealth(moduleContent, healthApplication, { showPresentationHeader: publicMode });
             return;
         }
 
@@ -368,7 +369,7 @@ export async function startWeb() {
                 return;
             }
             const { renderDevelopment } = await getPresentation("development");
-            await renderDevelopment(moduleContent, developmentApplication, lifeSystemApplication);
+            await renderDevelopment(moduleContent, developmentApplication, lifeSystemApplication, { showPresentationHeader: publicMode });
             return;
         }
 
