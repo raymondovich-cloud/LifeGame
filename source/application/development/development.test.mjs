@@ -1,4 +1,4 @@
-// source/application/development/development.test.mjs — Version 1.0
+// source/application/development/development.test.mjs — Version 1.1
 import test from"node:test";
 import assert from"node:assert/strict";
 import{createDevelopmentApplication,latestWithinWindow}from"./development.js";
@@ -35,4 +35,20 @@ test("application records and calculates from scoped memory",async()=>{
  await app.recordFact("goals",{progress:70});
  assert.equal(saved[0].category,"goals");
  assert.equal(saved[0].fact.progress,70);
+});
+
+test("application exposes update and delete for development facts",async()=>{
+ const facts=[{id:"fact-1",recordedAt:Date.now(),clarity:60}];
+ const memory={
+  async listAllFacts(){return{direction:facts}},
+  async listFacts(){return facts},
+  async saveFact(){return facts[0]},
+  async updateFact(category,id,fact){return{...facts[0],category,id,...fact}},
+  async deleteFact(category,id){return{id,category}}
+ };
+ const app=createDevelopmentApplication({memory});
+ const updated=await app.updateFact("direction","fact-1",{clarity:90});
+ assert.equal(updated.clarity,90);
+ const removed=await app.deleteFact("direction","fact-1");
+ assert.equal(removed.id,"fact-1");
 });
