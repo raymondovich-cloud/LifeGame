@@ -12,14 +12,13 @@ import { renderLogin } from "../../source/presentation/auth/login.js";
 import { renderProfile } from "../../source/presentation/profile/profile.js";
 import { renderHealth } from "../../source/presentation/health/health.js";
 import { renderDevelopment } from "../../source/presentation/development/development.js";
-import { createWebApplication } from "./composition/root.js";
 import { configureAssetsAnalyticsAccess } from "../../source/application/finance/assets.analytics.access.js";
 
 const APP_ROOT_ID = "app";
 const DEFAULT_APPLICATION_ROUTE = "finance";
 
-function startWeb() {
-    const application = createWebApplication();
+async function startWeb() {
+    let application = null;
 
     configureAssetsAnalyticsAccess({
         getEntitlement: () => "free"
@@ -670,7 +669,33 @@ function startWeb() {
 
     installGlobalApi();
     trace("web-shell", "application.start");
-    renderRoute();
+
+    // The composition root includes the Supabase infrastructure. It must not
+    // be a static module dependency of the web entrypoint: if the remote SDK
+    // or another infrastructure dependency fails to load, the browser would
+    // execute none of this file and the static HTML shell would remain on
+    // screen. Paint the public Finance surface first, then load infrastructure
+    // asynchronously. This keeps the UI boot path independent from persistence.
+    initializeApplicationShell();
+    renderFinance(
+        moduleContent,
+        (action) => openRegistrationModal(action),
+        null
+    );
+
+    try {
+        const { createWebApplication } = await import("./composition/root.js");
+        application = createWebApplication();
+        trace("web-shell", "composition.ready");
+        await renderRoute();
+    } catch (error) {
+        trace("web-shell", "composition.error", {
+            error: error?.message || "unknown"
+        });
+        console.error("LifeGame Web: application composition failed.", error);
+        // The public Finance surface is intentionally left visible. A failure
+        // in infrastructure must not collapse the product into header-only UI.
+    }
 }
 
 startWeb();
