@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.6
+// platforms/web/web.js — Version 4.7
 
 import {
     trace,
@@ -426,10 +426,16 @@ function startWeb() {
         let lifeSystemApplication = null;
 
         if (!isPublic && activeUserId) {
-            financeApplication = await application.finance.createApplicationForUser(activeUserId);
-            healthApplication = await application.health.createApplicationForUser(activeUserId);
-            developmentApplication = await application.development.createApplicationForUser(activeUserId);
-            lifeSystemApplication = await application.lifeSystem.createApplicationForUser(activeUserId);
+            // Hydrate only the active module first. Cross-domain services must
+            // never block the application shell from rendering.
+            if (route === "finance") {
+                financeApplication = await application.finance.createApplicationForUser(activeUserId);
+            } else if (route === "health") {
+                healthApplication = await application.health.createApplicationForUser(activeUserId);
+            } else if (route === "development") {
+                developmentApplication = await application.development.createApplicationForUser(activeUserId);
+                lifeSystemApplication = await application.lifeSystem.createApplicationForUser(activeUserId);
+            }
 
             if (renderId !== null && renderId !== routeRenderSequence) {
                 trace("web-shell", "shell.render.stale-after-memory", {
