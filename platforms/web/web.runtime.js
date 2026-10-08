@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.6
+// platforms/web/web.runtime.js — Version 5.7
 
 import {
     trace,
@@ -403,14 +403,31 @@ export async function startWeb() {
     async function handleAuthenticated(pendingAction = null, originRoute = DEFAULT_APPLICATION_ROUTE) {
         closeRegistrationModal();
 
-        // The authentication action itself is authoritative. Supabase can
-        // briefly return a stale/null session from a concurrent getSession()
-        // call immediately after login/registration. Mark authentication as
-        // established before the route re-check so a transient null session
-        // can never downgrade the authenticated shell to public mode.
+        // Authentication is authoritative, but authenticated module hydration
+        // still needs the resulting user id. Resolve the session before the
+        // route render so Finance/Health never receive an authenticated shell
+        // with a missing activeUserId after login or registration.
         authenticationEstablished = true;
         publicMode = false;
         sessionState = "authenticated";
+
+        try {
+            const sessionResult = await readSessionWithHydrationRetry();
+            const session = sessionResult?.session ?? null;
+
+            if (session?.user?.id) {
+                activeUserId = session.user.id;
+            }
+
+            trace("web-shell", "auth.session.ready", {
+                authenticated: Boolean(session),
+                userIdAvailable: Boolean(session?.user?.id)
+            });
+        } catch (error) {
+            trace("web-shell", "auth.session.resolve.error", {
+                error: error?.message || "unknown"
+            });
+        }
 
         await renderRoute();
 
