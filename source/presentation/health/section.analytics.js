@@ -1,4 +1,4 @@
-// source/presentation/health/section.analytics.js — Version 1.1
+// source/presentation/health/section.analytics.js — Version 1.2
 // Responsibility: render block-level Health analytics.
 
 const PERIODS=Object.freeze([["week","Неделя"],["month","Месяц"],["year","Год"],["custom","Период"]]);
