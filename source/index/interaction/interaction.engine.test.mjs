@@ -20,7 +20,7 @@ test("large spread is a system-level signal",()=>{
  const r=createLifeSystemInteraction({value:92},{value:54},{value:86});
  assert.equal(r.state,"system_imbalance");
  assert.equal(r.spread,38);
- assert.ok(r.pairs.some(pair=>pair.pair.join("/")==="Finance/Health"));
+ assert.ok(r.states.includes("system_imbalance"));\n assert.ok(r.states.includes("cross_domain_asymmetry"));
 });
 
 test("asymmetry below system threshold is still visible",()=>{
