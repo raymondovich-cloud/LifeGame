@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 1.1
+// source/presentation/health/health.js — Version 1.2
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 const FACTOR_LABELS = Object.freeze({
@@ -52,45 +52,129 @@ function renderFactor(factor, data) {
     return row;
 }
 
-function createFactForm(application, onSaved) {
-    const form = createElement("form", "health-input");
-    form.noValidate = true;
+const HEALTH_DATA_SECTIONS = Object.freeze([
+    {
+        key: "recovery",
+        label: "Восстановление",
+        description: "Сон и субъективное восстановление.",
+        fields: [
+            ["sleep", "Сон, часов", "7.5"],
+            ["recovery", "Восстановление 1–10", "8"]
+        ]
+    },
+    {
+        key: "activity",
+        label: "Активность",
+        description: "Повседневное движение и активность.",
+        fields: [
+            ["steps", "Шаги в день", "8000"],
+            ["activeMinutes", "Активность, мин/нед.", "150"]
+        ]
+    },
+    {
+        key: "training",
+        label: "Тренировки",
+        description: "Тренировочная нагрузка. Детальный расчёт нагрузки будет подключён следующим этапом.",
+        fields: [
+            ["workout", "Тренировка сегодня", "0"],
+            ["workoutDuration", "Длительность, мин.", "60"]
+        ]
+    },
+    {
+        key: "nutrition",
+        label: "Питание",
+        description: "Субъективная оценка качества питания.",
+        fields: [
+            ["nutrition", "Качество питания 1–10", "8"]
+        ]
+    },
+    {
+        key: "lifestyle",
+        label: "Образ жизни",
+        description: "Стресс, настроение и субъективное самочувствие.",
+        fields: [
+            ["stress", "Стресс 1–10", "4"],
+            ["mood", "Настроение 1–10", "8"],
+            ["wellbeing", "Самочувствие 1–10", "8"]
+        ]
+    },
+    {
+        key: "body",
+        label: "Состояние тела",
+        description: "Телесные показатели будут подключены к расчёту Body после завершения соответствующего слоя нормализации.",
+        fields: []
+    }
+]);
 
-    const title = createElement("strong", "health-input__title", "Ручной ввод данных");
-    const description = createElement(
-        "p",
-        "health-input__description",
-        "Добавляйте актуальные показатели восстановления, активности, образа жизни и питания."
-    );
+function createCategoryFields(section, inputs) {
+    const wrapper = createElement("div", "health-data-category-fields");
 
-    const grid = createElement("div", "health-input__grid");
-    const fields = [
-        ["sleep", "Сон, часов", "7.5"],
-        ["steps", "Шаги в день", "8000"],
-        ["activeMinutes", "Активность, мин/нед.", "150"],
-        ["recovery", "Восстановление 1–10", "8"],
-        ["stress", "Стресс 1–10", "4"],
-        ["mood", "Настроение 1–10", "8"],
-        ["wellbeing", "Самочувствие 1–10", "8"],
-        ["nutrition", "Качество питания 1–10", "8"]
-    ];
-
-    const inputs = new Map();
-
-    fields.forEach(([name, label, placeholder]) => {
-        const wrapper = createElement("label", "health-input__field");
-        wrapper.appendChild(createElement("span", "health-input__label", label));
+    section.fields.forEach(([name, label, placeholder]) => {
+        const field = createElement("label", "health-input__field");
+        field.appendChild(createElement("span", "health-input__label", label));
 
         const input = document.createElement("input");
-        input.type = "number";
+        input.type = name === "workout" ? "checkbox" : "number";
         input.name = name;
         input.placeholder = placeholder;
         input.min = "0";
         input.inputMode = "decimal";
 
-        wrapper.appendChild(input);
+        field.appendChild(input);
         inputs.set(name, input);
-        grid.appendChild(wrapper);
+        wrapper.appendChild(field);
+    });
+
+    return wrapper;
+}
+
+function createFactForm(application, onSaved) {
+    const form = createElement("form", "health-input");
+    form.noValidate = true;
+
+    const title = createElement("strong", "health-input__title", "Составляющие здоровья");
+    const description = createElement(
+        "p",
+        "health-input__description",
+        "Выберите составляющую здоровья и измените показатели внутри неё. Эти же категории используются на главном экране Health."
+    );
+
+    const categories = createElement("div", "health-data-categories");
+    const inputs = new Map();
+
+    HEALTH_DATA_SECTIONS.forEach((section, index) => {
+        const details = document.createElement("details");
+        details.className = "health-data-category";
+        if (index === 0) details.open = true;
+
+        const summary = document.createElement("summary");
+        summary.className = "health-data-category__summary";
+
+        const summaryCopy = createElement("span", "health-data-category__copy");
+        summaryCopy.append(
+            createElement("strong", "", section.label),
+            createElement("span", "", section.description)
+        );
+
+        summary.append(summaryCopy);
+        details.appendChild(summary);
+
+        const content = createElement("div", "health-data-category__content");
+
+        if (section.fields.length) {
+            content.appendChild(createCategoryFields(section, inputs));
+        } else {
+            content.appendChild(
+                createElement(
+                    "p",
+                    "health-data-category__pending",
+                    "Категория уже является частью Health Index. Ручные показатели тела подключаются после завершения нормализации Body."
+                )
+            );
+        }
+
+        details.appendChild(content);
+        categories.appendChild(details);
     });
 
     const submit = document.createElement("button");
@@ -101,7 +185,7 @@ function createFactForm(application, onSaved) {
     const status = createElement("p", "health-input__status");
     status.setAttribute("aria-live", "polite");
 
-    form.append(title, description, grid, submit, status);
+    form.append(title, description, categories, submit, status);
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -109,32 +193,57 @@ function createFactForm(application, onSaved) {
         status.textContent = "Сохраняем…";
 
         const value = (name) => {
-            const parsed = Number(inputs.get(name)?.value);
+            const input = inputs.get(name);
+            if (!input) return null;
+            if (input.type === "checkbox") return input.checked;
+            const parsed = Number(input.value);
             return Number.isFinite(parsed) ? parsed : null;
         };
 
         try {
             const now = Date.now();
+            const facts = [];
 
-            const facts = [
-                ["recovery", {
+            const recovery = {
+                recordedAt: now,
+                sleepDurationHours: value("sleep"),
+                subjectiveRecovery: value("recovery")
+            };
+
+            const activity = {
+                recordedAt: now,
+                stepsPerDay: value("steps"),
+                activeMinutesPerWeek: value("activeMinutes")
+            };
+
+            const lifestyle = {
+                recordedAt: now,
+                stress: value("stress"),
+                mood: value("mood"),
+                subjectiveWellbeing: value("wellbeing"),
+                subjectiveQuality: value("nutrition")
+            };
+
+            if (Object.values(recovery).some((item) => item !== null && item !== now)) {
+                facts.push(["recovery", recovery]);
+            }
+
+            if (Object.values(activity).some((item) => item !== null && item !== now)) {
+                facts.push(["activity", activity]);
+            }
+
+            if (Object.values(lifestyle).some((item) => item !== null && item !== now)) {
+                facts.push(["lifestyle", lifestyle]);
+            }
+
+            if (value("workout")) {
+                facts.push(["activity", {
                     recordedAt: now,
-                    sleepDurationHours: value("sleep"),
-                    subjectiveRecovery: value("recovery")
-                }],
-                ["activity", {
-                    recordedAt: now,
-                    stepsPerDay: value("steps"),
-                    activeMinutesPerWeek: value("activeMinutes")
-                }],
-                ["lifestyle", {
-                    recordedAt: now,
-                    stress: value("stress"),
-                    mood: value("mood"),
-                    subjectiveWellbeing: value("wellbeing"),
-                    subjectiveQuality: value("nutrition")
-                }]
-            ];
+                    type: "workout",
+                    workout: true,
+                    durationMinutes: value("workoutDuration")
+                }]);
+            }
 
             for (const [category, fact] of facts) {
                 const clean = Object.fromEntries(
@@ -148,7 +257,7 @@ function createFactForm(application, onSaved) {
 
             status.textContent = "Данные сохранены.";
             form.reset();
-            await onSaved();
+            if (typeof onSaved === "function") await onSaved();
         } catch (error) {
             status.textContent = error?.message || "Не удалось сохранить данные.";
         } finally {

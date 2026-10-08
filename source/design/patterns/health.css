@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 1.1 */
+/* source/design/patterns/health.css — Version 1.2 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -143,9 +143,70 @@
     background:var(--gradient-accent-line);
     opacity:.28;
 }
+.health-data-categories{
+    display:grid;
+    border-top:var(--border-subtle);
+}
+.health-data-category{
+    border-bottom:var(--border-subtle);
+}
+.health-data-category__summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-3);
+    padding:var(--space-4) 0;
+    cursor:pointer;
+    list-style:none;
+}
+.health-data-category__summary::-webkit-details-marker{display:none}
+.health-data-category__summary::after{
+    content:"→";
+    color:var(--color-gray);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-xs);
+    transition:transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+.health-data-category[open] .health-data-category__summary::after{
+    transform:rotate(90deg);
+}
+.health-data-category__copy{
+    display:grid;
+    gap:.3rem;
+}
+.health-data-category__copy strong{
+    color:var(--color-white-soft);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+}
+.health-data-category__copy span{
+    color:var(--color-gray);
+    font-size:var(--font-size-2xs);
+    line-height:1.4;
+}
+.health-data-category__content{
+    padding:0 0 var(--space-4);
+}
+.health-data-category-fields{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:var(--space-3);
+}
+.health-data-category__pending{
+    margin:0;
+    color:var(--color-gray);
+    font-size:var(--font-size-2xs);
+    line-height:1.5;
+}
+.health-data-category input[type="checkbox"]{
+    width:1.15rem;
+    height:1.15rem;
+    margin:.2rem 0 0;
+}
 @media (max-width:719px){
     .health-data-screen .health-input{
         padding-left:var(--space-4);
         padding-right:var(--space-4);
     }
+    .health-data-category-fields{grid-template-columns:1fr}
 }
