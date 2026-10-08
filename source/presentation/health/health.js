@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 2.1
+// source/presentation/health/health.js — Version 2.2
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
