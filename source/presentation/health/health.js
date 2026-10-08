@@ -270,10 +270,10 @@ function createFactForm(application, onSaved, container, onAnalyticsBack) {
 
     const categories = createElement("div", "health-data-categories");
 
-    HEALTH_DATA_SECTIONS.forEach((section, index) => {
+    HEALTH_DATA_SECTIONS.forEach((section, sectionIndex) => {
         const details = document.createElement("details");
         details.className = "health-data-category";
-        if (index === 0) details.open = true;
+        if (sectionIndex === 0) details.open = true;
 
         const summary = createElement("summary", "health-data-category__summary");
 
