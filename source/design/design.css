@@ -1,4 +1,4 @@
-/* design.css — Version 1.9 */
+/* design.css — Version 1.8 */
 
 /* Единая точка входа Design System. */
 
@@ -31,7 +31,6 @@
 @import "./components/liquidity.switch.css";
 @import "./components/info.tooltip.css";
 @import "./components/profile.css";
-@import "./components/data-management.css";
 
 @import "./patterns/dashboard.css";
 @import "./patterns/finance.css";
