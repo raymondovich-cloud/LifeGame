@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 1.7 */
+/* source/design/patterns/health.css — Version 1.8 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -178,7 +178,7 @@
     position:relative;
     z-index:1;
     display:grid;
-    grid-template-columns:minmax(0,1fr) auto auto;
+    grid-template-columns:minmax(0,1fr) auto;
     align-items:center;
     gap:var(--space-3);
     min-height:3.5rem;
@@ -187,16 +187,9 @@
     list-style:none;
 }
 .health-data-category__summary::-webkit-details-marker{display:none}
-.health-data-category__summary::after{
-    content:"→";
-    color:var(--color-gray);
-    font-family:var(--font-family-mono);
-    font-size:var(--font-size-xs);
-    transition:transform var(--motion-duration-fast) var(--motion-ease-standard);
-}
-.health-data-category[open] .health-data-category__summary::after{
-    transform:rotate(90deg);
-}
+.health-data-category__summary::marker{content:""}
+.health-data-category:not([open]) .info-tooltip{display:none}
+.health-data-category .info-tooltip{margin-right:var(--space-2)}
 .health-data-category[open] .health-data-category__summary{
     border-bottom:var(--border-subtle);
 }
