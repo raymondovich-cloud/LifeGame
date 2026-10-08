@@ -1,4 +1,4 @@
-// finance.js — Version 7.10
+// finance.js — Version 7.11
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1355,6 +1355,8 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
 }
 
 function renderFinance(root, onWriteAttempt = null, financeApplication = null, options = {}) {
+    const showPresentationHeader = options.showPresentationHeader !== false;
+
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
