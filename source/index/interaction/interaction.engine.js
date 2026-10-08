@@ -43,11 +43,16 @@ function createLifeSystemInteraction(financeIndex,healthIndex,developmentIndex){
  const complete=available.length===3;
  const hasAsymmetry=pairs.some(item=>item.state.startsWith("asymmetric"));
  const strongestConstraint=constraints[0]||null;
+ const signals=[];
+ if(complete&&strongestConstraint?.score<CONSTRAINT_SCORE_THRESHOLD)signals.push("structural_constraint");
+ if(complete&&spread>=THRESHOLD)signals.push("system_imbalance");
+ if(complete&&hasAsymmetry)signals.push("cross_domain_asymmetry");
+ if(complete&&!signals.length)signals.push("stable");
  let state="insufficient";
- if(complete&&strongestConstraint?.score<CONSTRAINT_SCORE_THRESHOLD)state="structural_constraint";
- else if(complete&&spread>=THRESHOLD)state="system_imbalance";
- else if(complete&&hasAsymmetry)state="cross_domain_asymmetry";
- else if(complete)state=spread<THRESHOLD?"stable":"no_material_conflict";
+ if(signals.includes("structural_constraint"))state="structural_constraint";
+ else if(signals.includes("system_imbalance"))state="system_imbalance";
+ else if(signals.includes("cross_domain_asymmetry"))state="cross_domain_asymmetry";
+ else if(signals.includes("stable"))state="stable";
 
  const messages={
   insufficient:"Недостаточно данных для анализа всей системы.",
@@ -64,7 +69,7 @@ function createLifeSystemInteraction(financeIndex,healthIndex,developmentIndex){
   inputs:values,
   pairs,
   state,
-  states:Object.freeze([state]),
+  states:Object.freeze(signals),
   explanation:messages[state],
   systemMean:available.length?Number((available.reduce((sum,value)=>sum+value,0)/available.length).toFixed(1)):null,
   spread:spread===null?null:Number(spread.toFixed(1)),
