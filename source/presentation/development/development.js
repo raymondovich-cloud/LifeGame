@@ -178,13 +178,14 @@ function createDevelopmentDiagnosisBlock(result){
  item.append(el("span","",primary?"ОЦЕНКА ОГРАНИЧИТЕЛЯ":"СТАТУС"),el("strong","",primary?score(primary.score)+"/100":"Данные формируются"));meta.appendChild(item);section.appendChild(meta);return section;
 }
 
-async function renderDevelopment(container,application,lifeSystemApplication=null){
+async function renderDevelopment(container,application,lifeSystemApplication=null,options={}){
  if(!application)throw new Error("LifeGame Development: application is required.");
  container.replaceChildren();
  const page=el("section","finance-workspace development-workspace");
+ const showPresentationHeader=options.showPresentationHeader!==false;
  const intro=el("header","finance-workspace-header");
  intro.append(el("span","finance-section-meta","DEVELOPMENT"),el("h2","","Система развития"),el("p","","Одна система для направления, целей, роста, действий и устойчивого темпа."));
- page.appendChild(intro);
+ if(showPresentationHeader)page.appendChild(intro);
  const result=await application.calculateFromMemory();
  page.appendChild(createDevelopmentHealthBlock(result));
  page.appendChild(createDevelopmentDynamicsBlock(result));
