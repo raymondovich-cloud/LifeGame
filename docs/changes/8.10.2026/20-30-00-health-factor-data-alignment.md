@@ -3,7 +3,7 @@
 # Health Factor Data Alignment
 
 **Дата:** 08.10.2026  
-**Время:** 21:00:00 MSK (UTC+03:00)  
+**Время:** 20:30:00 MSK (UTC+03:00)  
 **Статус:** IMPLEMENTED / REQUIRES VERIFICATION
 
 ## Запрос

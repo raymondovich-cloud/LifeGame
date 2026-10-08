@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 1.2
+// source/presentation/health/health.js — Version 1.3
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 const FACTOR_LABELS = Object.freeze({
@@ -129,6 +129,79 @@ function createCategoryFields(section, inputs) {
 }
 
 function createFactForm(application, onSaved) {
+    const list = createElement("div", "accordion-list data-management-accordion health-data-accordion");
+    const inputs = new Map();
+
+    HEALTH_DATA_SECTIONS.forEach((section, index) => {
+        const wrapper = document.createElement("article");
+        wrapper.className = "accordion-item health-subblock" + (index === 0 ? " is-open" : "");
+
+        const button = document.createElement("button");
+        button.className = "accordion-trigger";
+        button.type = "button";
+        button.setAttribute("aria-expanded", String(index === 0));
+        button.setAttribute("aria-controls", "health-" + section.key + "-content");
+
+        button.innerHTML =
+            '<span class="accordion-index">' + String(index + 1).padStart(2, "0") + "</span>" +
+            '<span class="accordion-title-group">' +
+                '<span class="accordion-title">' + section.label + "</span>" +
+                '<span class="accordion-description">' + section.description + "</span>" +
+            "</span>";
+
+        const header = document.createElement("div");
+        header.className = "accordion-header";
+        header.appendChild(button);
+
+        const content = createElement("div", "accordion-content" + (index === 0 ? " is-open" : ""));
+        content.id = "health-" + section.key + "-content";
+        content.hidden = false;
+
+        if (section.fields.length) {
+            const fieldGrid = createElement("div", "health-data-category-fields");
+            section.fields.forEach(([name, label, placeholder]) => {
+                const field = createElement("label", "health-input__field");
+                field.appendChild(createElement("span", "health-input__label", label));
+
+                const input = document.createElement("input");
+                input.type = name === "workout" ? "checkbox" : "number";
+                input.name = name;
+                input.placeholder = placeholder;
+                input.min = "0";
+                input.inputMode = "decimal";
+
+                field.append(input);
+                inputs.set(name, input);
+                fieldGrid.appendChild(field);
+            });
+            content.appendChild(fieldGrid);
+        } else {
+            content.appendChild(createElement(
+                "p",
+                "health-category-pending",
+                "Категория уже является частью Health Index. Ручные показатели тела подключаются после завершения нормализации Body."
+            ));
+        }
+
+        wrapper.append(header, content);
+        list.appendChild(wrapper);
+
+        button.addEventListener("click", () => {
+            const isOpen = button.getAttribute("aria-expanded") === "true";
+            list.querySelectorAll(".accordion-item").forEach((item) => {
+                item.classList.remove("is-open");
+                item.querySelector(".accordion-trigger")?.setAttribute("aria-expanded", "false");
+                item.querySelector(".accordion-content")?.classList.remove("is-open");
+            });
+
+            if (!isOpen) {
+                wrapper.classList.add("is-open");
+                button.setAttribute("aria-expanded", "true");
+                content.classList.add("is-open");
+            }
+        });
+    });
+
     const form = createElement("form", "health-input");
     form.noValidate = true;
 
@@ -136,46 +209,8 @@ function createFactForm(application, onSaved) {
     const description = createElement(
         "p",
         "health-input__description",
-        "Выберите составляющую здоровья и измените показатели внутри неё. Эти же категории используются на главном экране Health."
+        "Выберите составляющую здоровья и измените показатели внутри неё."
     );
-
-    const categories = createElement("div", "health-data-categories");
-    const inputs = new Map();
-
-    HEALTH_DATA_SECTIONS.forEach((section, index) => {
-        const details = document.createElement("details");
-        details.className = "health-data-category";
-        if (index === 0) details.open = true;
-
-        const summary = document.createElement("summary");
-        summary.className = "health-data-category__summary";
-
-        const summaryCopy = createElement("span", "health-data-category__copy");
-        summaryCopy.append(
-            createElement("strong", "", section.label),
-            createElement("span", "", section.description)
-        );
-
-        summary.append(summaryCopy);
-        details.appendChild(summary);
-
-        const content = createElement("div", "health-data-category__content");
-
-        if (section.fields.length) {
-            content.appendChild(createCategoryFields(section, inputs));
-        } else {
-            content.appendChild(
-                createElement(
-                    "p",
-                    "health-data-category__pending",
-                    "Категория уже является частью Health Index. Ручные показатели тела подключаются после завершения нормализации Body."
-                )
-            );
-        }
-
-        details.appendChild(content);
-        categories.appendChild(details);
-    });
 
     const submit = document.createElement("button");
     submit.type = "submit";
@@ -185,7 +220,7 @@ function createFactForm(application, onSaved) {
     const status = createElement("p", "health-input__status");
     status.setAttribute("aria-live", "polite");
 
-    form.append(title, description, categories, submit, status);
+    form.append(title, description, list, submit, status);
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -203,19 +238,8 @@ function createFactForm(application, onSaved) {
         try {
             const now = Date.now();
             const facts = [];
-
-            const recovery = {
-                recordedAt: now,
-                sleepDurationHours: value("sleep"),
-                subjectiveRecovery: value("recovery")
-            };
-
-            const activity = {
-                recordedAt: now,
-                stepsPerDay: value("steps"),
-                activeMinutesPerWeek: value("activeMinutes")
-            };
-
+            const recovery = { recordedAt: now, sleepDurationHours: value("sleep"), subjectiveRecovery: value("recovery") };
+            const activity = { recordedAt: now, stepsPerDay: value("steps"), activeMinutesPerWeek: value("activeMinutes") };
             const lifestyle = {
                 recordedAt: now,
                 stress: value("stress"),
@@ -224,17 +248,9 @@ function createFactForm(application, onSaved) {
                 subjectiveQuality: value("nutrition")
             };
 
-            if (Object.values(recovery).some((item) => item !== null && item !== now)) {
-                facts.push(["recovery", recovery]);
-            }
-
-            if (Object.values(activity).some((item) => item !== null && item !== now)) {
-                facts.push(["activity", activity]);
-            }
-
-            if (Object.values(lifestyle).some((item) => item !== null && item !== now)) {
-                facts.push(["lifestyle", lifestyle]);
-            }
+            if (Object.values(recovery).some((item) => item !== null && item !== now)) facts.push(["recovery", recovery]);
+            if (Object.values(activity).some((item) => item !== null && item !== now)) facts.push(["activity", activity]);
+            if (Object.values(lifestyle).some((item) => item !== null && item !== now)) facts.push(["lifestyle", lifestyle]);
 
             if (value("workout")) {
                 facts.push(["activity", {
@@ -246,13 +262,8 @@ function createFactForm(application, onSaved) {
             }
 
             for (const [category, fact] of facts) {
-                const clean = Object.fromEntries(
-                    Object.entries(fact).filter(([, item]) => item !== null)
-                );
-
-                if (Object.keys(clean).length > 1) {
-                    await application.recordFact(category, clean);
-                }
+                const clean = Object.fromEntries(Object.entries(fact).filter(([, item]) => item !== null));
+                if (Object.keys(clean).length > 1) await application.recordFact(category, clean);
             }
 
             status.textContent = "Данные сохранены.";
@@ -267,7 +278,6 @@ function createFactForm(application, onSaved) {
 
     return form;
 }
-
 function createHealthIndexBlock(healthApplication) {
     const section = createElement("section", "finance-health health-index-block");
     section.setAttribute("aria-label", "Health Index");
