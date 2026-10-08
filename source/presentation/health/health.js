@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 1.6
+// source/presentation/health/health.js — Version 1.7
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -302,14 +302,13 @@ function createFactForm(application, onSaved, container, onAnalyticsBack) {
             );
         }
 
-        content.appendChild(
-            createAnalyticsAction(
-                container,
-                application,
-                section,
-                onAnalyticsBack
-            )
+        const analyticsAction = createAnalyticsAction(
+            container,
+            application,
+            section,
+            onAnalyticsBack
         );
+        summary.appendChild(analyticsAction);
 
         details.appendChild(content);
         categories.appendChild(details);
