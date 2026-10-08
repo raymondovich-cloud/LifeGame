@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 4.7
+// platforms/web/web.js — Version 4.8
 
 import {
     trace,
@@ -577,14 +577,38 @@ function startWeb() {
                     error: error?.message || "unknown"
                 });
 
-                renderApplicationShell(
-                    isApplicationModule(requestedRoute)
-                        ? requestedRoute
-                        : DEFAULT_APPLICATION_ROUTE,
-                    false,
-                    null,
-                    renderId
-                );
+                // Never leave the application shell empty when user-data
+                // hydration fails. Render a safe module fallback so a database
+                // or network problem cannot make the whole product disappear.
+                publicMode = false;
+                appRoot.dataset.access = "authenticated";
+                initializeApplicationShell();
+                authRoot.hidden = true;
+                applicationShell.hidden = false;
+
+                const fallbackRoute = isApplicationModule(requestedRoute)
+                    ? requestedRoute
+                    : DEFAULT_APPLICATION_ROUTE;
+
+                if (fallbackRoute === "health" || fallbackRoute === "development") {
+                    renderPreviewModule(fallbackRoute);
+                } else if (fallbackRoute === "profile") {
+                    renderProfile(moduleContent, null, {
+                        profileApplication: application.profile,
+                        onLogout: handleLogout
+                    }).catch((fallbackError) => {
+                        trace("web-shell", "fallback.profile.error", {
+                            error: fallbackError?.message || "unknown"
+                        });
+                    });
+                } else {
+                    renderFinance(
+                        moduleContent,
+                        (action) => openRegistrationModal(action),
+                        null
+                    );
+                }
+
                 return;
             }
 
