@@ -200,7 +200,7 @@ async function renderDevelopment(container,application,lifeSystemApplication=nul
  valueRow.append(value,suffix);
  const status=el("div","finance-health-category","Недостаточно данных");
  const diagnostics=el("div","finance-health-diagnostics"); diagnostics.hidden=true;
- diagnosticsAction=diagnosisAction;
+
  diagnosticsAction.addEventListener("click",()=>{diagnostics.hidden=!diagnostics.hidden;diagnosticsAction.textContent=diagnostics.hidden?"Показать диагностику →":"Скрыть диагностику ↑";});
  hero.append(valueRow,status,el("p","finance-health-description","Индекс строится из пяти факторов и актуальных данных за последние 28 дней."),diagnostics);
  
