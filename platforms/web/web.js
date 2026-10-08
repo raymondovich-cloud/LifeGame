@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 5.0
+// platforms/web/web.js — Version 5.1
 // Responsibility: boot the browser shell before loading the application runtime.
 //
 // This file intentionally has no static application imports. A failure in a
@@ -33,6 +33,71 @@ function renderBootstrapFinance(container) {
     container.appendChild(page);
 }
 
+function renderBootstrapModule(container, route) {
+    container.replaceChildren();
+
+    if (route === "finance") {
+        renderBootstrapFinance(container);
+        return;
+    }
+
+    const modules = {
+        health: {
+            label: "HEALTH SYSTEM",
+            title: "Здоровье",
+            description: "Энергия, восстановление, тренировки и привычки.",
+            items: ["Физическое состояние", "Тренировки", "Привычки"]
+        },
+        development: {
+            label: "DEVELOPMENT SYSTEM",
+            title: "Развитие",
+            description: "Цели, навыки, знания и личный прогресс.",
+            items: ["Цели", "Навыки", "Прогресс"]
+        },
+        profile: {
+            label: "PROFILE",
+            title: "Профиль",
+            description: "Аккаунт и настройки LifeGame.",
+            items: ["Аккаунт", "Настройки", "Безопасность"]
+        }
+    };
+
+    const module = modules[route] ?? modules.finance;
+
+    const page = document.createElement("section");
+    page.className = "finance-workspace";
+
+    const meta = document.createElement("span");
+    meta.className = "finance-section-meta";
+    meta.textContent = module.label;
+
+    const title = document.createElement("h1");
+    title.textContent = module.title;
+
+    const description = document.createElement("p");
+    description.textContent = module.description;
+
+    const list = document.createElement("div");
+    list.className = "preview-subblock-list";
+
+    module.items.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "preview-subblock";
+        row.innerHTML =
+            '<span class="preview-subblock-index">' +
+            String(index + 1).padStart(2, "0") +
+            "</span>" +
+            '<span class="preview-subblock-name">' +
+            item +
+            "</span>" +
+            '<span class="preview-subblock-action">OPEN</span>';
+        list.appendChild(row);
+    });
+
+    page.append(meta, title, description, list);
+    container.appendChild(page);
+}
+
 function boot() {
     const appRoot = document.getElementById(APP_ROOT_ID);
     const shell = appRoot?.querySelector("#application-shell");
@@ -45,21 +110,26 @@ function boot() {
     shell.hidden = false;
     appRoot.dataset.access = "public";
 
-    renderBootstrapFinance(container);
+    const renderCurrentRoute = () => {
+        const route = window.location.hash.slice(1) || DEFAULT_ROUTE;
+        renderBootstrapModule(container, route);
+    };
 
-    if (!window.location.hash) {
-        window.location.hash = DEFAULT_ROUTE;
-    }
+    document.querySelectorAll(".navigation-item").forEach((item) => {
+        item.addEventListener("click", () => {
+            window.setTimeout(renderCurrentRoute, 0);
+        });
+    });
+
+    window.addEventListener("hashchange", renderCurrentRoute);
+
+    renderCurrentRoute();
 
     import("./web.runtime.js")
         .then(({ startWeb }) => startWeb())
         .catch((error) => {
             console.error("LifeGame Web runtime failed to load.", error);
-
-            const status = container.querySelector(".finance-section-meta:last-child");
-            if (status) {
-                status.textContent = "SYSTEM ONLINE";
-            }
+            renderCurrentRoute();
         });
 }
 
