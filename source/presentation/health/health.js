@@ -481,6 +481,8 @@ function renderHealthData(container, healthApplication, onBack) {
 }
 
 async function renderHealth(container, healthApplication, options = {}) {
+    const showPresentationHeader = options.showPresentationHeader !== false;
+
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
     }
