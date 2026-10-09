@@ -1,4 +1,4 @@
-// source/index/interaction/interaction.engine.test.mjs — Version 1.1
+// source/index/interaction/interaction.engine.test.mjs — Version 1.2
 import test from"node:test";
 import assert from"node:assert/strict";
 import{createLifeSystemInteraction}from"./interaction.engine.js";
@@ -20,7 +20,8 @@ test("large spread is a system-level signal",()=>{
  const r=createLifeSystemInteraction({value:92},{value:54},{value:86});
  assert.equal(r.state,"system_imbalance");
  assert.equal(r.spread,38);
- assert.ok(r.states.includes("system_imbalance"));\n assert.ok(r.states.includes("cross_domain_asymmetry"));
+ assert.ok(r.states.includes("system_imbalance"));
+ assert.ok(r.states.includes("cross_domain_asymmetry"));
 });
 
 test("asymmetry below system threshold is still visible",()=>{
