@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.7
+// platforms/web/web.runtime.js — Version 5.8
 
 import {
     trace,
@@ -349,6 +349,13 @@ export async function startWeb() {
                 financeApplication,
                 { showPresentationHeader: publicMode }
             );
+            return;
+        }
+
+        if (publicMode && (moduleId === "health" || moduleId === "development")) {
+            // Public previews must not invoke authenticated presentations, which
+            // require user-scoped applications. Use each module's own preview copy.
+            renderPreviewModule(moduleId);
             return;
         }
 
