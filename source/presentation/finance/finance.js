@@ -1,4 +1,4 @@
-// finance.js — Version 7.17
+// finance.js — Version 7.18
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -434,9 +434,12 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
     section.append(header, amount, caption, chart);
 
     if (animatedBars.length > 0) {
+        // Allow the zero-width state to render before applying target widths.
         requestAnimationFrame(() => {
-            animatedBars.forEach(({ element, width }) => {
-                element.style.width = width;
+            requestAnimationFrame(() => {
+                animatedBars.forEach(({ element, width }) => {
+                    element.style.width = width;
+                });
             });
         });
     }
