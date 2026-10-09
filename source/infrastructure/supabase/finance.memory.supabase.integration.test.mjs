@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.5
+// finance.memory.supabase.integration.test.mjs — Version 1.6
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -19,7 +19,12 @@ function createClientForTest() {
     });
 }
 
-async function createTestSession(label) {
+async 
+function withoutPersistenceMetadata(entries) {
+    return entries.map(({ createdAt, createdBy, ...entry }) => entry);
+}
+
+function createTestSession(label) {
     const client = createClientForTest();
     const email = "lifegame-" + label + "-" + Date.now() + "-" + Math.random().toString(36).slice(2) + "@example.test";
     const password = "LifeGameTest-12345";
@@ -76,10 +81,10 @@ test("Finance Supabase persistence survives memory recreation and isolates users
     assert.equal(recreatedMemory.listActualEarnings().length, 0);
     await recreatedMemory.hydrate();
 
-    assert.deepEqual(recreatedMemory.listActualEarnings(), [
+    assert.deepEqual(withoutPersistenceMetadata(recreatedMemory.listActualEarnings()), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(recreatedMemory.listFinancialBurden(), [
+    assert.deepEqual(withoutPersistenceMetadata(recreatedMemory.listFinancialBurden()), [
         {
             id: createdCredit.id,
             label: "Credit persistence",
@@ -106,10 +111,10 @@ test("Finance Supabase persistence survives memory recreation and isolates users
 
     await Promise.all([finalMemoryA.hydrate(), finalMemoryB.hydrate()]);
 
-    assert.deepEqual(finalMemoryA.listActualEarnings(), [
+    assert.deepEqual(withoutPersistenceMetadata(finalMemoryA.listActualEarnings()), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(finalMemoryB.listActualEarnings(), [
+    assert.deepEqual(withoutPersistenceMetadata(finalMemoryB.listActualEarnings()), [
         { id: createdB.id, label: "Persistence test B", amount: 54321 }
     ]);
 
