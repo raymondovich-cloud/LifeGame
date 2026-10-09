@@ -1,7 +1,7 @@
-
-/* input.css — Version 1.4 */
+/* input.css — Version 1.5 */
 
 .input-control {
+    box-sizing:border-box;
     width:100%;
     min-width:0;
     height:2.25rem;
