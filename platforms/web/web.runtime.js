@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.8
+// platforms/web/web.runtime.js — Version 5.9
 
 import {
     trace,
@@ -235,13 +235,15 @@ export async function startWeb() {
     function renderPreviewModule(moduleId) {
         const modules = {
             health: {
-                label: "HEALTH SYSTEM",
-                description: "Энергия и физическое состояние.",
+                label: "HEALTH",
+                title: "Система здоровья",
+                description: "Следите за активностью, тренировками и восстановлением, чтобы лучше понимать своё состояние и поддерживать энергию.",
                 items: ["Сила", "Восстановление", "Привычки"]
             },
             development: {
-                label: "DEVELOPMENT SYSTEM",
-                description: "Знания и личный рост.",
+                label: "DEVELOPMENT",
+                title: "Система развития",
+                description: "Ставьте цели, развивайте навыки и отслеживайте прогресс, сохраняя комфортный темп и время на отдых.",
                 items: ["Навыки", "Цели", "Прогресс"]
             }
         };
@@ -268,11 +270,22 @@ export async function startWeb() {
         const section = document.createElement("section");
         section.className = "module-subblocks";
 
-        const heading = document.createElement("div");
-        heading.className = "module-subblocks-header";
-        heading.innerHTML =
-            '<span class="module-subblocks-label">' + module.label + "</span>" +
-            "<p>" + module.description + "</p>";
+        // Reuse the same presentation header and its existing Design System
+        // gradient frame as Finance; keep preview-specific copy in Presentation.
+        const heading = document.createElement("header");
+        heading.className = "finance-workspace-header";
+
+        const eyebrow = document.createElement("span");
+        eyebrow.className = "finance-section-meta";
+        eyebrow.textContent = module.label;
+
+        const title = document.createElement("h2");
+        title.textContent = module.title;
+
+        const description = document.createElement("p");
+        description.textContent = module.description;
+
+        heading.append(eyebrow, title, description);
 
         const list = document.createElement("div");
         list.className = "preview-subblock-list";
