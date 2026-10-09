@@ -1,4 +1,4 @@
-# .github/workflows/database-tests.yml — Version 1.1
+# .github/workflows/database-tests.yml — Version 1.2
 
 name: LifeGame Database Tests
 
@@ -28,9 +28,13 @@ jobs:
 
       - name: Validate Web bootstrap syntax
         run: |
+          node --check platforms/web/service-worker.js
           node --check platforms/web/web.js
           node --check platforms/web/web.runtime.js
           node --check platforms/web/composition/root.js
+
+      - name: Run Service Worker tests
+        run: node --test platforms/web/service-worker.test.mjs
 
       - name: Run Application and Finance domain tests
         run: node --test source/application/identity/registration.test.mjs source/application/identity/login.test.mjs source/application/profile/profile.test.mjs source/application/finance/finance.test.mjs source/application/finance/finance.lifecycle.test.mjs source/application/finance/assets.analytics.test.mjs source/application/finance/finance.analytics.test.mjs source/application/development/development.test.mjs source/memory/finance/finance.memory.test.mjs source/domain/finance/financial.burden/financial.burden.test.mjs source/index/interaction/interaction.engine.test.mjs
