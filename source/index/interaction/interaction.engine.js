@@ -1,8 +1,10 @@
-// source/index/interaction/interaction.engine.js — Version 1.1
+// source/index/interaction/interaction.engine.js — Version 1.2
 const THRESHOLD=20;
+const SYSTEM_IMBALANCE_THRESHOLD=25;
 const CONSTRAINT_SCORE_THRESHOLD=50;
 
 function numeric(value){
+ if(value===null||value===undefined||(typeof value==="string"&&value.trim()===""))return null;
  const n=Number(value);
  return Number.isFinite(n)?Math.max(0,Math.min(100,n)):null;
 }
@@ -45,7 +47,7 @@ function createLifeSystemInteraction(financeIndex,healthIndex,developmentIndex){
  const strongestConstraint=constraints[0]||null;
  const signals=[];
  if(complete&&strongestConstraint?.score<CONSTRAINT_SCORE_THRESHOLD)signals.push("structural_constraint");
- if(complete&&spread>=THRESHOLD)signals.push("system_imbalance");
+ if(complete&&spread>=SYSTEM_IMBALANCE_THRESHOLD)signals.push("system_imbalance");
  if(complete&&hasAsymmetry)signals.push("cross_domain_asymmetry");
  if(complete&&!signals.length)signals.push("stable");
  let state="insufficient";
@@ -64,8 +66,9 @@ function createLifeSystemInteraction(financeIndex,healthIndex,developmentIndex){
  };
 
  return Object.freeze({
-  version:"1.1",
+  version:"1.2",
   threshold:THRESHOLD,
+  systemImbalanceThreshold:SYSTEM_IMBALANCE_THRESHOLD,
   inputs:values,
   pairs,
   state,
@@ -79,4 +82,4 @@ function createLifeSystemInteraction(financeIndex,healthIndex,developmentIndex){
  });
 }
 
-export{THRESHOLD,createLifeSystemInteraction};
+export{THRESHOLD,SYSTEM_IMBALANCE_THRESHOLD,createLifeSystemInteraction};
