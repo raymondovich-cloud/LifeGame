@@ -1,4 +1,4 @@
-// finance.js — Version 7.14
+// finance.js — Version 7.15
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -310,76 +310,6 @@ function createHealthBlock(financeApplication) {
     return section;
 }
 
-function createFinancialFactorsBlock(financeApplication) {
-    const result = financeApplication.getFinancialStabilityIndex();
-    const factors = [
-        ["cashFlowSustainability", "Устойчивость денежного потока"],
-        ["operationalLiquidity", "Операционная ликвидность"],
-        ["emergencyResilience", "Финансовый резерв"],
-        ["debtSustainability", "Устойчивость к долгам"],
-        ["solvencyPosition", "Чистая финансовая позиция"],
-        ["productiveCapital", "Продуктивный капитал"],
-        ["financialTrajectory", "Финансовая динамика"]
-    ];
-
-    const section = document.createElement("section");
-    section.className = "finance-capital finance-factors-block";
-    section.setAttribute("aria-label", "Financial stability factors");
-
-    const heading = document.createElement("div");
-    heading.className = "finance-block-heading";
-
-    const title = document.createElement("span");
-    title.className = "finance-section-meta";
-    title.textContent = "FINANCIAL FACTORS";
-
-    const description = document.createElement("p");
-    description.className = "finance-capital-caption";
-    description.textContent = "Семь факторов, которые формируют индекс финансовой устойчивости.";
-
-    const list = document.createElement("div");
-    list.className = "finance-factors-list";
-
-    factors.forEach(([key, label]) => {
-        const rawScore = result?.components?.[key];
-        const score = Number(rawScore);
-        const hasScore = rawScore !== null && rawScore !== undefined && Number.isFinite(score);
-
-        const row = document.createElement("div");
-        row.className = "finance-factor";
-
-        const rowHeader = document.createElement("div");
-        rowHeader.className = "finance-factor__header";
-
-        const name = document.createElement("span");
-        name.className = "finance-factor__label";
-        name.textContent = label;
-
-        const value = document.createElement("strong");
-        value.className = "finance-factor__score";
-        value.textContent = hasScore ? score.toFixed(1) + "/100" : "—";
-
-        rowHeader.append(name, value);
-
-        const track = document.createElement("div");
-        track.className = "finance-factor__track";
-        track.setAttribute("role", "img");
-        track.setAttribute("aria-label", label + ": " + (hasScore ? score.toFixed(1) + " из 100" : "нет данных"));
-
-        const fill = document.createElement("span");
-        fill.className = "finance-factor__fill";
-        fill.style.width = hasScore ? Math.max(0, Math.min(100, score)) + "%" : "0%";
-
-        track.appendChild(fill);
-        row.append(rowHeader, track);
-        list.appendChild(row);
-    });
-
-    heading.append(title);
-    section.append(heading, description, list);
-    return section;
-}
-
 function formatPercentChange(change) {
     if (!change || !change.hasComparison || change.percent === null) return "—";
     const value = Number(change.percent);
@@ -422,7 +352,7 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     const chartTitle = document.createElement("span");
     chartTitle.className = "finance-capital-chart-title";
-    chartTitle.textContent = "Динамика за месяц";
+    chartTitle.textContent = "Изменение за месяц";
 
     const chartBars = document.createElement("div");
     chartBars.className = "finance-capital-chart-bars";
@@ -448,8 +378,8 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
     const maxChange = Math.max(...comparableValues, 1);
 
     chartMetrics.forEach(({ id, label, value }) => {
-        const column = document.createElement("div");
-        column.className = "finance-capital-chart-column";
+        const row = document.createElement("div");
+        row.className = "finance-capital-chart-column";
 
         const labelNode = document.createElement("span");
         labelNode.className = "finance-capital-chart-label";
@@ -464,24 +394,29 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
                 hasComparison: true
             });
 
+        const chartHeader = document.createElement("div");
+        chartHeader.className = "finance-capital-chart-footer";
+        chartHeader.append(labelNode, metric);
+
         const barTrack = document.createElement("span");
         barTrack.className = "finance-capital-chart-track";
-        barTrack.setAttribute("aria-hidden", "true");
+        barTrack.setAttribute("role", "img");
+        barTrack.setAttribute("aria-label", label + ": " + (
+            value === null
+                ? "нет данных для сравнения"
+                : formatPercentChange({ percent: value, hasComparison: true })
+        ));
 
         const bar = document.createElement("span");
         bar.className = "finance-capital-chart-bar";
         if (value !== null) {
             bar.classList.add(value >= 0 ? "is-positive" : "is-negative");
-            bar.style.height = Math.max(10, (Math.abs(value) / maxChange) * 100) + "%";
+            bar.style.width = Math.max(4, (Math.abs(value) / maxChange) * 100) + "%";
         }
         barTrack.appendChild(bar);
 
-        const chartFooter = document.createElement("div");
-        chartFooter.className = "finance-capital-chart-footer";
-        chartFooter.append(metric, labelNode);
-
-        column.append(barTrack, chartFooter);
-        chartBars.appendChild(column);
+        row.append(chartHeader, barTrack);
+        chartBars.appendChild(row);
     });
 
     chart.append(chartTitle, chartBars);
@@ -1480,7 +1415,6 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null, o
     page.append(
         ...(showPresentationHeader ? [intro] : []),
         createHealthBlock(financeApplication),
-        createFinancialFactorsBlock(financeApplication),
         createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt)
     );
 
