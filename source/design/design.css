@@ -1,4 +1,4 @@
-/* design.css — Version 1.9 */
+/* design.css — Version 2.0 */
 
 /* Единая точка входа Design System. */
 
@@ -18,7 +18,7 @@
 
 @import "./components/button.css";
 @import "./components/card.css";
-@import "./components/input.css";
+@import "./components/input.css?v=20261010-1600";
 @import "./components/modal.css";
 @import "./components/accordion.css";
 @import "./components/navigation.css";
@@ -36,7 +36,7 @@
 @import "./patterns/finance.css";
 @import "./patterns/health.css";
 @import "./patterns/development.css";
-@import "./patterns/forms.css";
+@import "./patterns/forms.css?v=20261010-1600";
 @import "./patterns/preview.css";
 @import "./patterns/statistics.css";
 

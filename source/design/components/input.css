@@ -1,4 +1,4 @@
-/* input.css — Version 1.6 */
+/* input.css — Version 1.7 */
 
 .input-control {
     box-sizing:border-box;
@@ -23,10 +23,14 @@
 
 .input-control[type="date"] {
     display:block;
-    width:100%;
+    inline-size:100%;
+    min-inline-size:0;
+    max-inline-size:100%;
     min-width:0;
     max-width:100%;
     box-sizing:border-box;
+    -webkit-appearance:none;
+    appearance:none;
 }
 
 .input-control::placeholder {
