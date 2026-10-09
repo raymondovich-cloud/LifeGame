@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.6
+// finance.memory.supabase.integration.test.mjs — Version 1.4
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -17,10 +17,6 @@ function createClientForTest() {
     return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
         auth: { autoRefreshToken: false, persistSession: false }
     });
-}
-
-function normalizePersistedEntries(entries) {
-    return entries.map(({ createdAt, createdBy, creatorName, ...entry }) => entry);
 }
 
 async function createTestSession(label) {
@@ -77,13 +73,13 @@ test("Finance Supabase persistence survives memory recreation and isolates users
         userContext: { userId: sessionA.userId }
     });
 
-    assert.equal(recreatedMemory.listActualEarnings().length, 0);
-    await recreatedMemory.hydrate();
+    assert.equal(recreatedMemoryA.listActualEarnings().length, 0);
+    await recreatedMemoryA.hydrate();
 
-    assert.deepEqual(normalizePersistedEntries(recreatedMemory.listActualEarnings()), [
+    assert.deepEqual(recreatedMemoryA.listActualEarnings(), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(normalizePersistedEntries(recreatedMemory.listFinancialBurden()), [
+    assert.deepEqual(recreatedMemoryA.listFinancialBurden(), [
         {
             id: createdCredit.id,
             label: "Credit persistence",
@@ -110,10 +106,10 @@ test("Finance Supabase persistence survives memory recreation and isolates users
 
     await Promise.all([finalMemoryA.hydrate(), finalMemoryB.hydrate()]);
 
-    assert.deepEqual(normalizePersistedEntries(finalMemoryA.listActualEarnings()), [
+    assert.deepEqual(finalMemoryA.listActualEarnings(), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(normalizePersistedEntries(finalMemoryB.listActualEarnings()), [
+    assert.deepEqual(finalMemoryB.listActualEarnings(), [
         { id: createdB.id, label: "Persistence test B", amount: 54321 }
     ]);
 

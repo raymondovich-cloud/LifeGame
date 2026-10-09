@@ -1,9 +1,9 @@
-<!-- docs/project-state.md — Version 1.9 -->
+<!-- docs/project-state.md — Version 1.8 -->
 
 # LifeGame — текущее состояние проекта
 
 **Статус:** CURRENT  
-**Дата аудита:** 08.10.2026  
+**Дата аудита:** 07.10.2026  
 **Репозиторий:** `raymondovich-cloud/LifeGame`  
 **Основная ветка:** `main`
 
@@ -173,23 +173,7 @@ Finance Main и Finance DATA являются разными пользоват�
 - пользовательские операции с финансовыми записями;
 - отображение FSI 3.1 по шкале `0–1000`.
 
-## 8. Development — IMPLEMENTED
-
-Development Health 1.0 реализован в source/index/development/, с Application, user-scoped Memory, Supabase adapter, RLS storage и отдельной Presentation-поверхностью. Основные пять факторов и веса соответствуют утверждённой методологии: Direction 20%, Goals 30%, Growth 25%, Execution 15%, Balance 10%.
-
-Development DATA использует пять редактируемых областей с метриками методологии. Расчётный слой не содержит UI-логики.
-
-## 9. Life System Interaction — IMPLEMENTED
-
-Добавлен source/index/interaction/interaction.engine.js и Application coordinator source/application/life-system/life-system.js.
-
-- Finance, Health и Development продолжают рассчитываться независимо;
-- Interaction Engine принимает результаты индексов и их производные ограничения;
-- компонентные индексы не изменяются;
-- причинность между доменами не заявляется;
-- Life Quality Index не рассчитывается этим контуром.
-
-## 10. Memory и snapshots — IMPLEMENTED
+## 8. Memory и snapshots — IMPLEMENTED
 
 Finance использует Memory и user-scoped persistence.
 
@@ -197,7 +181,7 @@ Finance использует Memory и user-scoped persistence.
 
 Конкретные расчёты и представления должны подтверждаться соответствующим кодом и тестами; этот документ не расширяет их сверх фактической реализации.
 
-## 11. Design System — CURRENT
+## 9. Design System — CURRENT
 
 Design System находится в `source/design/` и разделена на:
 
@@ -218,7 +202,7 @@ Design System находится в `source/design/` и разделена на:
 - минимальный визуальный шум;
 - системный премиальный характер.
 
-## 12. Security — CURRENT / SEPARATE CONTRACT
+## 10. Security — CURRENT / SEPARATE CONTRACT
 
 Security является архитектурной частью проекта.
 
@@ -229,7 +213,7 @@ Security является архитектурной частью проекта
 
 Security-документы являются отдельными security-контрактами. Их текущая редакция синхронизирована с фактическим состоянием Identity и security boundary; архитектурные требования, не подтверждённые реализацией, явно отделены от CURRENT.
 
-## 13. Security Test Suite — CURRENT
+## 11. Security Test Suite — CURRENT
 
 Создан нормативный контур `docs/security/test.security/`:
 
@@ -239,13 +223,13 @@ Security-документы являются отдельными security-ко�
 
 Контур предназначен для воспроизводимого Security-аудита и отделяет проведение тестов от исправления найденных проблем.
 
-## 14. Исторические документы
+## 12. Исторические документы
 
 Исторические Change-файлы сохраняются и не являются источником CURRENT без дополнительной проверки.
 
 Предыдущие версии `docs/project-state.md` не являются текущим состоянием после этого аудита.
 
-## 15. Связь документации
+## 13. Связь документации
 
 - `docs/agent.md` — только правила;
 - `docs/fixed-version-project.md` — полный BASELINE;

@@ -1,8 +1,1 @@
-// source/index/development/development.index.js — Version 1.0
-import{FACTOR_WEIGHTS,calculateDevelopmentFactors}from"./development.factors.js";
-const DEVELOPMENT_CATEGORIES=Object.freeze([{minimum:0,maximum:39.999,key:"critical",label:"Critical"},{minimum:40,maximum:59.999,key:"weak",label:"Weak"},{minimum:60,maximum:74.999,key:"attention",label:"Attention"},{minimum:75,maximum:89.999,key:"good",label:"Good"},{minimum:90,maximum:100,key:"excellent",label:"Excellent"}]);
-function category(v){return DEVELOPMENT_CATEGORIES.find(x=>v>=x.minimum&&v<=x.maximum)||DEVELOPMENT_CATEGORIES[0]}
-function rawIndex(f){const a=Object.entries(f).filter(([,x])=>x.score!==null);if(!a.length)return null;const w=a.reduce((s,[k])=>s+FACTOR_WEIGHTS[k],0);return a.reduce((s,[k,x])=>s+FACTOR_WEIGHTS[k]*x.score,0)/w}
-function constraints(f,min=15){return Object.entries(f).filter(([,x])=>x.score!==null).map(([k,x])=>({factor:k,score:x.score,weight:FACTOR_WEIGHTS[k],deficit:100-x.score,constraint:FACTOR_WEIGHTS[k]*(100-x.score)})).filter(x=>x.deficit>=min).sort((a,b)=>b.constraint-a.constraint)}
-function calculateDevelopmentIndex(input={}){const factors=calculateDevelopmentFactors(input),raw=rawIndex(factors);if(raw===null)return{value:null,rawValue:null,status:"insufficient",category:null,coverage:0,confidence:"low",factors,constraints:[],methodology:{version:"1.0",periodDays:28}};const coverage=Object.entries(factors).reduce((s,[k,x])=>s+FACTOR_WEIGHTS[k]*x.coverage,0),status=coverage<.4?"insufficient":coverage<.7?"preliminary":"full",value=Math.max(0,Math.min(100,raw));return{value:Number(value.toFixed(1)),rawValue:Number(raw.toFixed(1)),status,category:category(value),coverage:Number((coverage*100).toFixed(1)),confidence:status==="full"?"high":status==="preliminary"?"medium":"low",factors,constraints:constraints(factors),methodology:{version:"1.0",periodDays:28,smoothing:false,dailyChangeLimit:null}}}
-export{DEVELOPMENT_CATEGORIES,calculateDevelopmentIndex};
+1

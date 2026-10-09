@@ -1,4 +1,4 @@
-// finance.js — Version 7.12
+// source/presentation/finance/finance.js — Version 7.9
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1281,8 +1281,7 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
     return wrapper;
 }
 
-function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null, options = {}) {
-    const showPresentationHeader = options.showPresentationHeader !== false;
+function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -1354,9 +1353,7 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
 }
 
-function renderFinance(root, onWriteAttempt = null, financeApplication = null, options = {}) {
-    const showPresentationHeader = options.showPresentationHeader !== false;
-
+function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -1396,7 +1393,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null, o
     }
 
     page.append(
-        ...(showPresentationHeader ? [intro] : []),
+        intro,
         createHealthBlock(financeApplication),
         createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt)
     );

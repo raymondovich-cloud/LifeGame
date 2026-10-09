@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 2.2
+// source/presentation/health/health.js — Version 2.1
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -433,8 +433,7 @@ function createFactorsBlock(index) {
     return section;
 }
 
-function renderHealthData(container, healthApplication, onBack, options = {}) {
-    const showPresentationHeader = options.showPresentationHeader !== false;
+function renderHealthData(container, healthApplication, onBack) {
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
     }
@@ -480,9 +479,7 @@ function renderHealthData(container, healthApplication, onBack, options = {}) {
     container.appendChild(page);
 }
 
-async function renderHealth(container, healthApplication, options = {}) {
-    const showPresentationHeader = options.showPresentationHeader !== false;
-
+async function renderHealth(container, healthApplication) {
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
     }
@@ -531,7 +528,7 @@ async function renderHealth(container, healthApplication, options = {}) {
     });
 
     dataEntry.append(copy, action);
-    page.append(...(showPresentationHeader ? [intro] : []), healthIndex.section, factorsContainer, dataEntry);
+    page.append(intro, healthIndex.section, factorsContainer, dataEntry);
     container.appendChild(page);
 
     const refresh = async () => {
