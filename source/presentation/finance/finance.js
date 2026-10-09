@@ -1,4 +1,4 @@
-// finance.js — Version 7.20
+// finance.js — Version 7.21
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -808,12 +808,12 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
         onResult(transcript) {
             const parsed = parseFinanceVoiceText(transcript);
             if (!parsed) {
-                voiceStatus.textContent = "Не удалось определить сумму. Попробуйте: «Зарплата 75 тысяч рублей».";
+                voiceStatus.textContent = "Речь распознана: «" + transcript + "», но сумму определить не удалось. Попробуйте: «Машина за полтора миллиона рублей».";
                 return;
             }
             labelInput.value = parsed.label || labelInput.value;
             amountInput.value = String(parsed.amount);
-            voiceStatus.textContent = "Распознано: «" + transcript + "». Проверьте поля и нажмите «Добавить».";
+            voiceStatus.textContent = "Распознано: «" + transcript + "». Название и сумма заполнены — проверьте поля и нажмите «Добавить».";
             labelInput.focus({ preventScroll: true });
         },
         onError(message) {
