@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.9
+// platforms/web/web.runtime.js — Version 5.10
 
 import {
     trace,
@@ -231,20 +231,17 @@ export async function startWeb() {
             }
         });
     }
-
     function renderPreviewModule(moduleId) {
         const modules = {
             health: {
                 label: "HEALTH",
                 title: "Система здоровья",
-                description: "Следите за активностью, тренировками и восстановлением, чтобы лучше понимать своё состояние и поддерживать энергию.",
-                items: ["Сила", "Восстановление", "Привычки"]
+                description: "Следите за активностью, тренировками и восстановлением, чтобы лучше понимать своё состояние и поддерживать энергию."
             },
             development: {
                 label: "DEVELOPMENT",
                 title: "Система развития",
-                description: "Ставьте цели, развивайте навыки и отслеживайте прогресс, сохраняя комфортный темп и время на отдых.",
-                items: ["Навыки", "Цели", "Прогресс"]
+                description: "Ставьте цели, развивайте навыки и отслеживайте прогресс, сохраняя комфортный темп и время на отдых."
             }
         };
 
@@ -270,8 +267,8 @@ export async function startWeb() {
         const section = document.createElement("section");
         section.className = "module-subblocks";
 
-        // Reuse the same presentation header and its existing Design System
-        // gradient frame as Finance; keep preview-specific copy in Presentation.
+        // Keep the public preview focused on its premium header. Module details
+        // are intentionally omitted until their dedicated experiences are ready.
         const heading = document.createElement("header");
         heading.className = "finance-workspace-header";
 
@@ -286,36 +283,9 @@ export async function startWeb() {
         description.textContent = module.description;
 
         heading.append(eyebrow, title, description);
-
-        const list = document.createElement("div");
-        list.className = "preview-subblock-list";
-
-        module.items.forEach((item, index) => {
-            const row = document.createElement("button");
-            row.type = "button";
-            row.className = "preview-subblock";
-            row.innerHTML =
-                '<span class="preview-subblock-index">' +
-                String(index + 1).padStart(2, "0") +
-                "</span>" +
-                '<span class="preview-subblock-name">' +
-                item +
-                "</span>" +
-                '<span class="preview-subblock-action">OPEN</span>';
-
-            row.addEventListener("click", () => {
-                if (publicMode) {
-                    openRegistrationModal();
-                }
-            });
-
-            list.appendChild(row);
-        });
-
-        section.append(heading, list);
+        section.appendChild(heading);
         moduleContent.appendChild(section);
     }
-
     async function handleLogout() {
         if (sessionState !== "authenticated") {
             return;
