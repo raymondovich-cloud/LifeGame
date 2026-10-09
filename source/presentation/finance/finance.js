@@ -1,4 +1,4 @@
-// finance.js — Version 7.12
+// finance.js — Version 7.13
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -9,6 +9,7 @@ import { createFinanceAnalytics } from "../../application/finance/finance.analyt
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
+import { animateCountUp } from "../shared/count-up.animation.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
@@ -204,7 +205,13 @@ function createHealthBlock(financeApplication) {
 
     const value = document.createElement("span");
     value.className = "finance-health-value";
-    value.textContent = String(Math.round(Number(result.value || 0) * 10));
+    value.setAttribute("aria-live", "off");
+
+    const rawScore = Number(result?.value);
+    const displayScore = Number.isFinite(rawScore)
+        ? Math.round(rawScore * 10)
+        : null;
+    value.textContent = displayScore === null ? "—" : "0";
 
     const suffix = document.createElement("span");
     suffix.className = "finance-health-suffix";
@@ -295,6 +302,11 @@ function createHealthBlock(financeApplication) {
     });
 
     section.append(healthHeader, valueRow, category, description, diagnosticsPanel);
+
+    if (displayScore !== null) {
+        animateCountUp(value, displayScore, { duration: 1800 });
+    }
+
     return section;
 }
 
