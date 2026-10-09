@@ -1,4 +1,4 @@
-// finance.memory.js — Version 3.0
+// finance.memory.js — Version 3.1
 
 const COLLECTIONS = Object.freeze([
     "assets",
@@ -122,7 +122,7 @@ function createFinanceMemory(userContext) {
     function getCollectionSnapshotAtOrBefore(collection, timestamp) {
         let result = null;
         getCollectionSnapshotList(collection).forEach((snapshot) => {
-            if (snapshot.occurredAt <= timestamp && (!result || snapshot.occurredAt > result.occurredAt)) {
+            if (snapshot.occurredAt <= timestamp && (!result || snapshot.occurredAt >= result.occurredAt)) {
                 result = snapshot;
             }
         });
@@ -150,7 +150,7 @@ function createFinanceMemory(userContext) {
         const list = getCollectionSnapshotList(collection);
         if (list.length === 0) return null;
         return cloneSnapshot(list.reduce((latest, snapshot) =>
-            !latest || snapshot.occurredAt > latest.occurredAt ? snapshot : latest, null));
+            !latest || snapshot.occurredAt >= latest.occurredAt ? snapshot : latest, null));
     }
 
     function mutateFinanceCollection({ collection, operation, entry = null, entryId = null, occurredAt = Date.now() }) {
@@ -258,7 +258,7 @@ function createFinanceMemory(userContext) {
 
         getCollectionSnapshotList("assets").forEach((snapshot) => {
             if (snapshot.occurredAt <= timestamp) {
-                if (!result || snapshot.occurredAt > result.occurredAt) {
+                if (!result || snapshot.occurredAt >= result.occurredAt) {
                     result = snapshot;
                 }
             }
@@ -302,7 +302,7 @@ function createFinanceMemory(userContext) {
 
         return cloneSnapshot(
             getCollectionSnapshotList("assets").reduce((latest, snapshot) =>
-                !latest || snapshot.occurredAt > latest.occurredAt
+                !latest || snapshot.occurredAt >= latest.occurredAt
                     ? snapshot
                     : latest,
             null)
