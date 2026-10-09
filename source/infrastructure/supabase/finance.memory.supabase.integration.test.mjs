@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.4
+// finance.memory.supabase.integration.test.mjs — Version 1.5
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -73,13 +73,13 @@ test("Finance Supabase persistence survives memory recreation and isolates users
         userContext: { userId: sessionA.userId }
     });
 
-    assert.equal(recreatedMemoryA.listActualEarnings().length, 0);
-    await recreatedMemoryA.hydrate();
+    assert.equal(recreatedMemory.listActualEarnings().length, 0);
+    await recreatedMemory.hydrate();
 
-    assert.deepEqual(recreatedMemoryA.listActualEarnings(), [
+    assert.deepEqual(recreatedMemory.listActualEarnings(), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(recreatedMemoryA.listFinancialBurden(), [
+    assert.deepEqual(recreatedMemory.listFinancialBurden(), [
         {
             id: createdCredit.id,
             label: "Credit persistence",
