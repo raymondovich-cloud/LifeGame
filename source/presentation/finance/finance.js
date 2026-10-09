@@ -1,4 +1,4 @@
-// finance.js — Version 7.21
+// finance.js — Version 7.22
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -803,9 +803,10 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
             voiceButton.disabled = true;
             voiceButton.textContent = "Слушаю…";
             voiceStatus.hidden = false;
-            voiceStatus.textContent = "Произнесите название и сумму. Запись не сохраняется LifeGame.";
+            voiceStatus.textContent = "Произнесите название и сумму. Дождитесь завершения распознавания.";
         },
         onResult(transcript) {
+            voiceStatus.hidden = false;
             const parsed = parseFinanceVoiceText(transcript);
             if (!parsed) {
                 voiceStatus.textContent = "Речь распознана: «" + transcript + "», но сумму определить не удалось. Попробуйте: «Машина за полтора миллиона рублей».";
