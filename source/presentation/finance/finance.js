@@ -1,4 +1,4 @@
-// finance.js — Version 7.13
+// finance.js — Version 7.14
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -307,6 +307,76 @@ function createHealthBlock(financeApplication) {
         animateCountUp(value, displayScore, { duration: 1800 });
     }
 
+    return section;
+}
+
+function createFinancialFactorsBlock(financeApplication) {
+    const result = financeApplication.getFinancialStabilityIndex();
+    const factors = [
+        ["cashFlowSustainability", "Устойчивость денежного потока"],
+        ["operationalLiquidity", "Операционная ликвидность"],
+        ["emergencyResilience", "Финансовый резерв"],
+        ["debtSustainability", "Устойчивость к долгам"],
+        ["solvencyPosition", "Чистая финансовая позиция"],
+        ["productiveCapital", "Продуктивный капитал"],
+        ["financialTrajectory", "Финансовая динамика"]
+    ];
+
+    const section = document.createElement("section");
+    section.className = "finance-capital finance-factors-block";
+    section.setAttribute("aria-label", "Financial stability factors");
+
+    const heading = document.createElement("div");
+    heading.className = "finance-block-heading";
+
+    const title = document.createElement("span");
+    title.className = "finance-section-meta";
+    title.textContent = "FINANCIAL FACTORS";
+
+    const description = document.createElement("p");
+    description.className = "finance-capital-caption";
+    description.textContent = "Семь факторов, которые формируют индекс финансовой устойчивости.";
+
+    const list = document.createElement("div");
+    list.className = "finance-factors-list";
+
+    factors.forEach(([key, label]) => {
+        const rawScore = result?.components?.[key];
+        const score = Number(rawScore);
+        const hasScore = rawScore !== null && rawScore !== undefined && Number.isFinite(score);
+
+        const row = document.createElement("div");
+        row.className = "finance-factor";
+
+        const rowHeader = document.createElement("div");
+        rowHeader.className = "finance-factor__header";
+
+        const name = document.createElement("span");
+        name.className = "finance-factor__label";
+        name.textContent = label;
+
+        const value = document.createElement("strong");
+        value.className = "finance-factor__score";
+        value.textContent = hasScore ? score.toFixed(1) + "/100" : "—";
+
+        rowHeader.append(name, value);
+
+        const track = document.createElement("div");
+        track.className = "finance-factor__track";
+        track.setAttribute("role", "img");
+        track.setAttribute("aria-label", label + ": " + (hasScore ? score.toFixed(1) + " из 100" : "нет данных"));
+
+        const fill = document.createElement("span");
+        fill.className = "finance-factor__fill";
+        fill.style.width = hasScore ? Math.max(0, Math.min(100, score)) + "%" : "0%";
+
+        track.appendChild(fill);
+        row.append(rowHeader, track);
+        list.appendChild(row);
+    });
+
+    heading.append(title);
+    section.append(heading, description, list);
     return section;
 }
 
@@ -1410,6 +1480,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null, o
     page.append(
         ...(showPresentationHeader ? [intro] : []),
         createHealthBlock(financeApplication),
+        createFinancialFactorsBlock(financeApplication),
         createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt)
     );
 
