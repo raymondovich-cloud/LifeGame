@@ -1,4 +1,4 @@
-// speech-recognition.adapter.js — Version 1.2
+// speech-recognition.adapter.js — Version 1.3
 // Responsibility: wrap browser speech recognition; never persist or transmit audio from LifeGame code.
 
 function createSpeechRecognition(handlers = {}) {
@@ -12,15 +12,17 @@ function createSpeechRecognition(handlers = {}) {
         const recognition = new Recognition();
         recognition.lang = "ru-RU";
         recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.interimResults = true;
         recognition.maxAlternatives = 1;
 
         let resultReceived = false;
         let errorReported = false;
+        let latestTranscript = "";
 
         recognition.onstart = () => {
             resultReceived = false;
             errorReported = false;
+            latestTranscript = "";
             handlers.onStart?.();
         };
 
@@ -30,20 +32,23 @@ function createSpeechRecognition(handlers = {}) {
 
             for (let index = startIndex; index < (event.results?.length || 0); index++) {
                 const result = event.results[index];
-                if (result?.isFinal === false) continue;
                 const transcript = result?.[0]?.transcript?.trim();
-                if (transcript) transcripts.push(transcript);
+                if (!transcript) continue;
+
+                if (result?.isFinal === false) {
+                    latestTranscript = transcript;
+                    continue;
+                }
+
+                transcripts.push(transcript);
             }
 
             const transcript = transcripts.join(" ").trim();
             if (transcript) {
                 resultReceived = true;
+                latestTranscript = transcript;
                 handlers.onResult?.(transcript);
-                return;
             }
-
-            errorReported = true;
-            handlers.onError?.("Safari завершил распознавание, но не передал текст. Попробуйте ещё раз. Если проблема повторяется, обновите страницу и проверьте распознавание снова.");
         };
 
         recognition.onerror = (event) => {
@@ -58,6 +63,14 @@ function createSpeechRecognition(handlers = {}) {
         };
 
         recognition.onend = () => {
+            // Some iOS WebKit sessions emit usable interim text but never mark it final.
+            // Use the latest interim transcript only after the session ends, avoiding
+            // partial form updates while the user is still speaking.
+            if (!resultReceived && latestTranscript) {
+                resultReceived = true;
+                handlers.onResult?.(latestTranscript);
+            }
+
             if (!resultReceived && !errorReported) {
                 errorReported = true;
                 handlers.onError?.("Safari завершил прослушивание без текста. Обновите страницу и попробуйте ещё раз.");
