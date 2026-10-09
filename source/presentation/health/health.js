@@ -1,10 +1,11 @@
-// source/presentation/health/health.js — Version 2.3
+// source/presentation/health/health.js — Version 2.4
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
 import { renderHealthAnalyticsScreen } from "./section.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
+import { animateBarWidth } from "../shared/bar.animation.js";
 
 const FACTOR_LABELS = Object.freeze({
     recovery: "Восстановление",
@@ -48,9 +49,10 @@ function renderFactor(factor, data) {
     const fill = createElement("span", "health-factor__fill");
     const numericScore = Number(data?.score);
 
-    fill.style.width = Number.isFinite(numericScore)
-        ? Math.max(0, Math.min(100, numericScore)) + "%"
-        : "0%";
+    animateBarWidth(
+        fill,
+        Number.isFinite(numericScore) ? Math.max(0, Math.min(100, numericScore)) : 0
+    );
 
     track.appendChild(fill);
     row.append(header, track);

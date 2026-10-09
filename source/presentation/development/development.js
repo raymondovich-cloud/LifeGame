@@ -1,7 +1,8 @@
-// source/presentation/development/development.js — Version 1.6
+// source/presentation/development/development.js — Version 1.7
 
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
+import { animateBarWidth } from "../shared/bar.animation.js";
 
 const FACTORS=Object.freeze([
  {key:"direction",label:"Направление",description:"Ясность курса и актуальность приоритетов.",metrics:[["clarity","Ясность"],["priority","Приоритет"],["review","Актуальность"]]},
@@ -22,7 +23,7 @@ function renderFactor(factor,data){
  const track=el("div","development-factor__track");
  const fill=el("span","development-factor__fill");
  const value=Number(data?.score);
- fill.style.width=Number.isFinite(value)?Math.max(0,Math.min(100,value))+"%":"0%";
+ animateBarWidth(fill,Number.isFinite(value)?Math.max(0,Math.min(100,value)):0);
  head.append(el("span","development-factor__label",factor.label),el("strong","development-factor__score",Number.isFinite(value)?score(value)+"/100":"—"));
  track.appendChild(fill);
  item.append(head,track,el("p","development-factor__description",factor.description));
