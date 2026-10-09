@@ -1,4 +1,4 @@
-// finance.js — Version 7.15
+// finance.js — Version 7.16
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -340,7 +340,11 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     const amount = document.createElement("div");
     amount.className = "finance-capital-value";
-    amount.textContent = formatAmount(snapshot.capital) + " ₽";
+    amount.textContent = "0 ₽";
+    animateCountUp(amount, snapshot.capital, {
+        duration: 1800,
+        formatter: (value) => formatAmount(value) + " ₽"
+    });
 
     const caption = document.createElement("p");
     caption.className = "finance-capital-caption";
