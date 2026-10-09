@@ -1,4 +1,4 @@
-// finance.js — Version 7.16
+// finance.js — Version 7.17
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -381,6 +381,8 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         .map((value) => Math.abs(value));
     const maxChange = Math.max(...comparableValues, 1);
 
+    const animatedBars = [];
+
     chartMetrics.forEach(({ id, label, value }) => {
         const row = document.createElement("div");
         row.className = "finance-capital-chart-column";
@@ -415,7 +417,12 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         bar.className = "finance-capital-chart-bar";
         if (value !== null) {
             bar.classList.add(value >= 0 ? "is-positive" : "is-negative");
-            bar.style.width = Math.max(4, (Math.abs(value) / maxChange) * 100) + "%";
+            bar.style.width = "0%";
+            bar.style.transitionDuration = "1800ms";
+            animatedBars.push({
+                element: bar,
+                width: Math.max(4, (Math.abs(value) / maxChange) * 100) + "%"
+            });
         }
         barTrack.appendChild(bar);
 
@@ -425,6 +432,15 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     chart.append(chartTitle, chartBars);
     section.append(header, amount, caption, chart);
+
+    if (animatedBars.length > 0) {
+        requestAnimationFrame(() => {
+            animatedBars.forEach(({ element, width }) => {
+                element.style.width = width;
+            });
+        });
+    }
+
     return section;
 }
 
