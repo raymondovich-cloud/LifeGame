@@ -1,9 +1,10 @@
-// source/presentation/health/health.js — Version 2.2
+// source/presentation/health/health.js — Version 2.3
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
 import { renderHealthAnalyticsScreen } from "./section.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
+import { animateCountUp } from "../shared/count-up.animation.js";
 
 const FACTOR_LABELS = Object.freeze({
     recovery: "Восстановление",
@@ -538,8 +539,15 @@ async function renderHealth(container, healthApplication, options = {}) {
         const result = await healthApplication.calculateFromMemory();
         const index = result.index;
 
-        healthIndex.value.textContent =
-            index.value === null ? "—" : index.value.toFixed(1);
+        if (index.value === null || !Number.isFinite(Number(index.value))) {
+            healthIndex.value.textContent = "—";
+        } else {
+            healthIndex.value.textContent = "0.0";
+            animateCountUp(healthIndex.value, Number(index.value), {
+                duration: 1800,
+                decimalPlaces: 1
+            });
+        }
 
         healthIndex.category.textContent =
             index.value === null

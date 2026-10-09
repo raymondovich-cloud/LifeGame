@@ -1,6 +1,7 @@
-// source/presentation/development/development.js — Version 1.5
+// source/presentation/development/development.js — Version 1.6
 
 import { createInfoTooltip } from "../shared/info.tooltip.js";
+import { animateCountUp } from "../shared/count-up.animation.js";
 
 const FACTORS=Object.freeze([
  {key:"direction",label:"Направление",description:"Ясность курса и актуальность приоритетов.",metrics:[["clarity","Ясность"],["priority","Приоритет"],["review","Актуальность"]]},
@@ -131,7 +132,8 @@ function createDevelopmentHealthBlock(result){
  diagnostics.addEventListener("click",()=>{const open=panel.hidden;panel.hidden=!open;diagnostics.textContent=open?"Скрыть диагностику ↑":"Показать диагностику →";});
  header.appendChild(diagnostics);
  const valueRow=el("div","finance-health-value-row");
- valueRow.append(el("span","finance-health-value",result.index.value===null?"—":score(result.index.value)),el("span","finance-health-suffix","/100"));
+ const value=el("span","finance-health-value",result.index.value===null?"—":"0.0");
+ valueRow.append(value,el("span","finance-health-suffix","/100"));
  const category=el("span","finance-health-category",result.index.category?.label||"Недостаточно данных");
  const description=el("p","finance-health-description","Сводная оценка направления, целей, роста, реализации и устойчивости за последние 28 дней.");
  const factors=result.index.factors||{};
@@ -142,14 +144,14 @@ function createDevelopmentHealthBlock(result){
   panel.appendChild(row);
  });
  section.append(header,valueRow,category,description,panel);
- return section;
+ return {section,value};
 }
 
 function createDevelopmentDynamicsBlock(result){
  const section=el("section","finance-capital");
  section.setAttribute("aria-label","Development dynamics");
  const heading=el("div","finance-block-heading");heading.append(el("span","finance-section-meta","DEVELOPMENT"));
- const value=result.index.value===null?"—":score(result.index.value)+"/100";
+ const value=result.index.value===null?"—":"0.0/100";
  const amount=el("div","finance-capital-value",value);
  const caption=el("p","finance-capital-caption","Текущий уровень развития");
  const chart=el("div","finance-capital-chart");chart.setAttribute("aria-label","Пять факторов развития");
@@ -166,7 +168,7 @@ function createDevelopmentDynamicsBlock(result){
   const footer=el("div","finance-capital-chart-footer");footer.append(metric,label);
   column.append(track,footer);bars.appendChild(column);
  });
- chart.append(title,bars);section.append(heading,amount,caption,chart);return section;
+ chart.append(title,bars);section.append(heading,amount,caption,chart);return {section,value:amount,score:result.index.value};
 }
 
 function createDevelopmentDiagnosisBlock(result){
@@ -187,8 +189,10 @@ async function renderDevelopment(container,application,lifeSystemApplication=nul
  intro.append(el("span","finance-section-meta","DEVELOPMENT"),el("h2","","Система развития"),el("p","","Одна система для направления, целей, роста, действий и устойчивого темпа."));
  if(showPresentationHeader)page.appendChild(intro);
  const result=await application.calculateFromMemory();
- page.appendChild(createDevelopmentHealthBlock(result));
- page.appendChild(createDevelopmentDynamicsBlock(result));
+ const developmentHealth=createDevelopmentHealthBlock(result);
+ const developmentDynamics=createDevelopmentDynamicsBlock(result);
+ page.appendChild(developmentHealth.section);
+ page.appendChild(developmentDynamics.section);
  page.appendChild(createDevelopmentDiagnosisBlock(result));
  const data=el("section","finance-data-entry");
  const copy=el("div","finance-data-entry-copy");
@@ -198,6 +202,14 @@ async function renderDevelopment(container,application,lifeSystemApplication=nul
  data.append(copy,action);page.appendChild(data);
  if(lifeSystemApplication){const system=await lifeSystemApplication.analyze();page.appendChild(createSystemContext(system));}
  container.appendChild(page);
+ if(result.index.value!==null&&result.index.value!==undefined&&Number.isFinite(Number(result.index.value))){
+  animateCountUp(developmentHealth.value,Number(result.index.value),{duration:1800,decimalPlaces:1});
+  animateCountUp(developmentDynamics.value,Number(result.index.value),{
+   duration:1800,
+   decimalPlaces:1,
+   formatter:value=>Number(value).toFixed(1)+"/100"
+  });
+ }
 }
 
 export{renderDevelopment};
