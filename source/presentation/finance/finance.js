@@ -1,4 +1,4 @@
-// finance.js — Version 7.19
+// finance.js — Version 7.20
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -11,6 +11,8 @@ import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
 import { animateBarWidth } from "../shared/bar.animation.js";
+import { createSpeechRecognition } from "../../infrastructure/voice/speech-recognition.adapter.js";
+import { parseFinanceVoiceText } from "../../application/voice/finance-command.parser.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
@@ -782,7 +784,59 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
     error.className = "finance-form-error";
     error.hidden = true;
 
-    form.append(labelInput, amountInput);
+    const voiceControl = document.createElement("div");
+    voiceControl.className = "finance-voice-control";
+
+    const voiceButton = document.createElement("button");
+    voiceButton.type = "button";
+    voiceButton.className = "finance-voice-button";
+    voiceButton.textContent = "🎙 Голосовой ввод";
+    voiceButton.setAttribute("aria-label", "Заполнить форму голосом");
+
+    const voiceStatus = document.createElement("p");
+    voiceStatus.className = "finance-voice-status";
+    voiceStatus.setAttribute("aria-live", "polite");
+    voiceStatus.hidden = true;
+
+    const speech = createSpeechRecognition({
+        onStart() {
+            voiceButton.disabled = true;
+            voiceButton.textContent = "Слушаю…";
+            voiceStatus.hidden = false;
+            voiceStatus.textContent = "Произнесите название и сумму. Запись не сохраняется LifeGame.";
+        },
+        onResult(transcript) {
+            const parsed = parseFinanceVoiceText(transcript);
+            if (!parsed) {
+                voiceStatus.textContent = "Не удалось определить сумму. Попробуйте: «Зарплата 75 тысяч рублей».";
+                return;
+            }
+            labelInput.value = parsed.label || labelInput.value;
+            amountInput.value = String(parsed.amount);
+            voiceStatus.textContent = "Распознано: «" + transcript + "». Проверьте поля и нажмите «Добавить».";
+            labelInput.focus({ preventScroll: true });
+        },
+        onError(message) {
+            voiceStatus.hidden = false;
+            voiceStatus.textContent = message;
+        },
+        onEnd() {
+            voiceButton.disabled = false;
+            voiceButton.textContent = "🎙 Голосовой ввод";
+        }
+    });
+
+    voiceButton.addEventListener("click", () => {
+        if (!speech) {
+            voiceStatus.hidden = false;
+            voiceStatus.textContent = "Распознавание речи не поддерживается этим браузером. Используйте ручной ввод.";
+            return;
+        }
+        speech.start();
+    });
+
+    voiceControl.append(voiceButton, voiceStatus);
+    form.append(voiceControl, labelInput, amountInput);
 
     if (section.id === "assets") {
         const advancedDetails = document.createElement("details");

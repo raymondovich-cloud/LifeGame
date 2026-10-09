@@ -1,4 +1,4 @@
-/* finance.css — Version 3.6 */
+/* finance.css — Version 3.7 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -437,3 +437,12 @@
 .finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .finance-add-form > .button-control {
     margin-top:0;
 }
+
+/* Voice input — finance form */
+.finance-voice-control{display:grid;gap:var(--space-2)}
+.finance-voice-button{justify-self:start;display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:.65rem 1rem;border:1px solid rgba(255,173,19,.55);border-radius:var(--radius-control, .75rem);background:rgba(255,173,19,.08);color:var(--color-white);font:inherit;font-size:var(--font-size-xs);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.finance-voice-button:hover:not(:disabled){background:rgba(255,173,19,.15)}
+.finance-voice-button:focus-visible{outline:2px solid #ffad13;outline-offset:3px}
+.finance-voice-button:disabled{opacity:.65;cursor:wait}
+.finance-voice-status{margin:0;color:var(--color-gray);font-size:var(--font-size-2xs);line-height:1.5;overflow-wrap:anywhere}
+.finance-voice-status[hidden]{display:none}
