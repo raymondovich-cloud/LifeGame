@@ -1,4 +1,4 @@
-// source/presentation/profile/profile.js — Version 1.5
+// source/presentation/profile/profile.js — Version 1.6
 // Responsibility: render the Profile Life Quality placeholder and profile settings.
 
 function createSettingsRow(label, value, action = null) {
@@ -218,7 +218,13 @@ function createSettingsModal(profile, email, profileApplication, userId, onLogou
             email || "Account active"
         );
 
-        rows.replaceChildren(nameRow, dateRow, emailRow);
+        const statusRow = createSettingsRow(
+            "Статус пользователя",
+            "Пользователь"
+        );
+        statusRow.classList.add("profile-settings-row--readonly");
+
+        rows.replaceChildren(nameRow, dateRow, emailRow, statusRow);
     }
 
     function startEdit() {
