@@ -1,0 +1,84 @@
+# .github/workflows/preview-publish.yml — Version 1.0
+name: LifeGame Preview CI
+
+on:
+  push:
+    branches:
+      - feature/pwa-static-cache
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lifegame-preview-ci
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate preview source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout LifeGame
+        uses: actions/checkout@v4
+        with:
+          ref: feature/pwa-static-cache
+
+      - name: Validate required web entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s platforms/web/index.html
+          test -s platforms/web/web.js
+          test -s platforms/web/service-worker.js
+          test -s source/design/design.css
+          test -s docs/agent.md
+          echo "Required LifeGame web entry points are present."
+
+      - name: Validate local Design System imports
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          root = Path(".")
+          errors = []
+          for css in (root / "source/design").rglob("*.css"):
+              text = css.read_text(encoding="utf-8")
+              for match in re.finditer(r'@import\s+(?:url\()?["\']([^"\']+)["\']\)?', text):
+                  target = match.group(1).split("?", 1)[0]
+                  if target.startswith(("http://", "https://", "//", "data:")):
+                      continue
+                  resolved = (css.parent / target).resolve()
+                  if not resolved.is_file():
+                      errors.append(f"{css}: missing import {target}")
+          if errors:
+              print("\n".join(errors), file=sys.stderr)
+              sys.exit(1)
+          print("Local Design System imports are valid.")
+          PY
+
+      - name: Request preview deployment
+        if: success()
+        env:
+          TEST_WEB_DISPATCH_TOKEN: ${{ secrets.TEST_WEB_DISPATCH_TOKEN }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$TEST_WEB_DISPATCH_TOKEN" ]; then
+            echo "::warning::TEST_WEB_DISPATCH_TOKEN is not configured. Test-web will pick up the latest source through its scheduled fallback."
+            exit 0
+          fi
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer $TEST_WEB_DISPATCH_TOKEN" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/raymondovich-cloud/Test-web/dispatches \
+            --data "{\"event_type\":\"lifegame-preview\",\"client_payload\":{\"source_commit\":\"$SOURCE_COMMIT\"}}"
+          echo "Test-web was asked to publish source commit $SOURCE_COMMIT."
