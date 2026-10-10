@@ -1,4 +1,4 @@
-/* finance.css — Version 3.9 */
+/* finance.css — Version 3.10 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
