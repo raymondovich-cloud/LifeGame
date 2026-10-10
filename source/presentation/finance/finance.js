@@ -1,4 +1,4 @@
-// finance.js — Version 7.23
+// finance.js — Version 7.24
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -12,7 +12,7 @@ import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
 import { animateBarWidth } from "../shared/bar.animation.js";
 import { createSpeechRecognition } from "../../infrastructure/voice/speech-recognition.adapter.js";
-import { parseFinanceVoiceCommand } from "../../application/voice/finance-command.parser.js";
+import { parseFinanceVoiceCommand, isCreditProductLabel } from "../../application/voice/finance-command.parser.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
@@ -1466,7 +1466,7 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
             saveButton.disabled = true;
             try {
                 if (sectionId === "financial-burden") {
-                    await financeApplication.addFinancialBurdenEntry(label, amount, null, false, null);
+                    await financeApplication.addFinancialBurdenEntry(label, amount, null, isCreditProductLabel(label), null);
                 } else {
                     const labelText = label.toLocaleLowerCase("ru-RU");
                     const assetType = /машин|автомобил|транспорт|мотоцикл/u.test(labelText)

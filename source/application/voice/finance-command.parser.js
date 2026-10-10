@@ -1,4 +1,4 @@
-// finance-command.parser.js — Version 1.2
+// finance-command.parser.js — Version 1.3
 // Responsibility: deterministic, AI-free extraction of a financial label and amount from recognized Russian speech.
 
 const SCALE_WORDS = Object.freeze([
@@ -156,6 +156,11 @@ function classifyFinanceVoiceCategory(transcript) {
     return null;
 }
 
+function isCreditProductLabel(label) {
+    const text = String(label || "").toLocaleLowerCase("ru-RU").trim();
+    return /(?:кредит[а-яё]*|ипотек[а-яё]*|рассрочк[а-яё]*|кредитн[а-яё]*\s+карт[а-яё]*)/iu.test(text);
+}
+
 function parseFinanceVoiceCommand(transcript) {
     const parsed = parseFinanceVoiceText(transcript);
     if (!parsed) return null;
@@ -165,4 +170,4 @@ function parseFinanceVoiceCommand(transcript) {
     });
 }
 
-export { parseFinanceVoiceText, classifyFinanceVoiceCategory, parseFinanceVoiceCommand };
+export { parseFinanceVoiceText, classifyFinanceVoiceCategory, parseFinanceVoiceCommand, isCreditProductLabel };
