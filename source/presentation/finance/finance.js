@@ -1,4 +1,4 @@
-// finance.js — Version 7.31
+// finance.js — Version 7.32
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -336,6 +336,12 @@ function formatPercentChange(change) {
 
 function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt, options = {}) {
     const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
+    const stabilityResult = financeApplication.getFinancialStabilityIndex();
+    const stabilityDiagnostics = stabilityResult?.diagnostics || {};
+    const assetEntries = financeApplication.listFinanceEntries("assets");
+    const productiveCapital = assetEntries
+        .filter((entry) => Boolean(entry?.incomeEnabled))
+        .reduce((total, entry) => total + Number(entry.amount || 0), 0);
     const range = financeAnalytics
         ? financeAnalytics.getFinanceAnalyticsRange("month")
         : null;
@@ -430,32 +436,32 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
             label: "CAPITAL",
             title: "Активы",
             value: snapshot.capital,
+            valueFormat: "currency",
             caption: "Общая стоимость активов",
             context: "Ликвидные средства: " + formatAmount(snapshot.liquid) +
                 " ₽ · Неликвидные активы: " + formatAmount(snapshot.illiquid) + " ₽",
-            chartTitle: "Изменение за месяц",
-            chartOrder: ["assets", "actual-earnings", "financial-burden", "mandatory-expenses"]
+            chartTitle: "Структура активов",
         },
         "debt-repayment": {
             id: "debt-repayment",
             label: "DEBT REPAYMENT",
             title: "Погашение долгов",
             value: snapshot.burden,
+            valueFormat: "currency",
             caption: "Остаток долговых обязательств",
-            context: "Платежи по долгам: " + formatAmount(snapshot.burdenPayment) + " ₽",
-            chartTitle: "Долговая нагрузка и связанные показатели",
-            chartOrder: ["financial-burden", "mandatory-expenses", "actual-earnings", "assets"]
+            context: "Регулярные платежи: " + formatAmount(snapshot.burdenPayment) + " ₽",
+            chartTitle: "Долги и обязательства по погашению",
         },
         "financial-stability": {
             id: "financial-stability",
             label: "FINANCIAL STABILITY",
             title: "Финансовая устойчивость",
-            value: snapshot.reserve,
-            caption: "Финансовый резерв",
+            value: stabilityResult?.dataStatus === "insufficient" ? null : stabilityResult?.value,
+            valueFormat: "score",
+            caption: "Индекс финансовой устойчивости",
             context: "Ликвидные средства: " + formatAmount(snapshot.liquid) +
-                " ₽ · Обязательные траты: " + formatAmount(snapshot.expenses) + " ₽",
+                " ₽ · Резерв: " + formatAmount(snapshot.reserve) + " ₽",
             chartTitle: "Показатели финансовой устойчивости",
-            chartOrder: ["mandatory-expenses", "financial-burden", "assets", "actual-earnings"]
         }
     });
 
@@ -466,33 +472,180 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
     let activeViewIndex = 0;
     let activeViewId = order[activeViewIndex];
 
-    const metricLabels = Object.freeze({
-        assets: "Активы",
-        "actual-earnings": "Заработано",
-        "financial-burden": "Нагрузка",
-        "mandatory-expenses": "Траты"
-    });
+    function formatViewValue(value, format = "currency") {
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+            return format === "score" ? "—/100" : "— ₽";
+        }
+        return format === "score"
+            ? formatAmount(value) + "/100"
+            : formatAmount(value) + " ₽";
+    }
 
     function renderChart(viewId) {
         const definition = viewDefinitions[viewId];
-        const chartMetrics = definition.chartOrder.map((id) => {
-            const change = analyticsSnapshot?.metrics?.[id]?.change;
-            const value = change?.hasComparison && Number.isFinite(Number(change.percent))
-                ? Number(change.percent)
-                : null;
-            return { id, label: metricLabels[id], value };
-        });
+        const diagnostics = stabilityDiagnostics;
+        const debtToIncome = diagnostics.debtToIncome;
+        const debtServiceRatio = diagnostics.debtServiceRatio;
+        const totalAssets = Math.max(0, snapshot.capital);
+        const income = Math.max(0, snapshot.income);
 
-        const comparableValues = chartMetrics
-            .map((metric) => metric.value)
-            .filter((value) => value !== null)
-            .map((value) => Math.abs(value));
-        const maxChange = Math.max(...comparableValues, 1);
+        const asAmount = (value) => formatAmount(value) + " ₽";
+        const asPercent = (value) => Number.isFinite(Number(value))
+            ? formatAmount(Number(value) * 100) + "%"
+            : "—";
+        const asMonths = (value) => Number.isFinite(Number(value))
+            ? formatAmount(value) + " мес."
+            : "—";
+        const clampPercent = (value) => Number.isFinite(Number(value))
+            ? Math.max(0, Math.min(100, Number(value)))
+            : 0;
+
+        let metrics = [];
+
+        if (viewId === "assets") {
+            metrics = [
+                {
+                    id: "liquid",
+                    label: "Ликвидные средства",
+                    valueText: asAmount(snapshot.liquid),
+                    fillPercent: totalAssets > 0 ? snapshot.liquid / totalAssets * 100 : 0,
+                    ariaText: "Доля ликвидных средств в активах"
+                },
+                {
+                    id: "illiquid",
+                    label: "Неликвидные активы",
+                    valueText: asAmount(snapshot.illiquid),
+                    fillPercent: totalAssets > 0 ? snapshot.illiquid / totalAssets * 100 : 0,
+                    ariaText: "Доля неликвидных активов"
+                },
+                {
+                    id: "reserve",
+                    label: "Средства в резерве",
+                    valueText: asAmount(snapshot.reserve),
+                    fillPercent: totalAssets > 0 ? snapshot.reserve / totalAssets * 100 : 0,
+                    ariaText: "Доля активов, отмеченных как финансовый резерв"
+                },
+                {
+                    id: "productive",
+                    label: "Продуктивный капитал",
+                    valueText: asAmount(productiveCapital),
+                    fillPercent: totalAssets > 0 ? productiveCapital / totalAssets * 100 : 0,
+                    ariaText: "Доля активов, настроенных на формирование дохода"
+                }
+            ];
+        } else if (viewId === "debt-repayment") {
+            metrics = [
+                {
+                    id: "debt",
+                    label: "Остаток долгов",
+                    valueText: asAmount(snapshot.burden),
+                    fillPercent: totalAssets > 0
+                        ? snapshot.burden / Math.max(totalAssets, snapshot.burden) * 100
+                        : (snapshot.burden > 0 ? 100 : 0),
+                    ariaText: "Общая сумма непогашенных долгов"
+                },
+                {
+                    id: "payment",
+                    label: "Регулярные платежи",
+                    valueText: asAmount(snapshot.burdenPayment),
+                    fillPercent: income > 0
+                        ? snapshot.burdenPayment / income * 100
+                        : (snapshot.burdenPayment > 0 ? 100 : 0),
+                    ariaText: "Регулярные платежи относительно фактического дохода"
+                },
+                {
+                    id: "debt-service",
+                    label: "Доля дохода на платежи",
+                    valueText: asPercent(debtServiceRatio),
+                    fillPercent: clampPercent(Number(debtServiceRatio) * 100),
+                    ariaText: "Доля фактического дохода, направляемая на платежи"
+                },
+                {
+                    id: "debt-to-income",
+                    label: "Долг к месячному доходу",
+                    valueText: Number.isFinite(Number(debtToIncome))
+                        ? formatAmount(debtToIncome) + "×"
+                        : "—",
+                    fillPercent: Number.isFinite(Number(debtToIncome))
+                        ? clampPercent(Number(debtToIncome) / 6 * 100)
+                        : 0,
+                    ariaText: "Отношение общего долга к фактическому доходу"
+                }
+            ];
+        } else {
+            const components = stabilityResult?.components || {};
+            const confidence = stabilityResult?.dataConfidence;
+            metrics = [
+                {
+                    id: "index",
+                    label: "Индекс устойчивости",
+                    valueText: stabilityResult?.dataStatus === "insufficient"
+                        ? "Недостаточно данных"
+                        : formatAmount(stabilityResult.value) + "/100",
+                    fillPercent: stabilityResult?.dataStatus === "insufficient"
+                        ? 0
+                        : clampPercent(stabilityResult.value),
+                    ariaText: "Индекс финансовой устойчивости по шкале от нуля до ста"
+                },
+                {
+                    id: "liquidity",
+                    label: "Финансовая выживаемость",
+                    valueText: asMonths(diagnostics.operationalLiquidityMonths),
+                    fillPercent: Number.isFinite(Number(diagnostics.operationalLiquidityMonths))
+                        ? clampPercent(Number(diagnostics.operationalLiquidityMonths) / 9 * 100)
+                        : 0,
+                    ariaText: "Сколько месяцев ликвидные средства покрывают обязательные расходы и платежи"
+                },
+                {
+                    id: "reserve",
+                    label: "Покрытие расходов резервом",
+                    valueText: asMonths(diagnostics.reserveMonths),
+                    fillPercent: Number.isFinite(Number(diagnostics.reserveMonths))
+                        ? clampPercent(Number(diagnostics.reserveMonths) / 9 * 100)
+                        : 0,
+                    ariaText: "Сколько месяцев резерв покрывает обязательные расходы и платежи"
+                },
+                {
+                    id: "coverage",
+                    label: "Покрытие обязательств доходом",
+                    valueText: Number.isFinite(Number(diagnostics.cashFlowCoverage))
+                        ? formatAmount(diagnostics.cashFlowCoverage) + "×"
+                        : "—",
+                    fillPercent: Number.isFinite(Number(diagnostics.cashFlowCoverage))
+                        ? clampPercent(Number(diagnostics.cashFlowCoverage) / 3 * 100)
+                        : 0,
+                    ariaText: "Отношение фактического дохода к обязательным расходам и платежам"
+                },
+                {
+                    id: "trajectory",
+                    label: "Финансовая динамика",
+                    valueText: components.financialTrajectory === null || components.financialTrajectory === undefined
+                        ? "—"
+                        : formatAmount(components.financialTrajectory) + "/100",
+                    fillPercent: clampPercent(components.financialTrajectory),
+                    ariaText: "Оценка финансовой динамики в составе индекса"
+                },
+                ...(Number(confidence?.historyObservations) >= 3 && diagnostics.trajectory?.incomeSlope !== null
+                    ? [{
+                        id: "income-trend",
+                        label: "Тренд дохода",
+                        valueText: diagnostics.trajectory.incomeSlope > 0
+                            ? "Растёт"
+                            : diagnostics.trajectory.incomeSlope < 0
+                                ? "Снижается"
+                                : "Без выраженного изменения",
+                        fillPercent: diagnostics.trajectory.incomeSlope > 0 ? 100
+                            : diagnostics.trajectory.incomeSlope < 0 ? 0 : 50,
+                        ariaText: "Направление изменения дохода по доступной истории"
+                    }]
+                    : [])
+            ];
+        }
 
         chartTitle.textContent = definition.chartTitle;
         chartBars.replaceChildren();
 
-        chartMetrics.forEach(({ id, label, value }, index) => {
+        metrics.forEach(({ id, label, valueText, fillPercent, ariaText }, index) => {
             const row = document.createElement("div");
             row.className = "finance-capital-chart-column";
             if (index === 0) row.classList.add("is-focus");
@@ -503,12 +656,7 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
             const metric = document.createElement("strong");
             metric.className = "finance-capital-chart-value";
-            metric.textContent = value === null
-                ? "—"
-                : formatPercentChange({
-                    percent: value,
-                    hasComparison: true
-                });
+            metric.textContent = valueText;
 
             const chartHeader = document.createElement("div");
             chartHeader.className = "finance-capital-chart-footer";
@@ -517,20 +665,12 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
             const barTrack = document.createElement("span");
             barTrack.className = "finance-capital-chart-track";
             barTrack.setAttribute("role", "img");
-            barTrack.setAttribute("aria-label", label + ": " + (
-                value === null
-                    ? "нет данных для сравнения"
-                    : formatPercentChange({ percent: value, hasComparison: true })
-            ));
+            barTrack.setAttribute("aria-label", label + ": " + ariaText + ". " + valueText);
 
             const bar = document.createElement("span");
             bar.className = "finance-capital-chart-bar";
-            if (value !== null) {
-                bar.classList.add(value >= 0 ? "is-positive" : "is-negative");
-                animateBarWidth(bar, Math.max(4, (Math.abs(value) / maxChange) * 100));
-            } else {
-                bar.style.width = "0%";
-            }
+            bar.classList.add(fillPercent > 0 ? "is-positive" : "is-neutral");
+            animateBarWidth(bar, clampPercent(fillPercent));
 
             barTrack.appendChild(bar);
             row.append(chartHeader, barTrack);
@@ -556,15 +696,19 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
             definition.title + ". Проведите влево или вправо для смены финансового экрана."
         );
 
-        const targetValue = Number(definition.value) || 0;
-        if (animateValue) {
-            amount.textContent = "0 ₽";
+        const targetValue = Number(definition.value);
+        if (!Number.isFinite(targetValue)) {
+            amount.textContent = definition.valueFormat === "score" ? "—/100" : "— ₽";
+        } else if (animateValue) {
+            amount.textContent = definition.valueFormat === "score" ? "0/100" : "0 ₽";
             animateCountUp(amount, targetValue, {
                 duration: 1800,
-                formatter: (value) => formatAmount(value) + " ₽"
+                formatter: (value) => definition.valueFormat === "score"
+                    ? formatAmount(value) + "/100"
+                    : formatAmount(value) + " ₽"
             });
         } else {
-            amount.textContent = formatAmount(targetValue) + " ₽";
+            amount.textContent = formatViewValue(targetValue, definition.valueFormat);
         }
 
         renderChart(activeViewId);
