@@ -1,4 +1,4 @@
-/* finance.css — Version 3.11 */
+/* finance.css — Version 3.12 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -526,52 +526,5 @@
     font-size:var(--font-size-2xs);
     letter-spacing:.06em;
 }
-.finance-capital-view-pin-status[hidden],
-.finance-view-context-menu[hidden]{
-    display:none;
-}
-.finance-view-context-menu{
-    position:absolute;
-    top:var(--space-4);
-    right:var(--space-4);
-    z-index:5;
-    display:flex;
-    flex-wrap:wrap;
-    align-items:center;
-    gap:var(--space-2);
-    max-width:calc(100% - 2 * var(--space-4));
-    padding:var(--space-2);
-    background:rgba(12,12,12,.96);
-    border:1px solid rgba(255,173,19,.35);
-    border-radius:var(--radius-md, .75rem);
-    box-shadow:0 12px 36px rgba(0,0,0,.35);
-}
-.finance-view-context-action,
-.finance-view-context-close{
-    min-height:2.25rem;
-    padding:.5rem .75rem;
-    color:var(--color-white);
-    font:inherit;
-    font-size:var(--font-size-2xs);
-    background:var(--color-surface-highlight);
-    border:1px solid var(--border-color, rgba(255,255,255,.12));
-    border-radius:999px;
-    cursor:pointer;
-    -webkit-tap-highlight-color:transparent;
-}
-.finance-view-context-action{
-    border-color:rgba(255,173,19,.45);
-}
-.finance-view-context-action:focus-visible,
-.finance-view-context-close:focus-visible{
-    outline:1px solid rgba(255,173,19,.8);
-    outline-offset:2px;
-}
+.finance-capital-view-pin-status[hidden]{display:none;}
 
-@media (max-width:719px){
-    .finance-view-context-menu{
-        top:var(--space-3);
-        right:var(--space-3);
-        max-width:calc(100% - 2 * var(--space-3));
-    }
-}

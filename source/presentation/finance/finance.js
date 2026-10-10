@@ -1,4 +1,4 @@
-// finance.js — Version 7.35
+// finance.js — Version 7.36
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -405,22 +405,28 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
     carousel.append(header, viewHeading, amount, caption, context, pinStatus, chart);
 
     const pinMenu = document.createElement("div");
-    pinMenu.className = "finance-view-context-menu";
+    pinMenu.className = "row-interaction-backdrop";
     pinMenu.hidden = true;
-    pinMenu.setAttribute("role", "group");
-    pinMenu.setAttribute("aria-label", "Настройки финансового экрана");
+    pinMenu.setAttribute("role", "presentation");
+
+    const interactionMenu = document.createElement("div");
+    interactionMenu.className = "row-interaction-menu";
+    interactionMenu.setAttribute("role", "menu");
+    interactionMenu.setAttribute("aria-label", "Действия с финансовым экраном");
 
     const pinAction = document.createElement("button");
     pinAction.type = "button";
-    pinAction.className = "finance-view-context-action";
+    pinAction.className = "row-interaction-menu__item";
+    pinAction.setAttribute("role", "menuitem");
 
     const closeMenu = document.createElement("button");
     closeMenu.type = "button";
-    closeMenu.className = "finance-view-context-close";
+    closeMenu.className = "row-interaction-menu__item";
     closeMenu.textContent = "Закрыть";
-    closeMenu.setAttribute("aria-label", "Закрыть меню закрепления");
+    closeMenu.setAttribute("role", "menuitem");
 
-    pinMenu.append(pinAction, closeMenu);
+    interactionMenu.append(pinAction, closeMenu);
+    pinMenu.appendChild(interactionMenu);
     section.append(carousel, pinMenu);
 
     const viewDefinitions = Object.freeze({
@@ -462,8 +468,12 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
     const recommendation = options.financeViewRecommendation ?? null;
     let preferences = loadFinanceCarouselPreferences(userId);
     let order = resolveFinanceCarouselOrder(recommendation, preferences.pinnedPositions);
-    let activeViewIndex = 0;
-    let activeViewId = order[activeViewIndex];
+    const pinnedDefaultViewId = Object.entries(preferences.pinnedPositions || {})
+        .sort((first, second) => first[1] - second[1])[0]?.[0];
+    let activeViewId = pinnedDefaultViewId && order.includes(pinnedDefaultViewId)
+        ? pinnedDefaultViewId
+        : order[0];
+    let activeViewIndex = Math.max(0, order.indexOf(activeViewId));
 
     function formatViewValue(value, format = "currency") {
         if (value === null || value === undefined || !Number.isFinite(Number(value))) {
@@ -709,15 +719,25 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
         renderChart(activeViewId);
     }
 
+    let pinMenuHideTimer = null;
+
     function hidePinMenu() {
-        pinMenu.hidden = true;
+        pinMenu.classList.remove("is-visible");
+        if (pinMenuHideTimer !== null) window.clearTimeout(pinMenuHideTimer);
+        pinMenuHideTimer = window.setTimeout(() => {
+            if (!pinMenu.classList.contains("is-visible")) pinMenu.hidden = true;
+            pinMenuHideTimer = null;
+        }, 300);
     }
 
     function showPinMenu() {
-        pinAction.textContent = isPinned(activeViewId)
-            ? "Открепить экран"
-            : "Закрепить экран";
+        if (pinMenuHideTimer !== null) {
+            window.clearTimeout(pinMenuHideTimer);
+            pinMenuHideTimer = null;
+        }
+        pinAction.textContent = isPinned(activeViewId) ? "Открепить" : "Закрепить";
         pinMenu.hidden = false;
+        window.requestAnimationFrame(() => pinMenu.classList.add("is-visible"));
     }
 
     function changeView(direction) {
@@ -756,6 +776,13 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
         hidePinMenu();
         carousel.focus({ preventScroll: true });
     });
+
+    pinMenu.addEventListener("click", (event) => {
+        if (event.target === pinMenu) hidePinMenu();
+    });
+
+    const stopMenuClick = (event) => event.stopPropagation();
+    pinMenu.querySelector(".row-interaction-menu")?.addEventListener("click", stopMenuClick);
 
     let pointerStartX = 0;
     let pointerStartY = 0;
