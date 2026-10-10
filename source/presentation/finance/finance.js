@@ -1,4 +1,4 @@
-// finance.js — Version 7.36
+// finance.js — Version 7.37
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -388,7 +388,14 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
 
     const pinStatus = document.createElement("span");
     pinStatus.className = "finance-capital-view-pin-status";
-    pinStatus.textContent = "ЗАКРЕПЛЕНО";
+    pinStatus.setAttribute("aria-label", "Экран закреплён");
+    const pinIcon = document.createElement("span");
+    pinIcon.className = "finance-capital-view-pin-icon";
+    pinIcon.setAttribute("aria-hidden", "true");
+    pinIcon.textContent = "📌";
+    const pinLabel = document.createElement("span");
+    pinLabel.textContent = "ЗАКРЕПЛЕНО";
+    pinStatus.append(pinIcon, pinLabel);
     pinStatus.hidden = true;
 
     const chart = document.createElement("div");

@@ -1,4 +1,4 @@
-/* finance.css — Version 3.12 */
+/* finance.css — Version 3.13 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -515,16 +515,31 @@
     line-height:1.45;
 }
 .finance-capital-view-pin-status{
-    position:relative;
-    z-index:1;
-    justify-self:start;
+    position:absolute;
+    z-index:2;
+    top:var(--space-3);
+    right:var(--space-3);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.3rem;
     padding:.2rem .45rem;
     color:var(--color-white-soft);
+    background:rgba(12,12,12,.72);
     border:1px solid rgba(255,173,19,.4);
     border-radius:999px;
     font-family:var(--font-family-mono);
     font-size:var(--font-size-2xs);
     letter-spacing:.06em;
+    line-height:1.35;
+    white-space:nowrap;
+}
+.finance-capital-view-pin-icon{
+    display:inline-block;
+    font-family:var(--font-family-sans);
+    font-size:.72rem;
+    line-height:1;
+    letter-spacing:normal;
 }
 .finance-capital-view-pin-status[hidden]{display:none;}
 
