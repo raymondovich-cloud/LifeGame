@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Login Presentation
-// Version: 1.2
+// Version: 1.3
 // Responsibility: render the Login interaction through Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -35,7 +35,11 @@ export function renderLogin(
 
     const title = document.createElement('h1');
     title.id = 'login-title';
-    title.textContent = 'Log in';
+    title.textContent = 'Ты уже в игре. Продолжай.';
+
+    const description = document.createElement('p');
+    description.textContent =
+        'Твои цели. Твои решения. Твой прогресс. Войди в LifeGame и продолжай создавать свою систему жизни.';
 
     const form = document.createElement('form');
     form.className = 'form';
@@ -46,7 +50,7 @@ export function renderLogin(
     const emailLabel = document.createElement('label');
     emailLabel.className = 'form-label';
     emailLabel.htmlFor = 'login-email';
-    emailLabel.textContent = 'Email';
+    emailLabel.textContent = 'Электронная почта';
 
     const emailInput = document.createElement('input');
     emailInput.className = 'input-control';
@@ -64,7 +68,7 @@ export function renderLogin(
     const passwordLabel = document.createElement('label');
     passwordLabel.className = 'form-label';
     passwordLabel.htmlFor = 'login-password';
-    passwordLabel.textContent = 'Password';
+    passwordLabel.textContent = 'Пароль';
 
     const passwordInput = document.createElement('input');
     passwordInput.className = 'input-control';
@@ -79,7 +83,7 @@ export function renderLogin(
     const submit = document.createElement('button');
     submit.className = 'button-control button-control--accent';
     submit.type = 'submit';
-    submit.textContent = 'Log in';
+    submit.textContent = 'Войти';
 
     const status = document.createElement('p');
     status.setAttribute('role', 'status');
@@ -88,12 +92,12 @@ export function renderLogin(
     const resendButton = document.createElement('button');
     resendButton.className = 'button-control';
     resendButton.type = 'button';
-    resendButton.textContent = 'Resend verification email';
+    resendButton.textContent = 'Отправить письмо для подтверждения';
     resendButton.hidden = true;
 
     resendButton.addEventListener('click', async () => {
         resendButton.disabled = true;
-        status.textContent = 'Sending verification email…';
+        status.textContent = 'Отправляем письмо для подтверждения…';
 
         try {
             await authController.resendVerification({
@@ -101,10 +105,10 @@ export function renderLogin(
             });
 
             status.textContent =
-                'Verification email sent. Check your inbox.';
+                'Письмо для подтверждения отправлено. Проверьте почту.';
         } catch (error) {
             status.textContent =
-                error?.message || 'Verification email could not be sent.';
+                error?.message || 'Не удалось отправить письмо для подтверждения.';
         } finally {
             resendButton.disabled = false;
         }
@@ -115,12 +119,12 @@ export function renderLogin(
 
     const registrationText = document.createElement('span');
     registrationText.className = 'auth-secondary-action__text';
-    registrationText.textContent = "Don't have an account?";
+    registrationText.textContent = 'Ещё нет аккаунта?';
 
     const registrationButton = document.createElement('button');
     registrationButton.className = 'button-control';
     registrationButton.type = 'button';
-    registrationButton.textContent = 'Create account';
+    registrationButton.textContent = 'Создать аккаунт';
     registrationButton.addEventListener('click', onCreateAccount);
 
     registrationPrompt.append(registrationText, registrationButton);
@@ -132,7 +136,7 @@ export function renderLogin(
         status,
         resendButton
     );
-    wrapper.append(title, form, registrationPrompt);
+    wrapper.append(title, description, form, registrationPrompt);
     container.append(wrapper);
 
     form.addEventListener('submit', async (event) => {
@@ -140,7 +144,7 @@ export function renderLogin(
 
         submit.disabled = true;
         resendButton.hidden = true;
-        status.textContent = 'Signing in…';
+        status.textContent = 'Выполняем вход…';
 
         try {
             const result = await authController.login({
@@ -149,7 +153,7 @@ export function renderLogin(
             });
 
             if (!result?.authenticated) {
-                throw new Error('Login could not be completed.');
+                throw new Error('Не удалось выполнить вход.');
             }
 
             form.reset();
@@ -157,14 +161,14 @@ export function renderLogin(
         } catch (error) {
             if (error?.code === IDENTITY_ERROR_CODE.EMAIL_NOT_CONFIRMED) {
                 status.textContent =
-                    'Email address is not confirmed. Check your inbox or resend the verification email.';
+                    'Электронная почта не подтверждена. Проверьте почту или запросите письмо повторно.';
                 resendButton.hidden = false;
             } else if (error?.code === IDENTITY_ERROR_CODE.RATE_LIMITED) {
                 status.textContent =
-                    'Too many requests. Wait before trying again.';
+                    'Слишком много запросов. Подождите и попробуйте снова.';
             } else {
                 status.textContent =
-                    error?.message || 'Login could not be completed.';
+                    error?.message || 'Не удалось выполнить вход.';
             }
         } finally {
             submit.disabled = false;
