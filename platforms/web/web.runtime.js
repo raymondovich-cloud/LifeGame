@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.13
+// platforms/web/web.runtime.js — Version 5.14
 
 import {
     trace,
@@ -479,16 +479,7 @@ export async function startWeb() {
         const description = document.createElement("p");
         description.textContent = state.description;
 
-        const progress = document.createElement("div");
-        progress.className = "finance-loading-progress";
-        progress.setAttribute("aria-hidden", "true");
-        for (let index = 0; index < 3; index += 1) {
-            const line = document.createElement("span");
-            line.className = "finance-loading-line";
-            progress.appendChild(line);
-        }
-
-        section.append(brand, meta, heading, description, progress);
+        section.append(brand, meta, heading, description);
         moduleContent.replaceChildren(section);
     }
 
