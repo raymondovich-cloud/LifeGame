@@ -1,4 +1,4 @@
-// finance.js — Version 7.34
+// finance.js — Version 7.35
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -644,7 +644,6 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
         metrics.forEach(({ id, label, valueText, fillPercent, ariaText }, index) => {
             const row = document.createElement("div");
             row.className = "finance-capital-chart-column";
-            if (index === 0) row.classList.add("is-focus");
 
             const labelNode = document.createElement("span");
             labelNode.className = "finance-capital-chart-label";
