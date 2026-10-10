@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Registration Presentation
-// Version: 1.4
+// Version: 1.5
 // Responsibility: render the registration interaction and call Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -35,11 +35,11 @@ export function renderRegistration(
 
     const title = document.createElement("h1");
     title.id = "registration-title";
-    title.textContent = "Create account";
+    title.textContent = "Перестань наблюдать. Начни играть.";
 
     const description = document.createElement("p");
     description.textContent =
-        "Create your LifeGame account to protect and synchronize your private data.";
+        "Твоя жизнь уже идёт. Создай свою систему, управляй решениями и определяй, каким будет твой следующий ход.";
 
     const form = document.createElement("form");
     form.className = "form";
@@ -94,7 +94,7 @@ export function renderRegistration(
     const emailLabel = document.createElement("label");
     emailLabel.className = "form-label";
     emailLabel.htmlFor = "registration-email";
-    emailLabel.textContent = "Email";
+    emailLabel.textContent = "Электронная почта";
 
     const emailInput = document.createElement("input");
     emailInput.className = "input-control";
@@ -112,7 +112,7 @@ export function renderRegistration(
     const passwordLabel = document.createElement("label");
     passwordLabel.className = "form-label";
     passwordLabel.htmlFor = "registration-password";
-    passwordLabel.textContent = "Password";
+    passwordLabel.textContent = "Пароль";
 
     const passwordInput = document.createElement("input");
     passwordInput.className = "input-control";
@@ -127,7 +127,7 @@ export function renderRegistration(
     const submit = document.createElement("button");
     submit.className = "button-control button-control--accent";
     submit.type = "submit";
-    submit.textContent = "Create account";
+    submit.textContent = "Создать аккаунт";
 
     const status = document.createElement("p");
     status.setAttribute("role", "status");
@@ -136,12 +136,12 @@ export function renderRegistration(
     const resendButton = document.createElement("button");
     resendButton.className = "button-control";
     resendButton.type = "button";
-    resendButton.textContent = "Resend verification email";
+    resendButton.textContent = "Отправить письмо для подтверждения";
     resendButton.hidden = true;
 
     resendButton.addEventListener("click", async () => {
         resendButton.disabled = true;
-        status.textContent = "Sending verification email…";
+        status.textContent = "Отправляем письмо для подтверждения…";
 
         try {
             await authController.resendVerification({
@@ -149,10 +149,10 @@ export function renderRegistration(
             });
 
             status.textContent =
-                "Verification email sent. Check your inbox.";
+                "Письмо для подтверждения отправлено. Проверьте почту.";
         } catch (error) {
             status.textContent =
-                error?.message || "Verification email could not be sent.";
+                error?.message || "Не удалось отправить письмо для подтверждения.";
         } finally {
             resendButton.disabled = false;
         }
@@ -161,7 +161,7 @@ export function renderRegistration(
     const loginButton = document.createElement("button");
     loginButton.className = "button-control";
     loginButton.type = "button";
-    loginButton.textContent = "Log in";
+    loginButton.textContent = "Войти";
     loginButton.addEventListener("click", onLogin);
 
     form.append(
@@ -181,7 +181,7 @@ export function renderRegistration(
 
         submit.disabled = true;
         resendButton.hidden = true;
-        status.textContent = "Creating account…";
+        status.textContent = "Создаём аккаунт…";
 
         try {
             const result = await authController.register({
@@ -193,21 +193,21 @@ export function renderRegistration(
 
             if (result.status === "PENDING_EMAIL_VERIFICATION") {
                 status.textContent =
-                    "Account created. Check your email to verify your address.";
+                    "Аккаунт создан. Проверьте почту, чтобы подтвердить адрес.";
                 resendButton.hidden = false;
             } else {
-                status.textContent = "Account created successfully.";
+                status.textContent = "Аккаунт успешно создан.";
                 form.reset();
                 onAuthenticated();
             }
         } catch (error) {
             if (error?.code === IDENTITY_ERROR_CODE.RATE_LIMITED) {
                 status.textContent =
-                    "Email service rate limit reached. Wait before requesting another message.";
+                    "Слишком много запросов на отправку письма. Подождите и попробуйте снова.";
                 resendButton.hidden = true;
             } else {
                 status.textContent =
-                    error?.message || "Registration could not be completed.";
+                    error?.message || "Не удалось завершить регистрацию.";
             }
         } finally {
             submit.disabled = false;
