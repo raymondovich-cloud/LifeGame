@@ -1,4 +1,4 @@
-// source/infrastructure/security/software-master-key-training-payload-encryption.test.mjs — Version 1.0
+// source/infrastructure/security/software-master-key-training-payload-encryption.test.mjs — Version 1.1
 import test from "node:test";
 import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
@@ -9,8 +9,8 @@ function setup(overrides={}){return createSoftwareMasterKeyTrainingPayloadEncryp
 test("encrypts private payload using unique salt and AES-256-GCM, then decrypts it",async()=>{
  const encryption=setup(),payload={activityType:"strength",intensity:"moderate",durationMinutes:42,notes:"private note",exercises:[{id:"barbell_bench_press",name:"Жим лёжа",sets:[]}]};
  const first=await encryption.encryptPayload(payload,context),second=await encryption.encryptPayload(payload,context);
- assert.equal(first.nonce.byteLength,12);assert.equal(first.tag.byteLength,16);assert.equal(first.wrappedKey.byteLength,32);
- assert.notDeepEqual(first.nonce,second.nonce);assert.notDeepEqual(first.wrappedKey,second.wrappedKey);assert.deepEqual(await encryption.decryptPayload(first,context),payload);
+ assert.equal(first.nonce.byteLength,12);assert.equal(first.tag.byteLength,16);assert.equal(first.keyEnvelope.byteLength,32);
+ assert.notDeepEqual(first.nonce,second.nonce);assert.notDeepEqual(first.keyEnvelope,second.keyEnvelope);assert.deepEqual(await encryption.decryptPayload(first,context),payload);
 });
 test("rejects modified ciphertext and authenticated metadata",async()=>{
  const encryption=setup(),envelope=await encryption.encryptPayload({notes:"private"},context),changed={...envelope,tag:new Uint8Array(envelope.tag)};changed.tag[0]^=0xff;

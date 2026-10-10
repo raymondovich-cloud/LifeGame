@@ -1,4 +1,4 @@
-// source/infrastructure/security/software-master-key-training-payload-encryption.js — Version 1.0
+// source/infrastructure/security/software-master-key-training-payload-encryption.js — Version 1.1
 // Responsibility: free-tier development encryption using Web Crypto HKDF + AES-256-GCM.
 // SERVER-ONLY. DEVELOPMENT/STAGING ONLY: master-key storage and rotation are not KMS-equivalent.
 // Before production, replace this provider with an approved managed-key envelope-encryption provider.
@@ -24,19 +24,19 @@ function createSoftwareMasterKeyTrainingPayloadEncryption({masterKey,keyVersion,
  async function derive(salt,info,usage){return cryptoApi.subtle.deriveKey({name:"HKDF",hash:"SHA-256",salt,info},await rootKeyPromise,{name:"AES-GCM",length:256},false,[usage]);}
  async function encryptPayload(payload,context){
   if(!payload||typeof payload!=="object"||Array.isArray(payload))throw new TypeError("Training payload encryption: payload must be an object.");
-  const additionalData=contextData(context),wrappedKey=cryptoApi.getRandomValues(new Uint8Array(SALT_BYTES)),nonce=cryptoApi.getRandomValues(new Uint8Array(NONCE_BYTES));let plaintext,sealed;
-  try{const key=await derive(wrappedKey,additionalData,"encrypt");plaintext=new TextEncoder().encode(JSON.stringify(payload));sealed=new Uint8Array(await cryptoApi.subtle.encrypt({name:"AES-GCM",iv:nonce,additionalData,tagLength:TAG_BYTES*8},key,plaintext));return Object.freeze({ciphertext:sealed.slice(0,-TAG_BYTES),nonce,tag:sealed.slice(-TAG_BYTES),wrappedKey,keyVersion});}
+  const additionalData=contextData(context),keyEnvelope=cryptoApi.getRandomValues(new Uint8Array(SALT_BYTES)),nonce=cryptoApi.getRandomValues(new Uint8Array(NONCE_BYTES));let plaintext,sealed;
+  try{const key=await derive(keyEnvelope,additionalData,"encrypt");plaintext=new TextEncoder().encode(JSON.stringify(payload));sealed=new Uint8Array(await cryptoApi.subtle.encrypt({name:"AES-GCM",iv:nonce,additionalData,tagLength:TAG_BYTES*8},key,plaintext));return Object.freeze({ciphertext:sealed.slice(0,-TAG_BYTES),nonce,tag:sealed.slice(-TAG_BYTES),keyEnvelope,keyVersion});}
   finally{plaintext?.fill(0);sealed?.fill(0);additionalData.fill(0);}
  }
  async function decryptPayload(envelope,context){
   if(!envelope||typeof envelope!=="object"||Array.isArray(envelope))throw new TypeError("Training payload encryption: envelope is required.");
   if(envelope.keyVersion!==keyVersion){const error=new Error("Training payload encryption: stored key version is not configured.");error.code="TRAINING_PAYLOAD_KEY_VERSION_UNAVAILABLE";throw error;}
-  const nonce=asBytes(envelope.nonce,"nonce"),tag=asBytes(envelope.tag,"authentication tag"),ciphertext=asBytes(envelope.ciphertext,"ciphertext"),wrappedKey=asBytes(envelope.wrappedKey,"key envelope");
-  if(nonce.byteLength!==NONCE_BYTES||tag.byteLength!==TAG_BYTES||ciphertext.byteLength===0||wrappedKey.byteLength!==SALT_BYTES)throw new TypeError("Training payload encryption: encrypted envelope is malformed.");
+  const nonce=asBytes(envelope.nonce,"nonce"),tag=asBytes(envelope.tag,"authentication tag"),ciphertext=asBytes(envelope.ciphertext,"ciphertext"),keyEnvelope=asBytes(envelope.keyEnvelope,"key envelope");
+  if(nonce.byteLength!==NONCE_BYTES||tag.byteLength!==TAG_BYTES||ciphertext.byteLength===0||keyEnvelope.byteLength!==SALT_BYTES)throw new TypeError("Training payload encryption: encrypted envelope is malformed.");
   const additionalData=contextData(context),sealed=new Uint8Array(ciphertext.byteLength+tag.byteLength);sealed.set(ciphertext);sealed.set(tag,ciphertext.byteLength);let plaintext;
-  try{const key=await derive(wrappedKey,additionalData,"decrypt");plaintext=new Uint8Array(await cryptoApi.subtle.decrypt({name:"AES-GCM",iv:nonce,additionalData,tagLength:TAG_BYTES*8},key,sealed));const parsed=JSON.parse(new TextDecoder().decode(plaintext));if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw new Error("invalid payload shape");return parsed;}
+  try{const key=await derive(keyEnvelope,additionalData,"decrypt");plaintext=new Uint8Array(await cryptoApi.subtle.decrypt({name:"AES-GCM",iv:nonce,additionalData,tagLength:TAG_BYTES*8},key,sealed));const parsed=JSON.parse(new TextDecoder().decode(plaintext));if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw new Error("invalid payload shape");return parsed;}
   catch{const error=new Error("Training payload encryption: payload authentication or decoding failed.");error.code="TRAINING_PAYLOAD_DECRYPTION_FAILED";throw error;}
-  finally{additionalData.fill(0);sealed.fill(0);plaintext?.fill(0);nonce.fill(0);tag.fill(0);ciphertext.fill(0);wrappedKey.fill(0);}
+  finally{additionalData.fill(0);sealed.fill(0);plaintext?.fill(0);nonce.fill(0);tag.fill(0);ciphertext.fill(0);keyEnvelope.fill(0);}
  }
  return Object.freeze({encryptPayload,decryptPayload});
 }

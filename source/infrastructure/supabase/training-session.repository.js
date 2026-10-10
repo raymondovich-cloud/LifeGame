@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.js — Version 1.2
+// source/infrastructure/supabase/training-session.repository.js — Version 1.3
 // Responsibility: persist encrypted sessions through a server-only Supabase client; every operation is explicitly owner-scoped.
 // SERVER-ONLY: requires a trusted privileged Supabase client, a verified user context and a server-side encryption port. Never import into client bundles. Direct client table grants are intentionally revoked.
 
@@ -84,7 +84,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
             payload_ciphertext: bytea(envelope.ciphertext, "ciphertext"),
             payload_nonce: bytea(envelope.nonce, "nonce"),
             payload_tag: bytea(envelope.tag, "authentication tag"),
-            payload_key_envelope: bytea(envelope.wrappedKey, "wrapped key"),
+            payload_key_envelope: bytea(envelope.keyEnvelope, "key envelope"),
             payload_key_version: envelope.keyVersion
         };
     }
@@ -101,7 +101,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
             ciphertext: parseBytea(row.payload_ciphertext, "ciphertext"),
             nonce: parseBytea(row.payload_nonce, "nonce"),
             tag: parseBytea(row.payload_tag, "authentication tag"),
-            wrappedKey: parseBytea(row.payload_key_envelope, "wrapped key"),
+            keyEnvelope: parseBytea(row.payload_key_envelope, "key envelope"),
             keyVersion: row.payload_key_version
         }, contextFor(row, revision));
         const session = createTrainingSession({

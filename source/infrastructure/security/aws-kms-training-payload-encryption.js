@@ -1,4 +1,4 @@
-// source/infrastructure/security/aws-kms-training-payload-encryption.js — Version 1.1
+// source/infrastructure/security/aws-kms-training-payload-encryption.js — Version 1.2
 // Responsibility: AES-256-GCM payload encryption with a KMS-backed envelope-encryption port.
 // SERVER-ONLY: never import this module into Web, Telegram WebApp, or iOS client bundles.
 
@@ -76,7 +76,7 @@ function createAwsKmsTrainingPayloadEncryption({ kms, keys, activeKeyVersion, cr
         const originalPlaintextKey = generated?.plaintextKey;
         const plaintextKey = asBytes(originalPlaintextKey, "generated plaintext key");
         const wrappedKey = asBytes(generated?.encryptedDataKey, "wrapped data key");
-        if (plaintextKey.byteLength !== KEY_BYTES || wrappedKey.byteLength === 0) {
+        if (plaintextKey.byteLength !== KEY_BYTES || keyEnvelope.byteLength === 0) {
             plaintextKey.fill(0);
             if (originalPlaintextKey instanceof Uint8Array) originalPlaintextKey.fill(0);
             throw new Error("Training payload encryption: KMS returned an invalid data key envelope.");
@@ -95,7 +95,7 @@ function createAwsKmsTrainingPayloadEncryption({ kms, keys, activeKeyVersion, cr
             ));
             const ciphertext = sealed.slice(0, -TAG_BYTES);
             const tag = sealed.slice(-TAG_BYTES);
-            return Object.freeze({ ciphertext, nonce, tag, wrappedKey, keyVersion });
+            return Object.freeze({ ciphertext, nonce, tag, keyEnvelope: wrappedKey, keyVersion });
         } finally {
             plaintext?.fill(0);
             sealed?.fill(0);
@@ -119,12 +119,12 @@ function createAwsKmsTrainingPayloadEncryption({ kms, keys, activeKeyVersion, cr
         const nonce = asBytes(envelope.nonce, "nonce");
         const tag = asBytes(envelope.tag, "authentication tag");
         const ciphertext = asBytes(envelope.ciphertext, "ciphertext");
-        const wrappedKey = asBytes(envelope.wrappedKey, "wrapped data key");
+        const keyEnvelope = asBytes(envelope.keyEnvelope, "key envelope");
         if (nonce.byteLength !== NONCE_BYTES || tag.byteLength !== TAG_BYTES || ciphertext.byteLength === 0 || wrappedKey.byteLength === 0) {
             throw new TypeError("Training payload encryption: encrypted envelope is malformed.");
         }
 
-        const decrypted = await kms.decryptDataKey({ keyId: keyArn, encryptedDataKey: wrappedKey, encryptionContext: kmsEncryptionContext });
+        const decrypted = await kms.decryptDataKey({ keyId: keyArn, encryptedDataKey: keyEnvelope, encryptionContext: kmsEncryptionContext });
         const originalPlaintextKey = decrypted?.plaintextKey;
         const plaintextKey = asBytes(originalPlaintextKey, "decrypted plaintext key");
         if (plaintextKey.byteLength !== KEY_BYTES) {

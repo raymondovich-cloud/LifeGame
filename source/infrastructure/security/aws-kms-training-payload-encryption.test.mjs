@@ -1,4 +1,4 @@
-// source/infrastructure/security/aws-kms-training-payload-encryption.test.mjs — Version 1.0
+// source/infrastructure/security/aws-kms-training-payload-encryption.test.mjs — Version 1.1
 import test from "node:test";
 import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
@@ -65,6 +65,7 @@ test("encrypts and decrypts private training payload with authenticated metadata
     assert.equal(envelope.nonce.byteLength, 12);
     assert.equal(envelope.tag.byteLength, 16);
     assert.equal(envelope.keyVersion, KEY_VERSION);
+    assert.equal(envelope.keyEnvelope.byteLength, 32);
     assert.deepEqual(await encryption.decryptPayload(envelope, context), payload);
 });
 
