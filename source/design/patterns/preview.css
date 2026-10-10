@@ -1,4 +1,4 @@
-/* preview.css — Version 1.3 */
+/* preview.css — Version 1.4 */
 
 .preview-subblock-list {
     display:grid;
@@ -69,10 +69,15 @@
     backdrop-filter:blur(14px);
 }
 
+.registration-modal__dialog #registration-title,
 .registration-modal__dialog #login-title {
     margin:0;
     font-size:clamp(1rem, 4.8vw, 1.5rem);
     letter-spacing:-.045em;
+    text-align:center;
+}
+
+.registration-modal__dialog #login-title {
     white-space:nowrap;
 }
 
