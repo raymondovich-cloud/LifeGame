@@ -1,4 +1,4 @@
-// source/infrastructure/security/aws-kms-training-payload-encryption.js — Version 1.0
+// source/infrastructure/security/aws-kms-training-payload-encryption.js — Version 1.1
 // Responsibility: AES-256-GCM payload encryption with a KMS-backed envelope-encryption port.
 // SERVER-ONLY: never import this module into Web, Telegram WebApp, or iOS client bundles.
 
@@ -82,21 +82,23 @@ function createAwsKmsTrainingPayloadEncryption({ kms, keys, activeKeyVersion, cr
             throw new Error("Training payload encryption: KMS returned an invalid data key envelope.");
         }
 
+        let plaintext;
+        let sealed;
         try {
             const nonce = cryptoApi.getRandomValues(new Uint8Array(NONCE_BYTES));
             const cryptoKey = await cryptoApi.subtle.importKey("raw", plaintextKey, { name: "AES-GCM" }, false, ["encrypt"]);
-            const plaintext = new TextEncoder().encode(JSON.stringify(payload));
-            const sealed = new Uint8Array(await cryptoApi.subtle.encrypt(
+            plaintext = new TextEncoder().encode(JSON.stringify(payload));
+            sealed = new Uint8Array(await cryptoApi.subtle.encrypt(
                 { name: "AES-GCM", iv: nonce, additionalData, tagLength: TAG_BYTES * 8 },
                 cryptoKey,
                 plaintext
             ));
             const ciphertext = sealed.slice(0, -TAG_BYTES);
             const tag = sealed.slice(-TAG_BYTES);
-            plaintext.fill(0);
-            sealed.fill(0);
             return Object.freeze({ ciphertext, nonce, tag, wrappedKey, keyVersion });
         } finally {
+            plaintext?.fill(0);
+            sealed?.fill(0);
             plaintextKey.fill(0);
             if (originalPlaintextKey instanceof Uint8Array) originalPlaintextKey.fill(0);
         }

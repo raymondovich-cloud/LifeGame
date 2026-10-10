@@ -1,4 +1,4 @@
-// supabase/functions/training-sessions/handler.js — Version 1.0
+// supabase/functions/training-sessions/handler.js — Version 1.1
 // Responsibility: authenticated HTTP boundary for the private training-session API.
 import { createSaveTrainingSession } from "../../../source/application/training/save-training-session.js";
 import { createManageTrainingSession } from "../../../source/application/training/manage-training-session.js";
@@ -12,28 +12,28 @@ function reply(status,body,origin,origins){
  if(origin&&origins.has(origin)){headers.set("Access-Control-Allow-Origin",origin);headers.set("Access-Control-Allow-Methods","POST, OPTIONS");headers.set("Access-Control-Allow-Headers","authorization, apikey, content-type, x-client-info");headers.set("Access-Control-Max-Age","600");}
  return new Response(status===204?null:JSON.stringify(body),{status,headers});
 }
+class RequestValidationError extends Error {}
 function mapError(error){
  const code=String(error?.code||"");
  if(code==="TRAINING_SESSION_NOT_FOUND")return{status:404,code};
  if(code==="TRAINING_SESSION_CONFLICT")return{status:409,code};
  if(code==="TRAINING_SESSION_SCOPE_MISMATCH")return{status:403,code};
- if(error instanceof TypeError||error instanceof SyntaxError)return{status:400,code:"INVALID_REQUEST"};
  if(code==="TRAINING_PAYLOAD_KEY_VERSION_UNAVAILABLE")return{status:503,code:"ENCRYPTION_KEY_UNAVAILABLE"};
  if(code==="TRAINING_PAYLOAD_DECRYPTION_FAILED")return{status:500,code:"PAYLOAD_INTEGRITY_FAILURE"};
  return{status:500,code:"INTERNAL_ERROR"};
 }
-function sessionId(value){if(typeof value!=="string"||!UUID.test(value.trim()))throw new TypeError("Invalid session id.");return value.trim().toLowerCase();}
+function sessionId(value){if(typeof value!=="string"||!UUID.test(value.trim()))throw new RequestValidationError("Invalid session id.");return value.trim().toLowerCase();}
 function validate(body){
- if(!body||typeof body!=="object"||Array.isArray(body))throw new TypeError("JSON object required.");
- if(Object.keys(body).some(k=>!["action","sessionId","expectedRevision","session","changes"].includes(k)))throw new TypeError("Unknown field.");
- if(!ACTIONS.has(body.action))throw new TypeError("Unsupported action.");
+ if(!body||typeof body!=="object"||Array.isArray(body))throw new RequestValidationError("JSON object required.");
+ if(Object.keys(body).some(k=>!["action","sessionId","expectedRevision","session","changes"].includes(k)))throw new RequestValidationError("Unknown field.");
+ if(!ACTIONS.has(body.action))throw new RequestValidationError("Unsupported action.");
  if(["get","start","complete","revise"].includes(body.action))sessionId(body.sessionId);
- if(["start","complete","revise"].includes(body.action)&&(!Number.isSafeInteger(body.expectedRevision)||body.expectedRevision<1))throw new TypeError("Invalid revision.");
+ if(["start","complete","revise"].includes(body.action)&&(!Number.isSafeInteger(body.expectedRevision)||body.expectedRevision<1))throw new RequestValidationError("Invalid revision.");
  if(body.action==="create"){
-  if(!body.session||typeof body.session!=="object"||Array.isArray(body.session)||body.session.status!=="planned")throw new TypeError("A planned session is required.");
-  if(["id","userId","user_id","createdAt","updatedAt","revision"].some(k=>Object.hasOwn(body.session,k)))throw new TypeError("Persistence metadata is server controlled.");
+  if(!body.session||typeof body.session!=="object"||Array.isArray(body.session)||body.session.status!=="planned")throw new RequestValidationError("A planned session is required.");
+  if(["id","userId","user_id","createdAt","updatedAt","revision"].some(k=>Object.hasOwn(body.session,k)))throw new RequestValidationError("Persistence metadata is server controlled.");
  }
- if(body.action==="revise"&&(!body.changes||typeof body.changes!=="object"||Array.isArray(body.changes)))throw new TypeError("Changes are required.");
+ if(body.action==="revise"&&(!body.changes||typeof body.changes!=="object"||Array.isArray(body.changes)))throw new RequestValidationError("Changes are required.");
  return body;
 }
 function output(value){return value==null?null:value.session&&Number.isSafeInteger(value.revision)?{session:value.session,revision:value.revision}:value;}
@@ -50,10 +50,17 @@ function createTrainingSessionsHandler({createUserClient,encryption,allowedOrigi
   if(Number(request.headers.get("content-length")||0)>MAX_BODY_BYTES)return reply(413,{error:"REQUEST_TOO_LARGE"},origin,origins);
   const auth=request.headers.get("authorization")||"",match=/^Bearer\s+([^\s]+)$/i.exec(auth);
   if(!match)return reply(401,{error:"UNAUTHENTICATED"},origin,origins);
+  let body;
   try{
    const raw=await request.text();
    if(new TextEncoder().encode(raw).byteLength>MAX_BODY_BYTES)return reply(413,{error:"REQUEST_TOO_LARGE"},origin,origins);
-   const body=validate(JSON.parse(raw));
+   body=validate(JSON.parse(raw));
+  }catch(error){
+   if(error instanceof RequestValidationError||error instanceof SyntaxError)return reply(400,{error:"INVALID_REQUEST"},origin,origins);
+   try{logger({code:"REQUEST_READ_FAILED"});}catch{}
+   return reply(400,{error:"INVALID_REQUEST"},origin,origins);
+  }
+  try{
    const client=createUserClient(auth);
    const verified=await client.auth.getUser(match[1]);
    const user=verified?.data?.user;

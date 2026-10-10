@@ -1,4 +1,4 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.3 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.4 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
@@ -7,7 +7,7 @@
 
 ## 1. Цель и границы
 
-Документ определяет контракт безопасного хранения дневника тренировок. Миграция и адаптер добавлены в GitHub, но миграция не применялась к удалённой Supabase-базе. Проверка в локальном Supabase/CI ещё требуется.
+Документ определяет контракт безопасного хранения дневника тренировок. Миграция и адаптер находятся в GitHub; миграция не применялась к удалённой Supabase-базе. CI подтверждает локальные PostgreSQL/RLS tests и unit-тесты Edge handler; реальный AWS KMS smoke test ещё не выполнялся.
 
 Текущая реализация Domain/Application не является доказательством безопасности хранения. Существующие Health/Development адаптеры и их RLS — полезная отправная точка, но не готовая реализация дневника тренировок.
 
@@ -100,7 +100,7 @@ AAD и AWS KMS Encryption Context связывают ciphertext/wrapped DEK с u
 
 AWS KMS key policy должна ограничивать доступ только kms:GenerateDataKey и kms:Decrypt для конкретного ключа и серверного workload. KMS key ARN/version mapping задаётся server-side; старые mappings нельзя удалять, пока данные не перешифрованы или не удалены. Ключи и credentials не добавляются в Git.
 
-TLS и шифрование at rest провайдера остаются дополнительными слоями, но не заменяют application-layer encryption. Шифрование реализовано на уровне Infrastructure port, но AWS SDK wiring и secrets не настроены; исходный код Edge Function добавлен, но endpoint не развёрнут.
+TLS и шифрование at rest провайдера остаются дополнительными слоями, но не заменяют application-layer encryption. Шифрование реализовано на уровне Infrastructure port; Edge Function source и AWS SDK wiring добавлены, но secrets не настроены и endpoint не развёрнут.
 
 ## 8. Удаление и жизненный цикл
 

@@ -1,4 +1,4 @@
-// supabase/functions/training-sessions/handler.test.mjs — Version 1.0
+// supabase/functions/training-sessions/handler.test.mjs — Version 1.1
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSessionsHandler, MAX_BODY_BYTES } from "./handler.js";
@@ -55,6 +55,12 @@ test("returns conflict for stale revision and hides internal error messages",asy
  const{handler}=setup({async findForUser(){return{session,revision:1};},async updateForUser(){return null;}});
  const res=await handler(req({action:"start",sessionId:ID,expectedRevision:1}));
  assert.equal(res.status,409);assert.deepEqual(await res.json(),{error:"TRAINING_SESSION_CONFLICT"});
+});
+test("rejects malformed JSON as a client error",async()=>{
+ const{handler}=setup();const res=await handler(req("{"));assert.equal(res.status,400);assert.deepEqual(await res.json(),{error:"INVALID_REQUEST"});
+});
+test("treats infrastructure TypeErrors as internal failures, not invalid requests",async()=>{
+ const{handler}=setup({async findForUser(){throw new TypeError("KMS provider failure");}});const res=await handler(req({action:"get",sessionId:ID}));assert.equal(res.status,500);assert.deepEqual(await res.json(),{error:"INTERNAL_ERROR"});
 });
 test("does not expose internal exception messages",async()=>{
  const{handler}=setup({async findForUser(){throw new Error("private payload");}});
