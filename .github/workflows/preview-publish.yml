@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 1.2
+# .github/workflows/preview-publish.yml — Version 1.3
 name: LifeGame Preview CI
 
 on:
@@ -66,6 +66,12 @@ jobs:
         run: |
           set -euo pipefail
           node --experimental-default-type=module --test source/application/voice/finance-command.parser.test.mjs source/domain/finance/financial.burden/financial.burden.test.mjs source/index/finance/finance.index.test.mjs
+
+      - name: Test profile role and lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-default-type=module --test source/application/profile/profile.test.mjs source/infrastructure/supabase/profile.adapter.test.mjs
 
       - name: Request preview deployment
         if: success()

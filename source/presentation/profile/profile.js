@@ -1,4 +1,4 @@
-// source/presentation/profile/profile.js — Version 1.6
+// source/presentation/profile/profile.js — Version 1.7
 // Responsibility: render the Profile Life Quality placeholder and profile settings.
 
 function createSettingsRow(label, value, action = null) {
@@ -156,7 +156,7 @@ function createLifeQualityVisual() {
     return visual;
 }
 
-function createSettingsModal(profile, email, profileApplication, userId, onLogout, onProfileUpdated) {
+function createSettingsModal(profile, email, userRole, profileApplication, userId, onLogout, onProfileUpdated) {
     const modal = document.createElement("div");
     modal.className = "profile-settings-modal";
     modal.setAttribute("role", "dialog");
@@ -218,9 +218,14 @@ function createSettingsModal(profile, email, profileApplication, userId, onLogou
             email || "Account active"
         );
 
+        const statusLabels = {
+            creator: "Создатель",
+            admin: "Администратор",
+            user: "Пользователь"
+        };
         const statusRow = createSettingsRow(
             "Статус пользователя",
-            "Пользователь"
+            statusLabels[userRole] || "Не удалось загрузить статус"
         );
         statusRow.classList.add("profile-settings-row--readonly");
 
@@ -355,12 +360,22 @@ async function renderProfile(root, session = null, options = {}) {
     settings.setAttribute("title", "Настройки");
     settings.textContent = "⚙";
 
-    settings.addEventListener("click", () => {
-        if (section.querySelector(".profile-settings-modal")) return;
+    settings.addEventListener("click", async () => {
+        if (section.querySelector(".profile-settings-modal") || settings.disabled) return;
+
+        settings.disabled = true;
+
+        let userRole = null;
+        try {
+            userRole = await profileApplication.getUserRole(userId);
+        } catch {
+            // Keep profile settings available if status lookup temporarily fails.
+        }
 
         const settingsView = createSettingsModal(
             currentProfile,
             email,
+            userRole,
             profileApplication,
             userId,
             onLogout,
@@ -371,6 +386,7 @@ async function renderProfile(root, session = null, options = {}) {
 
         section.appendChild(settingsView.modal);
         settingsView.focusClose();
+        settings.disabled = false;
     });
 
     heading.append(headingCopy, settings);

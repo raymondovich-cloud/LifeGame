@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Profile Application Tests
-// Version: 1.0
+// Version: 1.1
 // Responsibility: verify the Profile read and mutation application boundary.
 
 import test from "node:test";
@@ -18,6 +18,9 @@ test("updateProfile validates and delegates normalized profile data", async () =
     let received = null;
 
     const profilePort = {
+        async getUserRole() {
+            return "user";
+        },
         async getProfile() {
             return null;
         },
@@ -57,6 +60,9 @@ test("updateProfile rejects an empty display name before reaching the port", asy
     let called = false;
 
     const profilePort = {
+        async getUserRole() {
+            return "user";
+        },
         async getProfile() {
             return null;
         },
@@ -83,6 +89,9 @@ test("updateProfile rejects an invalid birth date before reaching the port", asy
     let called = false;
 
     const profilePort = {
+        async getUserRole() {
+            return "user";
+        },
         async getProfile() {
             return null;
         },
@@ -107,6 +116,9 @@ test("updateProfile rejects an invalid birth date before reaching the port", asy
 
 test("updateProfile requires a user id", async () => {
     const profilePort = {
+        async getUserRole() {
+            return "user";
+        },
         async getProfile() {
             return null;
         },
@@ -144,6 +156,10 @@ test("profile lifecycle reads, updates, and reads the persisted user profile", a
     ]);
 
     const profilePort = {
+        async getUserRole() {
+            return "user";
+        },
+
         async getProfile(userId) {
             return structuredClone(profiles.get(userId) ?? null);
         },
@@ -218,6 +234,10 @@ test("profile lifecycle remains user-scoped", async () => {
     ]);
 
     const profilePort = {
+        async getUserRole() {
+            return "user";
+        },
+
         async getProfile(userId) {
             return structuredClone(profiles.get(userId) ?? null);
         },
@@ -259,4 +279,25 @@ test("profile lifecycle remains user-scoped", async () => {
         displayName: "User B",
         birthDate: "1998-08-15"
     });
+});
+
+
+test("getUserRole normalizes the user id and delegates to the profile port", async () => {
+    let receivedUserId = null;
+    const profilePort = {
+        async getUserRole(userId) {
+            receivedUserId = userId;
+            return "creator";
+        },
+        async getProfile() {
+            return null;
+        },
+        async updateProfile() {
+            throw new Error("not expected");
+        }
+    };
+
+    const application = createProfileApplication(profilePort);
+    assert.equal(await application.getUserRole(" user-1 "), "creator");
+    assert.equal(receivedUserId, "user-1");
 });

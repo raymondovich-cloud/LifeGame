@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Profile Adapter
-// Version: 1.1
+// Version: 1.2
 // Responsibility: read and mutate user-scoped profile data in Supabase.
 //
 // RLS on public.profiles is the database authorization boundary.
@@ -19,6 +19,25 @@ export function createSupabaseProfileAdapter(supabaseClient) {
     }
 
     return Object.freeze({
+        async getUserRole(userId) {
+            const { data, error } = await supabaseClient
+                .from("user_profiles")
+                .select("role")
+                .eq("user_id", userId)
+                .maybeSingle();
+
+            if (error) {
+                throw new Error(
+                    error.message || "User status could not be loaded."
+                );
+            }
+
+            const role = data?.role;
+            return ["creator", "admin", "user"].includes(role)
+                ? role
+                : "user";
+        },
+
         async getProfile(userId) {
             const { data, error } = await supabaseClient
                 .from("profiles")
