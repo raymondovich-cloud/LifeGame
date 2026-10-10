@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.12
+// platforms/web/web.runtime.js — Version 5.13
 
 import {
     trace,
@@ -458,6 +458,17 @@ export async function startWeb() {
         section.setAttribute("aria-live", "polite");
         section.setAttribute("aria-busy", "true");
 
+        const brand = document.createElement("div");
+        brand.className = "finance-loading-brand";
+        brand.setAttribute("aria-hidden", "true");
+        for (const [index, letter] of Array.from("LifeGame").entries()) {
+            const glyph = document.createElement("span");
+            glyph.className = "finance-loading-brand-letter";
+            glyph.textContent = letter;
+            glyph.style.setProperty("--letter-index", String(index));
+            brand.appendChild(glyph);
+        }
+
         const meta = document.createElement("span");
         meta.className = "finance-section-meta";
         meta.textContent = state.label;
@@ -477,7 +488,7 @@ export async function startWeb() {
             progress.appendChild(line);
         }
 
-        section.append(meta, heading, description, progress);
+        section.append(brand, meta, heading, description, progress);
         moduleContent.replaceChildren(section);
     }
 
