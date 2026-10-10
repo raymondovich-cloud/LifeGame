@@ -1,4 +1,4 @@
-/* design.css — Version 2.0 */
+/* design.css — Version 2.1 */
 
 /* Единая точка входа Design System. */
 
@@ -20,6 +20,7 @@
 @import "./components/card.css";
 @import "./components/input.css?v=20261010-1600";
 @import "./components/modal.css";
+@import "./components/financial-burden-confirmation.css";
 @import "./components/accordion.css";
 @import "./components/navigation.css";
 @import "./components/header.css";
