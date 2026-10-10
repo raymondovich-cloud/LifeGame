@@ -1,4 +1,4 @@
-// source/index/health/health.activity-training.js — Version 1.0
+// source/index/health/health.activity-training.js — Version 1.1
 
 const WHO_ACTIVITY_GUIDELINES = Object.freeze({
     minimumModerateEquivalentMinutesPerWeek: 150,
@@ -8,34 +8,56 @@ const WHO_ACTIVITY_GUIDELINES = Object.freeze({
     minimumStrengthDaysPerWeek: 2
 });
 
-function finiteNonNegative(value) {
+function readNonNegative(value) {
     if (
         value === null ||
         value === undefined ||
         (typeof value === "string" && value.trim() === "")
     ) {
-        return null;
+        return { status: "missing", value: null };
     }
 
     const number = Number(value);
-    return Number.isFinite(number) && number >= 0 ? number : null;
+    if (!Number.isFinite(number) || number < 0) {
+        return { status: "invalid", value: null };
+    }
+
+    return { status: "valid", value: number };
+}
+
+function finiteNonNegative(value) {
+    const result = readNonNegative(value);
+    return result.status === "valid" ? result.value : null;
 }
 
 function calculateAerobicActivity(input = {}) {
-    const moderateMinutes = finiteNonNegative(input.moderateMinutesPerWeek);
-    const vigorousMinutes = finiteNonNegative(input.vigorousMinutesPerWeek);
+    const moderate = readNonNegative(input.moderateMinutesPerWeek);
+    const vigorous = readNonNegative(input.vigorousMinutesPerWeek);
 
-    if (moderateMinutes === null && vigorousMinutes === null) {
+    if (moderate.status === "invalid" || vigorous.status === "invalid") {
         return {
             available: false,
             equivalentModerateMinutesPerWeek: null,
             minimumRecommendationMet: null,
-            recommendedRange: "unknown"
+            recommendedRange: "unknown",
+            error: "invalid_aerobic_minutes"
         };
     }
 
+    if (moderate.status === "missing" || vigorous.status === "missing") {
+        return {
+            available: false,
+            equivalentModerateMinutesPerWeek: null,
+            minimumRecommendationMet: null,
+            recommendedRange: "unknown",
+            reason: "incomplete_data"
+        };
+    }
+
+    const moderateMinutes = moderate.value;
+    const vigorousMinutes = vigorous.value;
     const equivalentModerateMinutesPerWeek =
-        (moderateMinutes ?? 0) + 2 * (vigorousMinutes ?? 0);
+        moderateMinutes + 2 * vigorousMinutes;
 
     const minimum = WHO_ACTIVITY_GUIDELINES.minimumModerateEquivalentMinutesPerWeek;
     const maximum = WHO_ACTIVITY_GUIDELINES.maximumModerateEquivalentMinutesPerWeek;

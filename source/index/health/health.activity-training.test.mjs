@@ -1,4 +1,4 @@
-// source/index/health/health.activity-training.test.mjs — Version 1.0
+// source/index/health/health.activity-training.test.mjs — Version 1.1
 
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -23,15 +23,18 @@ test("Aerobic activity uses WHO moderate-equivalent minutes", () => {
 
 test("Aerobic activity distinguishes below, within, and above the recommended range", () => {
     assert.equal(calculateAerobicActivity({
-        moderateMinutesPerWeek: 149
+        moderateMinutesPerWeek: 149,
+        vigorousMinutesPerWeek: 0
     }).recommendedRange, "below");
 
     assert.equal(calculateAerobicActivity({
-        moderateMinutesPerWeek: 150
+        moderateMinutesPerWeek: 150,
+        vigorousMinutesPerWeek: 0
     }).recommendedRange, "within");
 
     assert.equal(calculateAerobicActivity({
-        moderateMinutesPerWeek: 301
+        moderateMinutesPerWeek: 301,
+        vigorousMinutesPerWeek: 0
     }).recommendedRange, "above");
 });
 
@@ -44,6 +47,17 @@ test("Aerobic activity reports missing data instead of treating it as zero", () 
     assert.equal(result.available, false);
     assert.equal(result.equivalentModerateMinutesPerWeek, null);
     assert.equal(result.minimumRecommendationMet, null);
+    assert.equal(result.reason, "incomplete_data");
+});
+
+test("Aerobic activity rejects invalid values instead of treating them as zero", () => {
+    const result = calculateAerobicActivity({
+        moderateMinutesPerWeek: -1,
+        vigorousMinutesPerWeek: 0
+    });
+
+    assert.equal(result.available, false);
+    assert.equal(result.error, "invalid_aerobic_minutes");
 });
 
 test("Strength activity reports recommendation attainment without a health score", () => {
