@@ -1,4 +1,4 @@
-// finance.js — Version 7.25
+// finance.js — Version 7.26
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1466,6 +1466,7 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
             labelInput.value = speechResult.label || "";
             amountInput.value = String(speechResult.amount);
             categorySelect.value = speechResult.sectionId || "";
+            updateCreditDetailsVisibility();
             preview.hidden = false;
 
             status.textContent = speechResult.sectionId
