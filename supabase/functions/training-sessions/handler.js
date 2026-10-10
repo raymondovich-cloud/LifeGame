@@ -1,4 +1,4 @@
-// supabase/functions/training-sessions/handler.js — Version 1.1
+// supabase/functions/training-sessions/handler.js — Version 1.2
 // Responsibility: authenticated HTTP boundary for the private training-session API.
 import { createSaveTrainingSession } from "../../../source/application/training/save-training-session.js";
 import { createManageTrainingSession } from "../../../source/application/training/manage-training-session.js";
@@ -37,8 +37,9 @@ function validate(body){
  return body;
 }
 function output(value){return value==null?null:value.session&&Number.isSafeInteger(value.revision)?{session:value.session,revision:value.revision}:value;}
-function createTrainingSessionsHandler({createUserClient,encryption,allowedOrigins=[],repositoryFactory=createSupabaseTrainingSessionRepository,clock=()=>Date.now(),createId=()=>crypto.randomUUID(),logger=()=>{}}={}){
+function createTrainingSessionsHandler({createUserClient,createRepositoryClient,encryption,allowedOrigins=[],repositoryFactory=createSupabaseTrainingSessionRepository,clock=()=>Date.now(),createId=()=>crypto.randomUUID(),logger=()=>{}}={}){
  if(typeof createUserClient!=="function")throw new TypeError("createUserClient is required.");
+ if(typeof createRepositoryClient!=="function")throw new TypeError("createRepositoryClient is required.");
  if(!encryption||typeof encryption.encryptPayload!=="function"||typeof encryption.decryptPayload!=="function")throw new TypeError("Encryption port is required.");
  const origins=new Set(allowedOrigins.map(v=>String(v).trim()).filter(Boolean));
  return async request=>{
@@ -66,7 +67,10 @@ function createTrainingSessionsHandler({createUserClient,encryption,allowedOrigi
    const user=verified?.data?.user;
    if(verified?.error||typeof user?.id!=="string"||!UUID.test(user.id))return reply(401,{error:"UNAUTHENTICATED"},origin,origins);
    const userContext=Object.freeze({userId:user.id.toLowerCase()});
-   const repository=repositoryFactory({client,userContext,encryption});
+   // Auth uses the user token; data access uses a separate server-only privileged client.
+   // Repository operations must always include the verified user_id in every query.
+   const repositoryClient=createRepositoryClient();
+   const repository=repositoryFactory({client:repositoryClient,userContext,encryption});
    let result;
    if(body.action==="get"){
     result=await repository.findForUser(userContext.userId,sessionId(body.sessionId));

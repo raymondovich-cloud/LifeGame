@@ -1,5 +1,5 @@
-// supabase/functions/training-sessions/index.ts — Version 1.0
-// Responsibility: compose Supabase Auth, AWS KMS, and the Training Sessions HTTP handler.
+// supabase/functions/training-sessions/index.ts — Version 1.1
+// Responsibility: compose Supabase Auth, the server-only Supabase database client, AWS KMS, and the Training Sessions HTTP handler.
 import { createClient } from "npm:@supabase/supabase-js@2.117.1";
 import { KMSClient, GenerateDataKeyCommand, DecryptCommand } from "npm:@aws-sdk/client-kms@3.850.0";
 import { createAwsKmsTrainingPayloadEncryption } from "../../../source/infrastructure/security/aws-kms-training-payload-encryption.js";
@@ -8,6 +8,7 @@ import { createTrainingSessionsHandler } from "./handler.js";
 function env(name:string):string { const value=Deno.env.get(name)?.trim(); if(!value)throw new Error("Missing required server configuration: "+name); return value; }
 const supabaseUrl=env("SUPABASE_URL");
 const supabaseAnonKey=env("SUPABASE_ANON_KEY");
+const supabaseServiceRoleKey=env("SUPABASE_SERVICE_ROLE_KEY");
 const region=env("AWS_REGION");
 const accessKeyId=env("AWS_ACCESS_KEY_ID");
 const secretAccessKey=env("AWS_SECRET_ACCESS_KEY");
@@ -38,6 +39,10 @@ const encryption=createAwsKmsTrainingPayloadEncryption({
 Deno.serve(createTrainingSessionsHandler({
  createUserClient(authorization:string){
   return createClient(supabaseUrl,supabaseAnonKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{headers:{Authorization:authorization}}});
+ },
+ createRepositoryClient(){
+  // Server-only elevated key; never expose this client or key to browser/Telegram/iOS code.
+  return createClient(supabaseUrl,supabaseServiceRoleKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
  },
  encryption,allowedOrigins,
  logger({code}:{code:string}){console.error(JSON.stringify({event:"training_sessions_request_failed",code}));}

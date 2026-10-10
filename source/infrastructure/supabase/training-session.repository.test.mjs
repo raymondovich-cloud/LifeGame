@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.0
+// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.1
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "../../domain/training/training-session.js";
@@ -122,6 +122,7 @@ test("inserts encrypted fields and reads back a validated domain session", async
     assert.equal(row.payload_nonce.length, 26);
     assert.equal(row.payload_tag.length, 34);
     assert.equal(row.payload_key_version, "test-key-v1");
+    assert.equal(row.user_id, USER_ID, "insert must bind ownership to verified context");
 
     const found = await repository.findForUser(USER_ID, SESSION_ID);
     assert.deepEqual(found, inserted);
@@ -136,6 +137,7 @@ test("uses an atomic expected-revision filter and returns the next revision", as
     assert.equal(updated.session.status, "in_progress");
     assert.equal(updated.session.notes, "updated note");
     assert.ok(client.calls.some((call) => call.action === "update" && call.filters.some(([key, value]) => key === "revision" && value === 1)));
+    assert.ok(client.calls.some((call) => call.action === "update" && call.filters.some(([key, value]) => key === "user_id" && value === USER_ID)), "privileged updates must always be owner-scoped");
 });
 
 test("returns null when the expected revision is stale", async () => {

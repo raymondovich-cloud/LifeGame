@@ -1,8 +1,8 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.5 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.6 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
-**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM encryption port добавлены в репозиторий. Production provider для envelope encryption не выбран; remote DB migration, cloud keys, secrets и production deployment не подключены. Разработка должна оставаться в бесплатном контуре до отдельного согласования расходов.  
+**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM encryption port добавлены в репозиторий. Production provider для envelope encryption не выбран; remote DB migration, cloud keys, secrets и production deployment не подключены. Прямые table grants для клиентских ролей отзываются в локальной миграции; privileged server path требует отдельной проверки перед deployment. Разработка должна оставаться в бесплатном контуре до отдельного согласования расходов.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
@@ -49,16 +49,18 @@
 ## 4. Авторизация и изоляция пользователя
 
 1. Владелец записи определяется доверенной identity Supabase Auth, а не значением `userId`, переданным клиентом.
-2. На таблице включается RLS; клиентские операции доступны только роли `authenticated`.
-3. SELECT и UPDATE используют ownership predicate, эквивалентный `(select auth.uid()) = user_id`; INSERT требует того же владельца. DELETE клиенту пока не выдан, удаление при удалении аккаунта идёт через FK cascade.
-4. INSERT требует `WITH CHECK ((select auth.uid()) = user_id)`.
-5. UPDATE требует `USING ((select auth.uid()) = user_id)` и `WITH CHECK ((select auth.uid()) = user_id)`.
-6. Табличные grants выдаются только для нужных операций; RLS не заменяется grants и grants не заменяют RLS.
-7. Не выдавать доступ роли `anon`. Не использовать `service_role` или secret key во frontend, Telegram WebApp либо iOS-клиенте.
-8. Не добавлять обход RLS через `SECURITY DEFINER` без отдельного security review. Текущий trigger — `SECURITY INVOKER`.
-9. При отсутствии записи или недоступности чужой записи возвращается единый результат «не найдено/недоступно».
+2. Прямые grants для `authenticated` и `anon` отозваны: клиент не может читать или изменять таблицу напрямую.
+3. Доступ к таблице выдаётся только `service_role`, используемой исключительно внутри Edge Function после проверки JWT. Репозиторий обязан добавлять `user_id` в каждый SELECT/UPDATE и назначать `user_id` только из проверенного `userContext`.
+4. RLS остаётся включённой как defense in depth; прямой клиентский доступ блокируется grants, а не только RLS.
+5. SELECT и UPDATE policies используют ownership predicate, эквивалентный `(select auth.uid()) = user_id`; INSERT policy требует того же владельца. Эти policies остаются дополнительным слоем защиты, но пользовательские роли не имеют table grants. DELETE клиенту не выдан, удаление при удалении аккаунта идёт через FK cascade.
+6. INSERT policy требует `WITH CHECK ((select auth.uid()) = user_id)`.
+7. UPDATE policy требует `USING ((select auth.uid()) = user_id)` и `WITH CHECK ((select auth.uid()) = user_id)`.
+8. Табличные grants для `authenticated` и `anon` отсутствуют. `service_role` имеет минимально необходимые здесь SELECT/INSERT/UPDATE grants; ключ никогда не попадает в клиентский код.
+9. Не выдавать доступ роли `anon`. Не использовать `service_role` или secret key во frontend, Telegram WebApp либо iOS-клиенте.
+10. Не добавлять обход RLS через `SECURITY DEFINER` без отдельного security review. Текущий trigger — `SECURITY INVOKER`; он разрешает trusted `service_role` работу без `auth.uid()`, но при наличии user claim продолжает проверять владельца.
+11. При отсутствии записи или недоступности чужой записи возвращается единый результат «не найдено/недоступно».
 
-Application use case может передавать user context как параметр порта, но это само по себе не является авторизацией. JWT должен проверяться сервером/БД, а ownership policy — действовать на каждой операции.
+Application use case может передавать user context как параметр порта, но это само по себе не является авторизацией. Handler проверяет JWT через Supabase Auth до создания привилегированного repository client. Все repository-запросы фильтруются по проверенному user ID; сервисный ключ никогда не передаётся клиенту. Любая ошибка в серверном коде, который формирует фильтры, становится риском повышенных привилегий, поэтому owner-scope тесты обязательны.
 
 ## 5. Контракт репозитория и конкурентные изменения
 

@@ -1,5 +1,5 @@
--- supabase/migrations/20261010160000_create_training_sessions.sql — Version 1.0
--- Private, user-scoped training-session persistence with encrypted payload and atomic revision control.
+-- supabase/migrations/20261010160000_create_training_sessions.sql — Version 1.1
+-- Private training-session persistence; direct authenticated table access is denied, and writes must use the server-side handler.
 
 begin;
 
@@ -19,7 +19,7 @@ create table public.training_sessions (
 );
 
 comment on table public.training_sessions is
-    'Private LifeGame training sessions. Only authenticated owner access is allowed; private payload fields contain authenticated ciphertext.';
+    'Private LifeGame training sessions. Direct authenticated/anon table access is revoked; a trusted server handler performs owner-scoped access. Private payload fields contain authenticated ciphertext.';
 comment on column public.training_sessions.session_date is
     'Minimal calendar metadata; reveals training frequency and is not encrypted.';
 comment on column public.training_sessions.status is
@@ -64,7 +64,10 @@ create policy training_sessions_update_own
 revoke all on table public.training_sessions from public;
 revoke all on table public.training_sessions from anon;
 revoke all on table public.training_sessions from authenticated;
-grant select, insert, update on table public.training_sessions to authenticated;
+-- User JWTs must not access the table directly. The Edge Function verifies the user first,
+-- then uses a server-only service-role client and explicit user_id filters in the repository.
+-- RLS remains enabled as defense in depth; service_role is never exposed to clients.
+grant select, insert, update on table public.training_sessions to service_role;
 
 create or replace function private.enforce_training_session_write()
 returns trigger
@@ -77,13 +80,13 @@ declare
 begin
     authenticated_user_id := (select auth.uid());
 
-    if authenticated_user_id is null then
-        raise exception 'training session requires an authenticated user'
+    if authenticated_user_id is null and current_user <> 'service_role' then
+        raise exception 'training session requires an authenticated user or trusted server role'
             using errcode = '42501';
     end if;
 
     if tg_op = 'INSERT' then
-        if new.user_id is distinct from authenticated_user_id then
+        if authenticated_user_id is not null and new.user_id is distinct from authenticated_user_id then
             raise exception 'training session owner must match authenticated user'
                 using errcode = '42501';
         end if;
@@ -98,7 +101,7 @@ begin
         return new;
     end if;
 
-    if old.user_id is distinct from authenticated_user_id then
+    if authenticated_user_id is not null and old.user_id is distinct from authenticated_user_id then
         raise exception 'training session owner must match authenticated user'
             using errcode = '42501';
     end if;

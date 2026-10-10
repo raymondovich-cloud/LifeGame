@@ -1,6 +1,6 @@
-// source/infrastructure/supabase/training-session.repository.js — Version 1.0
-// Responsibility: persist encrypted training sessions through Supabase under the authenticated user's RLS context.
-// SERVER-ONLY: requires a trusted user-scoped Supabase client and a server-side encryption port. Never import into client bundles.
+// source/infrastructure/supabase/training-session.repository.js — Version 1.1
+// Responsibility: persist encrypted sessions through a server-only Supabase client; every operation is explicitly owner-scoped.
+// SERVER-ONLY: requires a trusted privileged Supabase client, a verified user context and a server-side encryption port. Never import into client bundles. Direct client table grants are intentionally revoked.
 
 import { createTrainingSession, isTrainingSessionId } from "../../domain/training/training-session.js";
 import { createTrainingSessionPersistenceResult } from "../../application/training/training-session-persistence-result.js";
@@ -41,7 +41,7 @@ function dateTimestamp(value, field) {
 }
 
 function createSupabaseTrainingSessionRepository({ client, userContext, encryption } = {}) {
-    if (!client || typeof client.from !== "function") throw new TypeError("Training session repository: a user-scoped Supabase client is required.");
+    if (!client || typeof client.from !== "function") throw new TypeError("Training session repository: a server-only Supabase client is required.");
     if (typeof userContext?.userId !== "string" || !UUID.test(userContext.userId)) throw new TypeError("Training session repository: verified user context with UUID userId is required.");
     if (!encryption || typeof encryption.encryptPayload !== "function" || typeof encryption.decryptPayload !== "function") {
         throw new TypeError("Training session repository: server-side encryption port is required.");

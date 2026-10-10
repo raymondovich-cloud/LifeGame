@@ -1,4 +1,4 @@
-// supabase/functions/training-sessions/handler.test.mjs — Version 1.1
+// supabase/functions/training-sessions/handler.test.mjs — Version 1.2
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSessionsHandler, MAX_BODY_BYTES } from "./handler.js";
@@ -9,11 +9,13 @@ const encryption={async encryptPayload(v){return v;},async decryptPayload(v){ret
 const session={id:ID,date:"2026-10-10",activityType:"cardio",status:"planned",intensity:"moderate",durationMinutes:20,notes:"",exercises:[],createdAt:100,updatedAt:100};
 function setup(repository={}){
  const calls=[];
- const client={auth:{async getUser(token){calls.push(["auth",token]);return{data:{user:{id:USER}},error:null};}},from(){return{};}};
+ const client={auth:{async getUser(token){calls.push(["auth",token]);return{data:{user:{id:USER}},error:null};}}};
+ const repositoryClient={from(){return{};}};
  const handler=createTrainingSessionsHandler({
-  createUserClient(auth){calls.push(["client",auth]);return client;},encryption,allowedOrigins:["https://lifegame.site"],
+  createUserClient(auth){calls.push(["client",auth]);return client;},
+  createRepositoryClient(){calls.push(["repository-client"]);return repositoryClient;},encryption,allowedOrigins:["https://lifegame.site"],
   clock:()=>200,createId:()=>ID,
-  repositoryFactory({client:c,userContext,encryption:e}){calls.push(["scope",userContext.userId,c===client,e===encryption]);return repository;},
+  repositoryFactory({client:c,userContext,encryption:e}){calls.push(["scope",userContext.userId,c===repositoryClient,c===client,e===encryption]);return repository;},
   logger({code}){calls.push(["log",code]);}
  });
  return{handler,calls};
@@ -43,7 +45,7 @@ test("verifies user and scopes read to the authenticated identity",async()=>{
  const{handler,calls}=setup({async findForUser(userId,id){assert.equal(userId,USER);assert.equal(id,ID);return{session,revision:1};}});
  const res=await handler(req({action:"get",sessionId:ID}));assert.equal(res.status,200);
  assert.deepEqual((await res.json()).data,{session,revision:1});
- assert.deepEqual(calls.slice(0,3),[["client","Bearer test-token"],["auth","test-token"],["scope",USER,true,true]]);
+ assert.deepEqual(calls.slice(0,4),[["client","Bearer test-token"],["auth","test-token"],["repository-client"],["scope",USER,true,false,true]]);
 });
 test("creates only planned sessions with server-controlled identity and timestamps",async()=>{
  let saved;const{handler}=setup({async insertForUser(userId,input){saved={userId,input};return{session:{...input},revision:1};}});
@@ -66,4 +68,17 @@ test("does not expose internal exception messages",async()=>{
  const{handler}=setup({async findForUser(){throw new Error("private payload");}});
  const res=await handler(req({action:"get",sessionId:ID}));assert.equal(res.status,500);
  assert.deepEqual(await res.json(),{error:"INTERNAL_ERROR"});
+});
+
+test("does not create a privileged repository client before verifying the user",async()=>{
+ const calls=[];
+ const client={auth:{async getUser(){calls.push("auth");return{data:{user:null},error:new Error("invalid token")};}}};
+ const handler=createTrainingSessionsHandler({
+  createUserClient(){calls.push("user-client");return client;},
+  createRepositoryClient(){calls.push("privileged-client");return{};},
+  encryption,allowedOrigins:["https://lifegame.site"],logger(){}
+ });
+ const res=await handler(req({action:"get",sessionId:ID}));
+ assert.equal(res.status,401);
+ assert.deepEqual(calls,["user-client","auth"]);
 });
