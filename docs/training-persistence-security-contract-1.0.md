@@ -1,4 +1,4 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.7 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.8 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
@@ -35,7 +35,7 @@
 - `payload_ciphertext bytea not null` — AES-256-GCM ciphertext приватного payload;
 - `payload_nonce bytea not null` — 12-byte nonce;
 - `payload_tag bytea not null` — 16-byte GCM authentication tag;
-- `payload_key_envelope bytea not null` — KMS-wrapped DEK;
+- `payload_key_envelope bytea not null` — provider-specific key envelope (development: random HKDF salt; future managed-KMS provider: wrapped DEK);
 - `payload_key_version text not null` — version label used to resolve a KMS key ARN;
 - `created_at timestamptz not null`;
 - `updated_at timestamptz not null`.
@@ -137,10 +137,10 @@ RLS, grants и CAS должны тестироваться на реальной
 
 - UUID для ID сессии — принят и закреплён в Domain.
 - Revision-based optimistic concurrency — принят как контракт Application.
-- Шифрование приватного payload — AES-256-GCM с envelope encryption как целевая модель. AWS KMS adapter в репозитории — только необязательный кандидат, не production-решение. Перед интеграцией требуется выбрать и проверить бесплатный вариант, который обеспечивает требуемую модель угроз; если такого варианта нет, остановиться и согласовать расходы, не ослабляя безопасность.
+- Для бесплатной разработки реализован software-only AES-256-GCM + HKDF-SHA-256 provider с секретом окружения. Он предназначен только для development/staging и не эквивалентен управляемому KMS. До production необходимо заменить его на утверждённый managed-key provider, проверить ротацию и восстановление, и отдельно согласовать расходы.
 - Подготовить миграцию и интеграционные тесты, не затрагивая существующие Health/Development таблицы.
 - Проверить SQL, RLS, grants, тесты и CI до подключения UI.
 
 ## 11. Статус
 
-**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port; mock KMS покрывает криптографический контракт в unit-тестах. AWS KMS adapter сохранён, но не подключён к бесплатному development entrypoint и не является утверждённым production-решением. Entry point использует software-only provider с секретом окружения; deployment и secrets не настроены. Не создан AWS KMS key, не добавлены cloud credentials/secrets, миграция не применена к remote Supabase. CI подтвердил unit tests и локальные PostgreSQL/RLS tests. Следующий шаг — оценить существующие бесплатные возможности и угрозы; если бесплатный вариант не обеспечивает нужную защиту, до отдельного согласования не подключать реальный провайдер и не ослаблять требования безопасности.
+**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port; mock KMS покрывает криптографический контракт в unit-тестах. AWS KMS adapter сохранён, но не подключён к бесплатному development entrypoint и не является утверждённым production-решением. Entry point использует software-only provider с секретом окружения; deployment и secrets не настроены. Не создан AWS KMS key, не добавлены cloud credentials/secrets, миграция не применена к remote Supabase. CI подтверждает unit tests и локальные PostgreSQL/RLS tests для соответствующего коммита. Бесплатный software-only provider не считается production-ready; до выбора managed-key provider, проверки ротации и явного согласования расходов не развёртывать production endpoint и не ослаблять требования безопасности.
