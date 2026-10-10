@@ -1,0 +1,8 @@
+// source/application/training/save-training-session.test.mjs — Version 1.0
+import test from "node:test";import assert from "node:assert/strict";import {createSaveTrainingSession} from "./save-training-session.js";
+const session={date:"2026-10-10",activityType:"strength",status:"completed",intensity:"moderate",exercises:[{id:"e1",name:"Squat",muscleGroups:["legs"],sets:[{reps:5,completed:true}]}]};
+function setup(){const calls=[];return {calls,useCase:createSaveTrainingSession({repository:{saveForUser:async(userId,entity)=>{calls.push({userId,entity});return entity;}},clock:()=>1000,createId:()=>"generated-id"})};}
+test("saves validated data through user-scoped repository",async()=>{const {useCase,calls}=setup();const saved=await useCase.execute({userContext:{userId:"user-123"},session});assert.equal(calls[0].userId,"user-123");assert.equal(saved.id,"generated-id");assert.equal(saved.createdAt,1000);assert.equal(Object.hasOwn(saved,"userId"),false);});
+test("rejects missing user context before persistence",async()=>{const {useCase,calls}=setup();await assert.rejects(useCase.execute({session}),/authenticated user context/);assert.equal(calls.length,0);});
+test("rejects invalid domain data before persistence",async()=>{const {useCase,calls}=setup();await assert.rejects(useCase.execute({userContext:{userId:"user-123"},session:{...session,date:"bad"}}),/valid ISO calendar date/);assert.equal(calls.length,0);});
+test("requires repository and deterministic dependencies",()=>{assert.throws(()=>createSaveTrainingSession({}),/repository.saveForUser/);assert.throws(()=>createSaveTrainingSession({repository:{saveForUser(){}}}),/clock and createId/);});
