@@ -1,4 +1,4 @@
-// finance.carousel.test.mjs — Version 1.1
+// finance.carousel.test.mjs — Version 1.2
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -105,4 +105,28 @@ test("uses a bounded swipe threshold and preserves vertical gesture arbitration"
     assert.ok(financeSource.includes("Math.max(26, Math.min(34, carousel.clientWidth * 0.075))"));
     assert.ok(financeSource.includes("Math.abs(dx) > Math.abs(dy) * 1.15"));
     assert.ok(financeSource.includes("event.preventDefault()"));
+});
+
+
+test("renders separate domain-specific metrics for each finance carousel screen", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { fileURLToPath } = await import("node:url");
+    const sourcePath = fileURLToPath(new URL("./finance.js", import.meta.url));
+    const financeSource = await readFile(sourcePath, "utf8");
+
+    assert.ok(financeSource.includes('chartTitle: "Структура активов"'));
+    assert.ok(financeSource.includes('label: "Ликвидные средства"'));
+    assert.ok(financeSource.includes('label: "Неликвидные активы"'));
+    assert.ok(financeSource.includes('label: "Продуктивный капитал"'));
+
+    assert.ok(financeSource.includes('chartTitle: "Долги и обязательства по погашению"'));
+    assert.ok(financeSource.includes('label: "Остаток долгов"'));
+    assert.ok(financeSource.includes('label: "Регулярные платежи"'));
+    assert.ok(financeSource.includes('label: "Доля дохода на платежи"'));
+
+    assert.ok(financeSource.includes('chartTitle: "Показатели финансовой устойчивости"'));
+    assert.ok(financeSource.includes('label: "Финансовая выживаемость"'));
+    assert.ok(financeSource.includes('label: "Покрытие расходов резервом"'));
+    assert.ok(financeSource.includes('label: "Покрытие обязательств доходом"'));
+    assert.ok(!financeSource.includes("Основная зона для усиления —"));
 });
