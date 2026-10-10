@@ -1,13 +1,16 @@
-// source/domain/training/training-session.js — Version 1.0
+// source/domain/training/training-session.js — Version 1.1
 // Responsibility: validate and create an immutable training-session domain value.
 const TYPES=Object.freeze(["strength","cardio","mobility","other"]);
 const STATUSES=Object.freeze(["planned","in_progress","completed"]);
 const INTENSITIES=Object.freeze(["light","moderate","vigorous","unknown"]);
 const UNITS=Object.freeze(["kg","lb","bodyweight","band","machine","other"]);
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function validDate(s){if(typeof s!=="string"||!DATE.test(s))return false;const d=new Date(s+"T00:00:00.000Z");return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===s;}
 function text(v,f){if(typeof v!=="string"||!v.trim())throw new TypeError("Training session: "+f+" is required.");return v.trim();}
-function setValue(s,i){
+function isTrainingSessionId(v){return typeof v==="string"&&UUID.test(v.trim());}
+function sessionId(v){const id=text(v,"id");if(!isTrainingSessionId(id))throw new TypeError("Training session: id must be a canonical UUID.");return id.toLowerCase();}
+function setValue(s){
  if(!s||typeof s!=="object"||Array.isArray(s))throw new TypeError("Training session: invalid set.");
  if(!Number.isInteger(s.reps)||s.reps<0)throw new TypeError("Training session: reps must be a non-negative integer.");
  if(typeof s.completed!=="boolean")throw new TypeError("Training session: set completion must be explicit.");
@@ -30,7 +33,7 @@ function exerciseValue(e){
 }
 function createTrainingSession(input){
  if(!input||typeof input!=="object"||Array.isArray(input))throw new TypeError("Training session: input is required.");
- const id=text(input.id,"id");
+ const id=sessionId(input.id);
  if(!validDate(input.date))throw new TypeError("Training session: date must be a valid ISO calendar date.");
  if(!TYPES.includes(input.activityType))throw new TypeError("Training session: activity type is invalid.");
  if(!STATUSES.includes(input.status))throw new TypeError("Training session: status is invalid.");
@@ -42,4 +45,4 @@ function createTrainingSession(input){
  if(!Number.isFinite(input.createdAt)||!Number.isFinite(input.updatedAt)||input.createdAt<0||input.updatedAt<input.createdAt)throw new TypeError("Training session: valid createdAt and updatedAt timestamps are required.");
  return Object.freeze({id,date:input.date,activityType:input.activityType,status:input.status,intensity:input.intensity,durationMinutes:input.durationMinutes??null,notes:input.notes?.trim()??"",exercises:Object.freeze(input.exercises.map(exerciseValue)),createdAt:input.createdAt,updatedAt:input.updatedAt});
 }
-export {TYPES as ACTIVITY_TYPES,STATUSES as SESSION_STATUSES,INTENSITIES,UNITS as RESISTANCE_UNITS,createTrainingSession};
+export {TYPES as ACTIVITY_TYPES,STATUSES as SESSION_STATUSES,INTENSITIES,UNITS as RESISTANCE_UNITS,createTrainingSession,isTrainingSessionId};

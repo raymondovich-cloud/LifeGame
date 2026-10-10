@@ -1,10 +1,10 @@
-// source/domain/training/training-session-lifecycle.test.mjs — Version 1.0
+// source/domain/training/training-session-lifecycle.test.mjs — Version 1.1
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "./training-session.js";
 import { startTrainingSession, completeTrainingSession, reviseTrainingSession } from "./training-session-lifecycle.js";
 const planned = createTrainingSession({
-    id: "session-1", date: "2026-10-10", activityType: "strength", status: "planned", intensity: "unknown",
+    id: "11111111-1111-4111-8111-111111111111", date: "2026-10-10", activityType: "strength", status: "planned", intensity: "unknown",
     exercises: [{ id: "barbell_bench_press", name: "Жим штанги лёжа", muscleGroups: ["chest", "triceps"], sets: [] }],
     createdAt: 100, updatedAt: 100
 });
@@ -33,7 +33,7 @@ test("allows controlled corrections without changing identity or creation time",
     assert.equal(revised.updatedAt, 400);
 });
 test("rejects identity, lifecycle and unknown-field edits", () => {
-    assert.throws(() => reviseTrainingSession(planned, { id: "other" }, 200), /cannot be edited/);
+    assert.throws(() => reviseTrainingSession(planned, { id: "22222222-2222-4222-8222-222222222222" }, 200), /cannot be edited/);
     assert.throws(() => reviseTrainingSession(planned, { status: "completed" }, 200), /cannot be edited/);
     assert.throws(() => reviseTrainingSession(planned, { userId: "user-1" }, 200), /cannot be edited/);
 });
