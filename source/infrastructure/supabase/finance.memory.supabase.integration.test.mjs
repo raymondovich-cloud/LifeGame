@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.6
+// finance.memory.supabase.integration.test.mjs — Version 1.8
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -19,8 +19,8 @@ function createClientForTest() {
     });
 }
 
-function normalizePersistedEntries(entries) {
-    return entries.map(({ createdAt, createdBy, creatorName, ...entry }) => entry);
+function withoutPersistenceMetadata(entries) {
+    return entries.map(({ createdAt, createdBy, ...entry }) => entry);
 }
 
 async function createTestSession(label) {
@@ -80,17 +80,19 @@ test("Finance Supabase persistence survives memory recreation and isolates users
     assert.equal(recreatedMemory.listActualEarnings().length, 0);
     await recreatedMemory.hydrate();
 
-    assert.deepEqual(normalizePersistedEntries(recreatedMemory.listActualEarnings()), [
+    assert.deepEqual(withoutPersistenceMetadata(recreatedMemory.listActualEarnings()), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(normalizePersistedEntries(recreatedMemory.listFinancialBurden()), [
+    assert.deepEqual(withoutPersistenceMetadata(recreatedMemory.listFinancialBurden()), [
         {
             id: createdCredit.id,
             label: "Credit persistence",
             debt: 30000,
             payment: 3000,
+            status: "active",
             isCreditProduct: true,
-            interestRate: 25
+            interestRate: 25,
+            closedAt: null
         }
     ]);
 
@@ -110,10 +112,10 @@ test("Finance Supabase persistence survives memory recreation and isolates users
 
     await Promise.all([finalMemoryA.hydrate(), finalMemoryB.hydrate()]);
 
-    assert.deepEqual(normalizePersistedEntries(finalMemoryA.listActualEarnings()), [
+    assert.deepEqual(withoutPersistenceMetadata(finalMemoryA.listActualEarnings()), [
         { id: createdA.id, label: "Persistence test A", amount: 12345 }
     ]);
-    assert.deepEqual(normalizePersistedEntries(finalMemoryB.listActualEarnings()), [
+    assert.deepEqual(withoutPersistenceMetadata(finalMemoryB.listActualEarnings()), [
         { id: createdB.id, label: "Persistence test B", amount: 54321 }
     ]);
 
