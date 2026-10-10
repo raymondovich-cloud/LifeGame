@@ -1,4 +1,4 @@
-// finance.carousel.test.mjs — Version 1.0
+// finance.carousel.test.mjs — Version 1.1
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -83,4 +83,26 @@ test("pinning and unpinning updates only the selected screen preference", () => 
 
     const unpinned = toggleFinanceCarouselPin(pinned, "assets", 0);
     assert.deepEqual(unpinned, { pinnedPositions: {} });
+});
+
+test("documents the iOS touch gesture path and avoids pointer capture", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { fileURLToPath } = await import("node:url");
+    const sourcePath = fileURLToPath(new URL("./finance.js", import.meta.url));
+    const financeSource = await readFile(sourcePath, "utf8");
+    assert.ok(financeSource.includes('addEventListener("touchstart"'));
+    assert.ok(financeSource.includes('addEventListener("touchmove"'));
+    assert.ok(financeSource.includes('addEventListener("touchend"'));
+    assert.ok(financeSource.includes('event.pointerType === "touch"'));
+    assert.ok(!financeSource.includes("setPointerCapture("));
+});
+
+test("uses a bounded swipe threshold and preserves vertical gesture arbitration", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { fileURLToPath } = await import("node:url");
+    const sourcePath = fileURLToPath(new URL("./finance.js", import.meta.url));
+    const financeSource = await readFile(sourcePath, "utf8");
+    assert.ok(financeSource.includes("Math.max(26, Math.min(34, carousel.clientWidth * 0.075))"));
+    assert.ok(financeSource.includes("Math.abs(dx) > Math.abs(dy) * 1.15"));
+    assert.ok(financeSource.includes("event.preventDefault()"));
 });

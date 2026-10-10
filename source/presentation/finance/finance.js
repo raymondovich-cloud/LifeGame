@@ -1,4 +1,4 @@
-// finance.js — Version 7.30
+// finance.js — Version 7.31
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -623,6 +623,9 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
     let gestureMode = "idle";
     let longPressTimer = null;
     let longPressTriggered = false;
+    let gestureStartedAt = 0;
+    let latestX = 0;
+    let latestY = 0;
 
     function clearLongPressTimer() {
         if (longPressTimer !== null) {
@@ -631,78 +634,97 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         }
     }
 
-    carousel.addEventListener("pointerdown", (event) => {
-        if (event.pointerType === "mouse" && event.button !== 0) return;
-
+    function beginGesture(x, y) {
         if (!pinMenu.hidden) hidePinMenu();
-
-        pointerStartX = event.clientX;
-        pointerStartY = event.clientY;
+        pointerStartX = latestX = x;
+        pointerStartY = latestY = y;
+        gestureStartedAt = performance.now();
         gestureMode = "pending";
         longPressTriggered = false;
         clearLongPressTimer();
-
         longPressTimer = setTimeout(() => {
             if (gestureMode !== "pending") return;
             gestureMode = "longpress";
             longPressTriggered = true;
             showPinMenu();
         }, 550);
-    });
+    }
 
-    carousel.addEventListener("pointermove", (event) => {
+    function moveGesture(x, y, event) {
         if (gestureMode === "idle" || gestureMode === "longpress") return;
-
-        const deltaX = event.clientX - pointerStartX;
-        const deltaY = event.clientY - pointerStartY;
-
-        if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
-            clearLongPressTimer();
-        }
-
-        if (
-            gestureMode === "pending" &&
-            Math.abs(deltaX) > 10 &&
-            Math.abs(deltaX) > Math.abs(deltaY)
-        ) {
+        latestX = x;
+        latestY = y;
+        const dx = x - pointerStartX;
+        const dy = y - pointerStartY;
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) clearLongPressTimer();
+        if (gestureMode === "pending" && Math.abs(dx) >= 10 && Math.abs(dx) > Math.abs(dy) * 1.15) {
             gestureMode = "horizontal";
-            try {
-                carousel.setPointerCapture(event.pointerId);
-            } catch {
-                // Pointer capture is optional; the gesture remains scoped to the carousel.
-            }
-        } else if (
-            gestureMode === "pending" &&
-            Math.abs(deltaY) > 10
-        ) {
+        } else if (gestureMode === "pending" && Math.abs(dy) >= 10 && Math.abs(dy) > Math.abs(dx)) {
             gestureMode = "vertical";
         }
+        if (gestureMode === "horizontal" && event?.cancelable) event.preventDefault();
+    }
 
-        if (gestureMode === "horizontal" && event.cancelable) {
-            event.preventDefault();
-        }
-    }, { passive: false });
-
-    function finishPointerGesture(event, allowSwipe) {
+    function finishGesture(x, y, allowSwipe) {
         clearLongPressTimer();
-
-        if (allowSwipe && gestureMode === "horizontal" && !longPressTriggered) {
-            const deltaX = event.clientX - pointerStartX;
-            if (Math.abs(deltaX) >= 40) {
-                changeView(deltaX < 0 ? 1 : -1);
-            }
+        const dx = x - pointerStartX;
+        const dy = y - pointerStartY;
+        const elapsed = Math.max(1, performance.now() - gestureStartedAt);
+        const distanceLimit = Math.max(26, Math.min(34, carousel.clientWidth * 0.075));
+        const fastFlick = Math.abs(dx) >= 18 && Math.abs(dx) / elapsed >= 0.45;
+        const horizontal = Math.abs(dx) > Math.abs(dy) * 1.15;
+        if (allowSwipe && gestureMode === "horizontal" && !longPressTriggered && horizontal &&
+            (Math.abs(dx) >= distanceLimit || fastFlick)) {
+            changeView(dx < 0 ? 1 : -1);
         }
-
         gestureMode = "idle";
         longPressTriggered = false;
     }
 
-    carousel.addEventListener("pointerup", (event) => finishPointerGesture(event, true));
-    carousel.addEventListener("pointercancel", (event) => finishPointerGesture(event, false));
-    carousel.addEventListener("lostpointercapture", () => {
-        clearLongPressTimer();
-        gestureMode = "idle";
-        longPressTriggered = false;
+    carousel.addEventListener("touchstart", (event) => {
+        if (event.touches.length !== 1) {
+            clearLongPressTimer();
+            gestureMode = "idle";
+            return;
+        }
+        const touch = event.touches[0];
+        beginGesture(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    carousel.addEventListener("touchmove", (event) => {
+        if (event.touches.length !== 1) {
+            clearLongPressTimer();
+            gestureMode = "idle";
+            return;
+        }
+        const touch = event.touches[0];
+        moveGesture(touch.clientX, touch.clientY, event);
+    }, { passive: false });
+
+    carousel.addEventListener("touchend", (event) => {
+        const touch = event.changedTouches[0];
+        if (touch) finishGesture(touch.clientX, touch.clientY, true);
+        else finishGesture(latestX, latestY, false);
+    }, { passive: true });
+
+    carousel.addEventListener("touchcancel", () => finishGesture(latestX, latestY, false), { passive: true });
+
+    carousel.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "touch") return;
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        beginGesture(event.clientX, event.clientY);
+    });
+    carousel.addEventListener("pointermove", (event) => {
+        if (event.pointerType === "touch") return;
+        moveGesture(event.clientX, event.clientY, event);
+    }, { passive: false });
+    carousel.addEventListener("pointerup", (event) => {
+        if (event.pointerType === "touch") return;
+        finishGesture(event.clientX, event.clientY, true);
+    });
+    carousel.addEventListener("pointercancel", (event) => {
+        if (event.pointerType === "touch") return;
+        finishGesture(latestX, latestY, false);
     });
 
     carousel.addEventListener("contextmenu", (event) => {
