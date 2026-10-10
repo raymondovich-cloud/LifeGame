@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.11
+// platforms/web/web.runtime.js — Version 5.12
 
 import {
     trace,
@@ -431,6 +431,56 @@ export async function startWeb() {
         }
     }
 
+    function renderAuthenticatedLoadingState(route) {
+        const states = {
+            finance: {
+                label: "FINANCE",
+                title: "Подготавливаем финансовую систему",
+                description: "Загружаем ваши данные и проверяем актуальность показателей."
+            },
+            health: {
+                label: "HEALTH",
+                title: "Подготавливаем систему здоровья",
+                description: "Загружаем ваши данные активности и прогресса."
+            },
+            development: {
+                label: "DEVELOPMENT",
+                title: "Подготавливаем систему развития",
+                description: "Загружаем ваши цели и данные прогресса."
+            }
+        };
+        const state = states[route];
+        if (!state) return;
+
+        const section = document.createElement("section");
+        section.className = "finance-loading-state";
+        section.setAttribute("role", "status");
+        section.setAttribute("aria-live", "polite");
+        section.setAttribute("aria-busy", "true");
+
+        const meta = document.createElement("span");
+        meta.className = "finance-section-meta";
+        meta.textContent = state.label;
+
+        const heading = document.createElement("h2");
+        heading.textContent = state.title;
+
+        const description = document.createElement("p");
+        description.textContent = state.description;
+
+        const progress = document.createElement("div");
+        progress.className = "finance-loading-progress";
+        progress.setAttribute("aria-hidden", "true");
+        for (let index = 0; index < 3; index += 1) {
+            const line = document.createElement("span");
+            line.className = "finance-loading-line";
+            progress.appendChild(line);
+        }
+
+        section.append(meta, heading, description, progress);
+        moduleContent.replaceChildren(section);
+    }
+
     async function renderApplicationShell(route, isPublic, session = null, renderId = null) {
         if (renderId !== null && renderId !== routeRenderSequence) {
             return;
@@ -467,6 +517,10 @@ export async function startWeb() {
 
         if (!activeUserId) {
             return;
+        }
+
+        if (["finance", "health", "development"].includes(route)) {
+            renderAuthenticatedLoadingState(route);
         }
 
         try {
