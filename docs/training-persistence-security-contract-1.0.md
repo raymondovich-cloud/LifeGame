@@ -1,8 +1,8 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.4 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.5 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
-**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM/KMS encryption port добавлены в репозиторий. Remote DB, AWS KMS key, secrets и production deployment ещё не подключены.  
+**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM encryption port добавлены в репозиторий. Production provider для envelope encryption не выбран; remote DB migration, cloud keys, secrets и production deployment не подключены. Разработка должна оставаться в бесплатном контуре до отдельного согласования расходов.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
@@ -98,7 +98,7 @@ Application port фиксируется следующим образом:
 
 AAD и AWS KMS Encryption Context связывают ciphertext/wrapped DEK с user_id, session_id, датой, статусом и revision. Для AES-GCM используется 12-byte nonce и 16-byte tag. Модуль source/infrastructure/security/aws-kms-training-payload-encryption.js реализует Web Crypto часть и ожидает server-only KMS port; тесты используют mock KMS и не доказывают связь с AWS.
 
-AWS KMS key policy должна ограничивать доступ только kms:GenerateDataKey и kms:Decrypt для конкретного ключа и серверного workload. KMS key ARN/version mapping задаётся server-side; старые mappings нельзя удалять, пока данные не перешифрованы или не удалены. Ключи и credentials не добавляются в Git.
+Если после отдельного согласования будет выбран AWS KMS, key policy должна ограничивать доступ только kms:GenerateDataKey и kms:Decrypt для конкретного ключа и серверного workload. KMS key ARN/version mapping задаётся server-side; старые mappings нельзя удалять, пока данные не перешифрованы или не удалены. Ключи и credentials не добавляются в Git. До такого согласования не создавать AWS resources и не добавлять cloud credentials/secrets.
 
 TLS и шифрование at rest провайдера остаются дополнительными слоями, но не заменяют application-layer encryption. Шифрование реализовано на уровне Infrastructure port; Edge Function source и AWS SDK wiring добавлены, но secrets не настроены и endpoint не развёрнут.
 
@@ -133,10 +133,10 @@ RLS, grants и CAS должны тестироваться на реальной
 
 - UUID для ID сессии — принят и закреплён в Domain.
 - Revision-based optimistic concurrency — принят как контракт Application.
-- Шифрование приватного payload — AES-256-GCM с envelope encryption; AWS KMS выбран для дневника тренировок. Реальный key ARN, IAM policy и server-side AWS SDK wiring остаются обязательными перед интеграцией.
+- Шифрование приватного payload — AES-256-GCM с envelope encryption как целевая модель. AWS KMS adapter в репозитории — только необязательный кандидат, не production-решение. Перед интеграцией требуется выбрать и проверить бесплатный вариант, который обеспечивает требуемую модель угроз; если такого варианта нет, остановиться и согласовать расходы, не ослабляя безопасность.
 - Подготовить миграцию и интеграционные тесты, не затрагивая существующие Health/Development таблицы.
 - Проверить SQL, RLS, grants, тесты и CI до подключения UI.
 
 ## 11. Статус
 
-**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port с KMS abstraction. AWS KMS provider выбран как целевой. Исходный код Edge Function добавлен и покрыт unit-тестами, но endpoint не развёрнут. Не создан AWS KMS key, не добавлены credentials, миграция не применена к remote Supabase. CI подтвердил unit tests и локальные PostgreSQL/RLS tests. До deploy обязательны AWS KMS key с least-privilege IAM credentials, Edge Function secrets, безопасное применение миграции в выбранном окружении и реальный KMS smoke test.
+**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port; mock KMS покрывает криптографический контракт в unit-тестах. AWS KMS adapter и Edge Function wiring находятся в коде, но не развёрнуты и не являются утверждённым production-решением. Не создан AWS KMS key, не добавлены cloud credentials/secrets, миграция не применена к remote Supabase. CI подтвердил unit tests и локальные PostgreSQL/RLS tests. Следующий шаг — оценить существующие бесплатные возможности и угрозы; если бесплатный вариант не обеспечивает нужную защиту, до отдельного согласования не подключать реальный провайдер и не ослаблять требования безопасности.
