@@ -1,4 +1,4 @@
-// finance.js — Version 7.24
+// finance.js — Version 7.25
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1378,6 +1378,44 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
         categorySelect.appendChild(option);
     });
 
+    const creditPaymentInput = document.createElement("input");
+    creditPaymentInput.className = "input-control";
+    creditPaymentInput.name = "creditPayment";
+    creditPaymentInput.type = "number";
+    creditPaymentInput.inputMode = "decimal";
+    creditPaymentInput.min = "0";
+    creditPaymentInput.step = "0.01";
+    creditPaymentInput.placeholder = "Ежемесячный платёж, ₽";
+    creditPaymentInput.hidden = true;
+
+    const creditRateInput = document.createElement("input");
+    creditRateInput.className = "input-control";
+    creditRateInput.name = "creditInterestRate";
+    creditRateInput.type = "number";
+    creditRateInput.inputMode = "decimal";
+    creditRateInput.min = "0";
+    creditRateInput.step = "0.01";
+    creditRateInput.placeholder = "Ставка, % годовых";
+    creditRateInput.hidden = true;
+
+    const creditDetailsHint = document.createElement("p");
+    creditDetailsHint.className = "finance-voice-status";
+    creditDetailsHint.textContent = "Для кредитного продукта укажите ежемесячный платёж и ставку, чтобы LifeGame мог корректно рассчитать его параметры.";
+    creditDetailsHint.hidden = true;
+
+    const updateCreditDetailsVisibility = () => {
+        const isCreditProduct = categorySelect.value === "financial-burden"
+            && isCreditProductLabel(labelInput.value);
+        creditPaymentInput.hidden = !isCreditProduct;
+        creditRateInput.hidden = !isCreditProduct;
+        creditDetailsHint.hidden = !isCreditProduct;
+        creditPaymentInput.required = isCreditProduct;
+        creditRateInput.required = isCreditProduct;
+    };
+
+    labelInput.addEventListener("input", updateCreditDetailsVisibility);
+    categorySelect.addEventListener("change", updateCreditDetailsVisibility);
+
     const actions = document.createElement("div");
     actions.className = "finance-voice-preview-actions";
 
@@ -1397,7 +1435,15 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
     });
 
     actions.append(saveButton, cancelButton);
-    preview.append(labelInput, amountInput, categorySelect, actions);
+    preview.append(
+        labelInput,
+        amountInput,
+        categorySelect,
+        creditDetailsHint,
+        creditPaymentInput,
+        creditRateInput,
+        actions
+    );
 
     const speech = createSpeechRecognition({
         onStart() {
@@ -1466,7 +1512,26 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
             saveButton.disabled = true;
             try {
                 if (sectionId === "financial-burden") {
-                    await financeApplication.addFinancialBurdenEntry(label, amount, null, isCreditProductLabel(label), null);
+                    const isCreditProduct = isCreditProductLabel(label);
+                    if (isCreditProduct && (
+                        creditPaymentInput.value === ""
+                        || creditRateInput.value === ""
+                        || !Number.isFinite(Number(creditPaymentInput.value))
+                        || !Number.isFinite(Number(creditRateInput.value))
+                        || Number(creditPaymentInput.value) < 0
+                        || Number(creditRateInput.value) < 0
+                    )) {
+                        status.textContent = "Для кредитного продукта укажите ежемесячный платёж и ставку. Оба значения должны быть неотрицательными.";
+                        saveButton.disabled = false;
+                        return;
+                    }
+                    await financeApplication.addFinancialBurdenEntry(
+                        label,
+                        amount,
+                        isCreditProduct ? creditPaymentInput.value : null,
+                        isCreditProduct,
+                        isCreditProduct ? creditRateInput.value : null
+                    );
                 } else {
                     const labelText = label.toLocaleLowerCase("ru-RU");
                     const assetType = /машин|автомобил|транспорт|мотоцикл/u.test(labelText)
