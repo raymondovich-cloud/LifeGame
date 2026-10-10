@@ -1,8 +1,8 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.2 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.3 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
-**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM/KMS encryption port добавлены в репозиторий. Remote DB, AWS KMS key и Edge Function ещё не подключены.  
+**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM/KMS encryption port добавлены в репозиторий. Remote DB, AWS KMS key, secrets и production deployment ещё не подключены.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
@@ -100,7 +100,7 @@ AAD и AWS KMS Encryption Context связывают ciphertext/wrapped DEK с u
 
 AWS KMS key policy должна ограничивать доступ только kms:GenerateDataKey и kms:Decrypt для конкретного ключа и серверного workload. KMS key ARN/version mapping задаётся server-side; старые mappings нельзя удалять, пока данные не перешифрованы или не удалены. Ключи и credentials не добавляются в Git.
 
-TLS и шифрование at rest провайдера остаются дополнительными слоями, но не заменяют application-layer encryption. Шифрование реализовано на уровне Infrastructure port, но AWS SDK wiring, секреты и Edge Function ещё не подключены.
+TLS и шифрование at rest провайдера остаются дополнительными слоями, но не заменяют application-layer encryption. Шифрование реализовано на уровне Infrastructure port, но AWS SDK wiring и secrets не настроены; исходный код Edge Function добавлен, но endpoint не развёрнут.
 
 ## 8. Удаление и жизненный цикл
 
@@ -139,4 +139,4 @@ RLS, grants и CAS должны тестироваться на реальной
 
 ## 11. Статус
 
-**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port с KMS abstraction. AWS KMS provider выбран как целевой. Не создан AWS KMS key, не добавлены credentials, не создан Edge Function endpoint, миграция не применена к remote Supabase. CI/локальные PostgreSQL tests должны подтвердить миграцию и RLS до следующего этапа.
+**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port с KMS abstraction. AWS KMS provider выбран как целевой. Исходный код Edge Function добавлен и покрыт unit-тестами, но endpoint не развёрнут. Не создан AWS KMS key, не добавлены credentials, миграция не применена к remote Supabase. CI подтвердил unit tests и локальные PostgreSQL/RLS tests. До deploy обязательны AWS KMS key с least-privilege IAM credentials, Edge Function secrets, безопасное применение миграции в выбранном окружении и реальный KMS smoke test.
