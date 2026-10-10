@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 2.5
+// source/presentation/health/health.js — Version 2.6
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -24,6 +24,7 @@ function createElement(tag, className = "", text = null) {
 }
 
 function scoreText(score) {
+    if (score === null || score === undefined || score === "") return "—";
     return Number.isFinite(Number(score)) ? Number(score).toFixed(1) : "—";
 }
 
@@ -37,17 +38,21 @@ function renderFactor(factor, data) {
         FACTOR_LABELS[factor] || factor
     );
 
+    const hasNumericScore = data?.score !== null &&
+        data?.score !== undefined &&
+        data?.score !== "" &&
+        Number.isFinite(Number(data.score));
     const score = createElement(
         "strong",
         "health-factor__score",
-        scoreText(data?.score) + (Number.isFinite(Number(data?.score)) ? "/100" : "")
+        scoreText(data?.score) + (hasNumericScore ? "/100" : "")
     );
 
     header.append(label, score);
 
     const track = createElement("div", "health-factor__track");
     const fill = createElement("span", "health-factor__fill");
-    const numericScore = Number(data?.score);
+    const numericScore = hasNumericScore ? Number(data.score) : NaN;
 
     animateBarWidth(
         fill,
@@ -401,7 +406,10 @@ function renderDiagnostics(panel, index) {
             createElement(
                 "span",
                 "",
-                Number.isFinite(Number(data?.score))
+                data?.score !== null &&
+                data?.score !== undefined &&
+                data?.score !== "" &&
+                Number.isFinite(Number(data.score))
                     ? Number(data.score).toFixed(1) + "/100"
                     : "—"
             )
@@ -638,7 +646,7 @@ async function renderHealth(container, healthApplication, options = {}) {
         "health-overview-section health-daily-activity",
         "DAILY ACTIVITY",
         "Повседневная активность",
-        "Только доступные наблюдения. Подключение Apple Health не предполагается автоматически."
+        "Только сохранённые наблюдения. Интеграция с Apple Health будет подключена отдельно."
     );
     const trainingPanel = createHealthMetricsBlock(
         "health-overview-section health-training-summary",

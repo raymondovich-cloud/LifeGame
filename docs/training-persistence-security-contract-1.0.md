@@ -1,13 +1,13 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.11 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.12 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
-**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM encryption port добавлены в репозиторий. Production provider для envelope encryption не выбран; remote DB migration applied to the free Supabase project; cloud keys, secrets and production deployment are not configured. Прямые table grants для клиентских ролей отзываются в локальной миграции; privileged server path требует отдельной проверки перед deployment. Разработка должна оставаться в бесплатном контуре до отдельного согласования расходов.  
+**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM encryption port добавлены в репозиторий. Удалённая миграция Supabase НЕ применена; Edge Function и secrets не настроены и не развёрнуты. Software-only provider предназначен только для development/staging; production managed-key provider не выбран. Прямые table grants для клиентских ролей отзываются в локальной миграции; privileged server path требует отдельной проверки перед deployment. Разработка должна оставаться в бесплатном контуре до отдельного согласования расходов.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
 
-Документ определяет контракт безопасного хранения дневника тренировок. Миграция и адаптер находятся в GitHub; миграция применена к удалённому бесплатному Supabase-проекту; secrets и Edge Function не настроены. CI подтверждает локальные PostgreSQL/RLS tests и unit-тесты Edge handler; реальный AWS KMS smoke test ещё не выполнялся.
+Документ определяет контракт безопасного хранения дневника тренировок. Миграция и адаптер находятся в GitHub, но миграция НЕ применена к удалённому бесплатному Supabase-проекту; secrets и Edge Function не настроены и не развёрнуты. CI подтверждает локальные PostgreSQL/RLS tests и unit-тесты Edge handler; реальный AWS KMS smoke test не выполнялся.
 
 Текущая реализация Domain/Application не является доказательством безопасности хранения. Существующие Health/Development адаптеры и их RLS — полезная отправная точка, но не готовая реализация дневника тренировок.
 
@@ -143,4 +143,4 @@ RLS, grants и CAS должны тестироваться на реальной
 
 ## 11. Статус
 
-**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port; mock KMS покрывает криптографический контракт в unit-тестах. AWS KMS adapter сохранён, но не подключён к бесплатному development entrypoint и не является утверждённым production-решением. Entry point использует software-only provider с секретом окружения; deployment и secrets не настроены. Не создан AWS KMS key, не добавлены cloud credentials/secrets; remote schema migration применена, Edge Function не развёрнута. CI подтверждает unit tests и локальные PostgreSQL/RLS tests для соответствующего коммита. Бесплатный software-only provider не считается production-ready; до выбора managed-key provider, проверки ротации и явного согласования расходов не развёртывать production endpoint и не ослаблять требования безопасности.
+**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port; mock KMS покрывает криптографический контракт в unit-тестах. AWS KMS adapter сохранён, но не подключён к бесплатному development entrypoint и не является утверждённым production-решением. Entry point использует software-only provider с секретом окружения; deployment и secrets не настроены. Не создан AWS KMS key, не добавлены cloud credentials/secrets; remote schema migration НЕ применена, Edge Function не развёрнута. CI подтверждает unit tests и локальные PostgreSQL/RLS tests для соответствующего коммита. Бесплатный software-only provider не считается production-ready; до выбора managed-key provider, проверки ротации и явного согласования расходов не развёртывать production endpoint и не ослаблять требования безопасности.
