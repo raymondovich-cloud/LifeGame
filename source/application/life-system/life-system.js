@@ -1,0 +1,4 @@
+// source/application/life-system/life-system.js — Version 1.0
+import{createLifeSystemInteraction}from"../../index/interaction/interaction.engine.js";
+function createLifeSystemApplication({finance,health,development}={}){if(!finance||!health||!development)throw new Error("LifeGame Life System: three domain applications are required.");async function analyze(){const[f,h,d]=await Promise.all([finance.getFinancialStabilityIndex(),health.calculateFromMemory(),development.calculateFromMemory()]);const fi=f?.index||f;return{finance:fi,health:h.index,development:d.index,interaction:createLifeSystemInteraction(fi,h.index,d.index)}}return Object.freeze({analyze})}
+export{createLifeSystemApplication};

@@ -1,4 +1,4 @@
-/* finance.css — Version 3.4 */
+/* finance.css — Version 3.8 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -294,76 +294,71 @@
 
 .finance-capital-chart-bars{
     display:grid;
-    grid-template-columns:repeat(5,minmax(0,1fr));
-    align-items:end;
-    gap:var(--space-2);
-    min-height:8.75rem;
-    padding-bottom:var(--space-2);
+    gap:0;
+    border-top:var(--border-subtle);
     border-bottom:var(--border-subtle);
 }
 
 .finance-capital-chart-column{
     display:grid;
-    grid-template-rows:1fr auto;
-    align-items:end;
-    gap:.45rem;
+    gap:.55rem;
     min-width:0;
-    height:8.25rem;
-    text-align:center;
+    padding:var(--space-3) 0;
+    border-bottom:var(--border-subtle);
+}
+
+.finance-capital-chart-column:last-child{
+    border-bottom:0;
 }
 
 .finance-capital-chart-label{
     min-width:0;
-    color:var(--color-gray);
-    font-size:.68rem;
-    line-height:1.15;
-    text-align:center;
+    color:var(--color-white-soft);
+    font-size:var(--font-size-xs);
+    line-height:1.2;
     overflow-wrap:anywhere;
 }
 
 .finance-capital-chart-footer{
-    display:grid;
-    gap:.2rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-3);
     min-width:0;
-    justify-items:center;
 }
 
 .finance-capital-chart-value{
     min-width:0;
-    color:var(--color-white-soft);
+    color:var(--color-white);
     font-family:var(--font-family-mono);
-    font-size:.74rem;
+    font-size:var(--font-size-xs);
     font-weight:var(--font-weight-medium);
-    line-height:1;
+    line-height:1.2;
     white-space:nowrap;
 }
 
 .finance-capital-chart-track{
-    position:relative;
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
+    display:block;
     width:100%;
-    height:4.8rem;
-    border-bottom:1px solid rgba(255,255,255,.07);
+    height:.3rem;
+    overflow:hidden;
+    background:var(--color-surface-highlight);
 }
 
 .finance-capital-chart-bar{
     display:block;
-    width:min(1.5rem,42%);
-    min-height:0;
-    border-radius:3px 3px 0 0;
+    height:100%;
     background:var(--gradient-accent-line);
-    opacity:.68;
-    transition:height var(--motion-duration-normal) var(--motion-ease-standard),opacity var(--motion-duration-normal) var(--motion-ease-standard);
+    opacity:.72;
+    transition:width var(--motion-duration-normal) var(--motion-ease-standard),opacity var(--motion-duration-normal) var(--motion-ease-standard);
 }
 
 .finance-capital-chart-bar.is-positive{
-    opacity:.78;
+    opacity:.82;
 }
 
 .finance-capital-chart-bar.is-negative{
-    opacity:.58;
+    opacity:.52;
 }
 
 @media (max-width:719px){
@@ -371,39 +366,15 @@
         gap:var(--space-2);
     }
 
-    .finance-capital-chart-bars{
-        gap:.25rem;
-        min-height:8.5rem;
-    }
-
     .finance-capital-chart-column{
-        height:8rem;
-        gap:.3rem;
-    }
-
-    .finance-capital-chart-footer{
-        gap:.15rem;
-    }
-
-    .finance-capital-chart-label{
-        font-size:.58rem;
-        line-height:1.1;
+        gap:.5rem;
+        padding:var(--space-3) 0;
     }
 
     .finance-capital-chart-value{
-        font-size:.62rem;
-        letter-spacing:-.025em;
-    }
-
-    .finance-capital-chart-track{
-        height:4.6rem;
-    }
-
-    .finance-capital-chart-bar{
-        width:min(1.25rem,50%);
+        font-size:var(--font-size-xs);
     }
 }
-
 
 
 /* Assets block: X is the measured reference gap between «Название актива» and «Сумма». */
@@ -466,3 +437,34 @@
 .finance-data-screen .finance-data-accordion .finance-subblock:not([data-subblock="assets"]) .finance-add-form > .button-control {
     margin-top:0;
 }
+
+/* Voice input — finance form */
+.finance-voice-control{display:grid;gap:var(--space-2)}
+.finance-voice-button{justify-self:start;display:inline-flex;align-items:center;gap:.5rem;min-height:2.75rem;padding:.65rem 1rem;border:1px solid rgba(255,173,19,.55);border-radius:var(--radius-control, .75rem);background:rgba(255,173,19,.08);color:var(--color-white);font:inherit;font-size:var(--font-size-xs);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.finance-voice-button:hover:not(:disabled){background:rgba(255,173,19,.15)}
+.finance-voice-button:focus-visible{outline:2px solid #ffad13;outline-offset:3px}
+.finance-voice-button:disabled{opacity:.65;cursor:wait}
+.finance-voice-status{margin:0;color:var(--color-gray);font-size:var(--font-size-2xs);line-height:1.5;overflow-wrap:anywhere}
+.finance-voice-status[hidden]{display:none}
+
+
+/* Shared voice entry — single capture point for all Finance DATA categories. */
+.finance-voice-entry{
+    display:grid;
+    gap:var(--space-3);
+    margin-bottom:var(--space-4);
+    padding:var(--space-4);
+    background:var(--gradient-surface);
+    border:1px solid rgba(255,173,19,.32);
+    border-radius:var(--radius-card);
+}
+.finance-voice-entry-heading{display:grid;gap:var(--space-1)}
+.finance-voice-entry-heading strong{color:var(--color-white);font-size:var(--font-size-sm)}
+.finance-voice-entry-heading p{margin:0;color:var(--color-gray);font-size:var(--font-size-xs);line-height:1.5}
+.finance-voice-entry .finance-voice-control{gap:var(--space-2)}
+.finance-voice-entry .finance-voice-button{justify-self:stretch;justify-content:center;min-height:3rem}
+.finance-voice-preview{display:grid;gap:var(--space-2);padding-top:var(--space-3);border-top:var(--border-subtle)}
+.finance-voice-preview[hidden]{display:none}
+.finance-voice-preview-actions{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-2)}
+.finance-voice-preview-actions .button-control{flex:1 1 12rem}
+.finance-voice-preview-actions .finance-text-action{min-height:2.75rem}

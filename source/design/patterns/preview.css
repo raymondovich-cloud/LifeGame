@@ -1,4 +1,4 @@
-/* preview.css — Version 1.1 */
+/* preview.css — Version 1.2 */
 
 .preview-subblock-list {
     display:grid;
@@ -114,4 +114,66 @@
         align-items:stretch;
         flex-direction:column;
     }
+}
+
+
+/*
+ * Authentication palette — Raimondovich reference.
+ * Only colors and gradients are overridden here; geometry and borders remain
+ * governed by the existing component rules.
+ */
+.registration-modal__dialog {
+    background:
+        radial-gradient(ellipse 95% 46% at 100% 0%, rgba(255,106,0,.18), transparent 68%),
+        linear-gradient(135deg, #0a0807 0%, #100c09 58%, #15100c 100%);
+}
+
+.registration-modal__context {
+    color:#d6d0c9;
+}
+
+.registration-modal__dialog .form-label {
+    color:#c9b8a8;
+}
+
+.registration-modal__dialog .input-control {
+    color:#f7f5f2;
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.035) 0%, rgba(8,7,6,.94) 58%, rgba(255,106,0,.06) 100%);
+}
+
+.registration-modal__dialog .input-control::placeholder {
+    color:rgba(255,224,196,.42);
+}
+
+.registration-modal__dialog .button-control {
+    color:#e8dfd6;
+    background:
+        linear-gradient(115deg, rgba(255,255,255,.045) 0%, rgba(12,10,8,.95) 54%, rgba(255,106,0,.09) 100%);
+}
+
+.registration-modal__dialog .button-control:hover {
+    color:#fff0df;
+    background:
+        linear-gradient(115deg, rgba(255,240,223,.08) 0%, rgba(255,155,67,.13) 58%, rgba(255,105,0,.12) 100%);
+}
+
+.registration-modal__dialog .button-control--accent {
+    color:#fff0df;
+    background:
+        linear-gradient(105deg, rgba(255,240,223,.12) 0%, rgba(255,155,67,.18) 58%, rgba(255,105,0,.14) 100%);
+}
+
+.registration-modal__dialog .button-control--accent:hover {
+    color:#fff8f0;
+    background:
+        linear-gradient(105deg, rgba(255,240,223,.17) 0%, rgba(255,155,67,.25) 58%, rgba(255,105,0,.22) 100%);
+}
+
+.registration-modal__dialog [role="status"] {
+    color:#d6d0c9;
+}
+
+.auth-secondary-action__text {
+    color:#bdb1a5;
 }
