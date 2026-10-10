@@ -1,4 +1,4 @@
-// finance.js — Version 7.38
+// finance.js — Version 7.39
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -434,7 +434,9 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
 
     interactionMenu.append(pinAction, closeMenu);
     pinMenu.appendChild(interactionMenu);
-    section.append(carousel, pinMenu);
+    section.append(carousel);
+    // Match row interactions: keep the fixed overlay outside transformed finance containers.
+    document.body.appendChild(pinMenu);
 
     const viewDefinitions = Object.freeze({
         assets: {
