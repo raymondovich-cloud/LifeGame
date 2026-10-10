@@ -1,8 +1,8 @@
-<!-- docs/training-workout-diary-1.0.md — Version 1.3 -->
+<!-- docs/training-workout-diary-1.0.md — Version 1.4 -->
 
-# LifeGame — Дневник тренировок 1.3
+# LifeGame — Дневник тренировок 1.4
 
-**Статус:** EXPERIMENTAL — доменная модель, каталог упражнений, жизненный цикл и Application orchestration; UI и постоянное хранилище не подключены.  
+**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; UI и remote persistence не подключены.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
@@ -59,13 +59,21 @@ source/application/training/manage-training-session.js предоставляе�
 
 Это целевой контракт, а не текущая реализация. Не заявляется end-to-end encryption: доверенный серверный контур в целевой модели сможет расшифровывать payload. TLS и provider encryption-at-rest остаются дополнительными слоями, но не заменяют прикладное шифрование.
 
-## 7. Проверка и границы архитектуры
+## 7. Persistence и прикладное шифрование
+
+- Миграция supabase/migrations/20261010160000_create_training_sessions.sql задаёт таблицу training_sessions, RLS, grants, immutable ownership, разрешённые lifecycle transitions и DB-managed revision.
+- source/infrastructure/supabase/training-session.repository.js реализует findForUser, insertForUser и optimistic update через атомарный фильтр revision = expectedRevision. Адаптер работает только с шифрованным payload и требует server-side encryption port.
+- source/infrastructure/security/aws-kms-training-payload-encryption.js реализует AES-256-GCM и envelope-encryption orchestration через AWS KMS port. Для каждого сохранения создаётся DEK; AAD/KMS context привязаны к владельцу, сессии, дате, статусу и revision.
+- Целевой KMS-провайдер — AWS KMS. Key ARN, restricted IAM credentials и Edge Function wiring не настроены; миграция не применена к remote DB.
+- Database RLS/trigger tests находятся в supabase/tests/database/002_training_sessions_test.sql; crypto/repository unit tests проверяют mock KMS и mock Supabase, не реальный облачный KMS или remote database.
+
+## 8. Проверка и границы архитектуры
 
 Domain не знает о UI, Memory, Infrastructure, пользователях, БД, сети, Apple Health или криптографии. Application координирует сценарии через внедрённый репозиторий и часы; конкретная БД не подключена.
 
 Не изменялись текущий Health UI, общий Health Index и подготовка недельной силовой активности. Не реализованы постоянное хранение, Supabase-адаптер, миграция, прикладное шифрование, синхронизация web/Telegram/iOS, импорт Apple Health, программы тренировок, пользовательские упражнения и защита от конкурентных записей на уровне БД.
 
-## 8. Обязательная проверка перед production
+## 9. Обязательная проверка перед production
 
 - RLS и grants проверены тестами на реальной PostgreSQL/Supabase-среде.
 - Нельзя читать/изменять/удалять сессию другого пользователя.

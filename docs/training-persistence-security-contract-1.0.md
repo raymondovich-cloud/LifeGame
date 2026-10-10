@@ -1,13 +1,13 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.1 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.2 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
-**Статус:** PLANNED — архитектурный контракт; адаптер, схема БД и шифрование не реализованы.  
+**Статус:** PARTIALLY IMPLEMENTED — миграция, RLS/trigger, Supabase repository и AES-256-GCM/KMS encryption port добавлены в репозиторий. Remote DB, AWS KMS key и Edge Function ещё не подключены.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
 
-Документ определяет требования к будущему persistence-адаптеру дневника тренировок. Он опирается на существующий Supabase/PostgreSQL контур LifeGame, но не изменяет миграции и не подключается к реальной базе.
+Документ определяет контракт безопасного хранения дневника тренировок. Миграция и адаптер добавлены в GitHub, но миграция не применялась к удалённой Supabase-базе. Проверка в локальном Supabase/CI ещё требуется.
 
 Текущая реализация Domain/Application не является доказательством безопасности хранения. Существующие Health/Development адаптеры и их RLS — полезная отправная точка, но не готовая реализация дневника тренировок.
 
@@ -15,9 +15,9 @@
 
 - Domain: `source/domain/training/` — модель и правила жизненного цикла.
 - Application: `source/application/training/` — сценарии и порты репозитория.
-- Infrastructure: будущий адаптер в `source/infrastructure/supabase/`.
-- Persistence: будущая миграция PostgreSQL в `supabase/migrations/`.
-- Database security tests: `supabase/tests/database/` и соответствующие интеграционные тесты.
+- Infrastructure: `source/infrastructure/supabase/training-session.repository.js`.
+- Persistence: `supabase/migrations/20261010160000_create_training_sessions.sql`.
+- Database security tests: `supabase/tests/database/002_training_sessions_test.sql`; adapter and encryption unit tests in `source/infrastructure/`.
 
 Не переносить SQL, Supabase SDK, RLS-детали или криптографические библиотеки в Domain. Не подключать UI к Supabase напрямую.
 
@@ -32,12 +32,15 @@
 - `session_date date not null` — календарная дата;
 - `status text not null` — planned / in_progress / completed;
 - `revision bigint not null` — монотонная версия для optimistic concurrency;
-- `payload_ciphertext bytea not null` — аутентифицированный шифротекст приватного payload;
-- `payload_nonce bytea not null` и `payload_key_version text not null` — метаданные шифрования;
+- `payload_ciphertext bytea not null` — AES-256-GCM ciphertext приватного payload;
+- `payload_nonce bytea not null` — 12-byte nonce;
+- `payload_tag bytea not null` — 16-byte GCM authentication tag;
+- `payload_wrapped_key bytea not null` — KMS-wrapped DEK;
+- `payload_key_version text not null` — version label used to resolve a KMS key ARN;
 - `created_at timestamptz not null`;
 - `updated_at timestamptz not null`.
 
-Это логическая спецификация, не готовый SQL. Точный формат сериализации и ограничения размеров фиксируются в Infrastructure-контракте перед миграцией.
+Схема зафиксирована в миграции, но пока не применена к удалённой базе. Ограничения размеров, nonce/tag и ключевого конверта заданы в PostgreSQL.
 
 Открытые поля ограничиваются ID, owner, session_date, status, revision и timestamps. Они всё ещё раскрывают факт и частоту тренировок. Приватный payload включает activityType, intensity, durationMinutes, notes, exercises и sets. Если продукту понадобится поиск по зашифрованным полям, отдельный дизайн индексов должен пройти security review.
 
@@ -47,12 +50,12 @@
 
 1. Владелец записи определяется доверенной identity Supabase Auth, а не значением `userId`, переданным клиентом.
 2. На таблице включается RLS; клиентские операции доступны только роли `authenticated`.
-3. SELECT и DELETE используют ownership predicate, эквивалентный `(select auth.uid()) = user_id`.
+3. SELECT и UPDATE используют ownership predicate, эквивалентный `(select auth.uid()) = user_id`; INSERT требует того же владельца. DELETE клиенту пока не выдан, удаление при удалении аккаунта идёт через FK cascade.
 4. INSERT требует `WITH CHECK ((select auth.uid()) = user_id)`.
 5. UPDATE требует `USING ((select auth.uid()) = user_id)` и `WITH CHECK ((select auth.uid()) = user_id)`.
 6. Табличные grants выдаются только для нужных операций; RLS не заменяется grants и grants не заменяют RLS.
 7. Не выдавать доступ роли `anon`. Не использовать `service_role` или secret key во frontend, Telegram WebApp либо iOS-клиенте.
-8. Не добавлять обход RLS через `SECURITY DEFINER` без отдельного security review.
+8. Не добавлять обход RLS через `SECURITY DEFINER` без отдельного security review. Текущий trigger — `SECURITY INVOKER`.
 9. При отсутствии записи или недоступности чужой записи возвращается единый результат «не найдено/недоступно».
 
 Application use case может передавать user context как параметр порта, но это само по себе не является авторизацией. JWT должен проверяться сервером/БД, а ownership policy — действовать на каждой операции.
@@ -89,11 +92,15 @@ Application port фиксируется следующим образом:
 - применяется envelope encryption: DEK шифрует payload, KMS-managed KEK оборачивает DEK;
 - открытый DEK, KEK и другие секреты не хранятся рядом с данными, в Git, клиентском коде или логах;
 - ciphertext, nonce и key version хранятся раздельными техническими полями;
-- до реализации выбирается конкретный KMS-провайдер и документируются генерация, хранение, ротация, отзыв, восстановление и многоплатформенный доступ к ключам.
+- для дневника тренировок выбран целевой провайдер AWS KMS. Конкретный KMS key ARN, restricted IAM identity, секреты и cloud resources ещё не созданы. Для каждой записи используется отдельный DEK, получаемый через GenerateDataKey; при чтении DEK восстанавливается через Decrypt.
 
 Эта модель обеспечивает шифрование на уровне приложения в доверенном серверном контуре, но **не является end-to-end encryption**: доверенный сервер, имеющий право получить ключ, сможет расшифровать payload. Не следует заявлять E2EE без отдельной архитектуры клиентских ключей и recovery.
 
-TLS и шифрование at rest провайдера остаются дополнительными слоями, но не заменяют application-layer encryption. На момент версии 1.1 шифрование ещё не реализовано.
+AAD и AWS KMS Encryption Context связывают ciphertext/wrapped DEK с user_id, session_id, датой, статусом и revision. Для AES-GCM используется 12-byte nonce и 16-byte tag. Модуль source/infrastructure/security/aws-kms-training-payload-encryption.js реализует Web Crypto часть и ожидает server-only KMS port; тесты используют mock KMS и не доказывают связь с AWS.
+
+AWS KMS key policy должна ограничивать доступ только kms:GenerateDataKey и kms:Decrypt для конкретного ключа и серверного workload. KMS key ARN/version mapping задаётся server-side; старые mappings нельзя удалять, пока данные не перешифрованы или не удалены. Ключи и credentials не добавляются в Git.
+
+TLS и шифрование at rest провайдера остаются дополнительными слоями, но не заменяют application-layer encryption. Шифрование реализовано на уровне Infrastructure port, но AWS SDK wiring, секреты и Edge Function ещё не подключены.
 
 ## 8. Удаление и жизненный цикл
 
@@ -126,10 +133,10 @@ RLS, grants и CAS должны тестироваться на реальной
 
 - UUID для ID сессии — принят и закреплён в Domain.
 - Revision-based optimistic concurrency — принят как контракт Application.
-- Шифрование приватного payload — AES-256-GCM с envelope encryption; конкретный KMS-провайдер и его конфигурация остаются блокирующим решением до реализации.
+- Шифрование приватного payload — AES-256-GCM с envelope encryption; AWS KMS выбран для дневника тренировок. Реальный key ARN, IAM policy и server-side AWS SDK wiring остаются обязательными перед интеграцией.
 - Подготовить миграцию и интеграционные тесты, не затрагивая существующие Health/Development таблицы.
 - Проверить SQL, RLS, grants, тесты и CI до подключения UI.
 
 ## 11. Статус
 
-**PLANNED.** Это архитектурный контракт. Таблица `training_sessions`, её миграция, persistence-адаптер, KMS-интеграция, прикладное шифрование и тесты реальной БД не реализованы этим изменением.
+**PARTIALLY IMPLEMENTED.** В репозитории есть migration, RLS policies, ownership/lifecycle trigger, compare-and-swap repository adapter и AES-256-GCM encryption port с KMS abstraction. AWS KMS provider выбран как целевой. Не создан AWS KMS key, не добавлены credentials, не создан Edge Function endpoint, миграция не применена к remote Supabase. CI/локальные PostgreSQL tests должны подтвердить миграцию и RLS до следующего этапа.
