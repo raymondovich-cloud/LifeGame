@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Login Presentation
-// Version: 1.3
+// Version: 1.4
 // Responsibility: render the Login interaction through Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -36,10 +36,6 @@ export function renderLogin(
     const title = document.createElement('h1');
     title.id = 'login-title';
     title.textContent = 'Ты уже в игре. Продолжай.';
-
-    const description = document.createElement('p');
-    description.textContent =
-        'Твои цели. Твои решения. Твой прогресс. Войди в LifeGame и продолжай создавать свою систему жизни.';
 
     const form = document.createElement('form');
     form.className = 'form';
@@ -136,7 +132,7 @@ export function renderLogin(
         status,
         resendButton
     );
-    wrapper.append(title, description, form, registrationPrompt);
+    wrapper.append(title, form, registrationPrompt);
     container.append(wrapper);
 
     form.addEventListener('submit', async (event) => {

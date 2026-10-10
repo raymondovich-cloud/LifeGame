@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.15
+// platforms/web/web.runtime.js — Version 5.16
 
 import {
     trace,
@@ -168,12 +168,6 @@ export async function startWeb() {
         dialog.setAttribute("aria-modal", "true");
         dialog.setAttribute("aria-labelledby", "registration-title");
 
-        const context = document.createElement("p");
-        context.className = "registration-modal__context";
-        context.textContent =
-            "Создайте аккаунт, чтобы сохранять изменения в LifeGame.";
-
-        dialog.appendChild(context);
         modal.appendChild(dialog);
         authRoot.appendChild(modal);
 

@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Registration Presentation
-// Version: 1.5
+// Version: 1.6
 // Responsibility: render the registration interaction and call Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -36,10 +36,6 @@ export function renderRegistration(
     const title = document.createElement("h1");
     title.id = "registration-title";
     title.textContent = "Перестань наблюдать. Начни играть.";
-
-    const description = document.createElement("p");
-    description.textContent =
-        "Твоя жизнь уже идёт. Создай свою систему, управляй решениями и определяй, каким будет твой следующий ход.";
 
     const form = document.createElement("form");
     form.className = "form";
@@ -173,7 +169,7 @@ export function renderRegistration(
         status,
         resendButton
     );
-    wrapper.append(title, description, form, loginButton);
+    wrapper.append(title, form, loginButton);
     container.append(wrapper);
 
     form.addEventListener("submit", async (event) => {

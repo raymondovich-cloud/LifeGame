@@ -1,4 +1,4 @@
-/* preview.css — Version 1.2 */
+/* preview.css — Version 1.3 */
 
 .preview-subblock-list {
     display:grid;
@@ -69,6 +69,13 @@
     backdrop-filter:blur(14px);
 }
 
+.registration-modal__dialog #login-title {
+    margin:0;
+    font-size:clamp(1rem, 4.8vw, 1.5rem);
+    letter-spacing:-.045em;
+    white-space:nowrap;
+}
+
 .registration-modal__dialog {
     width:min(100%,32rem);
     max-height:min(90vh,48rem);
@@ -78,12 +85,6 @@
     border:1px solid rgba(255,255,255,.12);
     border-radius:var(--radius-card);
     box-shadow:var(--shadow-soft),0 24px 80px rgba(0,0,0,.45);
-}
-
-.registration-modal__context {
-    margin:0 0 var(--space-5);
-    color:var(--color-gray);
-    line-height:1.5;
 }
 
 @media (max-width:30rem) {
@@ -126,10 +127,6 @@
     background:
         radial-gradient(ellipse 95% 46% at 100% 0%, rgba(255,106,0,.18), transparent 68%),
         linear-gradient(135deg, #0a0807 0%, #100c09 58%, #15100c 100%);
-}
-
-.registration-modal__context {
-    color:#d6d0c9;
 }
 
 .registration-modal__dialog .form-label {
