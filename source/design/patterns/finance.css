@@ -569,4 +569,4 @@
 .finance-loading-line:nth-child(2),.finance-loading-line:nth-child(3){display:none}
 @keyframes finance-loading-letter-in{to{opacity:1;transform:translateY(0)}}
 @keyframes finance-loading-progress{to{transform:translateX(330%)}}
-@media (prefers-reduced-motion:reduce){.finance-loading-brand-letter{opacity:1;transform:none;animation:none}.finance-loading-line{animation:none;transform:none;flex-basis:100%}}}
+@media (prefers-reduced-motion:reduce){.finance-loading-brand-letter{opacity:1;transform:none;animation:none}.finance-loading-line{animation:none;transform:none;flex-basis:100%}}
