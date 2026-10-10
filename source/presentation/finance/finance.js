@@ -1,4 +1,4 @@
-// finance.js — Version 7.41
+// finance.js — Version 7.42
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1815,7 +1815,30 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
 
     button.addEventListener("click", () => {
         const nextOpen = button.getAttribute("aria-expanded") !== "true";
-        renderFinanceData(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
+        const accordion = button.closest(".finance-data-accordion");
+
+        if (!accordion) {
+            renderFinanceData(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
+            return;
+        }
+
+        accordion.querySelectorAll(".finance-subblock").forEach((item) => {
+            const isOpen = item === wrapper && nextOpen;
+            item.classList.toggle("is-open", isOpen);
+
+            const trigger = item.querySelector(".accordion-trigger");
+            trigger?.setAttribute("aria-expanded", String(isOpen));
+
+            const panel = item.querySelector(".accordion-content");
+            panel?.classList.toggle("is-open", isOpen);
+        });
+
+        const description = root.querySelector(".finance-data-screen .finance-workspace-header p");
+        if (description) {
+            description.textContent = nextOpen
+                ? "Управление выбранной системой."
+                : "Фиксируйте капитал, доходы, обязательства и резерв. На их основе система показывает финансовую устойчивость, её динамику и точки для улучшения.";
+        }
     });
 
     return wrapper;
