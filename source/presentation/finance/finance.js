@@ -1,4 +1,4 @@
-// finance.js — Version 7.28
+// finance.js — Version 7.29
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -1313,16 +1313,16 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
 function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
     const panel = document.createElement("section");
     panel.className = "finance-voice-entry";
-    panel.setAttribute("aria-label", "Голосовое добавление финансовых данных");
+    panel.setAttribute("aria-label", "Голосовой помощник для финансовых данных");
 
     const heading = document.createElement("div");
     heading.className = "finance-voice-entry-heading";
 
     const title = document.createElement("strong");
-    title.textContent = "Добавить голосом";
+    title.textContent = "Голосовой помощник";
 
     const hint = document.createElement("p");
-    hint.textContent = "Расскажите о доходе, расходе, долге или активе — LifeGame предложит категорию.";
+    hint.textContent = "Добавляйте и удаляйте доходы, расходы, долги и активы голосом. LifeGame распознает вашу команду и поможет указать категорию.";
 
     heading.append(title, hint);
 
