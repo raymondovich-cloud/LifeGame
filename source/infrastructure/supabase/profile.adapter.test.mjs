@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Profile Adapter Tests
-// Version: 1.0
+// Version: 1.1
 // Responsibility: verify the Profile persistence boundary without contacting Supabase.
 
 import test from "node:test";
@@ -162,6 +162,64 @@ test("updateProfile normalizes Supabase errors", async () => {
             }),
         /provider-specific secret/
     );
+});
+
+
+test("getUserRole reads the role from the signed-in user's profile row", async () => {
+    const calls = [];
+    const supabaseClient = {
+        from(table) {
+            calls.push(["from", table]);
+            return {
+                select(columns) {
+                    calls.push(["select", columns]);
+                    return {
+                        eq(column, value) {
+                            calls.push(["eq", column, value]);
+                            return {
+                                async maybeSingle() {
+                                    calls.push(["maybeSingle"]);
+                                    return { data: { role: "creator" }, error: null };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+
+    const adapter = createSupabaseProfileAdapter(supabaseClient);
+    assert.equal(await adapter.getUserRole("user-1"), "creator");
+    assert.deepEqual(calls, [
+        ["from", "user_profiles"],
+        ["select", "role"],
+        ["eq", "user_id", "user-1"],
+        ["maybeSingle"]
+    ]);
+});
+
+test("getUserRole defaults missing profile roles to user", async () => {
+    const supabaseClient = {
+        from() {
+            return {
+                select() {
+                    return {
+                        eq() {
+                            return {
+                                async maybeSingle() {
+                                    return { data: null, error: null };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }
+    };
+
+    const adapter = createSupabaseProfileAdapter(supabaseClient);
+    assert.equal(await adapter.getUserRole("user-1"), "user");
 });
 
 test("adapter requires a Supabase client", () => {
