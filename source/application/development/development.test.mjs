@@ -1,4 +1,4 @@
-// source/application/development/development.test.mjs — Version 1.1
+// source/application/development/development.test.mjs — Version 1.2
 import test from"node:test";
 import assert from"node:assert/strict";
 import{createDevelopmentApplication,latestWithinWindow}from"./development.js";
@@ -25,7 +25,7 @@ test("development excludes future facts",()=>{
 test("application records and calculates from scoped memory",async()=>{
  const saved=[];
  const memory={
-  async listAllFacts(){return{direction:[{recordedAt:Date.now(),clarity:90,priority:90,review:90}]}},
+  async listAllFacts(){return{direction:[{recordedAt:Date.now()-1000,clarity:90,priority:90,review:90}]}},
   async listFacts(){return[]},
   async saveFact(category,fact){saved.push({category,fact});return fact}
  };
