@@ -1,7 +1,7 @@
-// financial-burden-close-confirmation.js — Version 1.0
+// financial-burden-close-confirmation.js — Version 1.1
 // Responsibility: present a clear, accessible confirmation before closing a financial burden.
 
-const ORGANIZATION_DEBT_PATTERN = /(?:банк|банку|банка|банковск|ооо|ао\b|ип\b|фнс|гибдд|налог|мфо|микрофинанс|коллект|судеб|штраф|коммуналь|арендодатель|компания|организац|государствен|служба|фонд|страхов)/iu;
+const ORGANIZATION_DEBT_PATTERN = /(?:банк|банку|банка|банковск|ооо|ао(?![а-яё])|ип(?![а-яё])|фнс|гибдд|налог|мфо|микрофинанс|коллект|судеб|штраф|коммуналь|арендодатель|компания|организац|государствен|служба|фонд|страхов)/iu;
 
 function getConfirmationCopy(entry) {
     const label = String(entry?.label || "Обязательство").trim() || "Обязательство";
