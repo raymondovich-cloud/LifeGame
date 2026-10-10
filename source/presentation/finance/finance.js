@@ -1,9 +1,7 @@
-// finance.js — Version 7.40
+// finance.js — Version 7.41
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
-import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
-import { renderSectionAnalyticsScreen } from "./section.analytics.js";
 import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";
 import { createFinanceAnalytics } from "../../application/finance/finance.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
@@ -1530,45 +1528,57 @@ function createAssetsSummary(root, onWriteAttempt = null, financeApplication = n
             return;
         }
 
-        const renderAnalytics = () => renderAssetsStatisticsScreen(
-            root,
-            () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
-            assetsAnalytics,
-            financeApplication,
-            onWriteAttempt,
-            {
-                isPinned: (entryId) => isEntryPinned("assets", entryId),
-                onChanged: renderAnalytics,
-                onPin: (entryId) => {
-                    toggleEntryPinned("assets", entryId);
-                },
-                onDelete: (entryId) => {
-                    const remove = async () => {
-                        const result = await financeApplication.removeFinanceEntry("assets", entryId);
-                        if (!result) return;
+        const renderAnalytics = async (isInitialOpen = false) => {
+            try {
+                const { renderAssetsStatisticsScreen } = await import("./assets.statistics.js");
+                if (isInitialOpen && !statisticsButton.isConnected) return;
 
-                        pinnedEntries.delete(getEntryKey("assets", entryId));
-                        renderAnalytics();
-                    };
+                renderAssetsStatisticsScreen(
+                    root,
+                    () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
+                    assetsAnalytics,
+                    financeApplication,
+                    onWriteAttempt,
+                    {
+                        isPinned: (entryId) => isEntryPinned("assets", entryId),
+                        onChanged: () => renderAnalytics(),
+                        onPin: (entryId) => {
+                            toggleEntryPinned("assets", entryId);
+                        },
+                        onDelete: (entryId) => {
+                            const remove = async () => {
+                                const result = await financeApplication.removeFinanceEntry("assets", entryId);
+                                if (!result) return;
 
-                    if (typeof onWriteAttempt === "function") {
-                        onWriteAttempt(remove);
-                    } else {
-                        remove();
+                                pinnedEntries.delete(getEntryKey("assets", entryId));
+                                renderAnalytics();
+                            };
+
+                            if (typeof onWriteAttempt === "function") {
+                                onWriteAttempt(remove);
+                            } else {
+                                remove();
+                            }
+                        },
+                        onPinLimit: (entryId) => {
+                            if (isEntryPinned("assets", entryId)) return false;
+                            if (countPinnedEntries("assets", financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                                showSubscriptionLimitNotice();
+                                return true;
+                            }
+                            return false;
+                        }
                     }
-                },
-                onPinLimit: (entryId) => {
-                    if (isEntryPinned("assets", entryId)) return false;
-                    if (countPinnedEntries("assets", financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
-                        showSubscriptionLimitNotice();
-                        return true;
-                    }
-                    return false;
-                }
+                );
+            } catch (error) {
+                trace("finance", "analytics.lazy-load.error", {
+                    module: "assets.statistics",
+                    error: error?.message || "unknown"
+                });
             }
-        );
+        };
 
-        renderAnalytics();
+        renderAnalytics(true);
     });
 
     heading.append(title, statisticsButton);
@@ -1676,42 +1686,54 @@ function createSectionSummary(root, subblock, onWriteAttempt, financeApplication
     statisticsButton.addEventListener("click", () => {
         if (!financeAnalytics) return;
 
-        const renderAnalytics = () => renderSectionAnalyticsScreen(
-            root,
-            () => renderFinanceData(root, subblock.id, onWriteAttempt, financeApplication),
-            subblock,
-            financeAnalytics,
-            financeApplication,
-            onWriteAttempt,
-            {
-                isPinned: (entryId) => isEntryPinned(subblock.id, entryId),
-                onChanged: renderAnalytics,
-                onPin: (entryId) => toggleEntryPinned(subblock.id, entryId),
-                onDelete: (entryId) => {
-                    const remove = async () => {
-                        const result = await financeApplication.removeFinanceEntry(subblock.id, entryId);
-                        if (!result) return;
-                        pinnedEntries.delete(getEntryKey(subblock.id, entryId));
-                        renderAnalytics();
-                    };
+        const renderAnalytics = async (isInitialOpen = false) => {
+            try {
+                const { renderSectionAnalyticsScreen } = await import("./section.analytics.js");
+                if (isInitialOpen && !statisticsButton.isConnected) return;
 
-                    if (typeof onWriteAttempt === "function") {
-                        onWriteAttempt(remove);
-                    } else {
-                        remove();
+                renderSectionAnalyticsScreen(
+                    root,
+                    () => renderFinanceData(root, subblock.id, onWriteAttempt, financeApplication),
+                    subblock,
+                    financeAnalytics,
+                    financeApplication,
+                    onWriteAttempt,
+                    {
+                        isPinned: (entryId) => isEntryPinned(subblock.id, entryId),
+                        onChanged: () => renderAnalytics(),
+                        onPin: (entryId) => toggleEntryPinned(subblock.id, entryId),
+                        onDelete: (entryId) => {
+                            const remove = async () => {
+                                const result = await financeApplication.removeFinanceEntry(subblock.id, entryId);
+                                if (!result) return;
+                                pinnedEntries.delete(getEntryKey(subblock.id, entryId));
+                                renderAnalytics();
+                            };
+
+                            if (typeof onWriteAttempt === "function") {
+                                onWriteAttempt(remove);
+                            } else {
+                                remove();
+                            }
+                        },
+                        onPinLimit: () => {
+                            if (countPinnedEntries(subblock.id, financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                                showSubscriptionLimitNotice();
+                                return true;
+                            }
+                            return false;
+                        }
                     }
-                },
-                onPinLimit: () => {
-                    if (countPinnedEntries(subblock.id, financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
-                        showSubscriptionLimitNotice();
-                        return true;
-                    }
-                    return false;
-                }
+                );
+            } catch (error) {
+                trace("finance", "analytics.lazy-load.error", {
+                    module: "section.analytics",
+                    error: error?.message || "unknown"
+                });
             }
-        );
+        };
 
-        renderAnalytics();
+        renderAnalytics(true);
     });
 
     heading.append(title, statisticsButton);
