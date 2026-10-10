@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 2.4
+// source/presentation/health/health.js — Version 2.5
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -483,6 +483,131 @@ function renderHealthData(container, healthApplication, onBack, options = {}) {
     container.appendChild(page);
 }
 
+
+const HEALTH_CATEGORY_LABELS = Object.freeze({
+    critical: "Критический уровень",
+    weak: "Низкий уровень",
+    attention: "Требует внимания",
+    good: "Хороший уровень",
+    excellent: "Отличное состояние"
+});
+
+function hasValue(value) {
+    return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+}
+
+function latestField(records, field) {
+    return (Array.isArray(records) ? records : [])
+        .filter((record) => hasValue(record?.[field]))
+        .sort((left, right) => Number(left.recordedAt || 0) - Number(right.recordedAt || 0))
+        .at(-1) || null;
+}
+
+function formatMetric(value, unit = "") {
+    if (!hasValue(value)) return "Нет данных";
+    const formatted = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 }).format(Number(value));
+    return unit ? formatted + " " + unit : formatted;
+}
+
+function createHealthPriorityBlock() {
+    const section = createElement("section", "health-priority-panel");
+    section.setAttribute("aria-label", "Приоритетное действие");
+    return section;
+}
+
+function renderHealthPriority(panel, index, onOpenData) {
+    panel.replaceChildren();
+
+    const copy = createElement("div", "health-priority-panel__copy");
+    copy.appendChild(createElement("span", "finance-section-meta", "NEXT BEST ACTION"));
+
+    const title = createElement("h3", "health-priority-panel__title");
+    const description = createElement("p", "health-priority-panel__description");
+    const action = document.createElement("button");
+    action.type = "button";
+    action.className = "health-priority-panel__action";
+    action.textContent = "Обновить показатели →";
+    action.addEventListener("click", onOpenData);
+
+    if (index.value === null) {
+        title.textContent = "Начни с базовых данных";
+        description.textContent = "Добавь первые наблюдения, чтобы LifeGame смог показать текущее состояние и выделить приоритетную область.";
+        action.textContent = "Добавить данные →";
+    } else {
+        const primary = index.constraints?.[0];
+        const label = primary ? (FACTOR_LABELS[primary.factor] || primary.factor) : null;
+        title.textContent = primary ? "Фокус внимания — " + label.toLowerCase() : "Система выглядит сбалансированной";
+        description.textContent = primary
+            ? "Этот фактор сейчас сильнее всего влияет на общий Health Index. Начни с регулярного наблюдения за ним и небольших последовательных действий."
+            : "По доступным данным нет выраженного ограничивающего фактора. Поддерживай устойчивые привычки и обновляй показатели.";
+    }
+
+    copy.append(title, description);
+    panel.append(copy, action);
+}
+
+function createHealthMetricsBlock(className, eyebrow, title, description = "") {
+    const section = createElement("section", className);
+    section.appendChild(createElement("span", "finance-section-meta", eyebrow));
+    section.appendChild(createElement("h3", "health-overview-section__title", title));
+    if (description) section.appendChild(createElement("p", "health-overview-section__description", description));
+    return section;
+}
+
+function createHealthMetric(label, value, note = "") {
+    const item = createElement("div", "health-overview-metric");
+    item.appendChild(createElement("span", "health-overview-metric__label", label));
+    item.appendChild(createElement("strong", "health-overview-metric__value", value));
+    if (note) item.appendChild(createElement("span", "health-overview-metric__note", note));
+    return item;
+}
+
+async function renderDailyActivity(panel, healthApplication) {
+    const [activityFacts, recoveryFacts] = await Promise.all([
+        healthApplication.listFacts("activity"),
+        healthApplication.listFacts("recovery")
+    ]);
+
+    const steps = latestField(activityFacts, "stepsPerDay");
+    const activeMinutes = latestField(activityFacts, "activeMinutesPerWeek");
+    const sleep = latestField(recoveryFacts, "sleepDurationHours");
+
+    panel.querySelector(".health-overview-metrics")?.remove();
+    const metrics = createElement("div", "health-overview-metrics");
+    metrics.append(
+        createHealthMetric("Шаги в день", formatMetric(steps?.stepsPerDay, "шагов"), steps ? "Ручной ввод" : "Добавь первое значение"),
+        createHealthMetric("Активность за неделю", formatMetric(activeMinutes?.activeMinutesPerWeek, "мин"), activeMinutes ? "Ручной ввод" : "Добавь первое значение"),
+        createHealthMetric("Сон", formatMetric(sleep?.sleepDurationHours, "ч"), sleep ? "Последнее наблюдение" : "Добавь первое значение")
+    );
+    panel.appendChild(metrics);
+}
+
+async function renderTrainingSummary(panel, healthApplication) {
+    const activityFacts = await healthApplication.listFacts("activity");
+    const now = Date.now();
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const workouts = (Array.isArray(activityFacts) ? activityFacts : [])
+        .filter((fact) => (fact?.type === "workout" || fact?.workout === true) && fact?.workout !== false);
+    const recentWorkouts = workouts.filter((fact) => Number(fact.recordedAt) >= weekAgo && Number(fact.recordedAt) <= now);
+    const latestWorkout = workouts
+        .slice()
+        .sort((left, right) => Number(left.recordedAt || 0) - Number(right.recordedAt || 0))
+        .at(-1);
+
+    panel.querySelector(".health-overview-metrics")?.remove();
+    const metrics = createElement("div", "health-overview-metrics health-overview-metrics--training");
+    metrics.append(
+        createHealthMetric("За 7 дней", String(recentWorkouts.length), "Тренировок"),
+        createHealthMetric("Последняя", latestWorkout ? new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" }).format(new Date(latestWorkout.recordedAt)) : "Нет записей", latestWorkout ? "Дата занятия" : "История пока пуста"),
+        createHealthMetric("Длительность", formatMetric(latestField(workouts, "durationMinutes")?.durationMinutes, "мин"), "Последняя записанная")
+    );
+    panel.appendChild(metrics);
+
+    const note = panel.querySelector(".health-training-note") || createElement("p", "health-training-note");
+    note.textContent = "Дневник тренировок развивается как отдельный раздел и не зависит от подключения Apple Health.";
+    if (!note.isConnected) panel.appendChild(note);
+}
+
 async function renderHealth(container, healthApplication, options = {}) {
     const showPresentationHeader = options.showPresentationHeader !== false;
 
@@ -499,15 +624,28 @@ async function renderHealth(container, healthApplication, options = {}) {
 
     intro.append(
         createElement("span", "finance-section-meta", "HEALTH"),
-        createElement("h2", "", "Система здоровья"),
+        createElement("h2", "", "Твоё здоровье — твой ресурс."),
         createElement(
             "p",
             "",
-            "Понимайте состояние своего организма и образа жизни как единую систему."
+            "Единая система физического состояния, повседневной активности и развития — без медицинских диагнозов."
         )
     );
 
     const healthIndex = createHealthIndexBlock(healthApplication);
+    const priorityPanel = createHealthPriorityBlock();
+    const activityPanel = createHealthMetricsBlock(
+        "health-overview-section health-daily-activity",
+        "DAILY ACTIVITY",
+        "Повседневная активность",
+        "Только доступные наблюдения. Подключение Apple Health не предполагается автоматически."
+    );
+    const trainingPanel = createHealthMetricsBlock(
+        "health-overview-section health-training-summary",
+        "TRAINING",
+        "Тренировки",
+        "Краткая сводка тренировочной регулярности."
+    );
     const factorsContainer = createElement("div", "health-factors-container");
 
     const dataEntry = createElement("section", "finance-data-entry");
@@ -534,7 +672,15 @@ async function renderHealth(container, healthApplication, options = {}) {
     });
 
     dataEntry.append(copy, action);
-    page.append(...(showPresentationHeader ? [intro] : []), healthIndex.section, factorsContainer, dataEntry);
+    page.append(
+        ...(showPresentationHeader ? [intro] : []),
+        healthIndex.section,
+        priorityPanel,
+        activityPanel,
+        trainingPanel,
+        factorsContainer,
+        dataEntry
+    );
     container.appendChild(page);
 
     const refresh = async () => {
@@ -551,16 +697,24 @@ async function renderHealth(container, healthApplication, options = {}) {
             });
         }
 
-        healthIndex.category.textContent =
-            index.value === null
-                ? "Недостаточно данных"
-                : (index.category?.label || "Оценка");
+        const categoryKey = index.category?.key;
+        healthIndex.category.textContent = index.value === null
+            ? "Недостаточно данных"
+            : (HEALTH_CATEGORY_LABELS[categoryKey] || "Предварительная оценка");
 
-        healthIndex.description.textContent =
-            result.diagnosis?.message ||
-            "Недостаточно данных для персональной диагностики.";
+        healthIndex.description.textContent = index.value === null
+            ? "Пока недостаточно наблюдений для устойчивой оценки. Добавь базовые данные и возвращайся к показателю регулярно."
+            : "Покрытие доступных данных — " + Math.round(Number(index.coverage) || 0) + "%. Индекс помогает отслеживать динамику привычек, а не ставить диагнозы.";
 
         renderDiagnostics(healthIndex.diagnosticsPanel, index);
+        renderHealthPriority(priorityPanel, index, () => {
+            renderHealthData(container, healthApplication, () => renderHealth(container, healthApplication));
+        });
+
+        await Promise.all([
+            renderDailyActivity(activityPanel, healthApplication),
+            renderTrainingSummary(trainingPanel, healthApplication)
+        ]);
 
         factorsContainer.replaceChildren(
             createFactorsBlock(index)
