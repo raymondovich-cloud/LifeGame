@@ -1,4 +1,4 @@
-/* finance.css — Version 3.18 */
+/* finance.css — Version 3.19 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -558,7 +558,7 @@
 
 
 .finance-loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-3);box-sizing:border-box;width:100%;min-height:clamp(24rem,65vh,48rem);padding:var(--space-8) var(--space-4);text-align:center}
-.finance-loading-brand{display:flex;align-items:baseline;justify-content:center;gap:0;margin:0 0 var(--space-2);font-size:clamp(2rem,9vw,3rem);font-weight:var(--font-weight-semibold);letter-spacing:-.065em;line-height:1}
+.finance-loading-brand{display:flex;align-items:baseline;justify-content:center;gap:0;margin:0 0 var(--space-2);font-family:var(--font-family-system);font-size:clamp(2rem,9vw,3rem);font-weight:var(--font-weight-semibold);letter-spacing:var(--letter-spacing-system);line-height:1}
 .finance-loading-brand-letter{display:inline-block;color:var(--color-white);opacity:0;transform:translateY(.35em);animation:finance-loading-letter-in .42s cubic-bezier(.2,.75,.25,1) forwards;animation-delay:calc(var(--letter-index)*.075s)}
 .finance-loading-brand-letter:nth-child(n+5){color:var(--color-accent)}
 .finance-loading-state .finance-section-meta{margin-top:var(--space-2)}
