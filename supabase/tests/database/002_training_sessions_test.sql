@@ -1,4 +1,4 @@
--- supabase/tests/database/002_training_sessions_test.sql — Version 1.0
+-- supabase/tests/database/002_training_sessions_test.sql — Version 1.1
 -- Real PostgreSQL role/RLS/trigger tests. Ciphertext fixture bytes are dummy data, not a crypto test.
 
 begin;
@@ -186,7 +186,7 @@ select results_eq(
 select results_eq(
     $$
     select count(*)::bigint from public.training_sessions
-     where id = '20000000-0000-4000-8000-000000000001'
+     where id = '20000000-0000-4000-8000-000000000002'
        and octet_length(payload_ciphertext) > 0
        and octet_length(payload_nonce) = 12
        and octet_length(payload_tag) = 16
