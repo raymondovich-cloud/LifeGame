@@ -1,4 +1,4 @@
-/* row-interaction-menu.css — Version 1.5 */
+/* row-interaction-menu.css — Version 1.6 */
 
 .row-interaction-backdrop {
     position:fixed;
@@ -79,3 +79,7 @@
     background:var(--gradient-accent-button);
     filter:brightness(1.08);
 }
+
+
+/* Respect the native hidden state despite the component's display:grid rule. */
+.row-interaction-backdrop[hidden]{display:none!important;}

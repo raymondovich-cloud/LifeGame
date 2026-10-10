@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.10
+// platforms/web/web.runtime.js — Version 5.16
 
 import {
     trace,
@@ -168,12 +168,6 @@ export async function startWeb() {
         dialog.setAttribute("aria-modal", "true");
         dialog.setAttribute("aria-labelledby", "registration-title");
 
-        const context = document.createElement("p");
-        context.className = "registration-modal__context";
-        context.textContent =
-            "Создайте аккаунт, чтобы сохранять изменения в LifeGame.";
-
-        dialog.appendChild(context);
         modal.appendChild(dialog);
         authRoot.appendChild(modal);
 
@@ -330,7 +324,7 @@ export async function startWeb() {
                 moduleContent,
                 publicMode ? (action) => openRegistrationModal(action) : null,
                 financeApplication,
-                { showPresentationHeader: publicMode }
+                { showPresentationHeader: publicMode, userId: publicMode ? null : activeUserId }
             );
             return;
         }
@@ -431,6 +425,58 @@ export async function startWeb() {
         }
     }
 
+    function renderAuthenticatedLoadingState(route) {
+        const states = {
+            finance: {
+                label: "FINANCE",
+                title: "Подготавливаем финансовую систему",
+                description: "Загружаем ваши данные и проверяем актуальность показателей."
+            },
+            health: {
+                label: "HEALTH",
+                title: "Подготавливаем систему здоровья",
+                description: "Загружаем ваши данные активности и прогресса."
+            },
+            development: {
+                label: "DEVELOPMENT",
+                title: "Подготавливаем систему развития",
+                description: "Загружаем ваши цели и данные прогресса."
+            }
+        };
+        const state = states[route];
+        if (!state) return;
+
+        const section = document.createElement("section");
+        section.className = "finance-loading-state";
+        section.setAttribute("role", "status");
+        section.setAttribute("aria-live", "polite");
+        section.setAttribute("aria-busy", "true");
+
+        const brand = document.createElement("div");
+        brand.className = "finance-loading-brand";
+        brand.setAttribute("aria-hidden", "true");
+        for (const [index, letter] of Array.from("LifeGame").entries()) {
+            const glyph = document.createElement("span");
+            glyph.className = "finance-loading-brand-letter";
+            glyph.textContent = letter;
+            glyph.style.setProperty("--letter-index", String(index));
+            brand.appendChild(glyph);
+        }
+
+        const meta = document.createElement("span");
+        meta.className = "finance-section-meta";
+        meta.textContent = state.label;
+
+        const heading = document.createElement("h2");
+        heading.textContent = state.title;
+
+        const description = document.createElement("p");
+        description.textContent = state.description;
+
+        section.append(brand, meta, heading, description);
+        moduleContent.replaceChildren(section);
+    }
+
     async function renderApplicationShell(route, isPublic, session = null, renderId = null) {
         if (renderId !== null && renderId !== routeRenderSequence) {
             return;
@@ -467,6 +513,10 @@ export async function startWeb() {
 
         if (!activeUserId) {
             return;
+        }
+
+        if (["finance", "health", "development"].includes(route)) {
+            renderAuthenticatedLoadingState(route);
         }
 
         try {
@@ -538,13 +588,18 @@ export async function startWeb() {
         }
 
         try {
-            const sessionResult = await readSessionWithHydrationRetry();
+            // Normal route checks read the current session once. The bounded
+            // hydration retry remains reserved for the immediate post-login /
+            // post-registration transition, where the SDK may still be settling.
+            const sessionCheckStartedAt = performance.now();
+            const sessionResult = await application.auth.getCurrentSession();
             const session = sessionResult?.session ?? null;
 
             trace("web-shell", "route.session.result", {
                 requestedRoute,
                 authenticated: Boolean(session),
-                renderId
+                renderId,
+                durationMs: Math.round(performance.now() - sessionCheckStartedAt)
             });
 
             // A newer route render may have started while the session check

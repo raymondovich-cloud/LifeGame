@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 1.3
+# .github/workflows/preview-publish.yml — Version 1.5
 name: LifeGame Preview CI
 
 on:
@@ -60,6 +60,24 @@ jobs:
               sys.exit(1)
           print("Local Design System imports are valid.")
           PY
+
+      - name: Validate Health presentation syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-default-type=module --check source/presentation/health/health.js
+          node --experimental-default-type=module --check source/presentation/health/section.analytics.js
+          echo "Health presentation modules parse successfully."
+
+      - name: Validate Finance presentation and carousel
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-default-type=module --check source/presentation/finance/finance.js
+          node --experimental-default-type=module --check source/presentation/finance/finance.carousel.js
+          node --experimental-default-type=module --check platforms/web/web.runtime.js
+          node --experimental-default-type=module --test source/presentation/finance/finance.carousel.test.mjs
+          echo "Finance presentation syntax and carousel tests passed."
 
       - name: Test finance voice, burden lifecycle and FSI
         shell: bash

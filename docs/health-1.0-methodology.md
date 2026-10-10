@@ -1,8 +1,8 @@
-<!-- docs/health-1.0-methodology.md — Version 1.1 -->
+<!-- docs/health-1.0-methodology.md — Version 1.3 -->
 
 # Health Index 1.0 — методология
 
-**Статус:** BASELINE / PLANNED  
+**Статус:** DEPRECATED как целевая методология. Код Health Index 1.0 остаётся legacy-реализацией до отдельной миграции; экспериментальная модель Activity & Training описана в `docs/health-activity-training-1.0.md` и пока не подключена к пользовательскому индексу.  
 **Версия модели:** 1.0  
 **Версия документа:** 1.2  
 **Дата:** 08.10.2026

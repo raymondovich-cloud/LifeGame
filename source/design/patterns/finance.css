@@ -1,4 +1,4 @@
-/* finance.css — Version 3.8 */
+/* finance.css — Version 3.20 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -350,7 +350,7 @@
     height:100%;
     background:var(--gradient-accent-line);
     opacity:.72;
-    transition:width var(--motion-duration-normal) var(--motion-ease-standard),opacity var(--motion-duration-normal) var(--motion-ease-standard);
+    transition:width var(--bar-animation-duration, var(--motion-duration-normal)) cubic-bezier(0.22, 1, 0.36, 1),opacity var(--motion-duration-normal) var(--motion-ease-standard);
 }
 
 .finance-capital-chart-bar.is-positive{
@@ -468,3 +468,101 @@
 .finance-voice-preview-actions{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-2)}
 .finance-voice-preview-actions .button-control{flex:1 1 12rem}
 .finance-voice-preview-actions .finance-text-action{min-height:2.75rem}
+
+
+/* Finance view carousel — gestures and preferences are isolated to this block. */
+/* Version 3.10: removed obsolete first-row focus accent. */
+.finance-capital-carousel{
+    position:relative;
+    z-index:1;
+    display:grid;
+    gap:var(--space-2);
+    min-width:0;
+    touch-action:pan-y;
+    overscroll-behavior-x:contain;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+}
+.finance-capital-carousel:focus-visible{
+    outline:1px solid rgba(255,173,19,.65);
+    outline-offset:4px;
+}
+.finance-capital-view-heading{
+    display:grid;
+    gap:.3rem;
+    min-width:0;
+}
+.finance-capital-view-label{
+    color:var(--color-gray-dark);
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+    letter-spacing:var(--letter-spacing-system);
+}
+.finance-capital-view-title{
+    margin:0;
+    color:var(--color-white-soft);
+    font-size:var(--font-size-interface);
+    font-weight:var(--font-weight-medium);
+    letter-spacing:-.02em;
+}
+.finance-capital-view-context{
+    position:relative;
+    z-index:1;
+    margin:0;
+    color:var(--color-gray);
+    font-size:var(--font-size-2xs);
+    line-height:1.45;
+}
+.finance-capital-view-pin-status{
+    position:absolute;
+    z-index:2;
+    top:var(--space-3);
+    right:var(--space-3);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.3rem;
+    padding:.2rem .45rem;
+    color:var(--color-white-soft);
+    background:rgba(12,12,12,.72);
+    border:1px solid rgba(255,173,19,.4);
+    border-radius:999px;
+    font-family:var(--font-family-mono);
+    font-size:var(--font-size-2xs);
+    letter-spacing:.06em;
+    line-height:1.35;
+    white-space:nowrap;
+}
+.finance-capital-view-pin-icon{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:12px;
+    height:12px;
+    flex:0 0 12px;
+    color:var(--color-accent);
+    letter-spacing:normal;
+}
+
+.finance-capital-view-pin-icon svg{
+    display:block;
+    width:12px;
+    height:12px;
+    fill:currentColor;
+    transform:rotate(-28deg);
+    transform-origin:center;
+}
+.finance-capital-view-pin-status[hidden]{display:none;}
+
+
+
+.finance-loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-3);box-sizing:border-box;width:100%;min-height:clamp(24rem,65vh,48rem);padding:var(--space-8) var(--space-4);text-align:center}
+.finance-loading-brand{display:flex;align-items:baseline;justify-content:center;gap:0;margin:0 0 var(--space-2);font-family:var(--font-family-system);font-size:clamp(2rem,9vw,3rem);font-weight:var(--font-weight-semibold);letter-spacing:-.065em;line-height:1}
+.finance-loading-brand-letter{display:inline-block;color:var(--color-white);opacity:0;transform:translateY(.35em);animation:finance-loading-letter-in .42s cubic-bezier(.2,.75,.25,1) forwards;animation-delay:calc(var(--letter-index)*.075s)}
+.finance-loading-brand-letter:nth-child(n+5){color:var(--color-accent)}
+.finance-loading-state .finance-section-meta{margin-top:var(--space-2)}
+.finance-loading-state h2{margin:var(--space-1) 0 0;color:var(--color-white);font-size:clamp(1.35rem,5vw,1.8rem);font-weight:var(--font-weight-semibold);letter-spacing:-.025em}
+.finance-loading-state p{margin:0;max-width:32rem;color:var(--color-gray);font-size:var(--font-size-xs);line-height:1.5}
+@keyframes finance-loading-letter-in{to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.finance-loading-brand-letter{opacity:1;transform:none;animation:none}}

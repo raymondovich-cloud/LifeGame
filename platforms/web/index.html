@@ -1,4 +1,4 @@
-<!-- platforms/web/index.html — Version 1.18 -->
+<!-- platforms/web/index.html — Version 1.21 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +15,10 @@
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="mask-icon" href="./icons/icon-v2.svg" color="#ffad13">
     <link rel="manifest" href="./manifest.json">
-    <link rel="stylesheet" href="../../source/design/design.css?v=20261010-1600">
+    <!-- Preload modules required for the initial Finance screen while CSS is loading. -->
+    <link rel="modulepreload" href="./web.runtime.js?v=20261008-2140">
+    <link rel="modulepreload" href="../../source/presentation/finance/finance.js">
+    <link rel="stylesheet" href="../../source/design/design.css?v=20261010-1630">
 </head>
 
 <body>
@@ -33,7 +36,7 @@
                 <a class="navigation-item" data-module="development" href="#development"><span class="navigation-index">03</span><span class="navigation-label">Development</span></a>
                 <a class="navigation-item" data-module="profile" href="#profile"><span class="navigation-index">04</span><span class="navigation-label">Profile</span></a>
             </nav>
-            <footer class="app-footer"><a class="app-footer-link" href="https://t.me/BillionsMone" target="_blank" rel="noopener noreferrer">Developed by Raymondovich</a></footer>
+            <footer class="app-footer"><a class="app-footer-link" href="https://raymondovich.ru" target="_blank" rel="noopener noreferrer">Raymondovich digital ecosystem.</a></footer>
         </section>
     </main>
     <noscript><div class="noscript-message">LifeGame requires JavaScript to run.</div></noscript>

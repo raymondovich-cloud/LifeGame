@@ -1,4 +1,4 @@
-/* source/design/patterns/development.css — Version 1.3 */
+/* source/design/patterns/development.css — Version 1.4 */
 
 .development-workspace{gap:var(--space-4)}
 
@@ -299,4 +299,10 @@
     .development-data-form-actions{
         gap:var(--space-3);
     }
+}
+
+
+/* Shared bar animation: timing belongs to the Design System, not JavaScript. */
+.development-factor__fill{
+    transition:width var(--bar-animation-duration, var(--motion-duration-normal)) cubic-bezier(0.22, 1, 0.36, 1);
 }

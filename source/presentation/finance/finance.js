@@ -1,9 +1,7 @@
-// finance.js — Version 7.29
+// finance.js — Version 7.42
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
-import { renderAssetsStatisticsScreen } from "./assets.statistics.js";
-import { renderSectionAnalyticsScreen } from "./section.analytics.js";
 import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";
 import { createFinanceAnalytics } from "../../application/finance/finance.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
@@ -12,11 +10,25 @@ import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
 import { animateBarWidth } from "../shared/bar.animation.js";
 import { confirmFinancialBurdenClosure } from "./financial-burden-close-confirmation.js";
+import {
+    loadFinanceCarouselPreferences,
+    saveFinanceCarouselPreferences,
+    resolveFinanceCarouselOrder,
+    toggleFinanceCarouselPin
+} from "./finance.carousel.js";
 import { createSpeechRecognition } from "../../infrastructure/voice/speech-recognition.adapter.js";
 import { parseFinanceVoiceCommand, parseFinanceVoiceAction, isCreditProductLabel } from "../../application/voice/finance-command.parser.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
+const financeRenderContexts = new WeakMap();
+
+function resolveFinanceRenderOptions(root, options = {}) {
+    const previous = financeRenderContexts.get(root) || {};
+    const resolved = { ...previous, ...options };
+    financeRenderContexts.set(root, resolved);
+    return resolved;
+}
 
 const FINANCE_DATA_SUBBLOCKS = Object.freeze([
     { id: "assets", number: "01", title: "Активы", description: "Имущество и средства, которыми вы владеете", info: "Активы, которыми вы владеете: недвижимость, автомобиль, наличные, средства на картах, счета и другие активы, которые пользователь хочет учитывать в своей финансовой картине." },
@@ -320,118 +332,594 @@ function formatPercentChange(change) {
     return (value >= 0 ? "+" : "−") + formatAmount(Math.abs(value)) + "%";
 }
 
-function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt) {
+function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt, options = {}) {
     const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
-    const range = financeAnalytics
-        ? financeAnalytics.getFinanceAnalyticsRange("month")
-        : null;
-    const analyticsSnapshot = range
-        ? financeAnalytics.getFinanceAnalytics(range)
-        : null;
-
+    const stabilityResult = financeApplication.getFinancialStabilityIndex();
+    const stabilityDiagnostics = stabilityResult?.diagnostics || {};
+    const assetEntries = financeApplication.listFinanceEntries("assets");
+    const productiveCapital = assetEntries
+        .filter((entry) => Boolean(entry?.incomeEnabled))
+        .reduce((total, entry) => total + Number(entry.amount || 0), 0);
     const section = document.createElement("section");
     section.className = "finance-capital";
-    section.setAttribute("aria-label", "Dynamics");
+    section.setAttribute("aria-label", "Financial overview");
+
+    const carousel = document.createElement("div");
+    carousel.className = "finance-capital-carousel";
+    carousel.dataset.financeViewCarousel = "";
+    carousel.tabIndex = 0;
+    carousel.setAttribute("role", "region");
+    carousel.setAttribute("aria-roledescription", "carousel");
+    carousel.setAttribute(
+        "aria-label",
+        "Финансовый обзор. Проведите влево или вправо для смены экрана."
+    );
 
     const header = document.createElement("div");
     header.className = "finance-block-heading";
 
     const eyebrow = document.createElement("span");
     eyebrow.className = "finance-section-meta";
-    eyebrow.textContent = "DYNAMICS";
-
+    eyebrow.textContent = "FINANCIAL OVERVIEW";
     header.appendChild(eyebrow);
+
+    const viewHeading = document.createElement("div");
+    viewHeading.className = "finance-capital-view-heading";
+
+    const viewLabel = document.createElement("span");
+    viewLabel.className = "finance-capital-view-label";
+
+    const viewTitle = document.createElement("h3");
+    viewTitle.className = "finance-capital-view-title";
+
+    viewHeading.append(viewLabel, viewTitle);
 
     const amount = document.createElement("div");
     amount.className = "finance-capital-value";
     amount.textContent = "0 ₽";
-    animateCountUp(amount, snapshot.capital, {
-        duration: 1800,
-        formatter: (value) => formatAmount(value) + " ₽"
-    });
 
     const caption = document.createElement("p");
     caption.className = "finance-capital-caption";
-    caption.textContent = "Общая стоимость активов";
+
+    const context = document.createElement("p");
+    context.className = "finance-capital-view-context";
+
+    const pinStatus = document.createElement("span");
+    pinStatus.className = "finance-capital-view-pin-status";
+    pinStatus.setAttribute("aria-label", "Экран закреплён");
+    const pinLabel = document.createElement("span");
+    pinLabel.textContent = "ЗАКРЕПЛЕНО";
+    const pinIcon = document.createElement("span");
+    pinIcon.className = "finance-capital-view-pin-icon";
+    pinIcon.setAttribute("aria-hidden", "true");
+    pinIcon.innerHTML =
+        '<svg viewBox="0 0 16 16" focusable="false">' +
+            '<path d="M5.2 1.8h5.6l-.7 3.2 2.1 2.1v1.1H8.9v4.1l-.9 1.7-.9-1.7V8.2H3.8V7.1l2.1-2.1z"></path>' +
+        "</svg>";
+    pinStatus.append(pinLabel, pinIcon);
+    pinStatus.hidden = true;
 
     const chart = document.createElement("div");
     chart.className = "finance-capital-chart";
-    chart.setAttribute("aria-label", "Динамика пяти финансовых показателей за месяц");
+    chart.setAttribute("aria-label", "Показатели текущего финансового состояния");
 
     const chartTitle = document.createElement("span");
     chartTitle.className = "finance-capital-chart-title";
-    chartTitle.textContent = "Изменение за месяц";
 
     const chartBars = document.createElement("div");
     chartBars.className = "finance-capital-chart-bars";
 
-    const chartMetrics = [
-        ["assets", "Активы"],
-        ["actual-earnings", "Заработано"],
-        ["financial-burden", "Нагрузка"],
-        ["mandatory-expenses", "Траты"],
-    ].map(([id, label]) => {
-        const change = analyticsSnapshot?.metrics?.[id]?.change;
-        const value = change?.hasComparison && Number.isFinite(Number(change.percent))
-            ? Number(change.percent)
-            : null;
-
-        return { id, label, value };
-    });
-
-    const comparableValues = chartMetrics
-        .map((metric) => metric.value)
-        .filter((value) => value !== null)
-        .map((value) => Math.abs(value));
-    const maxChange = Math.max(...comparableValues, 1);
-
-    chartMetrics.forEach(({ id, label, value }) => {
-        const row = document.createElement("div");
-        row.className = "finance-capital-chart-column";
-
-        const labelNode = document.createElement("span");
-        labelNode.className = "finance-capital-chart-label";
-        labelNode.textContent = label;
-
-        const metric = document.createElement("strong");
-        metric.className = "finance-capital-chart-value";
-        metric.textContent = value === null
-            ? "—"
-            : formatPercentChange({
-                percent: value,
-                hasComparison: true
-            });
-
-        const chartHeader = document.createElement("div");
-        chartHeader.className = "finance-capital-chart-footer";
-        chartHeader.append(labelNode, metric);
-
-        const barTrack = document.createElement("span");
-        barTrack.className = "finance-capital-chart-track";
-        barTrack.setAttribute("role", "img");
-        barTrack.setAttribute("aria-label", label + ": " + (
-            value === null
-                ? "нет данных для сравнения"
-                : formatPercentChange({ percent: value, hasComparison: true })
-        ));
-
-        const bar = document.createElement("span");
-        bar.className = "finance-capital-chart-bar";
-        if (value !== null) {
-            bar.classList.add(value >= 0 ? "is-positive" : "is-negative");
-            animateBarWidth(bar, Math.max(4, (Math.abs(value) / maxChange) * 100));
-        } else {
-            bar.style.width = "0%";
-        }
-        barTrack.appendChild(bar);
-
-        row.append(chartHeader, barTrack);
-        chartBars.appendChild(row);
-    });
-
     chart.append(chartTitle, chartBars);
-    section.append(header, amount, caption, chart);
+    carousel.append(header, viewHeading, amount, caption, context, pinStatus, chart);
 
+    const pinMenu = document.createElement("div");
+    pinMenu.className = "row-interaction-backdrop";
+    pinMenu.hidden = true;
+    pinMenu.setAttribute("role", "presentation");
+
+    const interactionMenu = document.createElement("div");
+    interactionMenu.className = "row-interaction-menu";
+    interactionMenu.setAttribute("role", "menu");
+    interactionMenu.setAttribute("aria-label", "Действия с финансовым экраном");
+
+    const pinAction = document.createElement("button");
+    pinAction.type = "button";
+    pinAction.className = "row-interaction-menu__item";
+    pinAction.setAttribute("role", "menuitem");
+
+    const closeMenu = document.createElement("button");
+    closeMenu.type = "button";
+    closeMenu.className = "row-interaction-menu__item";
+    closeMenu.textContent = "Закрыть";
+    closeMenu.setAttribute("role", "menuitem");
+
+    interactionMenu.append(pinAction, closeMenu);
+    pinMenu.appendChild(interactionMenu);
+    section.append(carousel);
+    // Match row interactions: keep the fixed overlay outside transformed finance containers.
+    document.body.appendChild(pinMenu);
+
+    const viewDefinitions = Object.freeze({
+        assets: {
+            id: "assets",
+            label: "CAPITAL",
+            title: "Активы",
+            value: snapshot.capital,
+            valueFormat: "currency",
+            caption: "Общая стоимость активов",
+            context: "Ликвидные средства: " + formatAmount(snapshot.liquid) +
+                " ₽ · Неликвидные активы: " + formatAmount(snapshot.illiquid) + " ₽",
+            chartTitle: "Структура активов",
+        },
+        "debt-repayment": {
+            id: "debt-repayment",
+            label: "DEBT REPAYMENT",
+            title: "Погашение долгов",
+            value: snapshot.burden,
+            valueFormat: "currency",
+            caption: "Остаток долговых обязательств",
+            context: "Регулярные платежи: " + formatAmount(snapshot.burdenPayment) + " ₽",
+            chartTitle: "Долги и обязательства по погашению",
+        },
+        "financial-stability": {
+            id: "financial-stability",
+            label: "FINANCIAL STABILITY",
+            title: "Финансовая устойчивость",
+            value: stabilityResult?.dataStatus === "insufficient" ? null : stabilityResult?.value,
+            valueFormat: "score",
+            caption: "Индекс финансовой устойчивости",
+            context: "Ликвидные средства: " + formatAmount(snapshot.liquid) +
+                " ₽ · Резерв: " + formatAmount(snapshot.reserve) + " ₽",
+            chartTitle: "Показатели финансовой устойчивости",
+        }
+    });
+
+    const userId = options.userId ?? null;
+    const recommendation = options.financeViewRecommendation ?? null;
+    let preferences = loadFinanceCarouselPreferences(userId);
+    let order = resolveFinanceCarouselOrder(recommendation, preferences.pinnedPositions);
+    const pinnedDefaultViewId = Object.entries(preferences.pinnedPositions || {})
+        .sort((first, second) => first[1] - second[1])[0]?.[0];
+    let activeViewId = pinnedDefaultViewId && order.includes(pinnedDefaultViewId)
+        ? pinnedDefaultViewId
+        : order[0];
+    let activeViewIndex = Math.max(0, order.indexOf(activeViewId));
+
+    function formatViewValue(value, format = "currency") {
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+            return format === "score" ? "—/100" : "— ₽";
+        }
+        return format === "score"
+            ? formatAmount(value) + "/100"
+            : formatAmount(value) + " ₽";
+    }
+
+    function renderChart(viewId) {
+        const definition = viewDefinitions[viewId];
+        const diagnostics = stabilityDiagnostics;
+        const debtToIncome = diagnostics.debtToIncome;
+        const debtServiceRatio = diagnostics.debtServiceRatio;
+        const totalAssets = Math.max(0, snapshot.capital);
+        const income = Math.max(0, snapshot.income);
+
+        const asAmount = (value) => formatAmount(value) + " ₽";
+        const asPercent = (value) => value !== null && value !== undefined && Number.isFinite(Number(value))
+            ? formatAmount(Number(value) * 100) + "%"
+            : "—";
+        const asMonths = (value) => value !== null && value !== undefined && Number.isFinite(Number(value))
+            ? formatAmount(value) + " мес."
+            : "—";
+        const clampPercent = (value) => Number.isFinite(Number(value))
+            ? Math.max(0, Math.min(100, Number(value)))
+            : 0;
+
+        let metrics = [];
+
+        if (viewId === "assets") {
+            metrics = [
+                {
+                    id: "liquid",
+                    label: "Ликвидные средства",
+                    valueText: asAmount(snapshot.liquid),
+                    fillPercent: totalAssets > 0 ? snapshot.liquid / totalAssets * 100 : 0,
+                    ariaText: "Доля ликвидных средств в активах"
+                },
+                {
+                    id: "illiquid",
+                    label: "Неликвидные активы",
+                    valueText: asAmount(snapshot.illiquid),
+                    fillPercent: totalAssets > 0 ? snapshot.illiquid / totalAssets * 100 : 0,
+                    ariaText: "Доля неликвидных активов"
+                },
+                {
+                    id: "reserve",
+                    label: "Средства в резерве",
+                    valueText: asAmount(snapshot.reserve),
+                    fillPercent: totalAssets > 0 ? snapshot.reserve / totalAssets * 100 : 0,
+                    ariaText: "Доля активов, отмеченных как финансовый резерв"
+                },
+                {
+                    id: "productive",
+                    label: "Продуктивный капитал",
+                    valueText: asAmount(productiveCapital),
+                    fillPercent: totalAssets > 0 ? productiveCapital / totalAssets * 100 : 0,
+                    ariaText: "Доля активов, настроенных на формирование дохода"
+                }
+            ];
+        } else if (viewId === "debt-repayment") {
+            metrics = [
+                {
+                    id: "debt",
+                    label: "Остаток долгов",
+                    valueText: asAmount(snapshot.burden),
+                    fillPercent: totalAssets > 0
+                        ? snapshot.burden / Math.max(totalAssets, snapshot.burden) * 100
+                        : (snapshot.burden > 0 ? 100 : 0),
+                    ariaText: "Общая сумма непогашенных долгов"
+                },
+                {
+                    id: "payment",
+                    label: "Регулярные платежи",
+                    valueText: asAmount(snapshot.burdenPayment),
+                    fillPercent: income > 0
+                        ? snapshot.burdenPayment / income * 100
+                        : (snapshot.burdenPayment > 0 ? 100 : 0),
+                    ariaText: "Регулярные платежи относительно фактического дохода"
+                },
+                {
+                    id: "debt-service",
+                    label: "Доля дохода на платежи",
+                    valueText: asPercent(debtServiceRatio),
+                    fillPercent: clampPercent(Number(debtServiceRatio) * 100),
+                    ariaText: "Доля фактического дохода, направляемая на платежи"
+                },
+                {
+                    id: "debt-to-income",
+                    label: "Долг к месячному доходу",
+                    valueText: debtToIncome !== null && debtToIncome !== undefined && Number.isFinite(Number(debtToIncome))
+                        ? formatAmount(debtToIncome) + "×"
+                        : "—",
+                    fillPercent: debtToIncome !== null && debtToIncome !== undefined && Number.isFinite(Number(debtToIncome))
+                        ? clampPercent(Number(debtToIncome) / 6 * 100)
+                        : 0,
+                    ariaText: "Отношение общего долга к фактическому доходу"
+                }
+            ];
+        } else {
+            const components = stabilityResult?.components || {};
+            const confidence = stabilityResult?.dataConfidence;
+            metrics = [
+                {
+                    id: "index",
+                    label: "Индекс устойчивости",
+                    valueText: stabilityResult?.dataStatus === "insufficient"
+                        ? "Недостаточно данных"
+                        : formatAmount(stabilityResult.value) + "/100",
+                    fillPercent: stabilityResult?.dataStatus === "insufficient"
+                        ? 0
+                        : clampPercent(stabilityResult.value),
+                    ariaText: "Индекс финансовой устойчивости по шкале от нуля до ста"
+                },
+                {
+                    id: "liquidity",
+                    label: "Финансовая выживаемость",
+                    valueText: asMonths(diagnostics.operationalLiquidityMonths),
+                    fillPercent: Number.isFinite(Number(diagnostics.operationalLiquidityMonths))
+                        ? clampPercent(Number(diagnostics.operationalLiquidityMonths) / 9 * 100)
+                        : 0,
+                    ariaText: "Сколько месяцев ликвидные средства покрывают обязательные расходы и платежи"
+                },
+                {
+                    id: "reserve",
+                    label: "Покрытие расходов резервом",
+                    valueText: asMonths(diagnostics.reserveMonths),
+                    fillPercent: Number.isFinite(Number(diagnostics.reserveMonths))
+                        ? clampPercent(Number(diagnostics.reserveMonths) / 9 * 100)
+                        : 0,
+                    ariaText: "Сколько месяцев резерв покрывает обязательные расходы и платежи"
+                },
+                {
+                    id: "coverage",
+                    label: "Покрытие обязательств доходом",
+                    valueText: Number.isFinite(Number(diagnostics.cashFlowCoverage))
+                        ? formatAmount(diagnostics.cashFlowCoverage) + "×"
+                        : "—",
+                    fillPercent: Number.isFinite(Number(diagnostics.cashFlowCoverage))
+                        ? clampPercent(Number(diagnostics.cashFlowCoverage) / 3 * 100)
+                        : 0,
+                    ariaText: "Отношение фактического дохода к обязательным расходам и платежам"
+                },
+                {
+                    id: "trajectory",
+                    label: "Финансовая динамика",
+                    valueText: components.financialTrajectory === null || components.financialTrajectory === undefined
+                        ? "—"
+                        : formatAmount(components.financialTrajectory) + "/100",
+                    fillPercent: clampPercent(components.financialTrajectory),
+                    ariaText: "Оценка финансовой динамики в составе индекса"
+                },
+                ...(Number(confidence?.historyObservations) >= 3 &&
+                    diagnostics.trajectory?.incomeSlope !== null &&
+                    diagnostics.trajectory?.incomeSlope !== undefined &&
+                    Number.isFinite(Number(diagnostics.trajectory.incomeSlope))
+                    ? [{
+                        id: "income-trend",
+                        label: "Тренд дохода",
+                        valueText: diagnostics.trajectory.incomeSlope > 0
+                            ? "Растёт"
+                            : diagnostics.trajectory.incomeSlope < 0
+                                ? "Снижается"
+                                : "Без выраженного изменения",
+                        fillPercent: diagnostics.trajectory.incomeSlope > 0 ? 100
+                            : diagnostics.trajectory.incomeSlope < 0 ? 0 : 50,
+                        ariaText: "Направление изменения дохода по доступной истории"
+                    }]
+                    : [])
+            ];
+        }
+
+        chartTitle.textContent = definition.chartTitle;
+        chartBars.replaceChildren();
+
+        metrics.forEach(({ id, label, valueText, fillPercent, ariaText }, index) => {
+            const row = document.createElement("div");
+            row.className = "finance-capital-chart-column";
+
+            const labelNode = document.createElement("span");
+            labelNode.className = "finance-capital-chart-label";
+            labelNode.textContent = label;
+
+            const metric = document.createElement("strong");
+            metric.className = "finance-capital-chart-value";
+            metric.textContent = valueText;
+
+            const chartHeader = document.createElement("div");
+            chartHeader.className = "finance-capital-chart-footer";
+            chartHeader.append(labelNode, metric);
+
+            const barTrack = document.createElement("span");
+            barTrack.className = "finance-capital-chart-track";
+            barTrack.setAttribute("role", "img");
+            barTrack.setAttribute("aria-label", label + ": " + ariaText + ". " + valueText);
+
+            const bar = document.createElement("span");
+            bar.className = "finance-capital-chart-bar";
+            bar.classList.add(fillPercent > 0 ? "is-positive" : "is-neutral");
+            animateBarWidth(bar, clampPercent(fillPercent));
+
+            barTrack.appendChild(bar);
+            row.append(chartHeader, barTrack);
+            chartBars.appendChild(row);
+        });
+    }
+
+    function isPinned(viewId) {
+        return Object.prototype.hasOwnProperty.call(preferences.pinnedPositions, viewId);
+    }
+
+    function renderActiveView(animateValue = false) {
+        const definition = viewDefinitions[activeViewId];
+        if (!definition) return;
+
+        viewLabel.textContent = definition.label;
+        viewTitle.textContent = definition.title;
+        caption.textContent = definition.caption;
+        context.textContent = definition.context;
+        pinStatus.hidden = !isPinned(activeViewId);
+        carousel.setAttribute(
+            "aria-label",
+            definition.title + ". Проведите влево или вправо для смены финансового экрана."
+        );
+
+        const targetValue = Number(definition.value);
+        if (!Number.isFinite(targetValue)) {
+            amount.textContent = definition.valueFormat === "score" ? "—/100" : "— ₽";
+        } else if (animateValue) {
+            amount.textContent = definition.valueFormat === "score" ? "0/100" : "0 ₽";
+            animateCountUp(amount, targetValue, {
+                duration: 1800,
+                formatter: (value) => definition.valueFormat === "score"
+                    ? formatAmount(value) + "/100"
+                    : formatAmount(value) + " ₽"
+            });
+        } else {
+            amount.textContent = formatViewValue(targetValue, definition.valueFormat);
+        }
+
+        renderChart(activeViewId);
+    }
+
+    let pinMenuHideTimer = null;
+
+    function hidePinMenu() {
+        pinMenu.classList.remove("is-visible");
+        if (pinMenuHideTimer !== null) window.clearTimeout(pinMenuHideTimer);
+        pinMenuHideTimer = window.setTimeout(() => {
+            if (!pinMenu.classList.contains("is-visible")) pinMenu.hidden = true;
+            pinMenuHideTimer = null;
+        }, 300);
+    }
+
+    function showPinMenu() {
+        if (pinMenuHideTimer !== null) {
+            window.clearTimeout(pinMenuHideTimer);
+            pinMenuHideTimer = null;
+        }
+        pinAction.textContent = isPinned(activeViewId) ? "Открепить" : "Закрепить";
+        pinMenu.hidden = false;
+        window.requestAnimationFrame(() => pinMenu.classList.add("is-visible"));
+    }
+
+    function changeView(direction) {
+        hidePinMenu();
+        activeViewIndex = Math.max(
+            0,
+            Math.min(order.length - 1, activeViewIndex + direction)
+        );
+        activeViewId = order[activeViewIndex];
+        renderActiveView(false);
+    }
+
+    pinAction.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        preferences = toggleFinanceCarouselPin(
+            preferences,
+            activeViewId
+        );
+        saveFinanceCarouselPreferences(userId, preferences);
+        order = resolveFinanceCarouselOrder(recommendation, preferences.pinnedPositions);
+        activeViewIndex = order.indexOf(activeViewId);
+        if (activeViewIndex < 0) {
+            activeViewIndex = 0;
+            activeViewId = order[0];
+        }
+        renderActiveView(false);
+        hidePinMenu();
+        carousel.focus({ preventScroll: true });
+    });
+
+    closeMenu.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        hidePinMenu();
+        carousel.focus({ preventScroll: true });
+    });
+
+    pinMenu.addEventListener("click", (event) => {
+        if (event.target === pinMenu) hidePinMenu();
+    });
+
+    const stopMenuClick = (event) => event.stopPropagation();
+    pinMenu.querySelector(".row-interaction-menu")?.addEventListener("click", stopMenuClick);
+
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let gestureMode = "idle";
+    let longPressTimer = null;
+    let longPressTriggered = false;
+    let gestureStartedAt = 0;
+    let latestX = 0;
+    let latestY = 0;
+
+    function clearLongPressTimer() {
+        if (longPressTimer !== null) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    }
+
+    function beginGesture(x, y) {
+        if (!pinMenu.hidden) hidePinMenu();
+        pointerStartX = latestX = x;
+        pointerStartY = latestY = y;
+        gestureStartedAt = performance.now();
+        gestureMode = "pending";
+        longPressTriggered = false;
+        clearLongPressTimer();
+        longPressTimer = setTimeout(() => {
+            if (gestureMode !== "pending") return;
+            gestureMode = "longpress";
+            longPressTriggered = true;
+            showPinMenu();
+        }, 550);
+    }
+
+    function moveGesture(x, y, event) {
+        if (gestureMode === "idle" || gestureMode === "longpress") return;
+        latestX = x;
+        latestY = y;
+        const dx = x - pointerStartX;
+        const dy = y - pointerStartY;
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) clearLongPressTimer();
+        if (gestureMode === "pending" && Math.abs(dx) >= 10 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+            gestureMode = "horizontal";
+        } else if (gestureMode === "pending" && Math.abs(dy) >= 10 && Math.abs(dy) > Math.abs(dx)) {
+            gestureMode = "vertical";
+        }
+        if (gestureMode === "horizontal" && event?.cancelable) event.preventDefault();
+    }
+
+    function finishGesture(x, y, allowSwipe) {
+        clearLongPressTimer();
+        const dx = x - pointerStartX;
+        const dy = y - pointerStartY;
+        const elapsed = Math.max(1, performance.now() - gestureStartedAt);
+        const distanceLimit = Math.max(26, Math.min(34, carousel.clientWidth * 0.075));
+        const fastFlick = Math.abs(dx) >= 18 && Math.abs(dx) / elapsed >= 0.45;
+        const horizontal = Math.abs(dx) > Math.abs(dy) * 1.15;
+        if (allowSwipe && gestureMode === "horizontal" && !longPressTriggered && horizontal &&
+            (Math.abs(dx) >= distanceLimit || fastFlick)) {
+            changeView(dx < 0 ? 1 : -1);
+        }
+        gestureMode = "idle";
+        longPressTriggered = false;
+    }
+
+    carousel.addEventListener("touchstart", (event) => {
+        if (event.touches.length !== 1) {
+            clearLongPressTimer();
+            gestureMode = "idle";
+            return;
+        }
+        const touch = event.touches[0];
+        beginGesture(touch.clientX, touch.clientY);
+    }, { passive: true });
+
+    carousel.addEventListener("touchmove", (event) => {
+        if (event.touches.length !== 1) {
+            clearLongPressTimer();
+            gestureMode = "idle";
+            return;
+        }
+        const touch = event.touches[0];
+        moveGesture(touch.clientX, touch.clientY, event);
+    }, { passive: false });
+
+    carousel.addEventListener("touchend", (event) => {
+        const touch = event.changedTouches[0];
+        if (touch) finishGesture(touch.clientX, touch.clientY, true);
+        else finishGesture(latestX, latestY, false);
+    }, { passive: true });
+
+    carousel.addEventListener("touchcancel", () => finishGesture(latestX, latestY, false), { passive: true });
+
+    carousel.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "touch") return;
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        beginGesture(event.clientX, event.clientY);
+    });
+    carousel.addEventListener("pointermove", (event) => {
+        if (event.pointerType === "touch") return;
+        moveGesture(event.clientX, event.clientY, event);
+    }, { passive: false });
+    carousel.addEventListener("pointerup", (event) => {
+        if (event.pointerType === "touch") return;
+        finishGesture(event.clientX, event.clientY, true);
+    });
+    carousel.addEventListener("pointercancel", (event) => {
+        if (event.pointerType === "touch") return;
+        finishGesture(latestX, latestY, false);
+    });
+
+    carousel.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        showPinMenu();
+    });
+
+    carousel.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            changeView(-1);
+        } else if (event.key === "ArrowRight") {
+            event.preventDefault();
+            changeView(1);
+        } else if (event.key === "Escape") {
+            hidePinMenu();
+        }
+    });
+
+    renderActiveView(true);
     return section;
 }
 
@@ -1040,45 +1528,57 @@ function createAssetsSummary(root, onWriteAttempt = null, financeApplication = n
             return;
         }
 
-        const renderAnalytics = () => renderAssetsStatisticsScreen(
-            root,
-            () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
-            assetsAnalytics,
-            financeApplication,
-            onWriteAttempt,
-            {
-                isPinned: (entryId) => isEntryPinned("assets", entryId),
-                onChanged: renderAnalytics,
-                onPin: (entryId) => {
-                    toggleEntryPinned("assets", entryId);
-                },
-                onDelete: (entryId) => {
-                    const remove = async () => {
-                        const result = await financeApplication.removeFinanceEntry("assets", entryId);
-                        if (!result) return;
+        const renderAnalytics = async (isInitialOpen = false) => {
+            try {
+                const { renderAssetsStatisticsScreen } = await import("./assets.statistics.js");
+                if (isInitialOpen && !statisticsButton.isConnected) return;
 
-                        pinnedEntries.delete(getEntryKey("assets", entryId));
-                        renderAnalytics();
-                    };
+                renderAssetsStatisticsScreen(
+                    root,
+                    () => renderFinanceData(root, "assets", onWriteAttempt, financeApplication),
+                    assetsAnalytics,
+                    financeApplication,
+                    onWriteAttempt,
+                    {
+                        isPinned: (entryId) => isEntryPinned("assets", entryId),
+                        onChanged: () => renderAnalytics(),
+                        onPin: (entryId) => {
+                            toggleEntryPinned("assets", entryId);
+                        },
+                        onDelete: (entryId) => {
+                            const remove = async () => {
+                                const result = await financeApplication.removeFinanceEntry("assets", entryId);
+                                if (!result) return;
 
-                    if (typeof onWriteAttempt === "function") {
-                        onWriteAttempt(remove);
-                    } else {
-                        remove();
+                                pinnedEntries.delete(getEntryKey("assets", entryId));
+                                renderAnalytics();
+                            };
+
+                            if (typeof onWriteAttempt === "function") {
+                                onWriteAttempt(remove);
+                            } else {
+                                remove();
+                            }
+                        },
+                        onPinLimit: (entryId) => {
+                            if (isEntryPinned("assets", entryId)) return false;
+                            if (countPinnedEntries("assets", financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                                showSubscriptionLimitNotice();
+                                return true;
+                            }
+                            return false;
+                        }
                     }
-                },
-                onPinLimit: (entryId) => {
-                    if (isEntryPinned("assets", entryId)) return false;
-                    if (countPinnedEntries("assets", financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
-                        showSubscriptionLimitNotice();
-                        return true;
-                    }
-                    return false;
-                }
+                );
+            } catch (error) {
+                trace("finance", "analytics.lazy-load.error", {
+                    module: "assets.statistics",
+                    error: error?.message || "unknown"
+                });
             }
-        );
+        };
 
-        renderAnalytics();
+        renderAnalytics(true);
     });
 
     heading.append(title, statisticsButton);
@@ -1186,42 +1686,54 @@ function createSectionSummary(root, subblock, onWriteAttempt, financeApplication
     statisticsButton.addEventListener("click", () => {
         if (!financeAnalytics) return;
 
-        const renderAnalytics = () => renderSectionAnalyticsScreen(
-            root,
-            () => renderFinanceData(root, subblock.id, onWriteAttempt, financeApplication),
-            subblock,
-            financeAnalytics,
-            financeApplication,
-            onWriteAttempt,
-            {
-                isPinned: (entryId) => isEntryPinned(subblock.id, entryId),
-                onChanged: renderAnalytics,
-                onPin: (entryId) => toggleEntryPinned(subblock.id, entryId),
-                onDelete: (entryId) => {
-                    const remove = async () => {
-                        const result = await financeApplication.removeFinanceEntry(subblock.id, entryId);
-                        if (!result) return;
-                        pinnedEntries.delete(getEntryKey(subblock.id, entryId));
-                        renderAnalytics();
-                    };
+        const renderAnalytics = async (isInitialOpen = false) => {
+            try {
+                const { renderSectionAnalyticsScreen } = await import("./section.analytics.js");
+                if (isInitialOpen && !statisticsButton.isConnected) return;
 
-                    if (typeof onWriteAttempt === "function") {
-                        onWriteAttempt(remove);
-                    } else {
-                        remove();
+                renderSectionAnalyticsScreen(
+                    root,
+                    () => renderFinanceData(root, subblock.id, onWriteAttempt, financeApplication),
+                    subblock,
+                    financeAnalytics,
+                    financeApplication,
+                    onWriteAttempt,
+                    {
+                        isPinned: (entryId) => isEntryPinned(subblock.id, entryId),
+                        onChanged: () => renderAnalytics(),
+                        onPin: (entryId) => toggleEntryPinned(subblock.id, entryId),
+                        onDelete: (entryId) => {
+                            const remove = async () => {
+                                const result = await financeApplication.removeFinanceEntry(subblock.id, entryId);
+                                if (!result) return;
+                                pinnedEntries.delete(getEntryKey(subblock.id, entryId));
+                                renderAnalytics();
+                            };
+
+                            if (typeof onWriteAttempt === "function") {
+                                onWriteAttempt(remove);
+                            } else {
+                                remove();
+                            }
+                        },
+                        onPinLimit: () => {
+                            if (countPinnedEntries(subblock.id, financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
+                                showSubscriptionLimitNotice();
+                                return true;
+                            }
+                            return false;
+                        }
                     }
-                },
-                onPinLimit: () => {
-                    if (countPinnedEntries(subblock.id, financeApplication) >= MAX_PINNED_ENTRIES_PER_BLOCK) {
-                        showSubscriptionLimitNotice();
-                        return true;
-                    }
-                    return false;
-                }
+                );
+            } catch (error) {
+                trace("finance", "analytics.lazy-load.error", {
+                    module: "section.analytics",
+                    error: error?.message || "unknown"
+                });
             }
-        );
+        };
 
-        renderAnalytics();
+        renderAnalytics(true);
     });
 
     heading.append(title, statisticsButton);
@@ -1303,7 +1815,30 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
 
     button.addEventListener("click", () => {
         const nextOpen = button.getAttribute("aria-expanded") !== "true";
-        renderFinanceData(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
+        const accordion = button.closest(".finance-data-accordion");
+
+        if (!accordion) {
+            renderFinanceData(root, nextOpen ? subblock.id : null, onWriteAttempt, financeApplication);
+            return;
+        }
+
+        accordion.querySelectorAll(".finance-subblock").forEach((item) => {
+            const isOpen = item === wrapper && nextOpen;
+            item.classList.toggle("is-open", isOpen);
+
+            const trigger = item.querySelector(".accordion-trigger");
+            trigger?.setAttribute("aria-expanded", String(isOpen));
+
+            const panel = item.querySelector(".accordion-content");
+            panel?.classList.toggle("is-open", isOpen);
+        });
+
+        const description = root.querySelector(".finance-data-screen .finance-workspace-header p");
+        if (description) {
+            description.textContent = nextOpen
+                ? "Управление выбранной системой."
+                : "Фиксируйте капитал, доходы, обязательства и резерв. На их основе система показывает финансовую устойчивость, её динамику и точки для улучшения.";
+        }
     });
 
     return wrapper;
@@ -1626,10 +2161,12 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
 }
 
 function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null, options = {}) {
-    const showPresentationHeader = options.showPresentationHeader !== false;
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
+
+    options = resolveFinanceRenderOptions(root, options);
+    const showPresentationHeader = options.showPresentationHeader !== false;
 
     root.replaceChildren();
 
@@ -1660,7 +2197,7 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     back.className = "finance-text-action";
     back.textContent = "← Finance";
     back.addEventListener("click", () => {
-        renderFinance(root, onWriteAttempt, financeApplication);
+        renderFinance(root, onWriteAttempt, financeApplication, options);
     });
 
     intro.append(title, description);
@@ -1700,11 +2237,12 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
 }
 
 function renderFinance(root, onWriteAttempt = null, financeApplication = null, options = {}) {
-    const showPresentationHeader = options.showPresentationHeader !== false;
-
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
+
+    options = resolveFinanceRenderOptions(root, options);
+    const showPresentationHeader = options.showPresentationHeader !== false;
 
     root.replaceChildren();
 
@@ -1743,7 +2281,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null, o
     page.append(
         ...(showPresentationHeader ? [intro] : []),
         createHealthBlock(financeApplication),
-        createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt)
+        createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt, options)
     );
 
     const data = document.createElement("section");
@@ -1765,7 +2303,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null, o
     action.className = "finance-text-action";
     action.textContent = "Открыть →";
     action.addEventListener("click", () => {
-        renderFinanceData(root, null, onWriteAttempt, financeApplication);
+        renderFinanceData(root, null, onWriteAttempt, financeApplication, options);
     });
 
     data.append(copy, action);

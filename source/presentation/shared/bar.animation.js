@@ -1,4 +1,4 @@
-// bar.animation.js — Version 1.0
+// bar.animation.js — Version 1.1
 // Responsibility: animate presentation-only horizontal bar widths consistently across modules.
 
 function animateBarWidth(element, targetPercent, options = {}) {
@@ -12,14 +12,13 @@ function animateBarWidth(element, targetPercent, options = {}) {
         typeof window.matchMedia === "function" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    element.style.setProperty("--bar-animation-duration", reduceMotion ? "0ms" : duration + "ms");
     element.style.width = "0%";
 
     if (reduceMotion || target === 0 || typeof requestAnimationFrame !== "function") {
         element.style.width = target + "%";
         return;
     }
-
-    element.style.transition = "width " + duration + "ms cubic-bezier(0.22, 1, 0.36, 1)";
 
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
