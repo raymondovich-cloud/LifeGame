@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.10
+// platforms/web/web.runtime.js — Version 5.11
 
 import {
     trace,
@@ -330,7 +330,7 @@ export async function startWeb() {
                 moduleContent,
                 publicMode ? (action) => openRegistrationModal(action) : null,
                 financeApplication,
-                { showPresentationHeader: publicMode }
+                { showPresentationHeader: publicMode, userId: publicMode ? null : activeUserId }
             );
             return;
         }

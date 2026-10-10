@@ -1,4 +1,4 @@
-// finance.js — Version 7.29
+// finance.js — Version 7.30
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -12,11 +12,25 @@ import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
 import { animateBarWidth } from "../shared/bar.animation.js";
 import { confirmFinancialBurdenClosure } from "./financial-burden-close-confirmation.js";
+import {
+    loadFinanceCarouselPreferences,
+    saveFinanceCarouselPreferences,
+    resolveFinanceCarouselOrder,
+    toggleFinanceCarouselPin
+} from "./finance.carousel.js";
 import { createSpeechRecognition } from "../../infrastructure/voice/speech-recognition.adapter.js";
 import { parseFinanceVoiceCommand, parseFinanceVoiceAction, isCreditProductLabel } from "../../application/voice/finance-command.parser.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
+const financeRenderContexts = new WeakMap();
+
+function resolveFinanceRenderOptions(root, options = {}) {
+    const previous = financeRenderContexts.get(root) || {};
+    const resolved = { ...previous, ...options };
+    financeRenderContexts.set(root, resolved);
+    return resolved;
+}
 
 const FINANCE_DATA_SUBBLOCKS = Object.freeze([
     { id: "assets", number: "01", title: "Активы", description: "Имущество и средства, которыми вы владеете", info: "Активы, которыми вы владеете: недвижимость, автомобиль, наличные, средства на картах, счета и другие активы, которые пользователь хочет учитывать в своей финансовой картине." },
@@ -320,7 +334,7 @@ function formatPercentChange(change) {
     return (value >= 0 ? "+" : "−") + formatAmount(Math.abs(value)) + "%";
 }
 
-function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt) {
+function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt, options = {}) {
     const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
     const range = financeAnalytics
         ? financeAnalytics.getFinanceAnalyticsRange("month")
@@ -331,107 +345,384 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     const section = document.createElement("section");
     section.className = "finance-capital";
-    section.setAttribute("aria-label", "Dynamics");
+    section.setAttribute("aria-label", "Financial overview");
+
+    const carousel = document.createElement("div");
+    carousel.className = "finance-capital-carousel";
+    carousel.dataset.financeViewCarousel = "";
+    carousel.tabIndex = 0;
+    carousel.setAttribute("role", "region");
+    carousel.setAttribute("aria-roledescription", "carousel");
+    carousel.setAttribute(
+        "aria-label",
+        "Финансовый обзор. Проведите влево или вправо для смены экрана."
+    );
 
     const header = document.createElement("div");
     header.className = "finance-block-heading";
 
     const eyebrow = document.createElement("span");
     eyebrow.className = "finance-section-meta";
-    eyebrow.textContent = "DYNAMICS";
-
+    eyebrow.textContent = "FINANCIAL OVERVIEW";
     header.appendChild(eyebrow);
+
+    const viewHeading = document.createElement("div");
+    viewHeading.className = "finance-capital-view-heading";
+
+    const viewLabel = document.createElement("span");
+    viewLabel.className = "finance-capital-view-label";
+
+    const viewTitle = document.createElement("h3");
+    viewTitle.className = "finance-capital-view-title";
+
+    viewHeading.append(viewLabel, viewTitle);
 
     const amount = document.createElement("div");
     amount.className = "finance-capital-value";
     amount.textContent = "0 ₽";
-    animateCountUp(amount, snapshot.capital, {
-        duration: 1800,
-        formatter: (value) => formatAmount(value) + " ₽"
-    });
 
     const caption = document.createElement("p");
     caption.className = "finance-capital-caption";
-    caption.textContent = "Общая стоимость активов";
+
+    const context = document.createElement("p");
+    context.className = "finance-capital-view-context";
+
+    const pinStatus = document.createElement("span");
+    pinStatus.className = "finance-capital-view-pin-status";
+    pinStatus.textContent = "ЗАКРЕПЛЕНО";
+    pinStatus.hidden = true;
 
     const chart = document.createElement("div");
     chart.className = "finance-capital-chart";
-    chart.setAttribute("aria-label", "Динамика пяти финансовых показателей за месяц");
+    chart.setAttribute("aria-label", "Динамика финансовых показателей за месяц");
 
     const chartTitle = document.createElement("span");
     chartTitle.className = "finance-capital-chart-title";
-    chartTitle.textContent = "Изменение за месяц";
 
     const chartBars = document.createElement("div");
     chartBars.className = "finance-capital-chart-bars";
 
-    const chartMetrics = [
-        ["assets", "Активы"],
-        ["actual-earnings", "Заработано"],
-        ["financial-burden", "Нагрузка"],
-        ["mandatory-expenses", "Траты"],
-    ].map(([id, label]) => {
-        const change = analyticsSnapshot?.metrics?.[id]?.change;
-        const value = change?.hasComparison && Number.isFinite(Number(change.percent))
-            ? Number(change.percent)
-            : null;
-
-        return { id, label, value };
-    });
-
-    const comparableValues = chartMetrics
-        .map((metric) => metric.value)
-        .filter((value) => value !== null)
-        .map((value) => Math.abs(value));
-    const maxChange = Math.max(...comparableValues, 1);
-
-    chartMetrics.forEach(({ id, label, value }) => {
-        const row = document.createElement("div");
-        row.className = "finance-capital-chart-column";
-
-        const labelNode = document.createElement("span");
-        labelNode.className = "finance-capital-chart-label";
-        labelNode.textContent = label;
-
-        const metric = document.createElement("strong");
-        metric.className = "finance-capital-chart-value";
-        metric.textContent = value === null
-            ? "—"
-            : formatPercentChange({
-                percent: value,
-                hasComparison: true
-            });
-
-        const chartHeader = document.createElement("div");
-        chartHeader.className = "finance-capital-chart-footer";
-        chartHeader.append(labelNode, metric);
-
-        const barTrack = document.createElement("span");
-        barTrack.className = "finance-capital-chart-track";
-        barTrack.setAttribute("role", "img");
-        barTrack.setAttribute("aria-label", label + ": " + (
-            value === null
-                ? "нет данных для сравнения"
-                : formatPercentChange({ percent: value, hasComparison: true })
-        ));
-
-        const bar = document.createElement("span");
-        bar.className = "finance-capital-chart-bar";
-        if (value !== null) {
-            bar.classList.add(value >= 0 ? "is-positive" : "is-negative");
-            animateBarWidth(bar, Math.max(4, (Math.abs(value) / maxChange) * 100));
-        } else {
-            bar.style.width = "0%";
-        }
-        barTrack.appendChild(bar);
-
-        row.append(chartHeader, barTrack);
-        chartBars.appendChild(row);
-    });
-
     chart.append(chartTitle, chartBars);
-    section.append(header, amount, caption, chart);
+    carousel.append(header, viewHeading, amount, caption, context, pinStatus, chart);
 
+    const pinMenu = document.createElement("div");
+    pinMenu.className = "finance-view-context-menu";
+    pinMenu.hidden = true;
+    pinMenu.setAttribute("role", "group");
+    pinMenu.setAttribute("aria-label", "Настройки финансового экрана");
+
+    const pinAction = document.createElement("button");
+    pinAction.type = "button";
+    pinAction.className = "finance-view-context-action";
+
+    const closeMenu = document.createElement("button");
+    closeMenu.type = "button";
+    closeMenu.className = "finance-view-context-close";
+    closeMenu.textContent = "Закрыть";
+    closeMenu.setAttribute("aria-label", "Закрыть меню закрепления");
+
+    pinMenu.append(pinAction, closeMenu);
+    section.append(carousel, pinMenu);
+
+    const viewDefinitions = Object.freeze({
+        assets: {
+            id: "assets",
+            label: "CAPITAL",
+            title: "Активы",
+            value: snapshot.capital,
+            caption: "Общая стоимость активов",
+            context: "Ликвидные средства: " + formatAmount(snapshot.liquid) +
+                " ₽ · Неликвидные активы: " + formatAmount(snapshot.illiquid) + " ₽",
+            chartTitle: "Изменение за месяц",
+            chartOrder: ["assets", "actual-earnings", "financial-burden", "mandatory-expenses"]
+        },
+        "debt-repayment": {
+            id: "debt-repayment",
+            label: "DEBT REPAYMENT",
+            title: "Погашение долгов",
+            value: snapshot.burden,
+            caption: "Остаток долговых обязательств",
+            context: "Платежи по долгам: " + formatAmount(snapshot.burdenPayment) + " ₽",
+            chartTitle: "Долговая нагрузка и связанные показатели",
+            chartOrder: ["financial-burden", "mandatory-expenses", "actual-earnings", "assets"]
+        },
+        "financial-stability": {
+            id: "financial-stability",
+            label: "FINANCIAL STABILITY",
+            title: "Финансовая устойчивость",
+            value: snapshot.reserve,
+            caption: "Финансовый резерв",
+            context: "Ликвидные средства: " + formatAmount(snapshot.liquid) +
+                " ₽ · Обязательные траты: " + formatAmount(snapshot.expenses) + " ₽",
+            chartTitle: "Показатели финансовой устойчивости",
+            chartOrder: ["mandatory-expenses", "financial-burden", "assets", "actual-earnings"]
+        }
+    });
+
+    const userId = options.userId ?? null;
+    const recommendation = options.financeViewRecommendation ?? null;
+    let preferences = loadFinanceCarouselPreferences(userId);
+    let order = resolveFinanceCarouselOrder(recommendation, preferences.pinnedPositions);
+    let activeViewIndex = 0;
+    let activeViewId = order[activeViewIndex];
+
+    const metricLabels = Object.freeze({
+        assets: "Активы",
+        "actual-earnings": "Заработано",
+        "financial-burden": "Нагрузка",
+        "mandatory-expenses": "Траты"
+    });
+
+    function renderChart(viewId) {
+        const definition = viewDefinitions[viewId];
+        const chartMetrics = definition.chartOrder.map((id) => {
+            const change = analyticsSnapshot?.metrics?.[id]?.change;
+            const value = change?.hasComparison && Number.isFinite(Number(change.percent))
+                ? Number(change.percent)
+                : null;
+            return { id, label: metricLabels[id], value };
+        });
+
+        const comparableValues = chartMetrics
+            .map((metric) => metric.value)
+            .filter((value) => value !== null)
+            .map((value) => Math.abs(value));
+        const maxChange = Math.max(...comparableValues, 1);
+
+        chartTitle.textContent = definition.chartTitle;
+        chartBars.replaceChildren();
+
+        chartMetrics.forEach(({ id, label, value }, index) => {
+            const row = document.createElement("div");
+            row.className = "finance-capital-chart-column";
+            if (index === 0) row.classList.add("is-focus");
+
+            const labelNode = document.createElement("span");
+            labelNode.className = "finance-capital-chart-label";
+            labelNode.textContent = label;
+
+            const metric = document.createElement("strong");
+            metric.className = "finance-capital-chart-value";
+            metric.textContent = value === null
+                ? "—"
+                : formatPercentChange({
+                    percent: value,
+                    hasComparison: true
+                });
+
+            const chartHeader = document.createElement("div");
+            chartHeader.className = "finance-capital-chart-footer";
+            chartHeader.append(labelNode, metric);
+
+            const barTrack = document.createElement("span");
+            barTrack.className = "finance-capital-chart-track";
+            barTrack.setAttribute("role", "img");
+            barTrack.setAttribute("aria-label", label + ": " + (
+                value === null
+                    ? "нет данных для сравнения"
+                    : formatPercentChange({ percent: value, hasComparison: true })
+            ));
+
+            const bar = document.createElement("span");
+            bar.className = "finance-capital-chart-bar";
+            if (value !== null) {
+                bar.classList.add(value >= 0 ? "is-positive" : "is-negative");
+                animateBarWidth(bar, Math.max(4, (Math.abs(value) / maxChange) * 100));
+            } else {
+                bar.style.width = "0%";
+            }
+
+            barTrack.appendChild(bar);
+            row.append(chartHeader, barTrack);
+            chartBars.appendChild(row);
+        });
+    }
+
+    function isPinned(viewId) {
+        return Object.prototype.hasOwnProperty.call(preferences.pinnedPositions, viewId);
+    }
+
+    function renderActiveView(animateValue = false) {
+        const definition = viewDefinitions[activeViewId];
+        if (!definition) return;
+
+        viewLabel.textContent = definition.label;
+        viewTitle.textContent = definition.title;
+        caption.textContent = definition.caption;
+        context.textContent = definition.context;
+        pinStatus.hidden = !isPinned(activeViewId);
+        carousel.setAttribute(
+            "aria-label",
+            definition.title + ". Проведите влево или вправо для смены финансового экрана."
+        );
+
+        const targetValue = Number(definition.value) || 0;
+        if (animateValue) {
+            amount.textContent = "0 ₽";
+            animateCountUp(amount, targetValue, {
+                duration: 1800,
+                formatter: (value) => formatAmount(value) + " ₽"
+            });
+        } else {
+            amount.textContent = formatAmount(targetValue) + " ₽";
+        }
+
+        renderChart(activeViewId);
+    }
+
+    function hidePinMenu() {
+        pinMenu.hidden = true;
+    }
+
+    function showPinMenu() {
+        pinAction.textContent = isPinned(activeViewId)
+            ? "Открепить экран"
+            : "Закрепить экран";
+        pinMenu.hidden = false;
+    }
+
+    function changeView(direction) {
+        hidePinMenu();
+        activeViewIndex = Math.max(
+            0,
+            Math.min(order.length - 1, activeViewIndex + direction)
+        );
+        activeViewId = order[activeViewIndex];
+        renderActiveView(false);
+    }
+
+    pinAction.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        preferences = toggleFinanceCarouselPin(
+            preferences,
+            activeViewId,
+            activeViewIndex
+        );
+        saveFinanceCarouselPreferences(userId, preferences);
+        order = resolveFinanceCarouselOrder(recommendation, preferences.pinnedPositions);
+        activeViewIndex = order.indexOf(activeViewId);
+        if (activeViewIndex < 0) {
+            activeViewIndex = 0;
+            activeViewId = order[0];
+        }
+        renderActiveView(false);
+        hidePinMenu();
+        carousel.focus({ preventScroll: true });
+    });
+
+    closeMenu.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        hidePinMenu();
+        carousel.focus({ preventScroll: true });
+    });
+
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let gestureMode = "idle";
+    let longPressTimer = null;
+    let longPressTriggered = false;
+
+    function clearLongPressTimer() {
+        if (longPressTimer !== null) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    }
+
+    carousel.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+
+        if (!pinMenu.hidden) hidePinMenu();
+
+        pointerStartX = event.clientX;
+        pointerStartY = event.clientY;
+        gestureMode = "pending";
+        longPressTriggered = false;
+        clearLongPressTimer();
+
+        longPressTimer = setTimeout(() => {
+            if (gestureMode !== "pending") return;
+            gestureMode = "longpress";
+            longPressTriggered = true;
+            showPinMenu();
+        }, 550);
+    });
+
+    carousel.addEventListener("pointermove", (event) => {
+        if (gestureMode === "idle" || gestureMode === "longpress") return;
+
+        const deltaX = event.clientX - pointerStartX;
+        const deltaY = event.clientY - pointerStartY;
+
+        if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
+            clearLongPressTimer();
+        }
+
+        if (
+            gestureMode === "pending" &&
+            Math.abs(deltaX) > 10 &&
+            Math.abs(deltaX) > Math.abs(deltaY)
+        ) {
+            gestureMode = "horizontal";
+            try {
+                carousel.setPointerCapture(event.pointerId);
+            } catch {
+                // Pointer capture is optional; the gesture remains scoped to the carousel.
+            }
+        } else if (
+            gestureMode === "pending" &&
+            Math.abs(deltaY) > 10
+        ) {
+            gestureMode = "vertical";
+        }
+
+        if (gestureMode === "horizontal" && event.cancelable) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+
+    function finishPointerGesture(event, allowSwipe) {
+        clearLongPressTimer();
+
+        if (allowSwipe && gestureMode === "horizontal" && !longPressTriggered) {
+            const deltaX = event.clientX - pointerStartX;
+            if (Math.abs(deltaX) >= 40) {
+                changeView(deltaX < 0 ? 1 : -1);
+            }
+        }
+
+        gestureMode = "idle";
+        longPressTriggered = false;
+    }
+
+    carousel.addEventListener("pointerup", (event) => finishPointerGesture(event, true));
+    carousel.addEventListener("pointercancel", (event) => finishPointerGesture(event, false));
+    carousel.addEventListener("lostpointercapture", () => {
+        clearLongPressTimer();
+        gestureMode = "idle";
+        longPressTriggered = false;
+    });
+
+    carousel.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        showPinMenu();
+    });
+
+    carousel.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            changeView(-1);
+        } else if (event.key === "ArrowRight") {
+            event.preventDefault();
+            changeView(1);
+        } else if (event.key === "Escape") {
+            hidePinMenu();
+        }
+    });
+
+    renderActiveView(true);
     return section;
 }
 
@@ -1626,10 +1917,12 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
 }
 
 function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null, options = {}) {
-    const showPresentationHeader = options.showPresentationHeader !== false;
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
+
+    options = resolveFinanceRenderOptions(root, options);
+    const showPresentationHeader = options.showPresentationHeader !== false;
 
     root.replaceChildren();
 
@@ -1660,7 +1953,7 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
     back.className = "finance-text-action";
     back.textContent = "← Finance";
     back.addEventListener("click", () => {
-        renderFinance(root, onWriteAttempt, financeApplication);
+        renderFinance(root, onWriteAttempt, financeApplication, options);
     });
 
     intro.append(title, description);
@@ -1700,11 +1993,12 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
 }
 
 function renderFinance(root, onWriteAttempt = null, financeApplication = null, options = {}) {
-    const showPresentationHeader = options.showPresentationHeader !== false;
-
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
+
+    options = resolveFinanceRenderOptions(root, options);
+    const showPresentationHeader = options.showPresentationHeader !== false;
 
     root.replaceChildren();
 
@@ -1743,7 +2037,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null, o
     page.append(
         ...(showPresentationHeader ? [intro] : []),
         createHealthBlock(financeApplication),
-        createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt)
+        createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt, options)
     );
 
     const data = document.createElement("section");
@@ -1765,7 +2059,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null, o
     action.className = "finance-text-action";
     action.textContent = "Открыть →";
     action.addEventListener("click", () => {
-        renderFinanceData(root, null, onWriteAttempt, financeApplication);
+        renderFinanceData(root, null, onWriteAttempt, financeApplication, options);
     });
 
     data.append(copy, action);
