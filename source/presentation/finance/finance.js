@@ -1,4 +1,4 @@
-// finance.js — Version 7.33
+// finance.js — Version 7.34
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -334,7 +334,7 @@ function formatPercentChange(change) {
     return (value >= 0 ? "+" : "−") + formatAmount(Math.abs(value)) + "%";
 }
 
-function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt, options = {}) {
+function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt, options = {}) {
     const snapshot = getFinancialSnapshot(financeApplication, assetsAnalytics);
     const stabilityResult = financeApplication.getFinancialStabilityIndex();
     const stabilityDiagnostics = stabilityResult?.diagnostics || {};
@@ -2199,7 +2199,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null, o
     page.append(
         ...(showPresentationHeader ? [intro] : []),
         createHealthBlock(financeApplication),
-        createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt, options)
+        createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAttempt, options)
     );
 
     const data = document.createElement("section");
