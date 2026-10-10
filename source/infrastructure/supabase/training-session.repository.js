@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.js — Version 1.1
+// source/infrastructure/supabase/training-session.repository.js — Version 1.2
 // Responsibility: persist encrypted sessions through a server-only Supabase client; every operation is explicitly owner-scoped.
 // SERVER-ONLY: requires a trusted privileged Supabase client, a verified user context and a server-side encryption port. Never import into client bundles. Direct client table grants are intentionally revoked.
 
@@ -6,7 +6,7 @@ import { createTrainingSession, isTrainingSessionId } from "../../domain/trainin
 import { createTrainingSessionPersistenceResult } from "../../application/training/training-session-persistence-result.js";
 
 const TABLE = "training_sessions";
-const COLUMNS = "id,user_id,session_date,status,revision,payload_ciphertext,payload_nonce,payload_tag,payload_wrapped_key,payload_key_version,created_at,updated_at";
+const COLUMNS = "id,user_id,session_date,status,revision,payload_ciphertext,payload_nonce,payload_tag,payload_key_envelope,payload_key_version,created_at,updated_at";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function bytea(value, field) {
@@ -84,7 +84,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
             payload_ciphertext: bytea(envelope.ciphertext, "ciphertext"),
             payload_nonce: bytea(envelope.nonce, "nonce"),
             payload_tag: bytea(envelope.tag, "authentication tag"),
-            payload_wrapped_key: bytea(envelope.wrappedKey, "wrapped key"),
+            payload_key_envelope: bytea(envelope.wrappedKey, "wrapped key"),
             payload_key_version: envelope.keyVersion
         };
     }
@@ -101,7 +101,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
             ciphertext: parseBytea(row.payload_ciphertext, "ciphertext"),
             nonce: parseBytea(row.payload_nonce, "nonce"),
             tag: parseBytea(row.payload_tag, "authentication tag"),
-            wrappedKey: parseBytea(row.payload_wrapped_key, "wrapped key"),
+            wrappedKey: parseBytea(row.payload_key_envelope, "wrapped key"),
             keyVersion: row.payload_key_version
         }, contextFor(row, revision));
         const session = createTrainingSession({

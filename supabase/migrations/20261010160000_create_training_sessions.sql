@@ -1,4 +1,4 @@
--- supabase/migrations/20261010160000_create_training_sessions.sql — Version 1.1
+-- supabase/migrations/20261010160000_create_training_sessions.sql — Version 1.2
 -- Private training-session persistence; direct authenticated table access is denied, and writes must use the server-side handler.
 
 begin;
@@ -12,7 +12,7 @@ create table public.training_sessions (
     payload_ciphertext bytea not null check (octet_length(payload_ciphertext) between 1 and 262144),
     payload_nonce bytea not null check (octet_length(payload_nonce) = 12),
     payload_tag bytea not null check (octet_length(payload_tag) = 16),
-    payload_wrapped_key bytea not null check (octet_length(payload_wrapped_key) between 1 and 8192),
+    payload_key_envelope bytea not null check (octet_length(payload_key_envelope) between 1 and 8192),
     payload_key_version text not null check (char_length(btrim(payload_key_version)) between 1 and 200),
     created_at timestamptz not null default clock_timestamp(),
     updated_at timestamptz not null default clock_timestamp()
@@ -32,8 +32,8 @@ comment on column public.training_sessions.payload_nonce is
     '12-byte AES-GCM nonce; unique per encryption operation.';
 comment on column public.training_sessions.payload_tag is
     '16-byte AES-GCM authentication tag.';
-comment on column public.training_sessions.payload_wrapped_key is
-    'KMS-wrapped per-record DEK. The plaintext DEK must never be stored in PostgreSQL.';
+comment on column public.training_sessions.payload_key_envelope is
+    'Provider-specific key envelope. The free development provider stores a random HKDF salt; a future managed-KMS provider stores a wrapped per-record DEK. Plaintext master/data keys must never be stored in PostgreSQL.';
 comment on column public.training_sessions.payload_key_version is
     'Opaque encryption-key configuration version used to resolve the KMS key during decryption.';
 
