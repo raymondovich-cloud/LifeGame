@@ -1,4 +1,4 @@
-// speech-recognition.adapter.js — Version 1.3
+// speech-recognition.adapter.js — Version 1.4
 // Responsibility: wrap browser speech recognition; never persist or transmit audio from LifeGame code.
 
 function createSpeechRecognition(handlers = {}) {
@@ -48,6 +48,15 @@ function createSpeechRecognition(handlers = {}) {
                 resultReceived = true;
                 latestTranscript = transcript;
                 handlers.onResult?.(transcript);
+
+                // Stop capture as soon as a final transcript is available.
+                // iOS Safari may keep the microphone indicator active unless
+                // the recognizer is explicitly told to stop.
+                try {
+                    recognition.stop();
+                } catch {
+                    // The browser may already have ended the recognition session.
+                }
             }
         };
 
@@ -63,6 +72,14 @@ function createSpeechRecognition(handlers = {}) {
         };
 
         recognition.onend = () => {
+            // Explicitly release the recognizer when the session ends. This is
+            // defensive for iOS Safari, which can retain the microphone indicator.
+            try {
+                recognition.abort();
+            } catch {
+                // The recognizer may already be inactive.
+            }
+
             // Some iOS WebKit sessions emit usable interim text but never mark it final.
             // Use the latest interim transcript only after the session ends, avoiding
             // partial form updates while the user is still speaking.
