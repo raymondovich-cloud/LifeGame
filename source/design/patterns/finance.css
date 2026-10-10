@@ -471,6 +471,7 @@
 
 
 /* Finance view carousel — gestures and preferences are isolated to this block. */
+/* Version 3.10: removed obsolete first-row focus accent. */
 .finance-capital-carousel{
     position:relative;
     z-index:1;
@@ -566,13 +567,7 @@
     outline:1px solid rgba(255,173,19,.8);
     outline-offset:2px;
 }
-.finance-capital-chart-column.is-focus{
-    padding-left:var(--space-2);
-    border-left:1px solid rgba(255,173,19,.55);
-}
-.finance-capital-chart-column.is-focus .finance-capital-chart-label{
-    color:var(--color-white-soft);
-}
+
 @media (max-width:719px){
     .finance-view-context-menu{
         top:var(--space-3);
