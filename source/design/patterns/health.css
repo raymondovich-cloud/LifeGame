@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 2.0 */
+/* source/design/patterns/health.css — Version 2.1 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -63,7 +63,7 @@
     height:100%;
     background:var(--gradient-accent-line);
     opacity:.72;
-    transition:width var(--motion-duration-normal) var(--motion-ease-standard);
+    transition:width var(--bar-animation-duration, var(--motion-duration-normal)) cubic-bezier(0.22, 1, 0.36, 1);
 }
 .health-input-host{
     width:100%;
