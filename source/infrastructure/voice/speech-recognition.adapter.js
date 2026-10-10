@@ -1,4 +1,4 @@
-// speech-recognition.adapter.js — Version 1.4
+// speech-recognition.adapter.js — Version 1.5
 // Responsibility: wrap browser speech recognition; never persist or transmit audio from LifeGame code.
 
 function createSpeechRecognition(handlers = {}) {
@@ -18,11 +18,39 @@ function createSpeechRecognition(handlers = {}) {
         let resultReceived = false;
         let errorReported = false;
         let latestTranscript = "";
+        let silenceTimer = null;
+
+        function clearSilenceTimer() {
+            if (silenceTimer !== null) {
+                clearTimeout(silenceTimer);
+                silenceTimer = null;
+            }
+        }
+
+        function abortRecognition() {
+            clearSilenceTimer();
+            try {
+                recognition.abort();
+            } catch {
+                // The browser may already have stopped the recognition session.
+            }
+        }
+
+        function scheduleStopAfterSpeechPause() {
+            clearSilenceTimer();
+            // iOS Safari may keep capturing for several seconds after the last
+            // interim result. Stop after a short pause and use the last transcript.
+            silenceTimer = setTimeout(() => {
+                silenceTimer = null;
+                abortRecognition();
+            }, 1800);
+        }
 
         recognition.onstart = () => {
             resultReceived = false;
             errorReported = false;
             latestTranscript = "";
+            clearSilenceTimer();
             handlers.onStart?.();
         };
 
@@ -35,8 +63,10 @@ function createSpeechRecognition(handlers = {}) {
                 const transcript = result?.[0]?.transcript?.trim();
                 if (!transcript) continue;
 
+                latestTranscript = transcript;
+                scheduleStopAfterSpeechPause();
+
                 if (result?.isFinal === false) {
-                    latestTranscript = transcript;
                     continue;
                 }
 
@@ -49,14 +79,9 @@ function createSpeechRecognition(handlers = {}) {
                 latestTranscript = transcript;
                 handlers.onResult?.(transcript);
 
-                // Stop capture as soon as a final transcript is available.
-                // iOS Safari may keep the microphone indicator active unless
-                // the recognizer is explicitly told to stop.
-                try {
-                    recognition.stop();
-                } catch {
-                    // The browser may already have ended the recognition session.
-                }
+                // Abort immediately after a final result instead of waiting for
+                // WebKit's potentially delayed natural end-of-speech timeout.
+                abortRecognition();
             }
         };
 
@@ -72,13 +97,7 @@ function createSpeechRecognition(handlers = {}) {
         };
 
         recognition.onend = () => {
-            // Explicitly release the recognizer when the session ends. This is
-            // defensive for iOS Safari, which can retain the microphone indicator.
-            try {
-                recognition.abort();
-            } catch {
-                // The recognizer may already be inactive.
-            }
+            clearSilenceTimer();
 
             // Some iOS WebKit sessions emit usable interim text but never mark it final.
             // Use the latest interim transcript only after the session ends, avoiding
