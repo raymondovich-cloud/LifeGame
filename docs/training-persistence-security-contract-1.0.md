@@ -1,4 +1,4 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.9 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.10 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
@@ -16,7 +16,7 @@
 - Domain: `source/domain/training/` — модель и правила жизненного цикла.
 - Application: `source/application/training/` — сценарии и порты репозитория.
 - Infrastructure: `source/infrastructure/supabase/training-session.repository.js`.
-- Persistence: `supabase/migrations/20261010160000_create_training_sessions.sql`.
+- Persistence: `supabase/migrations/20261010125401_create_training_sessions.sql`.
 - Database security tests: `supabase/tests/database/002_training_sessions_test.sql`; adapter and encryption unit tests in `source/infrastructure/`.
 
 Не переносить SQL, Supabase SDK, RLS-детали или криптографические библиотеки в Domain. Не подключать UI к Supabase напрямую.

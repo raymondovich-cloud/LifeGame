@@ -1,4 +1,4 @@
--- supabase/migrations/20261010160000_create_training_sessions.sql — Version 1.2
+-- supabase/migrations/20261010125401_create_training_sessions.sql — Version 1.3
 -- Private training-session persistence; direct authenticated table access is denied, and writes must use the server-side handler.
 
 begin;
@@ -35,7 +35,7 @@ comment on column public.training_sessions.payload_tag is
 comment on column public.training_sessions.payload_key_envelope is
     'Provider-specific key envelope. The free development provider stores a random HKDF salt; a future managed-KMS provider stores a wrapped per-record DEK. Plaintext master/data keys must never be stored in PostgreSQL.';
 comment on column public.training_sessions.payload_key_version is
-    'Opaque encryption-key configuration version used to resolve the KMS key during decryption.';
+    'Encryption provider key version used to resolve the server-side development or managed-key provider.';
 
 create index training_sessions_user_date_idx
     on public.training_sessions (user_id, session_date desc);
