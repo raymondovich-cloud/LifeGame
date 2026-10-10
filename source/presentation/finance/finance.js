@@ -1,4 +1,4 @@
-// finance.js — Version 7.27
+// finance.js — Version 7.28
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -11,6 +11,7 @@ import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
 import { animateBarWidth } from "../shared/bar.animation.js";
+import { confirmFinancialBurdenClosure } from "./financial-burden-close-confirmation.js";
 import { createSpeechRecognition } from "../../infrastructure/voice/speech-recognition.adapter.js";
 import { parseFinanceVoiceCommand, parseFinanceVoiceAction, isCreditProductLabel } from "../../application/voice/finance-command.parser.js";
 
@@ -1474,7 +1475,7 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
                     return;
                 }
                 const candidate = candidates[0];
-                if (!window.confirm("Подтвердите закрытие обязательства «" + candidate.label + "». Запись останется в истории, а её долг и платежи перестанут учитываться в текущем FSI.")) {
+                if (!(await confirmFinancialBurdenClosure(candidate))) {
                     status.textContent = "Закрытие отменено. Данные и FSI не изменены.";
                     return;
                 }
