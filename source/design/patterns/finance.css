@@ -1,4 +1,4 @@
-/* finance.css — Version 3.10 */
+/* finance.css — Version 3.11 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -350,7 +350,7 @@
     height:100%;
     background:var(--gradient-accent-line);
     opacity:.72;
-    transition:width var(--motion-duration-normal) var(--motion-ease-standard),opacity var(--motion-duration-normal) var(--motion-ease-standard);
+    transition:width var(--bar-animation-duration, var(--motion-duration-normal)) cubic-bezier(0.22, 1, 0.36, 1),opacity var(--motion-duration-normal) var(--motion-ease-standard);
 }
 
 .finance-capital-chart-bar.is-positive{
