@@ -1,4 +1,4 @@
-<!-- docs/training-persistence-security-contract-1.0.md — Version 1.8 -->
+<!-- docs/training-persistence-security-contract-1.0.md — Version 1.9 -->
 
 # LifeGame — Контракт безопасного хранения дневника тренировок
 
