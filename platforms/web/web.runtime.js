@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.14
+// platforms/web/web.runtime.js — Version 5.15
 
 import {
     trace,
@@ -594,13 +594,18 @@ export async function startWeb() {
         }
 
         try {
-            const sessionResult = await readSessionWithHydrationRetry();
+            // Normal route checks read the current session once. The bounded
+            // hydration retry remains reserved for the immediate post-login /
+            // post-registration transition, where the SDK may still be settling.
+            const sessionCheckStartedAt = performance.now();
+            const sessionResult = await application.auth.getCurrentSession();
             const session = sessionResult?.session ?? null;
 
             trace("web-shell", "route.session.result", {
                 requestedRoute,
                 authenticated: Boolean(session),
-                renderId
+                renderId,
+                durationMs: Math.round(performance.now() - sessionCheckStartedAt)
             });
 
             // A newer route render may have started while the session check
