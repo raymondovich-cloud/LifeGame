@@ -1,4 +1,4 @@
-// source/presentation/finance/finance.js — Version 7.9
+// finance.js — Version 7.29
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -9,6 +9,11 @@ import { createFinanceAnalytics } from "../../application/finance/finance.analyt
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { attachEntryEdit } from "./entry.edit.js";
 import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
+import { animateCountUp } from "../shared/count-up.animation.js";
+import { animateBarWidth } from "../shared/bar.animation.js";
+import { confirmFinancialBurdenClosure } from "./financial-burden-close-confirmation.js";
+import { createSpeechRecognition } from "../../infrastructure/voice/speech-recognition.adapter.js";
+import { parseFinanceVoiceCommand, parseFinanceVoiceAction, isCreditProductLabel } from "../../application/voice/finance-command.parser.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
@@ -204,7 +209,13 @@ function createHealthBlock(financeApplication) {
 
     const value = document.createElement("span");
     value.className = "finance-health-value";
-    value.textContent = String(Math.round(Number(result.value || 0) * 10));
+    value.setAttribute("aria-live", "off");
+
+    const rawScore = Number(result?.value);
+    const displayScore = Number.isFinite(rawScore)
+        ? Math.round(rawScore * 10)
+        : null;
+    value.textContent = displayScore === null ? "—" : "0";
 
     const suffix = document.createElement("span");
     suffix.className = "finance-health-suffix";
@@ -295,6 +306,11 @@ function createHealthBlock(financeApplication) {
     });
 
     section.append(healthHeader, valueRow, category, description, diagnosticsPanel);
+
+    if (displayScore !== null) {
+        animateCountUp(value, displayScore, { duration: 1800 });
+    }
+
     return section;
 }
 
@@ -328,7 +344,11 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     const amount = document.createElement("div");
     amount.className = "finance-capital-value";
-    amount.textContent = formatAmount(snapshot.capital) + " ₽";
+    amount.textContent = "0 ₽";
+    animateCountUp(amount, snapshot.capital, {
+        duration: 1800,
+        formatter: (value) => formatAmount(value) + " ₽"
+    });
 
     const caption = document.createElement("p");
     caption.className = "finance-capital-caption";
@@ -340,7 +360,7 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     const chartTitle = document.createElement("span");
     chartTitle.className = "finance-capital-chart-title";
-    chartTitle.textContent = "Динамика за месяц";
+    chartTitle.textContent = "Изменение за месяц";
 
     const chartBars = document.createElement("div");
     chartBars.className = "finance-capital-chart-bars";
@@ -366,8 +386,8 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
     const maxChange = Math.max(...comparableValues, 1);
 
     chartMetrics.forEach(({ id, label, value }) => {
-        const column = document.createElement("div");
-        column.className = "finance-capital-chart-column";
+        const row = document.createElement("div");
+        row.className = "finance-capital-chart-column";
 
         const labelNode = document.createElement("span");
         labelNode.className = "finance-capital-chart-label";
@@ -382,28 +402,36 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
                 hasComparison: true
             });
 
+        const chartHeader = document.createElement("div");
+        chartHeader.className = "finance-capital-chart-footer";
+        chartHeader.append(labelNode, metric);
+
         const barTrack = document.createElement("span");
         barTrack.className = "finance-capital-chart-track";
-        barTrack.setAttribute("aria-hidden", "true");
+        barTrack.setAttribute("role", "img");
+        barTrack.setAttribute("aria-label", label + ": " + (
+            value === null
+                ? "нет данных для сравнения"
+                : formatPercentChange({ percent: value, hasComparison: true })
+        ));
 
         const bar = document.createElement("span");
         bar.className = "finance-capital-chart-bar";
         if (value !== null) {
             bar.classList.add(value >= 0 ? "is-positive" : "is-negative");
-            bar.style.height = Math.max(10, (Math.abs(value) / maxChange) * 100) + "%";
+            animateBarWidth(bar, Math.max(4, (Math.abs(value) / maxChange) * 100));
+        } else {
+            bar.style.width = "0%";
         }
         barTrack.appendChild(bar);
 
-        const chartFooter = document.createElement("div");
-        chartFooter.className = "finance-capital-chart-footer";
-        chartFooter.append(metric, labelNode);
-
-        column.append(barTrack, chartFooter);
-        chartBars.appendChild(column);
+        row.append(chartHeader, barTrack);
+        chartBars.appendChild(row);
     });
 
     chart.append(chartTitle, chartBars);
     section.append(header, amount, caption, chart);
+
     return section;
 }
 
@@ -1281,7 +1309,324 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
     return wrapper;
 }
 
-function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null) {
+
+function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
+    const panel = document.createElement("section");
+    panel.className = "finance-voice-entry";
+    panel.setAttribute("aria-label", "Голосовой помощник для финансовых данных");
+
+    const heading = document.createElement("div");
+    heading.className = "finance-voice-entry-heading";
+
+    const title = document.createElement("strong");
+    title.textContent = "Голосовой помощник";
+
+    const hint = document.createElement("p");
+    hint.textContent = "Добавляйте и удаляйте доходы, расходы, долги и активы голосом. LifeGame распознает вашу команду и поможет указать категорию.";
+
+    heading.append(title, hint);
+
+    const voiceControl = document.createElement("div");
+    voiceControl.className = "finance-voice-control";
+
+    const voiceButton = document.createElement("button");
+    voiceButton.type = "button";
+    voiceButton.className = "finance-voice-button";
+    voiceButton.textContent = "🎙 Голосовой ввод";
+    voiceButton.setAttribute("aria-label", "Добавить финансовую запись голосом");
+
+    const status = document.createElement("p");
+    status.className = "finance-voice-status";
+    status.setAttribute("aria-live", "polite");
+    status.hidden = true;
+
+    const preview = document.createElement("form");
+    preview.className = "finance-voice-preview";
+    preview.hidden = true;
+
+    const labelInput = document.createElement("input");
+    labelInput.className = "input-control";
+    labelInput.name = "label";
+    labelInput.type = "text";
+    labelInput.autocomplete = "off";
+    labelInput.placeholder = "Название записи";
+    labelInput.required = true;
+
+    const amountInput = document.createElement("input");
+    amountInput.className = "input-control";
+    amountInput.name = "amount";
+    amountInput.type = "number";
+    amountInput.inputMode = "decimal";
+    amountInput.min = "0.01";
+    amountInput.step = "0.01";
+    amountInput.placeholder = "Сумма, ₽";
+    amountInput.required = true;
+
+    const categorySelect = document.createElement("select");
+    categorySelect.className = "input-control";
+    categorySelect.name = "category";
+    categorySelect.required = true;
+
+    const placeholderOption = document.createElement("option");
+    placeholderOption.value = "";
+    placeholderOption.textContent = "Выберите категорию";
+    categorySelect.appendChild(placeholderOption);
+
+    FINANCE_DATA_SUBBLOCKS.forEach((item) => {
+        const option = document.createElement("option");
+        option.value = item.id;
+        option.textContent = item.number + " · " + item.title;
+        categorySelect.appendChild(option);
+    });
+
+    const creditPaymentInput = document.createElement("input");
+    creditPaymentInput.className = "input-control";
+    creditPaymentInput.name = "creditPayment";
+    creditPaymentInput.type = "number";
+    creditPaymentInput.inputMode = "decimal";
+    creditPaymentInput.min = "0";
+    creditPaymentInput.step = "0.01";
+    creditPaymentInput.placeholder = "Ежемесячный платёж, ₽";
+    creditPaymentInput.hidden = true;
+
+    const creditRateInput = document.createElement("input");
+    creditRateInput.className = "input-control";
+    creditRateInput.name = "creditInterestRate";
+    creditRateInput.type = "number";
+    creditRateInput.inputMode = "decimal";
+    creditRateInput.min = "0";
+    creditRateInput.step = "0.01";
+    creditRateInput.placeholder = "Ставка, % годовых";
+    creditRateInput.hidden = true;
+
+    const creditDetailsHint = document.createElement("p");
+    creditDetailsHint.className = "finance-voice-status";
+    creditDetailsHint.textContent = "Для кредитного продукта укажите ежемесячный платёж и ставку, чтобы LifeGame мог корректно рассчитать его параметры.";
+    creditDetailsHint.hidden = true;
+
+    const updateCreditDetailsVisibility = () => {
+        const isCreditProduct = categorySelect.value === "financial-burden"
+            && isCreditProductLabel(labelInput.value);
+        creditPaymentInput.hidden = !isCreditProduct;
+        creditRateInput.hidden = !isCreditProduct;
+        creditDetailsHint.hidden = !isCreditProduct;
+        creditPaymentInput.required = isCreditProduct;
+        creditRateInput.required = isCreditProduct;
+    };
+
+    labelInput.addEventListener("input", updateCreditDetailsVisibility);
+    categorySelect.addEventListener("change", updateCreditDetailsVisibility);
+
+    const actions = document.createElement("div");
+    actions.className = "finance-voice-preview-actions";
+
+    const saveButton = document.createElement("button");
+    saveButton.className = "button-control";
+    saveButton.type = "submit";
+    saveButton.textContent = "Подтвердить и добавить";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.className = "finance-text-action";
+    cancelButton.type = "button";
+    cancelButton.textContent = "Отмена";
+    cancelButton.addEventListener("click", () => {
+        preview.reset();
+        preview.hidden = true;
+        status.hidden = true;
+    });
+
+    actions.append(saveButton, cancelButton);
+    preview.append(
+        labelInput,
+        amountInput,
+        categorySelect,
+        creditDetailsHint,
+        creditPaymentInput,
+        creditRateInput,
+        actions
+    );
+
+    const speech = createSpeechRecognition({
+        onStart() {
+            voiceButton.disabled = true;
+            voiceButton.textContent = "Слушаю…";
+            status.hidden = false;
+            status.textContent = "Произнесите фразу целиком. После паузы распознавание завершится.";
+            preview.hidden = true;
+        },
+        async onResult(transcript) {
+            status.hidden = false;
+            const voiceAction = parseFinanceVoiceAction(transcript);
+            if (voiceAction) {
+                preview.hidden = true;
+                const target = voiceAction.target.toLocaleLowerCase("ru-RU");
+                const candidates = financeApplication.listFinanceEntries("financial-burden")
+                    .filter((entry) => entry.status !== "closed")
+                    .filter((entry) => {
+                        const label = String(entry.label || "").toLocaleLowerCase("ru-RU");
+                        return label.includes(target) || target.includes(label);
+                    });
+                if (candidates.length === 0) {
+                    status.textContent = "Не нашёл активное обязательство «" + voiceAction.target + "». Проверьте название в разделе «Финансовая нагрузка».";
+                    return;
+                }
+                if (candidates.length > 1) {
+                    status.textContent = "Нашёл несколько подходящих обязательств: " + candidates.map((entry) => entry.label).join(", ") + ". Уточните название и повторите команду.";
+                    return;
+                }
+                const candidate = candidates[0];
+                if (!(await confirmFinancialBurdenClosure(candidate))) {
+                    status.textContent = "Закрытие отменено. Данные и FSI не изменены.";
+                    return;
+                }
+                try {
+                    const closed = await financeApplication.closeFinancialBurdenEntry(candidate.id);
+                    if (!closed) {
+                        status.textContent = "Не удалось закрыть обязательство. Обновите данные и попробуйте ещё раз.";
+                        return;
+                    }
+                    const successMessage = "Обязательство «" + candidate.label + "» закрыто. Текущая финансовая нагрузка пересчитана; FSI отражает изменение с учётом остальных показателей.";
+                    renderFinanceData(root, "financial-burden", onWriteAttempt, financeApplication);
+                    const refreshedStatus = root.querySelector(".finance-voice-status");
+                    if (refreshedStatus) {
+                        refreshedStatus.hidden = false;
+                        refreshedStatus.textContent = successMessage;
+                    }
+                } catch (error) {
+                    status.textContent = error?.message || "Не удалось сохранить закрытие обязательства.";
+                }
+                return;
+            }
+            const speechResult = parseFinanceVoiceCommand(transcript);
+            if (!speechResult) {
+                preview.hidden = true;
+                status.textContent = "Не удалось уверенно выделить сумму. Попробуйте назвать предмет или операцию и сумму, например: «Купил машину за полтора миллиона рублей».";
+                return;
+            }
+
+            labelInput.value = speechResult.label || "";
+            amountInput.value = String(speechResult.amount);
+            categorySelect.value = speechResult.sectionId || "";
+            updateCreditDetailsVisibility();
+            preview.hidden = false;
+
+            status.textContent = speechResult.sectionId
+                ? "Предварительный результат распознан. Проверьте название, сумму и предложенную категорию перед сохранением."
+                : "Сумма распознана, но категорию нельзя определить достаточно уверенно. Выберите её вручную перед сохранением.";
+        },
+        onError(message) {
+            status.hidden = false;
+            status.textContent = message;
+        },
+        onEnd() {
+            voiceButton.disabled = false;
+            voiceButton.textContent = "🎙 Голосовой ввод";
+        }
+    });
+
+    voiceButton.addEventListener("click", () => {
+        if (!speech) {
+            status.hidden = false;
+            status.textContent = "Распознавание речи не поддерживается этим браузером. Используйте ручное добавление в нужной категории.";
+            return;
+        }
+        speech.start();
+    });
+
+    preview.addEventListener("submit", (event) => {
+        event.preventDefault();
+        status.hidden = false;
+
+        const sectionId = categorySelect.value;
+        const label = labelInput.value.trim();
+        const amount = Number(amountInput.value);
+        if (!FINANCE_DATA_SUBBLOCKS.some((item) => item.id === sectionId)) {
+            status.textContent = "Выберите финансовую категорию перед сохранением.";
+            categorySelect.focus({ preventScroll: true });
+            return;
+        }
+        if (!label || !Number.isFinite(amount) || amount <= 0) {
+            status.textContent = "Проверьте название и сумму. Сумма должна быть больше нуля.";
+            return;
+        }
+
+        const save = async () => {
+            saveButton.disabled = true;
+            try {
+                if (sectionId === "financial-burden") {
+                    const isCreditProduct = isCreditProductLabel(label);
+                    if (isCreditProduct && (
+                        creditPaymentInput.value === ""
+                        || creditRateInput.value === ""
+                        || !Number.isFinite(Number(creditPaymentInput.value))
+                        || !Number.isFinite(Number(creditRateInput.value))
+                        || Number(creditPaymentInput.value) < 0
+                        || Number(creditRateInput.value) < 0
+                    )) {
+                        status.textContent = "Для кредитного продукта укажите ежемесячный платёж и ставку. Оба значения должны быть неотрицательными.";
+                        saveButton.disabled = false;
+                        return;
+                    }
+                    await financeApplication.addFinancialBurdenEntry(
+                        label,
+                        amount,
+                        isCreditProduct ? creditPaymentInput.value : null,
+                        isCreditProduct,
+                        isCreditProduct ? creditRateInput.value : null
+                    );
+                } else {
+                    const labelText = label.toLocaleLowerCase("ru-RU");
+                    const assetType = /машин|автомобил|транспорт|мотоцикл/u.test(labelText)
+                        ? "vehicle"
+                        : /квартир|недвижим|дом|земельн/u.test(labelText)
+                            ? "real-estate"
+                            : /вклад/u.test(labelText)
+                                ? "bank-deposit"
+                                : /облигац/u.test(labelText)
+                                    ? "bond"
+                                    : /сч[её]т|карта/u.test(labelText)
+                                        ? "bank-account"
+                                        : "cash";
+                    const liquidity = sectionId === "assets" && ["vehicle", "real-estate"].includes(assetType)
+                        ? "illiquid"
+                        : "liquid";
+
+                    await financeApplication.addFinanceEntry(
+                        sectionId,
+                        label,
+                        amount,
+                        liquidity,
+                        {
+                            assetType,
+                            isReserve: false,
+                            incomeEnabled: false,
+                            annualYieldRate: null,
+                            compoundingFrequency: "none"
+                        }
+                    );
+                }
+
+                renderFinanceData(root, sectionId, onWriteAttempt, financeApplication);
+            } catch (error) {
+                status.textContent = error?.message || "Не удалось сохранить запись. Проверьте данные и попробуйте ещё раз.";
+                saveButton.disabled = false;
+            }
+        };
+
+        if (typeof onWriteAttempt === "function") {
+            onWriteAttempt(save);
+        } else {
+            save();
+        }
+    });
+
+    voiceControl.append(voiceButton, status);
+    panel.append(heading, voiceControl, preview);
+    return panel;
+}
+
+function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null, options = {}) {
+    const showPresentationHeader = options.showPresentationHeader !== false;
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -1348,12 +1693,15 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
         );
     });
 
+    page.appendChild(createFinanceVoiceEntry(root, onWriteAttempt, financeApplication));
     page.appendChild(list);
     root.appendChild(page);
     attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
 }
 
-function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
+function renderFinance(root, onWriteAttempt = null, financeApplication = null, options = {}) {
+    const showPresentationHeader = options.showPresentationHeader !== false;
+
     if (!root) {
         throw new Error("LifeGame Finance: presentation root was not found.");
     }
@@ -1393,7 +1741,7 @@ function renderFinance(root, onWriteAttempt = null, financeApplication = null) {
     }
 
     page.append(
-        intro,
+        ...(showPresentationHeader ? [intro] : []),
         createHealthBlock(financeApplication),
         createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytics, root, onWriteAttempt)
     );

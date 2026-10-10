@@ -1,4 +1,4 @@
-// financial.burden.js — Version 2.2
+// financial.burden.js — Version 2.3
 
 function createFinancialBurden(label, debt, payment = null, isCreditProduct = false, interestRate = null) {
     const normalizedLabel = String(label ?? "").trim();
@@ -36,7 +36,9 @@ function createFinancialBurden(label, debt, payment = null, isCreditProduct = fa
             debt: normalizedDebt,
             payment: normalizedPayment,
             isCreditProduct: normalizedIsCreditProduct,
-            interestRate: normalizedInterestRate
+            interestRate: normalizedInterestRate,
+            status: "active",
+            closedAt: null
         },
         event: {
             type: "finance.financial.burden.changed",
@@ -56,6 +58,8 @@ function updateFinancialBurden(existingEntry, label, debt, payment, isCreditProd
     return {
         entry: {
             ...result.entry,
+            status: existingEntry.status || "active",
+            closedAt: existingEntry.closedAt || null,
             id: existingEntry.id
         },
         event: {
@@ -65,6 +69,14 @@ function updateFinancialBurden(existingEntry, label, debt, payment, isCreditProd
                 entryId: existingEntry.id
             }
         }
+    };
+}
+
+function closeFinancialBurden(existingEntry, occurredAt = Date.now()) {
+    if (!existingEntry || existingEntry.status === "closed") return false;
+    return {
+        entry: { ...existingEntry, status: "closed", closedAt: new Date(occurredAt).toISOString() },
+        event: { type: "finance.financial.burden.changed", occurredAt, payload: { operation: "closed", entryId: existingEntry.id } }
     };
 }
 
@@ -87,5 +99,6 @@ function removeFinancialBurden(existingEntry) {
 export {
     createFinancialBurden,
     updateFinancialBurden,
-    removeFinancialBurden
+    removeFinancialBurden,
+    closeFinancialBurden
 };

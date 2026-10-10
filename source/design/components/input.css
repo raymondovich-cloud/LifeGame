@@ -1,7 +1,7 @@
-
-/* input.css — Version 1.4 */
+/* input.css — Version 1.7 */
 
 .input-control {
+    box-sizing:border-box;
     width:100%;
     min-width:0;
     height:2.25rem;
@@ -19,6 +19,18 @@
     border:var(--border-subtle);
     border-radius:var(--radius-control);
     outline:none;
+}
+
+.input-control[type="date"] {
+    display:block;
+    inline-size:100%;
+    min-inline-size:0;
+    max-inline-size:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+    -webkit-appearance:none;
+    appearance:none;
 }
 
 .input-control::placeholder {

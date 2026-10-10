@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.7
+// finance.memory.supabase.integration.test.mjs — Version 1.8
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -89,8 +89,10 @@ test("Finance Supabase persistence survives memory recreation and isolates users
             label: "Credit persistence",
             debt: 30000,
             payment: 3000,
+            status: "active",
             isCreditProduct: true,
-            interestRate: 25
+            interestRate: 25,
+            closedAt: null
         }
     ]);
 

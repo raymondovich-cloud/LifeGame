@@ -1,9 +1,11 @@
-// source/presentation/health/health.js — Version 2.1
+// source/presentation/health/health.js — Version 2.4
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
 import { renderHealthAnalyticsScreen } from "./section.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
+import { animateCountUp } from "../shared/count-up.animation.js";
+import { animateBarWidth } from "../shared/bar.animation.js";
 
 const FACTOR_LABELS = Object.freeze({
     recovery: "Восстановление",
@@ -47,9 +49,10 @@ function renderFactor(factor, data) {
     const fill = createElement("span", "health-factor__fill");
     const numericScore = Number(data?.score);
 
-    fill.style.width = Number.isFinite(numericScore)
-        ? Math.max(0, Math.min(100, numericScore)) + "%"
-        : "0%";
+    animateBarWidth(
+        fill,
+        Number.isFinite(numericScore) ? Math.max(0, Math.min(100, numericScore)) : 0
+    );
 
     track.appendChild(fill);
     row.append(header, track);
@@ -433,7 +436,8 @@ function createFactorsBlock(index) {
     return section;
 }
 
-function renderHealthData(container, healthApplication, onBack) {
+function renderHealthData(container, healthApplication, onBack, options = {}) {
+    const showPresentationHeader = options.showPresentationHeader !== false;
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
     }
@@ -479,7 +483,9 @@ function renderHealthData(container, healthApplication, onBack) {
     container.appendChild(page);
 }
 
-async function renderHealth(container, healthApplication) {
+async function renderHealth(container, healthApplication, options = {}) {
+    const showPresentationHeader = options.showPresentationHeader !== false;
+
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
     }
@@ -528,15 +534,22 @@ async function renderHealth(container, healthApplication) {
     });
 
     dataEntry.append(copy, action);
-    page.append(intro, healthIndex.section, factorsContainer, dataEntry);
+    page.append(...(showPresentationHeader ? [intro] : []), healthIndex.section, factorsContainer, dataEntry);
     container.appendChild(page);
 
     const refresh = async () => {
         const result = await healthApplication.calculateFromMemory();
         const index = result.index;
 
-        healthIndex.value.textContent =
-            index.value === null ? "—" : index.value.toFixed(1);
+        if (index.value === null || !Number.isFinite(Number(index.value))) {
+            healthIndex.value.textContent = "—";
+        } else {
+            healthIndex.value.textContent = "0.0";
+            animateCountUp(healthIndex.value, Number(index.value), {
+                duration: 1800,
+                decimalPlaces: 1
+            });
+        }
 
         healthIndex.category.textContent =
             index.value === null

@@ -1,4 +1,4 @@
-/* profile.css — Version 1.1 */
+/* profile.css — Version 1.2 */
 /* Responsibility: Profile Life Quality placeholder and settings presentation. */
 
 .profile-dashboard {
@@ -240,6 +240,10 @@
 
 .profile-settings-row--editable:hover {
     background:var(--surface-control-hover);
+}
+
+.profile-settings-row--readonly {
+    cursor:default;
 }
 
 .profile-settings-label {

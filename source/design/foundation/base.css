@@ -1,6 +1,15 @@
-/* base.css — Version 1.3 */
+/* base.css — Version 1.4 */
 
 html { background:var(--color-black); }
 body { min-width:320px; min-height:100vh; min-height:100dvh; background:var(--gradient-ambient),var(--color-black); color:var(--color-white); font-family:var(--font-family-system); font-size:var(--font-size-md); font-weight:var(--font-weight-regular); line-height:var(--line-height-normal); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
 h1, h2, h3 { font-weight:var(--font-weight-semibold); letter-spacing:var(--letter-spacing-tight); line-height:var(--line-height-tight); }
+
+#app h1, #app h2, #app h3, #app .brand-name, #app .finance-overview-score, #app .module-number {
+    color:transparent;
+    background-image:var(--gradient-text-premium);
+    background-clip:text;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
 ::selection { background:var(--color-accent); color:var(--color-black); }

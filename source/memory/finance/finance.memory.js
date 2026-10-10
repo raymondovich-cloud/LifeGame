@@ -1,4 +1,4 @@
-// finance.memory.js — Version 3.1
+// finance.memory.js — Version 3.2
 
 const COLLECTIONS = Object.freeze([
     "assets",
@@ -101,7 +101,7 @@ function createFinanceMemory(userContext) {
     function calculateCollectionTotal(collection, entries) {
         return entries.reduce((total, item) => {
             if (collection === "financial-burden") {
-                return total + Number(item.debt || item.amount || 0);
+                return item.status === "closed" ? total : total + Number(item.debt || item.amount || 0);
             }
             return total + Number(item.amount || 0);
         }, 0);
@@ -258,7 +258,7 @@ function createFinanceMemory(userContext) {
 
         getCollectionSnapshotList("assets").forEach((snapshot) => {
             if (snapshot.occurredAt <= timestamp) {
-                if (!result || snapshot.occurredAt >= result.occurredAt) {
+                if (!result || snapshot.occurredAt > result.occurredAt) {
                     result = snapshot;
                 }
             }
@@ -302,7 +302,7 @@ function createFinanceMemory(userContext) {
 
         return cloneSnapshot(
             getCollectionSnapshotList("assets").reduce((latest, snapshot) =>
-                !latest || snapshot.occurredAt >= latest.occurredAt
+                !latest || snapshot.occurredAt > latest.occurredAt
                     ? snapshot
                     : latest,
             null)

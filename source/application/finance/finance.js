@@ -1,4 +1,4 @@
-// finance.js — Version 6.4
+// finance.js — Version 6.5
 
 import {
     createActualEarning,
@@ -9,7 +9,8 @@ import {
 import {
     createFinancialBurden,
     updateFinancialBurden,
-    removeFinancialBurden
+    removeFinancialBurden,
+    closeFinancialBurden
 } from "../../domain/finance/financial.burden/financial.burden.js";
 
 import {
@@ -116,9 +117,11 @@ function listFinanceEntries(subblockId) {
 
     const config = getCollectionConfig(subblockId);
     const entries = getMemoryMethod(config, "list")();
-    if (entries.length > 0) return entries;
+    const activeEntries = subblockId === "financial-burden" ? entries.filter((entry) => entry.status !== "closed") : entries;
+    if (activeEntries.length > 0) return activeEntries;
     const snapshot = financeMemory.getLatestCollectionSnapshot(subblockId);
-    return Array.isArray(snapshot?.entries) ? snapshot.entries : [];
+    const snapshotEntries = Array.isArray(snapshot?.entries) ? snapshot.entries : [];
+    return subblockId === "financial-burden" ? snapshotEntries.filter((entry) => entry.status !== "closed") : snapshotEntries;
 }
 
 async function addFinanceEntry(subblockId, label, amount, liquidity, options = null) {
@@ -230,6 +233,18 @@ async function updateFinanceEntry(
     return savedEntry;
 }
 
+async function closeFinancialBurdenEntry(entryId) {
+    const existingEntry = financeMemory.listFinancialBurden().find((entry) => entry.id === entryId && entry.status !== "closed");
+    const result = closeFinancialBurden(existingEntry);
+    if (!result) return false;
+    const mutation = await financeMemory.mutateFinanceCollection({
+        collection: "financial-burden", operation: "update", entryId, entry: result.entry, occurredAt: result.event.occurredAt
+    });
+    const closedEntry = mutation ? mutation.entry : false;
+    trace("application", "finance.burden.closed", { entryId, result: Boolean(closedEntry) });
+    return closedEntry;
+}
+
 async function removeFinanceEntry(subblockId, entryId) {
     if (subblockId === "assets") {
         const memory = financeMemory;
@@ -290,7 +305,7 @@ function calculateCreditProductAnalytics(entry) {
 }
 
 function getFinancialStabilityIndex() {
-    const financialBurden = financeMemory.listFinancialBurden();
+    const financialBurden = financeMemory.listFinancialBurden().filter((entry) => entry.status !== "closed");
     const assetEntries = financeMemory.listAssets();
     const actualEarnings = financeMemory.listActualEarnings();
     const mandatoryExpenses = financeMemory.listMandatoryExpenses();
@@ -324,9 +339,8 @@ function getFinancialStabilityIndex() {
         const actualEarnings = useLiveState
             ? financeMemory.listActualEarnings()
             : entriesFromSnapshot(earningsSnapshot);
-        const financialBurden = useLiveState
-            ? financeMemory.listFinancialBurden()
-            : entriesFromSnapshot(burdenSnapshot);
+        const financialBurden = (useLiveState ? financeMemory.listFinancialBurden() : entriesFromSnapshot(burdenSnapshot))
+            .filter((entry) => entry.status !== "closed");
         const mandatoryExpenses = useLiveState
             ? financeMemory.listMandatoryExpenses()
             : entriesFromSnapshot(expensesSnapshot);
@@ -347,7 +361,7 @@ function getFinancialStabilityIndex() {
                 "financial-burden",
                 timestamp,
                 (snapshot) => Array.isArray(snapshot.entries)
-                    ? snapshot.entries.reduce((total, entry) => total + Number(entry?.debt || 0), 0)
+                    ? snapshot.entries.reduce((total, entry) => entry?.status === "closed" ? total : total + Number(entry?.debt || 0), 0)
                     : Number(snapshot.total) || 0
             ),
             liquidityHistory: historyUntil(
@@ -437,6 +451,7 @@ function getFinancialStabilityIndex() {
         addFinanceEntry,
         addFinancialBurdenEntry,
         removeFinanceEntry,
+        closeFinancialBurdenEntry,
         updateFinanceEntry,
         getFinancialStabilityIndex,
         calculateCreditProductAnalytics,
