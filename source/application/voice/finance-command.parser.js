@@ -1,4 +1,4 @@
-// finance-command.parser.js — Version 1.1
+// finance-command.parser.js — Version 1.2
 // Responsibility: deterministic, AI-free extraction of a financial label and amount from recognized Russian speech.
 
 const SCALE_WORDS = Object.freeze([
@@ -131,4 +131,38 @@ function parseFinanceVoiceText(transcript) {
     return Object.freeze({ amount: match.amount, label: label || "Голосовая запись" });
 }
 
-export { parseFinanceVoiceText };
+
+function classifyFinanceVoiceCategory(transcript) {
+    const text = String(transcript || "").toLocaleLowerCase("ru-RU");
+
+    // Cyrillic-specific character classes are used because JavaScript's \\b and \\w
+    // word-boundary semantics are ASCII-oriented and do not classify Russian words reliably.
+    if (/(?:долг[а-яё]*|долж(?:ен|на|ны|но)(?![а-яё])|задолж[а-яё]*|кредит[а-яё]*|ипотек[а-яё]*|за[её]м[а-яё]*|одолжил[а-яё]*|плат[её]ж\s+по\s+кредиту)/iu.test(text)) {
+        return "financial-burden";
+    }
+
+    if (/(?:зарплат[а-яё]*|аванс[а-яё]*|преми[а-яё]*|доход[а-яё]*|заработал[а-яё]*|выручк[а-яё]*|гонорар[а-яё]*|пенси[а-яё]*|стипенд[а-яё]*|дивиденд[а-яё]*|получил[аи]?\s+(?:деньги|оплату))/iu.test(text)) {
+        return "actual-earnings";
+    }
+
+    if (/(?:аренд[а-яё]*|коммунал[а-яё]*|сч[её]т\s+за|оплатил[а-яё]*|заплатил[а-яё]*|потратил[а-яё]*|расход[а-яё]*|купил[аи]?\s+продукт[а-яё]*|бензин(?![а-яё])|топлив[а-яё]*|лекарств[а-яё]*|интернет(?![а-яё])|подписк[а-яё]*|страховк[а-яё]*|налог[а-яё]*)/iu.test(text)) {
+        return "mandatory-expenses";
+    }
+
+    if (/(?:купил[а-яё]*|приобр[её]л[а-яё]*|покупаю(?![а-яё])|актив[а-яё]*|машин[а-яё]*|автомобил[а-яё]*|квартир[а-яё]*|недвижим[а-яё]*|дом(?![а-яё])|наличн[а-яё]*|банковск[а-яё]*\s+сч[её]т|вклад[а-яё]*|облигац[а-яё]*|инвестиц[а-яё]*)/iu.test(text)) {
+        return "assets";
+    }
+
+    return null;
+}
+
+function parseFinanceVoiceCommand(transcript) {
+    const parsed = parseFinanceVoiceText(transcript);
+    if (!parsed) return null;
+    return Object.freeze({
+        ...parsed,
+        sectionId: classifyFinanceVoiceCategory(transcript)
+    });
+}
+
+export { parseFinanceVoiceText, classifyFinanceVoiceCategory, parseFinanceVoiceCommand };

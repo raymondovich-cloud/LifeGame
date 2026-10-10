@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 1.0
+# .github/workflows/preview-publish.yml — Version 1.1
 name: LifeGame Preview CI
 
 on:
@@ -60,6 +60,12 @@ jobs:
               sys.exit(1)
           print("Local Design System imports are valid.")
           PY
+
+      - name: Test finance voice command parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-default-type=module --test source/application/voice/finance-command.parser.test.mjs
 
       - name: Request preview deployment
         if: success()

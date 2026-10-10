@@ -1,4 +1,4 @@
-// finance.js — Version 7.22
+// finance.js — Version 7.23
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -12,7 +12,7 @@ import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
 import { animateBarWidth } from "../shared/bar.animation.js";
 import { createSpeechRecognition } from "../../infrastructure/voice/speech-recognition.adapter.js";
-import { parseFinanceVoiceText } from "../../application/voice/finance-command.parser.js";
+import { parseFinanceVoiceCommand } from "../../application/voice/finance-command.parser.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
@@ -784,60 +784,7 @@ function createAddForm(root, section, onWriteAttempt, financeApplication) {
     error.className = "finance-form-error";
     error.hidden = true;
 
-    const voiceControl = document.createElement("div");
-    voiceControl.className = "finance-voice-control";
-
-    const voiceButton = document.createElement("button");
-    voiceButton.type = "button";
-    voiceButton.className = "finance-voice-button";
-    voiceButton.textContent = "🎙 Голосовой ввод";
-    voiceButton.setAttribute("aria-label", "Заполнить форму голосом");
-
-    const voiceStatus = document.createElement("p");
-    voiceStatus.className = "finance-voice-status";
-    voiceStatus.setAttribute("aria-live", "polite");
-    voiceStatus.hidden = true;
-
-    const speech = createSpeechRecognition({
-        onStart() {
-            voiceButton.disabled = true;
-            voiceButton.textContent = "Слушаю…";
-            voiceStatus.hidden = false;
-            voiceStatus.textContent = "Произнесите название и сумму. Дождитесь завершения распознавания.";
-        },
-        onResult(transcript) {
-            voiceStatus.hidden = false;
-            const parsed = parseFinanceVoiceText(transcript);
-            if (!parsed) {
-                voiceStatus.textContent = "Речь распознана: «" + transcript + "», но сумму определить не удалось. Попробуйте: «Машина за полтора миллиона рублей».";
-                return;
-            }
-            labelInput.value = parsed.label || labelInput.value;
-            amountInput.value = String(parsed.amount);
-            voiceStatus.textContent = "Распознано: «" + transcript + "». Название и сумма заполнены — проверьте поля и нажмите «Добавить».";
-            labelInput.focus({ preventScroll: true });
-        },
-        onError(message) {
-            voiceStatus.hidden = false;
-            voiceStatus.textContent = message;
-        },
-        onEnd() {
-            voiceButton.disabled = false;
-            voiceButton.textContent = "🎙 Голосовой ввод";
-        }
-    });
-
-    voiceButton.addEventListener("click", () => {
-        if (!speech) {
-            voiceStatus.hidden = false;
-            voiceStatus.textContent = "Распознавание речи не поддерживается этим браузером. Используйте ручной ввод.";
-            return;
-        }
-        speech.start();
-    });
-
-    voiceControl.append(voiceButton, voiceStatus);
-    form.append(voiceControl, labelInput, amountInput);
+    form.append(labelInput, amountInput);
 
     if (section.id === "assets") {
         const advancedDetails = document.createElement("details");
@@ -1361,6 +1308,216 @@ function createSubblock(root, subblock, isOpen, onWriteAttempt = null, financeAp
     return wrapper;
 }
 
+
+function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
+    const panel = document.createElement("section");
+    panel.className = "finance-voice-entry";
+    panel.setAttribute("aria-label", "Голосовое добавление финансовых данных");
+
+    const heading = document.createElement("div");
+    heading.className = "finance-voice-entry-heading";
+
+    const title = document.createElement("strong");
+    title.textContent = "Добавить голосом";
+
+    const hint = document.createElement("p");
+    hint.textContent = "Расскажите о доходе, расходе, долге или активе — LifeGame предложит категорию.";
+
+    heading.append(title, hint);
+
+    const voiceControl = document.createElement("div");
+    voiceControl.className = "finance-voice-control";
+
+    const voiceButton = document.createElement("button");
+    voiceButton.type = "button";
+    voiceButton.className = "finance-voice-button";
+    voiceButton.textContent = "🎙 Голосовой ввод";
+    voiceButton.setAttribute("aria-label", "Добавить финансовую запись голосом");
+
+    const status = document.createElement("p");
+    status.className = "finance-voice-status";
+    status.setAttribute("aria-live", "polite");
+    status.hidden = true;
+
+    const preview = document.createElement("form");
+    preview.className = "finance-voice-preview";
+    preview.hidden = true;
+
+    const labelInput = document.createElement("input");
+    labelInput.className = "input-control";
+    labelInput.name = "label";
+    labelInput.type = "text";
+    labelInput.autocomplete = "off";
+    labelInput.placeholder = "Название записи";
+    labelInput.required = true;
+
+    const amountInput = document.createElement("input");
+    amountInput.className = "input-control";
+    amountInput.name = "amount";
+    amountInput.type = "number";
+    amountInput.inputMode = "decimal";
+    amountInput.min = "0.01";
+    amountInput.step = "0.01";
+    amountInput.placeholder = "Сумма, ₽";
+    amountInput.required = true;
+
+    const categorySelect = document.createElement("select");
+    categorySelect.className = "input-control";
+    categorySelect.name = "category";
+    categorySelect.required = true;
+
+    const placeholderOption = document.createElement("option");
+    placeholderOption.value = "";
+    placeholderOption.textContent = "Выберите категорию";
+    categorySelect.appendChild(placeholderOption);
+
+    FINANCE_DATA_SUBBLOCKS.forEach((item) => {
+        const option = document.createElement("option");
+        option.value = item.id;
+        option.textContent = item.number + " · " + item.title;
+        categorySelect.appendChild(option);
+    });
+
+    const actions = document.createElement("div");
+    actions.className = "finance-voice-preview-actions";
+
+    const saveButton = document.createElement("button");
+    saveButton.className = "button-control";
+    saveButton.type = "submit";
+    saveButton.textContent = "Подтвердить и добавить";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.className = "finance-text-action";
+    cancelButton.type = "button";
+    cancelButton.textContent = "Отмена";
+    cancelButton.addEventListener("click", () => {
+        preview.reset();
+        preview.hidden = true;
+        status.hidden = true;
+    });
+
+    actions.append(saveButton, cancelButton);
+    preview.append(labelInput, amountInput, categorySelect, actions);
+
+    const speech = createSpeechRecognition({
+        onStart() {
+            voiceButton.disabled = true;
+            voiceButton.textContent = "Слушаю…";
+            status.hidden = false;
+            status.textContent = "Произнесите фразу целиком. После паузы распознавание завершится.";
+            preview.hidden = true;
+        },
+        onResult(transcript) {
+            const speechResult = parseFinanceVoiceCommand(transcript);
+            status.hidden = false;
+
+            if (!speechResult) {
+                preview.hidden = true;
+                status.textContent = "Не удалось уверенно выделить сумму. Попробуйте назвать предмет или операцию и сумму, например: «Купил машину за полтора миллиона рублей».";
+                return;
+            }
+
+            labelInput.value = speechResult.label || "";
+            amountInput.value = String(speechResult.amount);
+            categorySelect.value = speechResult.sectionId || "";
+            preview.hidden = false;
+
+            status.textContent = speechResult.sectionId
+                ? "Предварительный результат распознан. Проверьте название, сумму и предложенную категорию перед сохранением."
+                : "Сумма распознана, но категорию нельзя определить достаточно уверенно. Выберите её вручную перед сохранением.";
+        },
+        onError(message) {
+            status.hidden = false;
+            status.textContent = message;
+        },
+        onEnd() {
+            voiceButton.disabled = false;
+            voiceButton.textContent = "🎙 Голосовой ввод";
+        }
+    });
+
+    voiceButton.addEventListener("click", () => {
+        if (!speech) {
+            status.hidden = false;
+            status.textContent = "Распознавание речи не поддерживается этим браузером. Используйте ручное добавление в нужной категории.";
+            return;
+        }
+        speech.start();
+    });
+
+    preview.addEventListener("submit", (event) => {
+        event.preventDefault();
+        status.hidden = false;
+
+        const sectionId = categorySelect.value;
+        const label = labelInput.value.trim();
+        const amount = Number(amountInput.value);
+        if (!FINANCE_DATA_SUBBLOCKS.some((item) => item.id === sectionId)) {
+            status.textContent = "Выберите финансовую категорию перед сохранением.";
+            categorySelect.focus({ preventScroll: true });
+            return;
+        }
+        if (!label || !Number.isFinite(amount) || amount <= 0) {
+            status.textContent = "Проверьте название и сумму. Сумма должна быть больше нуля.";
+            return;
+        }
+
+        const save = async () => {
+            saveButton.disabled = true;
+            try {
+                if (sectionId === "financial-burden") {
+                    await financeApplication.addFinancialBurdenEntry(label, amount, null, false, null);
+                } else {
+                    const labelText = label.toLocaleLowerCase("ru-RU");
+                    const assetType = /машин|автомобил|транспорт|мотоцикл/u.test(labelText)
+                        ? "vehicle"
+                        : /квартир|недвижим|дом|земельн/u.test(labelText)
+                            ? "real-estate"
+                            : /вклад/u.test(labelText)
+                                ? "bank-deposit"
+                                : /облигац/u.test(labelText)
+                                    ? "bond"
+                                    : /сч[её]т|карта/u.test(labelText)
+                                        ? "bank-account"
+                                        : "cash";
+                    const liquidity = sectionId === "assets" && ["vehicle", "real-estate"].includes(assetType)
+                        ? "illiquid"
+                        : "liquid";
+
+                    await financeApplication.addFinanceEntry(
+                        sectionId,
+                        label,
+                        amount,
+                        liquidity,
+                        {
+                            assetType,
+                            isReserve: false,
+                            incomeEnabled: false,
+                            annualYieldRate: null,
+                            compoundingFrequency: "none"
+                        }
+                    );
+                }
+
+                renderFinanceData(root, sectionId, onWriteAttempt, financeApplication);
+            } catch (error) {
+                status.textContent = error?.message || "Не удалось сохранить запись. Проверьте данные и попробуйте ещё раз.";
+                saveButton.disabled = false;
+            }
+        };
+
+        if (typeof onWriteAttempt === "function") {
+            onWriteAttempt(save);
+        } else {
+            save();
+        }
+    });
+
+    voiceControl.append(voiceButton, status);
+    panel.append(heading, voiceControl, preview);
+    return panel;
+}
+
 function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, financeApplication = null, options = {}) {
     const showPresentationHeader = options.showPresentationHeader !== false;
     if (!root) {
@@ -1429,6 +1586,7 @@ function renderFinanceData(root, activeSectionId = null, onWriteAttempt = null, 
         );
     });
 
+    page.appendChild(createFinanceVoiceEntry(root, onWriteAttempt, financeApplication));
     page.appendChild(list);
     root.appendChild(page);
     attachSwipeDelete(root, onWriteAttempt, financeApplication, assetsAnalytics);
