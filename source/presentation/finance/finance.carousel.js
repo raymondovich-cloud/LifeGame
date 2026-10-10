@@ -1,4 +1,4 @@
-// finance.carousel.js — Version 1.0
+// finance.carousel.js — Version 1.1
 // Responsibility: persist finance-carousel pin preferences and resolve display order.
 
 const FINANCE_CAROUSEL_VIEW_IDS = Object.freeze([
@@ -128,24 +128,32 @@ function saveFinanceCarouselPreferences(userId, preferences = {}) {
     }
 }
 
-function toggleFinanceCarouselPin(preferences, viewId, position) {
+function toggleFinanceCarouselPin(preferences, viewId) {
     const pinnedPositions = normalizePinnedPositions(preferences?.pinnedPositions);
 
     if (!FINANCE_CAROUSEL_VIEW_IDS.includes(viewId)) {
         return { pinnedPositions };
     }
 
-    if (Object.prototype.hasOwnProperty.call(pinnedPositions, viewId)) {
-        delete pinnedPositions[viewId];
-    } else if (
-        Number.isInteger(position) &&
-        position >= 0 &&
-        position < FINANCE_CAROUSEL_VIEW_IDS.length
-    ) {
-        pinnedPositions[viewId] = position;
+    const isCurrentlyPinned = Object.prototype.hasOwnProperty.call(pinnedPositions, viewId);
+    const orderedPinnedIds = Object.entries(pinnedPositions)
+        .sort((first, second) => first[1] - second[1])
+        .map(([id]) => id)
+        .filter((id) => id !== viewId);
+
+    if (!isCurrentlyPinned) {
+        // A newly pinned screen becomes the default screen after reload.
+        orderedPinnedIds.unshift(viewId);
     }
 
-    return { pinnedPositions: normalizePinnedPositions(pinnedPositions) };
+    const nextPinnedPositions = {};
+    orderedPinnedIds.forEach((id, index) => {
+        if (index < FINANCE_CAROUSEL_VIEW_IDS.length) {
+            nextPinnedPositions[id] = index;
+        }
+    });
+
+    return { pinnedPositions: nextPinnedPositions };
 }
 
 export {

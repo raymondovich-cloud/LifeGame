@@ -1,4 +1,4 @@
-// finance.js — Version 7.37
+// finance.js — Version 7.38
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -762,8 +762,7 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
         event.stopPropagation();
         preferences = toggleFinanceCarouselPin(
             preferences,
-            activeViewId,
-            activeViewIndex
+            activeViewId
         );
         saveFinanceCarouselPreferences(userId, preferences);
         order = resolveFinanceCarouselOrder(recommendation, preferences.pinnedPositions);
