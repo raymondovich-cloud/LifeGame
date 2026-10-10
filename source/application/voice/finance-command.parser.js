@@ -1,4 +1,4 @@
-// finance-command.parser.js — Version 1.3
+// finance-command.parser.js — Version 1.5
 // Responsibility: deterministic, AI-free extraction of a financial label and amount from recognized Russian speech.
 
 const SCALE_WORDS = Object.freeze([
@@ -161,6 +161,19 @@ function isCreditProductLabel(label) {
     return /(?:кредит[а-яё]*|ипотек[а-яё]*|рассрочк[а-яё]*|кредитн[а-яё]*\s+карт[а-яё]*)/iu.test(text);
 }
 
+function parseFinanceVoiceAction(transcript) {
+    if (typeof transcript !== "string" || !transcript.trim()) return null;
+    const normalized = transcript.toLocaleLowerCase("ru-RU").trim().replace(/[.!?,;:]+$/u, "");
+    const closePattern = /^(?:я\s+)?(?:полностью\s+)?(?:закрыл[а]?|погасил[а]?|выплатил[а]?)\s+(?:(?:свой|свою|этот|эту)\s+)?(?:кредит|ипотек[ауи]?|долг|задолженность|рассрочку|обязательство)(?=\s|$)[а-яё\s-]*$/iu;
+    if (!closePattern.test(normalized)) return null;
+    const target = normalized
+        .replace(/^(?:я\s+)?(?:полностью\s+)?(?:закрыл[а]?|погасил[а]?|выплатил[а]?)\s+/iu, "")
+        .replace(/^(?:(?:свой|свою|этот|эту)\s+)?(?:кредит|ипотек[ауи]?|долг|задолженность|рассрочку|обязательство)\s*/iu, "")
+        .replace(/[.!?,;:]+$/gu, "").replace(/\s+/gu, " ").trim();
+    if (!target) return null;
+    return Object.freeze({ type: "close-financial-burden", target });
+}
+
 function parseFinanceVoiceCommand(transcript) {
     const parsed = parseFinanceVoiceText(transcript);
     if (!parsed) return null;
@@ -170,4 +183,4 @@ function parseFinanceVoiceCommand(transcript) {
     });
 }
 
-export { parseFinanceVoiceText, classifyFinanceVoiceCategory, parseFinanceVoiceCommand, isCreditProductLabel };
+export { parseFinanceVoiceText, classifyFinanceVoiceCategory, parseFinanceVoiceCommand, parseFinanceVoiceAction, isCreditProductLabel };

@@ -1,9 +1,9 @@
-// finance-command.parser.test.mjs — Version 1.1
+// finance-command.parser.test.mjs — Version 1.2
 
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { parseFinanceVoiceCommand, isCreditProductLabel } from "./finance-command.parser.js";
+import { parseFinanceVoiceCommand, parseFinanceVoiceAction, isCreditProductLabel } from "./finance-command.parser.js";
 
 test("classifies a car purchase as an asset and parses a spoken million amount", () => {
     const result = parseFinanceVoiceCommand("Я купил машину за полтора миллиона рублей");
@@ -47,4 +47,12 @@ test("recognizes a credit label as a credit product, not a generic debt", () => 
 test("does not classify a generic personal debt as a credit product", () => {
     assert.equal(isCreditProductLabel("Долг другу"), false);
     assert.equal(isCreditProductLabel("Должен банку"), false);
+});
+
+
+test("recognizes a closure command without requiring an amount", () => {
+    assert.deepEqual(parseFinanceVoiceAction("Я закрыл кредит Сбербанк"), { type: "close-financial-burden", target: "сбербанк" });
+    assert.deepEqual(parseFinanceVoiceAction("Погасил долг другу"), { type: "close-financial-burden", target: "другу" });
+    assert.equal(parseFinanceVoiceAction("Купил машину за 500000"), null);
+    assert.equal(parseFinanceVoiceAction("Я закрыл кредит"), null);
 });

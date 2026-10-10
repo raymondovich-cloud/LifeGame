@@ -1,4 +1,4 @@
-// finance.memory.supabase.js — Version 3.1
+// finance.memory.supabase.js — Version 3.2
 // Responsibility: implement the Finance Memory Port with Supabase persistence and a local runtime cache.
 
 const COLLECTIONS = Object.freeze({
@@ -16,7 +16,7 @@ const COLLECTIONS = Object.freeze({
         ]
     },
     actualEarnings: { table: "finance_actual_earnings", fields: ["label", "amount"] },
-    financialBurden: { table: "finance_burdens", fields: ["label", "debt", "payment", "is_credit_product", "interest_rate"] },
+    financialBurden: { table: "finance_burdens", fields: ["label", "debt", "payment", "is_credit_product", "interest_rate", "status", "closed_at"] },
     mandatoryExpenses: { table: "finance_mandatory_expenses", fields: ["label", "amount"] }
 });
 
@@ -50,6 +50,11 @@ function createSupabaseFinanceMemory({ client, userContext }) {
         if (result.interest_rate !== undefined) {
             result.interestRate = result.interest_rate === null ? null : Number(result.interest_rate);
             delete result.interest_rate;
+        }
+        if (result.status === undefined && result.debt !== undefined) result.status = "active";
+        if (result.closed_at !== undefined) {
+            result.closedAt = result.closed_at;
+            delete result.closed_at;
         }
 
         if (result.asset_type !== undefined) {
@@ -331,7 +336,7 @@ function createSupabaseFinanceMemory({ client, userContext }) {
 
         const entries = list(key);
         const total = collection === "financial-burden"
-            ? entries.reduce((sum, item) => sum + Number(item.debt || item.amount || 0), 0)
+            ? entries.reduce((sum, item) => item.status === "closed" ? sum : sum + Number(item.debt || item.amount || 0), 0)
             : entries.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
         const snapshot = await saveFinanceSnapshot(collection, {
@@ -367,6 +372,14 @@ function createSupabaseFinanceMemory({ client, userContext }) {
             }
             if (field === "interest_rate") {
                 payload[field] = entry.interestRate ?? null;
+                return;
+            }
+            if (field === "closed_at") {
+                payload[field] = entry.closedAt ?? null;
+                return;
+            }
+            if (field === "status") {
+                payload[field] = entry.status ?? "active";
                 return;
             }
             payload[field] = entry[field];
@@ -408,6 +421,14 @@ function createSupabaseFinanceMemory({ client, userContext }) {
             }
             if (field === "interest_rate") {
                 payload[field] = entry.interestRate ?? null;
+                return;
+            }
+            if (field === "closed_at") {
+                payload[field] = entry.closedAt ?? null;
+                return;
+            }
+            if (field === "status") {
+                payload[field] = entry.status ?? "active";
                 return;
             }
             payload[field] = entry[field];

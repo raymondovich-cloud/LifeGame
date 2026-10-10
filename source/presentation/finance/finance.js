@@ -1,4 +1,4 @@
-// finance.js — Version 7.26
+// finance.js — Version 7.27
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -12,7 +12,7 @@ import { showSubscriptionLimitNotice } from "../shared/subscription.limit.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
 import { animateBarWidth } from "../shared/bar.animation.js";
 import { createSpeechRecognition } from "../../infrastructure/voice/speech-recognition.adapter.js";
-import { parseFinanceVoiceCommand, isCreditProductLabel } from "../../application/voice/finance-command.parser.js";
+import { parseFinanceVoiceCommand, parseFinanceVoiceAction, isCreditProductLabel } from "../../application/voice/finance-command.parser.js";
 
 const pinnedEntries = new Set();
 const MAX_PINNED_ENTRIES_PER_BLOCK = 3;
@@ -1453,10 +1453,50 @@ function createFinanceVoiceEntry(root, onWriteAttempt, financeApplication) {
             status.textContent = "Произнесите фразу целиком. После паузы распознавание завершится.";
             preview.hidden = true;
         },
-        onResult(transcript) {
-            const speechResult = parseFinanceVoiceCommand(transcript);
+        async onResult(transcript) {
             status.hidden = false;
-
+            const voiceAction = parseFinanceVoiceAction(transcript);
+            if (voiceAction) {
+                preview.hidden = true;
+                const target = voiceAction.target.toLocaleLowerCase("ru-RU");
+                const candidates = financeApplication.listFinanceEntries("financial-burden")
+                    .filter((entry) => entry.status !== "closed")
+                    .filter((entry) => {
+                        const label = String(entry.label || "").toLocaleLowerCase("ru-RU");
+                        return label.includes(target) || target.includes(label);
+                    });
+                if (candidates.length === 0) {
+                    status.textContent = "Не нашёл активное обязательство «" + voiceAction.target + "». Проверьте название в разделе «Финансовая нагрузка».";
+                    return;
+                }
+                if (candidates.length > 1) {
+                    status.textContent = "Нашёл несколько подходящих обязательств: " + candidates.map((entry) => entry.label).join(", ") + ". Уточните название и повторите команду.";
+                    return;
+                }
+                const candidate = candidates[0];
+                if (!window.confirm("Подтвердите закрытие обязательства «" + candidate.label + "». Запись останется в истории, а её долг и платежи перестанут учитываться в текущем FSI.")) {
+                    status.textContent = "Закрытие отменено. Данные и FSI не изменены.";
+                    return;
+                }
+                try {
+                    const closed = await financeApplication.closeFinancialBurdenEntry(candidate.id);
+                    if (!closed) {
+                        status.textContent = "Не удалось закрыть обязательство. Обновите данные и попробуйте ещё раз.";
+                        return;
+                    }
+                    const successMessage = "Обязательство «" + candidate.label + "» закрыто. Текущая финансовая нагрузка пересчитана; FSI отражает изменение с учётом остальных показателей.";
+                    renderFinanceData(root, "financial-burden", onWriteAttempt, financeApplication);
+                    const refreshedStatus = root.querySelector(".finance-voice-status");
+                    if (refreshedStatus) {
+                        refreshedStatus.hidden = false;
+                        refreshedStatus.textContent = successMessage;
+                    }
+                } catch (error) {
+                    status.textContent = error?.message || "Не удалось сохранить закрытие обязательства.";
+                }
+                return;
+            }
+            const speechResult = parseFinanceVoiceCommand(transcript);
             if (!speechResult) {
                 preview.hidden = true;
                 status.textContent = "Не удалось уверенно выделить сумму. Попробуйте назвать предмет или операцию и сумму, например: «Купил машину за полтора миллиона рублей».";

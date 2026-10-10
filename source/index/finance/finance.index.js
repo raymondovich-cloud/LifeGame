@@ -1,4 +1,4 @@
-// source/index/finance/finance.index.js — Version 4.2
+// source/index/finance/finance.index.js — Version 4.3
 
 // FSI 4.1 — Financial Stability Index.
 // Theory-driven composite model of cash-flow sustainability, operational liquidity,
@@ -438,16 +438,15 @@ function calculateFinancialStabilityIndex(financeState = {}) {
     const illiquidFunds = resolve(financeState.illiquidFundsAmount, illiquid);
     const totalAssets = resolve(financeState.totalAssetsAmount, assets);
 
-    const debt = financeState.debts !== undefined
-        ? amount(financeState.debts)
-        : sum(financeState.financialBurden, "debt");
+    const activeFinancialBurden = Array.isArray(financeState.financialBurden)
+        ? financeState.financialBurden.filter((entry) => entry?.status !== "closed")
+        : [];
+    const debt = financeState.debts !== undefined ? amount(financeState.debts) : sum(activeFinancialBurden, "debt");
 
     const income = resolve(financeState.income, financeState.actualEarnings);
     const expenses = resolve(financeState.expenses, financeState.mandatoryExpenses);
 
-    const payments = financeState.payments !== undefined
-        ? amount(financeState.payments)
-        : sum(financeState.financialBurden, "payment");
+    const payments = financeState.payments !== undefined ? amount(financeState.payments) : sum(activeFinancialBurden, "payment");
 
     const reserve = Math.min(
         liquidFunds,
