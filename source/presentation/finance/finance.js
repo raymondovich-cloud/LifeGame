@@ -1,4 +1,4 @@
-// finance.js — Version 7.32
+// finance.js — Version 7.33
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
 
@@ -342,13 +342,6 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
     const productiveCapital = assetEntries
         .filter((entry) => Boolean(entry?.incomeEnabled))
         .reduce((total, entry) => total + Number(entry.amount || 0), 0);
-    const range = financeAnalytics
-        ? financeAnalytics.getFinanceAnalyticsRange("month")
-        : null;
-    const analyticsSnapshot = range
-        ? financeAnalytics.getFinanceAnalytics(range)
-        : null;
-
     const section = document.createElement("section");
     section.className = "finance-capital";
     section.setAttribute("aria-label", "Financial overview");
@@ -400,7 +393,7 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
 
     const chart = document.createElement("div");
     chart.className = "finance-capital-chart";
-    chart.setAttribute("aria-label", "Динамика финансовых показателей за месяц");
+    chart.setAttribute("aria-label", "Показатели текущего финансового состояния");
 
     const chartTitle = document.createElement("span");
     chartTitle.className = "finance-capital-chart-title";
@@ -490,10 +483,10 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
         const income = Math.max(0, snapshot.income);
 
         const asAmount = (value) => formatAmount(value) + " ₽";
-        const asPercent = (value) => Number.isFinite(Number(value))
+        const asPercent = (value) => value !== null && value !== undefined && Number.isFinite(Number(value))
             ? formatAmount(Number(value) * 100) + "%"
             : "—";
-        const asMonths = (value) => Number.isFinite(Number(value))
+        const asMonths = (value) => value !== null && value !== undefined && Number.isFinite(Number(value))
             ? formatAmount(value) + " мес."
             : "—";
         const clampPercent = (value) => Number.isFinite(Number(value))
@@ -563,10 +556,10 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
                 {
                     id: "debt-to-income",
                     label: "Долг к месячному доходу",
-                    valueText: Number.isFinite(Number(debtToIncome))
+                    valueText: debtToIncome !== null && debtToIncome !== undefined && Number.isFinite(Number(debtToIncome))
                         ? formatAmount(debtToIncome) + "×"
                         : "—",
-                    fillPercent: Number.isFinite(Number(debtToIncome))
+                    fillPercent: debtToIncome !== null && debtToIncome !== undefined && Number.isFinite(Number(debtToIncome))
                         ? clampPercent(Number(debtToIncome) / 6 * 100)
                         : 0,
                     ariaText: "Отношение общего долга к фактическому доходу"
@@ -625,7 +618,10 @@ function createCapitalBlock(financeApplication, assetsAnalytics, financeAnalytic
                     fillPercent: clampPercent(components.financialTrajectory),
                     ariaText: "Оценка финансовой динамики в составе индекса"
                 },
-                ...(Number(confidence?.historyObservations) >= 3 && diagnostics.trajectory?.incomeSlope !== null
+                ...(Number(confidence?.historyObservations) >= 3 &&
+                    diagnostics.trajectory?.incomeSlope !== null &&
+                    diagnostics.trajectory?.incomeSlope !== undefined &&
+                    Number.isFinite(Number(diagnostics.trajectory.incomeSlope))
                     ? [{
                         id: "income-trend",
                         label: "Тренд дохода",
