@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.3
+// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.4
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "../../domain/training/training-session.js";
@@ -73,7 +73,7 @@ const encryption = {
             ciphertext,
             nonce: new Uint8Array(12).fill(1),
             tag: new Uint8Array(16).fill(2),
-            wrappedKey: new Uint8Array([3, 4, 5]),
+            keyEnvelope: new Uint8Array(32).fill(7),
             keyVersion: "test-key-v1",
             context
         };
