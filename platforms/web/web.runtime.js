@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.19
+// platforms/web/web.runtime.js — Version 5.20
 
 import {
     trace,
@@ -300,6 +300,7 @@ export async function startWeb() {
         application.finance.clearForUser(activeUserId);
         application.health.clearForUser(activeUserId);
         application.trainingOverview.clearForUser(activeUserId);
+        application.trainingWorkoutLibrary.clearForUser(activeUserId);
         application.development.clearForUser(activeUserId);
         activeUserId = null;
 
@@ -314,7 +315,7 @@ export async function startWeb() {
         await renderRoute();
     }
 
-    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null, trainingOverviewApplication = null, trainingSessionApplication = null) {
+    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null, trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
             openLoginModal();
@@ -353,6 +354,7 @@ export async function startWeb() {
             await renderTraining(moduleContent, {
                 trainingOverviewApplication,
                 trainingSessionApplication,
+                trainingWorkoutLibraryApplication,
                 onBack: () => { window.location.hash = "health"; }
             });
             return;
@@ -547,6 +549,7 @@ export async function startWeb() {
             let lifeSystemApplication = null;
             let trainingOverviewApplication = null;
             let trainingSessionApplication = null;
+            let trainingWorkoutLibraryApplication = null;
 
             if (route === "finance") {
                 financeApplication = await application.finance.createApplicationForUser(activeUserId);
@@ -555,6 +558,7 @@ export async function startWeb() {
             } else if (route === "training") {
                 trainingOverviewApplication = await application.trainingOverview.createApplicationForUser(activeUserId);
                 trainingSessionApplication = await application.trainingSessions.createApplicationForUser(activeUserId);
+                trainingWorkoutLibraryApplication = await application.trainingWorkoutLibrary.createApplicationForUser(activeUserId);
             } else if (route === "development") {
                 developmentApplication = await application.development.createApplicationForUser(activeUserId);
                 lifeSystemApplication = await application.lifeSystem.createApplicationForUser(activeUserId);
@@ -572,7 +576,8 @@ export async function startWeb() {
                 developmentApplication,
                 lifeSystemApplication,
                 trainingOverviewApplication,
-                trainingSessionApplication
+                trainingSessionApplication,
+                trainingWorkoutLibraryApplication
             );
         } catch (error) {
             trace("web-shell", "module.hydration.error", {

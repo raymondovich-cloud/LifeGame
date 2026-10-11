@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 2.4
+# .github/workflows/preview-publish.yml — Version 2.5
 name: LifeGame Preview CI
 
 on:
@@ -68,6 +68,8 @@ jobs:
           node --experimental-default-type=module --check source/presentation/health/health.js
           node --experimental-default-type=module --check source/presentation/training/training-overview.js
           node --experimental-default-type=module --check source/presentation/training/training.js
+          node --experimental-default-type=module --check source/application/training/training-workout-library.js
+          node --experimental-default-type=module --check source/infrastructure/supabase/training-workout-library.api.js
           node --experimental-default-type=module --check source/presentation/training/training-session.js
           node --experimental-default-type=module --check source/presentation/health/section.analytics.js
           node --experimental-default-type=module --check source/domain/training/training-program.js
@@ -82,7 +84,7 @@ jobs:
           node --experimental-default-type=module --check source/infrastructure/supabase/training-program.repository.js
           node --experimental-default-type=module --check source/infrastructure/security/training-program-payload-encryption.js
           node --experimental-default-type=module --check supabase/functions/training-programs/handler.js
-          node --experimental-default-type=module --test source/domain/training/training-program.test.mjs source/application/training/training-program.test.mjs source/application/training/training-overview.read-model.test.mjs source/application/training/load-training-overview.test.mjs source/infrastructure/supabase/training-session.repository.test.mjs source/infrastructure/supabase/training-overview.api.test.mjs supabase/functions/training-programs/handler.test.mjs supabase/functions/training-sessions/handler.test.mjs
+          node --experimental-default-type=module --test source/application/training/training-workout-library.test.mjs source/domain/training/training-program.test.mjs source/application/training/training-program.test.mjs source/application/training/training-overview.read-model.test.mjs source/application/training/load-training-overview.test.mjs source/infrastructure/supabase/training-session.repository.test.mjs source/infrastructure/supabase/training-overview.api.test.mjs supabase/functions/training-programs/handler.test.mjs supabase/functions/training-sessions/handler.test.mjs
           echo "Training Program persistence boundary and Application tests passed."
 
       - name: Validate Finance presentation and carousel

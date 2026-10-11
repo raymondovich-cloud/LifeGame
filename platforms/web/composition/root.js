@@ -1,4 +1,4 @@
-// root.js — Version 3.2
+// root.js — Version 3.3
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 // Module-specific application dependencies are loaded lazily so one broken optional
@@ -11,6 +11,8 @@ import { createAuthController } from "../../../source/presentation/auth/auth.con
 import { createUserContext } from "../../../source/application/user/user.context.js";
 import { createProfileApplication } from "../../../source/application/profile/profile.js";
 import { createTrainingOverviewApi } from "../../../source/infrastructure/supabase/training-overview.api.js";
+import { createTrainingWorkoutLibraryApi } from "../../../source/infrastructure/supabase/training-workout-library.api.js";
+import { createTrainingWorkoutLibraryApplication } from "../../../source/application/training/training-workout-library.js";
 import { createTrainingSessionApi } from "../../../source/infrastructure/supabase/training-session.api.js";
 import { createTrainingSessionWorkflow } from "../../../source/application/training/training-session-workflow.js";
 import { createSupabaseProfileAdapter } from "../../../source/infrastructure/supabase/profile.adapter.js";
@@ -38,7 +40,9 @@ export function createWebApplication() {
     const developmentApplicationByUser = new Map();
     const lifeSystemApplicationByUser = new Map();
     const trainingOverviewApplicationByUser = new Map();
+    const trainingWorkoutLibraryApplicationByUser = new Map();
     const trainingOverviewApi = createTrainingOverviewApi({ client: supabaseClient });
+    const trainingWorkoutLibraryApi = createTrainingWorkoutLibraryApi({ client: supabaseClient });
     const trainingSessionApi = createTrainingSessionApi({ client: supabaseClient });
     const trainingSessionApplicationByUser = new Map();
     let trainingOverviewModulePromise = null;
@@ -128,6 +132,17 @@ export function createWebApplication() {
             }));
         }
         return trainingOverviewApplicationByUser.get(normalizedUserId);
+    }
+
+    async function createTrainingWorkoutLibraryApplicationForUser(userId) {
+        const normalizedUserId = String(userId ?? "").trim();
+        if (!normalizedUserId) throw new Error("LifeGame Web: authenticated user id is required.");
+        if (!trainingWorkoutLibraryApplicationByUser.has(normalizedUserId)) {
+            const userContext = createUserContext(normalizedUserId);
+            trainingWorkoutLibraryApplicationByUser.set(normalizedUserId,
+                createTrainingWorkoutLibraryApplication({ api: trainingWorkoutLibraryApi, userContext }));
+        }
+        return trainingWorkoutLibraryApplicationByUser.get(normalizedUserId);
     }
 
     async function loadLifeSystemModule() {
@@ -265,6 +280,12 @@ export function createWebApplication() {
             createApplicationForUser: createTrainingOverviewApplicationForUser,
             clearForUser(userId) {
                 trainingOverviewApplicationByUser.delete(String(userId ?? "").trim());
+            }
+        }),
+        trainingWorkoutLibrary: Object.freeze({
+            createApplicationForUser: createTrainingWorkoutLibraryApplicationForUser,
+            clearForUser(userId) {
+                trainingWorkoutLibraryApplicationByUser.delete(String(userId ?? "").trim());
             }
         }),
         lifeSystem: Object.freeze({
