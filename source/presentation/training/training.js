@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 3.2
+// source/presentation/training/training.js — Version 3.3
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -26,7 +26,7 @@ function renderTrainingShell(container, onBack) {
     page.append(back, intro, content); container.appendChild(page); return content;
 }
 function normalizeExercise(exercise) {
-    return { id: exercise.id, name: exercise.name, muscleGroups: Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : [], targetReps: Number.isInteger(exercise.targetReps) ? exercise.targetReps : 8 };
+    return { id: exercise.id, name: exercise.name, exerciseType: exercise.exerciseType === "cardio" ? "cardio" : "strength", muscleGroups: Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : [], targetReps: Number.isInteger(exercise.targetReps) ? exercise.targetReps : 8 };
 }
 function localId() {
     if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
@@ -44,11 +44,16 @@ function openExerciseModal(container, onSave) {
     const input = document.createElement("input"); input.type = "text"; input.name = "exerciseName"; input.autocomplete = "off";
     input.maxLength = 80; input.required = true; input.placeholder = "Например, жим лёжа"; input.setAttribute("aria-describedby", "training-exercise-modal-error");
     label.appendChild(input);
+    const typeLabel = el("label", "training-exercise-modal__label", "Тип упражнения");
+    const typeSelect = document.createElement("select"); typeSelect.name = "exerciseType"; typeSelect.required = true;
+    const cardioOption = document.createElement("option"); cardioOption.value = "cardio"; cardioOption.textContent = "Кардио тренировка";
+    const strengthOption = document.createElement("option"); strengthOption.value = "strength"; strengthOption.textContent = "Силовая тренировка";
+    typeSelect.append(cardioOption, strengthOption); typeSelect.value = "strength"; typeLabel.appendChild(typeSelect);
     const error = el("p", "training-exercise-modal__error"); error.id = "training-exercise-modal-error"; error.setAttribute("role", "alert");
     const footer = el("div", "training-exercise-modal__actions");
     const save = el("button", "training-overview__start", "СОХРАНИТЬ УПРАЖНЕНИЕ"); save.type = "submit";
     const cancel = el("button", "training-workout-builder__cancel", "Отмена"); cancel.type = "button";
-    footer.append(save, cancel); form.append(label, error, footer); dialog.append(heading, description, form); overlay.appendChild(dialog); container.appendChild(overlay);
+    footer.append(save, cancel); form.append(label, typeLabel, error, footer); dialog.append(heading, description, form); overlay.appendChild(dialog); container.appendChild(overlay);
     let closed = false;
     const close = () => { if (closed) return; closed = true; document.removeEventListener("keydown", onKeydown); overlay.remove(); if (previousFocus?.isConnected) previousFocus.focus(); };
     const onKeydown = (event) => { if (event.key === "Escape") close(); };
@@ -59,7 +64,7 @@ function openExerciseModal(container, onSave) {
         const name = input.value.trim().replace(/\s+/g, " ");
         if (!name) { error.textContent = "Введи название упражнения."; input.focus(); return; }
         save.disabled = true; cancel.disabled = true; error.textContent = "Сохраняем упражнение…";
-        try { await onSave(name); close(); }
+        try { await onSave({ name, exerciseType: typeSelect.value }); close(); }
         catch (failure) {
             error.textContent = failure?.code === "TRAINING_EXERCISE_DUPLICATE" ? "Такое упражнение уже есть в библиотеке." : failure?.message || "Не удалось сохранить упражнение. Попробуй ещё раз.";
             save.disabled = false; cancel.disabled = false; input.focus();
@@ -431,8 +436,8 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     createExercise.type = "button";
     createExercise.setAttribute("aria-label", "Создать упражнение");
     createExercise.setAttribute("title", "Создать упражнение");
-    createExercise.addEventListener("click", () => openExerciseModal(container, async (name) => {
-        await libraryApplication.createExercise({ name });
+    createExercise.addEventListener("click", () => openExerciseModal(container, async ({ name, exerciseType }) => {
+        await libraryApplication.createExercise({ name, exerciseType });
         if (typeof onExerciseCreated === "function") await onExerciseCreated();
     }));
     exerciseHeadingRow.appendChild(createExercise);
