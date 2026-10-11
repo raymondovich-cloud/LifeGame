@@ -1,4 +1,4 @@
-// supabase/functions/training-sessions/handler.js — Version 1.2
+// supabase/functions/training-sessions/handler.js — Version 1.3
 // Responsibility: authenticated HTTP boundary for the private training-session API.
 import { createSaveTrainingSession } from "../../../source/application/training/save-training-session.js";
 import { createManageTrainingSession } from "../../../source/application/training/manage-training-session.js";
@@ -6,7 +6,7 @@ import { createSupabaseTrainingSessionRepository } from "../../../source/infrast
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_BODY_BYTES=262144;
-const ACTIONS=new Set(["get","create","start","complete","revise"]);
+const ACTIONS=new Set(["get","list","create","start","complete","revise"]);
 function reply(status,body,origin,origins){
  const headers=new Headers({"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store, max-age=0","Pragma":"no-cache","X-Content-Type-Options":"nosniff","Vary":"Origin"});
  if(origin&&origins.has(origin)){headers.set("Access-Control-Allow-Origin",origin);headers.set("Access-Control-Allow-Methods","POST, OPTIONS");headers.set("Access-Control-Allow-Headers","authorization, apikey, content-type, x-client-info");headers.set("Access-Control-Max-Age","600");}
@@ -75,6 +75,9 @@ function createTrainingSessionsHandler({createUserClient,createRepositoryClient,
    if(body.action==="get"){
     result=await repository.findForUser(userContext.userId,sessionId(body.sessionId));
     if(result==null)return reply(404,{error:"TRAINING_SESSION_NOT_FOUND"},origin,origins);
+   }else if(body.action==="list"){
+    if(typeof repository.listForUser!=="function")throw new Error("Training session repository list operation is unavailable.");
+    result=await repository.listForUser(userContext.userId);
    }else if(body.action==="create"){
     result=await createSaveTrainingSession({repository,clock,createId}).execute({userContext,session:body.session});
    }else{
