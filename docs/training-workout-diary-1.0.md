@@ -1,8 +1,8 @@
-<!-- docs/training-workout-diary-1.0.md — Version 1.5 -->
+<!-- docs/training-workout-diary-1.0.md — Version 1.6 -->
 
-# LifeGame — Дневник тренировок 1.5
+# LifeGame — Дневник тренировок 1.6
 
-**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; добавлен UI-каркас Training Overview, но программы, прогресс, запуск занятия, связь UI с сессиями и remote persistence ещё не подключены.  
+**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; добавлен UI-каркас Training Overview и Domain/Application-модель программы, но реальные пользовательские программы, прогресс, запуск занятия, связь UI с сессиями и защищённое удалённое хранение программ ещё не подключены.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
@@ -47,6 +47,14 @@ source/application/training/manage-training-session.js предоставляе�
 Все revision — положительные safe integers. ID сессии — UUID в каноническом формате. При несовпадении ожидаемой версии Application возвращает `TRAINING_SESSION_CONFLICT`; отсутствие записи в scope пользователя — `TRAINING_SESSION_NOT_FOUND`. Конкретный адаптер обязан обеспечить атомарную проверку версии в БД, а не проверять её только в JavaScript.
 
 Передача userId в порт задаёт scope, но не является авторизацией. Серверная identity и политики БД обязаны независимо проверять владельца при каждой операции. Токены и service-role secrets не должны попадать во frontend.
+
+## 5.1. Доменная модель тренировочной программы
+
+`source/domain/training/training-program.js` определяет неизменяемую `TrainingProgram`: UUID, название, дату начала, продолжительность 1–52 недели, статус active/paused/completed, недельные шаблоны занятий и timestamps. Каждый шаблон задаёт стабильный ID, название, день недели, необязательную длительность и упражнения. Назначение упражнения хранит целевые группы мышц, подходы, повторения, отдых и необязательное сопротивление; для собственного веса числовая нагрузка не выдумывается.
+
+`get-training-program.js` возвращает программу текущего пользователя или `null`. `save-training-program.js` создаёт программу с revision 1 либо обновляет её с optimistic concurrency, сохраняя ID и createdAt. Repository port обязан изолировать владельца, а `updateForUser(userId, program, expectedRevision)` должен выполнять атомарный compare-and-swap. Application-контекст сам по себе не является авторизацией. Контракт покрыт unit-тестами, но конкретный защищённый persistence-адаптер программ пока не реализован.
+
+`TrainingProgram` описывает недельный шаблон, а не историю выполненных занятий. Текущая неделя, фактический прогресс и рекомендация по прошлому весу должны вычисляться отдельным Application read model на основании даты начала, расписания и завершённых `TrainingSession`; они не должны быть вручную изменяемыми полями программы.
 
 ## 6. Шифрование и открытые метаданные
 
