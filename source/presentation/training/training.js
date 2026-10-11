@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 2.0
+// source/presentation/training/training.js — Version 2.1
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -309,13 +309,20 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
         });
         templatePanel.appendChild(list);
     }
-    const exercisePanel = el("div", "training-saved-resources__panel training-saved-resources__library");
+    const exerciseSection = el("section", "training-exercise-library");
+    exerciseSection.setAttribute("aria-label", "Библиотека упражнений");
+    const exerciseHeader = el("header", "training-exercise-library__header");
+    exerciseHeader.append(
+        el("h3", "training-workout-builder__title", "Библиотека упражнений"),
+        el("p", "training-overview__description", "Все сохранённые упражнения — отдельно от твоих тренировок.")
+    );
+    const exercisePanel = el("div", "training-exercise-library__panel");
     const libraryToggle = el("button", "training-saved-resources__library-toggle");
     libraryToggle.type = "button";
     libraryToggle.setAttribute("aria-expanded", "false");
     libraryToggle.setAttribute("aria-controls", "training-exercise-library-content");
     libraryToggle.append(
-        el("span", "training-overview__eyebrow", "БИБЛИОТЕКА УПРАЖНЕНИЙ"),
+        el("span", "training-overview__eyebrow", "УПРАЖНЕНИЯ"),
         el("span", "training-saved-resources__library-meta", String(exercises.length)),
         el("span", "training-saved-resources__library-chevron", "⌄")
     );
@@ -335,7 +342,9 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
         libraryToggle.classList.toggle("is-expanded", !expanded);
     });
     exercisePanel.append(libraryToggle, libraryContent);
-    section.append(heading, templatePanel, exercisePanel); container.appendChild(section);
+    exerciseSection.append(exerciseHeader, exercisePanel);
+    section.append(heading, templatePanel);
+    container.append(section, exerciseSection);
 }
 async function renderTraining(container, { trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null, onBack = null } = {}) {
     if (!container || typeof container.replaceChildren !== "function") throw new TypeError("LifeGame Training: a container element is required.");
