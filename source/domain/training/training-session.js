@@ -56,7 +56,9 @@ function createTrainingSession(input){
  if(input.notes!=null&&typeof input.notes!=="string")throw new TypeError("Training session: notes must be text.");
  if(input.durationMinutes!=null&&(!Number.isInteger(input.durationMinutes)||input.durationMinutes<0))throw new TypeError("Training session: duration must be a non-negative integer.");
  if(!Number.isFinite(input.createdAt)||!Number.isFinite(input.updatedAt)||input.createdAt<0||input.updatedAt<input.createdAt)throw new TypeError("Training session: valid createdAt and updatedAt timestamps are required.");
+ const startedAt=input.startedAt==null?null:input.startedAt;
+ if(startedAt!==null&&(!Number.isFinite(startedAt)||startedAt<input.createdAt||startedAt>input.updatedAt))throw new TypeError("Training session: startedAt must be between creation and last update timestamps.");
  const title=typeof input.title==="string"&&input.title.trim()?input.title.trim().slice(0,80):"Моя тренировка";
- return Object.freeze({id,date:input.date,title,activityType:input.activityType,status:input.status,intensity:input.intensity,durationMinutes:input.durationMinutes??null,notes:input.notes?.trim()??"",exercises:Object.freeze(input.exercises.map(exerciseValue)),createdAt:input.createdAt,updatedAt:input.updatedAt});
+ return Object.freeze({id,date:input.date,title,activityType:input.activityType,status:input.status,intensity:input.intensity,durationMinutes:input.durationMinutes??null,notes:input.notes?.trim()??"",exercises:Object.freeze(input.exercises.map(exerciseValue)),createdAt:input.createdAt,startedAt,updatedAt:input.updatedAt});
 }
 export {TYPES as ACTIVITY_TYPES,STATUSES as SESSION_STATUSES,INTENSITIES,UNITS as RESISTANCE_UNITS,createTrainingSession,isTrainingSessionId};
