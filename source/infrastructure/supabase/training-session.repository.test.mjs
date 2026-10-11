@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.6
+// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.7
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "../../domain/training/training-session.js";
@@ -103,8 +103,9 @@ function makeSession(overrides = {}) {
         status: "planned",
         intensity: "unknown",
         durationMinutes: 35,
+        title: "Верх тела",
         notes: "first note",
-        exercises: [{ id: "bench", name: "Bench press", muscleGroups: ["chest"], sets: [] }],
+        exercises: [{ id: "bench", name: "Bench press", exerciseType: "strength", targetSets: 3, targetReps: 8, targetResistance: { value: 40, unit: "kg" }, muscleGroups: ["chest"], sets: [] }],
         createdAt: 1000,
         updatedAt: 1000,
         ...overrides
@@ -126,6 +127,8 @@ test("inserts encrypted fields and reads back a validated domain session", async
     const inserted = await repository.insertForUser(USER_ID, makeSession());
     assert.equal(inserted.revision, 1);
     assert.equal(inserted.session.id, SESSION_ID);
+    assert.equal(inserted.session.title, "Верх тела");
+    assert.equal(inserted.session.exercises[0].targetSets, 3);
     assert.equal(inserted.session.notes, "first note");
     assert.equal(inserted.session.createdAt, Date.parse("2026-10-10T10:00:00.000Z"));
     const row = client.rows.get(SESSION_ID);

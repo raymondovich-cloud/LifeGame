@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.17 */
+/* source/design/patterns/training.css — Version 3.18 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -725,3 +725,21 @@
 .training-overview::after{
     display:none;
 }
+
+
+/* Global active workout banner — Version 1.0 */
+.active-training-banner-host{display:block;width:100%;margin-top:var(--space-4)}
+.active-training-banner{
+    display:flex;align-items:center;gap:var(--space-3);width:100%;min-width:0;min-height:4.25rem;
+    padding:var(--space-3) var(--space-4);border:1px solid rgba(242,138,46,.34);
+    border-radius:var(--radius-card);background:linear-gradient(110deg,rgba(242,138,46,.13),rgba(12,12,12,.96) 62%);
+    color:var(--color-white);text-align:left;box-shadow:0 10px 32px rgba(0,0,0,.22);cursor:pointer;
+}
+.active-training-banner__copy{display:grid;gap:.3rem;flex:1 1 auto;min-width:0}
+.active-training-banner__eyebrow{color:var(--color-gray);font-family:var(--font-family-mono);font-size:.58rem;letter-spacing:.12em}
+.active-training-banner__title{overflow:hidden;color:var(--color-white);font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);text-overflow:ellipsis;white-space:nowrap}
+.active-training-banner__timer{flex:0 0 auto;color:var(--color-accent);font-family:var(--font-family-mono);font-size:var(--font-size-interface);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.active-training-banner__arrow{flex:0 0 auto;color:var(--color-accent);font-size:1.1rem}
+.active-training-banner:active{transform:translateY(1px)}
+@media (min-width:720px){.active-training-banner-host{margin-top:var(--space-5)}.active-training-banner{padding:var(--space-3) var(--space-5)}}
+@media (prefers-reduced-motion:reduce){.active-training-banner{transition:none}}

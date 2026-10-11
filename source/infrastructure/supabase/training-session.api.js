@@ -1,4 +1,4 @@
-// training-session.api.js — Version 1.0
+// training-session.api.js — Version 1.1
 // Responsibility: expose authenticated training-session commands through the browser Supabase Functions client.
 function createTrainingSessionApi({ client } = {}) {
     if (!client?.functions || typeof client.functions.invoke !== "function") {
@@ -48,8 +48,17 @@ function createTrainingSessionApi({ client } = {}) {
     async function completeSession({ sessionId, expectedRevision } = {}) {
         return envelope(await invoke({ action: "complete", sessionId, expectedRevision }), "completed");
     }
+    async function listSessions() {
+        const result = await invoke({ action: "list" });
+        if (!Array.isArray(result)) {
+            const failure = new Error("Training Session API: invalid session list.");
+            failure.code = "TRAINING_SESSION_API_INVALID_RESPONSE";
+            throw failure;
+        }
+        return Object.freeze(result.map((item) => envelope(item)));
+    }
 
-    return Object.freeze({ createSession, startSession, reviseSession, completeSession });
+    return Object.freeze({ createSession, startSession, reviseSession, completeSession, listSessions });
 }
 
 export { createTrainingSessionApi };

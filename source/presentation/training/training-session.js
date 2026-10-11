@@ -1,4 +1,4 @@
-// source/presentation/training/training-session.js — Version 2.5
+// source/presentation/training/training-session.js — Version 2.6
 // Responsibility: render the active workout interaction; delegate persistence and business rules to the application layer.
 function createElement(tag, className = "", text = null) {
     const element = document.createElement(tag);
@@ -7,7 +7,7 @@ function createElement(tag, className = "", text = null) {
     return element;
 }
 
-function renderTrainingSession(container, { sessionResult, workout, application, onFinished } = {}) {
+function renderTrainingSession(container, { sessionResult, workout, application, onFinished, onBack, onSessionChange } = {}) {
     if (!container || typeof container.replaceChildren !== "function") throw new TypeError("Training Session: a container element is required.");
     if (!sessionResult?.session || !Number.isSafeInteger(sessionResult.revision)) throw new TypeError("Training Session: a valid session envelope is required.");
     if (!workout || !Array.isArray(workout.exercises) || !application ||
@@ -16,7 +16,7 @@ function renderTrainingSession(container, { sessionResult, workout, application,
     }
 
     let current = sessionResult;
-    const startedAt = Date.now();
+    const startedAt = Number.isFinite(current.session.createdAt) ? current.session.createdAt : Date.now();
     let timerId = null;
     const expandedExerciseIds = new Set();
 
@@ -31,7 +31,7 @@ function renderTrainingSession(container, { sessionResult, workout, application,
         const back = createElement("button", "training-session__back", "← Назад");
         back.type = "button";
         back.addEventListener("click", () => {
-            if (typeof onFinished === "function") onFinished();
+            if (typeof onBack === "function") onBack();
         });
         header.append(back, title, elapsed);
 
@@ -115,6 +115,7 @@ function renderTrainingSession(container, { sessionResult, workout, application,
                             reps: repetitions,
                             resistance: selectedResistance
                         });
+                        if (typeof onSessionChange === "function") onSessionChange(current);
                         render();
                     } catch (error) {
                         checkbox.disabled = false;
@@ -181,6 +182,10 @@ function renderTrainingSession(container, { sessionResult, workout, application,
     }
 
     render();
+    return () => {
+        if (timerId !== null) window.clearInterval(timerId);
+        timerId = null;
+    };
 }
 
 export { renderTrainingSession };

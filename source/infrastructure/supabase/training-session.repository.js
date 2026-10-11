@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.js — Version 1.6
+// source/infrastructure/supabase/training-session.repository.js — Version 1.7
 // Responsibility: persist encrypted sessions through a server-only Supabase client; every operation is explicitly owner-scoped.
 // SERVER-ONLY: requires a trusted privileged Supabase client, a verified user context and a server-side encryption port. Never import into client bundles. Direct client table grants are intentionally revoked.
 
@@ -70,6 +70,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
     async function encryptFields(session, revision, userId) {
         const context = { userId, sessionId: session.id, sessionDate: session.date, status: session.status, revision };
         const payload = {
+            title: session.title,
             activityType: session.activityType,
             intensity: session.intensity,
             durationMinutes: session.durationMinutes,
@@ -107,6 +108,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
         const session = createTrainingSession({
             id: row.id,
             date: row.session_date,
+            title: payload.title || "Моя тренировка",
             activityType: payload.activityType,
             status: row.status,
             intensity: payload.intensity,

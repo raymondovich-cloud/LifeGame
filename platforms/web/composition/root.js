@@ -1,4 +1,4 @@
-// root.js — Version 3.3
+// root.js — Version 3.4
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 // Module-specific application dependencies are loaded lazily so one broken optional
@@ -110,6 +110,7 @@ export function createWebApplication() {
             const workflow = createTrainingSessionWorkflow({ api: trainingSessionApi });
             trainingSessionApplicationByUser.set(normalizedUserId, Object.freeze({
                 startWorkout: ({ workout } = {}) => workflow.startWorkout({ userContext, workout }),
+                getActiveWorkout: () => workflow.getActiveWorkout({ userContext }),
                 recordSet: (input = {}) => workflow.recordSet({ ...input, userContext }),
                 completeWorkout: (input = {}) => workflow.completeWorkout({ ...input, userContext })
             }));

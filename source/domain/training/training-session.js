@@ -1,15 +1,23 @@
-// source/domain/training/training-session.js — Version 1.1
+// source/domain/training/training-session.js — Version 1.2
 // Responsibility: validate and create an immutable training-session domain value.
 const TYPES=Object.freeze(["strength","cardio","mobility","other"]);
 const STATUSES=Object.freeze(["planned","in_progress","completed"]);
 const INTENSITIES=Object.freeze(["light","moderate","vigorous","unknown"]);
 const UNITS=Object.freeze(["kg","lb","bodyweight","band","machine","other"]);
+const EXERCISE_TYPES=Object.freeze(["strength","cardio"]);
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function validDate(s){if(typeof s!=="string"||!DATE.test(s))return false;const d=new Date(s+"T00:00:00.000Z");return !Number.isNaN(d.getTime())&&d.toISOString().slice(0,10)===s;}
 function text(v,f){if(typeof v!=="string"||!v.trim())throw new TypeError("Training session: "+f+" is required.");return v.trim();}
 function isTrainingSessionId(v){return typeof v==="string"&&UUID.test(v.trim());}
 function sessionId(v){const id=text(v,"id");if(!isTrainingSessionId(id))throw new TypeError("Training session: id must be a canonical UUID.");return id.toLowerCase();}
+function targetResistanceValue(value){
+ if(value==null)return null;
+ if(typeof value!=="object"||Array.isArray(value)||!UNITS.includes(value.unit))throw new TypeError("Training session: target resistance unit is invalid.");
+ if(value.unit==="bodyweight"){if(value.value!=null)throw new TypeError("Training session: bodyweight target must not contain numeric resistance.");return Object.freeze({value:null,unit:value.unit});}
+ if(typeof value.value!=="number"||!Number.isFinite(value.value)||value.value<0)throw new TypeError("Training session: target resistance must be non-negative.");
+ return Object.freeze({value:value.value,unit:value.unit});
+}
 function setValue(s){
  if(!s||typeof s!=="object"||Array.isArray(s))throw new TypeError("Training session: invalid set.");
  if(!Number.isInteger(s.reps)||s.reps<0)throw new TypeError("Training session: reps must be a non-negative integer.");
@@ -28,8 +36,13 @@ function exerciseValue(e){
  const id=text(e.id,"exercise id"),name=text(e.name,"exercise name");
  if(!Array.isArray(e.muscleGroups)||e.muscleGroups.some(g=>typeof g!=="string"||!g.trim()))throw new TypeError("Training session: muscle groups must be explicit strings.");
  if(!Array.isArray(e.sets))throw new TypeError("Training session: exercise sets must be an array.");
+ const exerciseType=e.exerciseType==null?"strength":e.exerciseType;
+ if(!EXERCISE_TYPES.includes(exerciseType))throw new TypeError("Training session: exercise type is invalid.");
+ const targetSets=e.targetSets==null?4:e.targetSets,targetReps=e.targetReps==null?8:e.targetReps;
+ if(!Number.isInteger(targetSets)||targetSets<1||targetSets>100)throw new TypeError("Training session: target sets must be from 1 to 100.");
+ if(!Number.isInteger(targetReps)||targetReps<1||targetReps>100)throw new TypeError("Training session: target reps must be from 1 to 100.");
  const muscleGroups=[...new Set(e.muscleGroups.map(g=>g.trim()))].sort();
- return Object.freeze({id,name,muscleGroups:Object.freeze(muscleGroups),sets:Object.freeze(e.sets.map(setValue))});
+ return Object.freeze({id,name,exerciseType,targetSets,targetReps,targetResistance:targetResistanceValue(e.targetResistance),muscleGroups:Object.freeze(muscleGroups),sets:Object.freeze(e.sets.map(setValue))});
 }
 function createTrainingSession(input){
  if(!input||typeof input!=="object"||Array.isArray(input))throw new TypeError("Training session: input is required.");
@@ -43,6 +56,7 @@ function createTrainingSession(input){
  if(input.notes!=null&&typeof input.notes!=="string")throw new TypeError("Training session: notes must be text.");
  if(input.durationMinutes!=null&&(!Number.isInteger(input.durationMinutes)||input.durationMinutes<0))throw new TypeError("Training session: duration must be a non-negative integer.");
  if(!Number.isFinite(input.createdAt)||!Number.isFinite(input.updatedAt)||input.createdAt<0||input.updatedAt<input.createdAt)throw new TypeError("Training session: valid createdAt and updatedAt timestamps are required.");
- return Object.freeze({id,date:input.date,activityType:input.activityType,status:input.status,intensity:input.intensity,durationMinutes:input.durationMinutes??null,notes:input.notes?.trim()??"",exercises:Object.freeze(input.exercises.map(exerciseValue)),createdAt:input.createdAt,updatedAt:input.updatedAt});
+ const title=typeof input.title==="string"&&input.title.trim()?input.title.trim().slice(0,80):"Моя тренировка";
+ return Object.freeze({id,date:input.date,title,activityType:input.activityType,status:input.status,intensity:input.intensity,durationMinutes:input.durationMinutes??null,notes:input.notes?.trim()??"",exercises:Object.freeze(input.exercises.map(exerciseValue)),createdAt:input.createdAt,updatedAt:input.updatedAt});
 }
 export {TYPES as ACTIVITY_TYPES,STATUSES as SESSION_STATUSES,INTENSITIES,UNITS as RESISTANCE_UNITS,createTrainingSession,isTrainingSessionId};

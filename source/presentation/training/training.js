@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 3.9
+// source/presentation/training/training.js — Version 4.0
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { createPinIndicator } from "../shared/pin-indicator.js";
@@ -522,7 +522,7 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     section.append(heading, templatePanel);
     container.append(section, exerciseSection);
 }
-async function renderTraining(container, { trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null, onBack = null } = {}) {
+async function renderTraining(container, { trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null, onBack = null, activeWorkout = null, onActiveWorkoutChange = null, onActiveWorkoutScreenChange = null } = {}) {
     if (!container || typeof container.replaceChildren !== "function") throw new TypeError("LifeGame Training: a container element is required.");
     const content = renderTrainingShell(container, onBack);
     if (!trainingOverviewApplication || typeof trainingOverviewApplication.execute !== "function" ||
@@ -565,16 +565,68 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
             }
         }
     });
+    let currentActiveWorkout = activeWorkout;
+    let sessionCleanup = null;
+    const notifyActiveWorkout = () => {
+        if (typeof onActiveWorkoutChange === "function") onActiveWorkoutChange(currentActiveWorkout);
+    };
+    const notifyActiveScreen = (visible) => {
+        if (typeof onActiveWorkoutScreenChange === "function") onActiveWorkoutScreenChange(visible);
+    };
+    const showActiveWorkout = ({ sessionResult, workout } = {}) => {
+        if (!sessionResult?.session || !workout) return;
+        currentActiveWorkout = { sessionResult, workout };
+        notifyActiveWorkout();
+        if (typeof sessionCleanup === "function") sessionCleanup();
+        notifyActiveScreen(true);
+        sessionCleanup = renderTrainingSession(content, {
+            sessionResult, workout, application: trainingSessionApplication,
+            onSessionChange: (nextSessionResult) => {
+                currentActiveWorkout = { sessionResult: nextSessionResult, workout: currentActiveWorkout?.workout || workout };
+                notifyActiveWorkout();
+            },
+            onBack: async () => {
+                if (typeof sessionCleanup === "function") sessionCleanup();
+                sessionCleanup = null;
+                notifyActiveScreen(false);
+                await loadOverview();
+            },
+            onFinished: async () => {
+                currentActiveWorkout = null;
+                sessionCleanup = null;
+                notifyActiveWorkout();
+                notifyActiveScreen(false);
+                await loadOverview();
+            }
+        });
+    };
     const startWorkout = async (workout) => {
-        if (!trainingSessionApplication || typeof trainingSessionApplication.startWorkout !== "function") { renderStatus(content, "Запуск тренировки пока недоступен. Попробуй позже."); return; }
+        if (!trainingSessionApplication || typeof trainingSessionApplication.startWorkout !== "function") {
+            renderStatus(content, "Запуск тренировки пока недоступен. Попробуй позже."); return;
+        }
+        if (currentActiveWorkout) { showActiveWorkout(currentActiveWorkout); return; }
         renderStatus(content, "Запускаем тренировку…");
         try {
             const sessionResult = await trainingSessionApplication.startWorkout({ workout });
-            if (content.isConnected) renderTrainingSession(content, { sessionResult, workout, application: trainingSessionApplication, onFinished: loadOverview });
+            if (content.isConnected) showActiveWorkout({ sessionResult, workout });
         } catch (error) {
-            if (content.isConnected) renderStatus(content, error?.code === "TRAINING_SESSION_CONFLICT" ? "Данные тренировки изменились. Обнови экран и попробуй снова." : "Не удалось запустить тренировку. Проверь соединение и повтори попытку.");
+            if (error?.code === "TRAINING_SESSION_ALREADY_ACTIVE" && typeof trainingSessionApplication.getActiveWorkout === "function") {
+                try {
+                    const active = await trainingSessionApplication.getActiveWorkout();
+                    if (active && content.isConnected) { showActiveWorkout(active); return; }
+                } catch {}
+            }
+            if (content.isConnected) renderStatus(content, error?.code === "TRAINING_SESSION_CONFLICT"
+                ? "Данные тренировки изменились. Обнови экран и попробуй снова."
+                : "Не удалось запустить тренировку. Проверь соединение и повтори попытку.");
         }
     };
-    await loadOverview();
+    if (currentActiveWorkout) showActiveWorkout(currentActiveWorkout);
+    else await loadOverview();
+    return () => {
+        if (typeof sessionCleanup === "function") sessionCleanup();
+        sessionCleanup = null;
+        notifyActiveScreen(false);
+    };
 }
 export { renderTraining };
