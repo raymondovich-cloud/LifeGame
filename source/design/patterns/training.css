@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 2.3 */
+/* source/design/patterns/training.css — Version 2.4 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -356,3 +356,20 @@
 .training-saved-resources__library-toggle:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;border-radius:var(--radius-sm)}
 .training-saved-resources__library-content{display:grid;gap:var(--space-3);padding:var(--space-2) 0 var(--space-1)}
 .training-saved-resources__library-content[hidden]{display:none}
+
+
+/* Saved workout read-only details — Version 1.0 */
+.training-workout-details{
+    display:grid;gap:var(--space-4);min-width:0;padding:var(--space-4);
+    background:var(--gradient-card-premium);border:1px solid rgba(242,138,46,.3);
+    border-radius:var(--radius-card);box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22)
+}
+.training-workout-details__back{justify-self:start}
+.training-workout-details__header{display:grid;gap:var(--space-3);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
+.training-workout-details__title{margin:0;color:var(--color-white);font-size:var(--font-size-section);line-height:var(--line-height-snug);overflow-wrap:anywhere}
+.training-workout-details__list{display:grid;gap:var(--space-2);margin:0;padding:0;list-style:none}
+.training-workout-details__item{display:grid;grid-template-columns:2rem minmax(0,1fr);align-items:center;gap:var(--space-3);padding:var(--space-3);border:var(--border-subtle);border-radius:var(--radius-sm);background:rgba(255,255,255,.025)}
+.training-workout-details__number{color:var(--color-accent);font-family:var(--font-family-mono);font-size:var(--font-size-xs)}
+.training-workout-details__exercise-name{min-width:0;color:var(--color-white);font-size:var(--font-size-sm);overflow-wrap:anywhere}
+.training-workout-details__empty{padding:var(--space-3);color:var(--color-gray);font-size:var(--font-size-sm)}
+@media (min-width:600px){.training-workout-details{padding:var(--space-5)}}

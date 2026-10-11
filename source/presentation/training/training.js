@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 3.0
+// source/presentation/training/training.js — Version 3.1
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -338,7 +338,42 @@ function attachSavedWorkoutInteractions(item, template, onEditTemplate, onDelete
     });
 }
 
-function renderSavedResources(container, { exercises, templates, onCreateWorkout, onStartWorkout, onEditTemplate, onDeleteTemplate, onDeleteExercise, libraryApplication, onExerciseCreated }) {
+function renderWorkoutDetails(container, template, onBack) {
+    container.replaceChildren();
+    const details = el("section", "training-workout-details");
+    details.setAttribute("aria-label", "Тренировка «" + template.title + "»");
+    const back = el("button", "training-workout-builder__cancel training-workout-details__back", "← Мои тренировки");
+    back.type = "button";
+    back.addEventListener("click", () => { if (typeof onBack === "function") onBack(); });
+    const header = el("header", "training-workout-details__header");
+    header.append(
+        el("span", "training-overview__eyebrow", "ТВОЯ ТРЕНИРОВКА"),
+        el("h3", "training-workout-details__title", template.title || "Моя тренировка"),
+        el("p", "training-overview__description", "Упражнения, которые ты добавил в это занятие.")
+    );
+    const list = el("ol", "training-workout-details__list");
+    const seen = new Set();
+    const uniqueExercises = (Array.isArray(template.exercises) ? template.exercises : []).filter((exercise) => {
+        const key = exercise?.id || (typeof exercise?.name === "string" ? exercise.name.trim().toLocaleLowerCase("ru-RU") : "");
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+    uniqueExercises.forEach((exercise, index) => {
+        const item = el("li", "training-workout-details__item");
+        item.append(
+            el("span", "training-workout-details__number", String(index + 1).padStart(2, "0")),
+            el("span", "training-workout-details__exercise-name", exercise.name || "Упражнение")
+        );
+        list.appendChild(item);
+    });
+    if (!uniqueExercises.length) {
+        list.appendChild(el("li", "training-workout-details__empty", "В этой тренировке пока нет упражнений."));
+    }
+    details.append(back, header, list);
+    container.appendChild(details);
+}
+function renderSavedResources(container, { exercises, templates, onCreateWorkout, onViewTemplate, onEditTemplate, onDeleteTemplate, onDeleteExercise, libraryApplication, onExerciseCreated }) {
     const section = el("section", "training-saved-resources"); section.setAttribute("aria-label", "Мои тренировки");
     const heading = el("header", "training-saved-resources__header");
     const headingRow = el("div", "training-saved-resources__heading-row");
@@ -356,49 +391,21 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
         const list = el("div", "training-saved-resources__list");
         templates.forEach((template) => {
             const item = el("article", "training-saved-resources__item"), info = el("div", "training-saved-resources__item-info");
-            const start = el("button", "training-overview__workout-title training-saved-resources__title-button", template.title);
+            const start = el("button", "training-overview__workout-title training-saved-resources__title-button", template.title || "Моя тренировка");
             start.type = "button";
-            start.setAttribute("aria-label", (template.exercises.length === 0 ? "Открыть пустую тренировку «" : "Начать тренировку «") + template.title + "»");
-            let longPressWasTriggered = false;
-            let longPressResetTimer = null;
-            const createWorkoutSession = () => ({
-                id: localId(),
-                title: template.title,
-                durationMinutes: null,
-                exercises: template.exercises.map(normalizeExercise)
-            });
-            const suppressLongPressClick = (event) => {
-                if (!longPressWasTriggered) return false;
-                longPressWasTriggered = false;
-                if (longPressResetTimer !== null) window.clearTimeout(longPressResetTimer);
-                longPressResetTimer = null;
-                event.preventDefault();
-                event.stopPropagation();
-                return true;
-            };
+            start.setAttribute("aria-label", "Открыть тренировку «" + (template.title || "Моя тренировка") + "»");
             start.addEventListener("click", (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                if (suppressLongPressClick(event)) return;
-                if (template.exercises.length === 0) onEditTemplate(template);
-                else onStartWorkout(createWorkoutSession());
+                if (typeof onViewTemplate === "function") onViewTemplate(template);
             });
-            const markLongPress = () => {
-                longPressWasTriggered = true;
-                if (longPressResetTimer !== null) window.clearTimeout(longPressResetTimer);
-                longPressResetTimer = window.setTimeout(() => {
-                    longPressWasTriggered = false;
-                    longPressResetTimer = null;
-                }, 800);
-            };
-            attachSavedWorkoutInteractions(item, template, onEditTemplate, onDeleteTemplate, markLongPress);
+            attachSavedWorkoutInteractions(item, template, onEditTemplate, onDeleteTemplate);
             item.addEventListener("click", (event) => {
                 if (event.target.closest("button")) return;
-                if (suppressLongPressClick(event)) return;
-                if (template.exercises.length === 0) onEditTemplate(template);
-                else onStartWorkout(createWorkoutSession());
+                if (typeof onViewTemplate === "function") onViewTemplate(template);
             });
-            info.append(start, el("p", "training-overview__description", template.exercises.length + " упражнений"));
+            const exerciseCount = Array.isArray(template.exercises) ? template.exercises.length : 0;
+            info.append(start, el("p", "training-overview__description", exerciseCount + " упражнений"));
             item.append(info); list.appendChild(item);
         });
         templatePanel.appendChild(list);
@@ -474,7 +481,7 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
             if (!content.isConnected) return;
             renderTrainingOverview(content, { program: overview?.program ?? null, hasSavedTemplates: templates.length > 0, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout });
             if (templates.length > 0) {
-                renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout,
+                renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onViewTemplate: (template) => renderWorkoutDetails(content, template, loadOverview),
                     libraryApplication: trainingWorkoutLibraryApplication, onExerciseCreated: loadOverview,
                     onEditTemplate: (template) => renderBuilder(exercises, template),
                     onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); },
