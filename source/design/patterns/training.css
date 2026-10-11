@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 1.6 */
+/* source/design/patterns/training.css — Version 1.7 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -302,3 +302,22 @@
 .training-workout-builder input{width:100%;min-height:3rem;padding:var(--space-3);border:1px solid rgba(242,138,46,.35);border-radius:var(--radius-sm);background:rgba(255,255,255,.035);color:var(--color-white);font:inherit}
 .training-workout-builder__actions button:disabled{opacity:.45;cursor:not-allowed}
 @media (min-width:600px){.training-saved-resources{padding:var(--space-5)}.training-saved-resources__item{grid-template-columns:minmax(0,1fr) auto;align-items:center}.training-saved-resources__item-actions{grid-template-columns:auto auto}.training-workout-builder__library-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Collapsible exercise library inside My Workouts — Version 1.0 */
+.training-saved-resources__library{gap:0;padding-top:var(--space-3);border-top:var(--border-subtle)}
+.training-saved-resources__library-toggle{
+    display:flex;align-items:center;gap:var(--space-3);width:100%;min-height:2.8rem;padding:var(--space-2) 0;
+    border:0;background:transparent;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent
+}
+.training-saved-resources__library-toggle .training-overview__eyebrow{flex:1;min-width:0}
+.training-saved-resources__library-meta{color:var(--color-gray);font-family:var(--font-family-mono);font-size:var(--font-size-xs)}
+.training-saved-resources__library-chevron{
+    display:grid;place-items:center;width:1.65rem;height:1.65rem;flex:0 0 auto;
+    border:var(--border-subtle);border-radius:50%;color:var(--color-accent);
+    transition:transform var(--motion-duration-fast),background var(--motion-duration-fast)
+}
+.training-saved-resources__library-toggle.is-expanded .training-saved-resources__library-chevron{transform:rotate(180deg);background:rgba(242,138,46,.08)}
+.training-saved-resources__library-toggle:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;border-radius:var(--radius-sm)}
+.training-saved-resources__library-content{display:grid;gap:var(--space-3);padding:var(--space-2) 0 var(--space-1)}
+.training-saved-resources__library-content[hidden]{display:none}
