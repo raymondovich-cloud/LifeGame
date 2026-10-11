@@ -16,7 +16,11 @@ function renderTrainingSession(container, { sessionResult, workout, application,
     }
 
     let current = sessionResult;
-    const startedAt = Number.isFinite(current.session.createdAt) ? current.session.createdAt : Date.now();
+    const startedAt = Number.isFinite(current.session.startedAt)
+        ? current.session.startedAt
+        : current.session.status === "in_progress" && Number.isFinite(current.session.updatedAt)
+            ? current.session.updatedAt
+            : Number.isFinite(current.session.createdAt) ? current.session.createdAt : Date.now();
     let timerId = null;
     const expandedExerciseIds = new Set();
 
