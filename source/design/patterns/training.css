@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.6 */
+/* source/design/patterns/training.css — Version 3.7 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -342,10 +342,12 @@
 @media (min-width:600px){.training-exercise-library{padding:var(--space-5)}}
 .training-saved-resources__library-toggle,
 .training-saved-resources__workouts-toggle{
-    display:flex;align-items:center;gap:var(--space-3);width:100%;min-height:2.8rem;padding:var(--space-3);
-    border:1px solid rgba(242,138,46,.22);border-radius:var(--radius-sm);
-    background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
-    text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent
+    display:flex;align-items:center;gap:var(--space-3);width:100%;min-height:2.8rem;padding:var(--space-2) 0;
+    border:0;background:transparent;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent
+}
+.training-saved-resources__workouts-toggle{
+    padding:var(--space-3);border:1px solid rgba(242,138,46,.22);border-radius:var(--radius-sm);
+    background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015))
 }
 .training-saved-resources__workouts-toggle .training-overview__eyebrow{flex:1;min-width:0}
 .training-saved-resources__workouts-toggle:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;border-radius:var(--radius-sm)}
