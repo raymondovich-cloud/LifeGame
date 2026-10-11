@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 2.7 */
+/* source/design/patterns/training.css — Version 2.8 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -413,3 +413,10 @@
 .training-session__set-weight:disabled{opacity:.65}
 .training-session__set-weight-unit{color:var(--color-white-soft);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold)}
 @media(max-width:380px){.training-session__set-row{grid-template-columns:1rem 1rem minmax(2.25rem,1fr) auto minmax(2.75rem,.8fr) auto;gap:var(--space-2)}.training-session__set-reps,.training-session__set-weight{padding:var(--space-1);font-size:var(--font-size-sm)}.training-session__set-unit,.training-session__set-weight-unit{font-size:.65rem}}
+
+
+/* Compact active workout header — Version 1.0 */
+.training-session--active .training-session__header{grid-template-columns:2rem minmax(0,1fr);gap:var(--space-1) var(--space-2);padding:var(--space-2) 0}
+.training-session--active .training-session__back{grid-row:1/3;width:2rem;height:2rem;min-width:0;min-height:0;padding:0;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:transparent;color:var(--color-white);font-size:1.25rem;line-height:1}
+.training-session--active .training-session__title{font-size:var(--font-size-sm);font-weight:var(--font-weight-medium);line-height:1.3}
+.training-session--active .training-session__elapsed{font-size:1.35rem;line-height:1.15;font-weight:650}
