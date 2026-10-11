@@ -1,12 +1,10 @@
-// source/presentation/health/health.js — Version 3.1
+// source/presentation/health/health.js — Version 3.2
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
 import { renderHealthAnalyticsScreen } from "./section.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
-import { renderTrainingOverview } from "../training/training-overview.js";
-import { renderTrainingSession } from "../training/training-session.js";
 
 const FACTOR_LABELS = Object.freeze({
     recovery: "Восстановление",
@@ -311,13 +309,6 @@ function createFactForm(application, onSaved, container, onAnalyticsBack) {
     return wrapper;
 }
 
-function renderTrainingOverviewStatus(container, message) {
-    const status = createElement("p", "training-overview__description", message);
-    status.setAttribute("role", "status");
-    status.setAttribute("aria-live", "polite");
-    container.replaceChildren(status);
-}
-
 function createHealthIndexBlock(healthApplication) {
     const section = createElement("section", "finance-health health-index-block");
     section.setAttribute("aria-label", "Health Index");
@@ -481,8 +472,9 @@ function renderHealthPriority(panel, index, onOpenData) {
 
 async function renderHealth(container, healthApplication, options = {}) {
     const showPresentationHeader = options.showPresentationHeader !== false;
-    const trainingOverviewApplication = options.trainingOverviewApplication || null;
-    const trainingSessionApplication = options.trainingSessionApplication || null;
+    const onOpenTraining = typeof options.onOpenTraining === "function"
+        ? options.onOpenTraining
+        : () => { window.location.hash = "training"; };
 
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
@@ -507,7 +499,19 @@ async function renderHealth(container, healthApplication, options = {}) {
 
     const healthIndex = createHealthIndexBlock(healthApplication);
     const priorityPanel = createHealthPriorityBlock();
-    const trainingPanel = createElement("div", "health-training-overview-host");
+    const trainingPanel = createElement("section", "health-overview-section health-training-entry");
+    trainingPanel.setAttribute("aria-label", "Тренировки");
+    trainingPanel.append(
+        createElement("span", "finance-section-meta", "TRAINING"),
+        createElement("h3", "health-overview-section__title", "Тренировки"),
+        createElement("p", "health-overview-section__description", "Отдельное пространство для занятий, рабочих весов и истории прогресса.")
+    );
+    const trainingAction = document.createElement("button");
+    trainingAction.type = "button";
+    trainingAction.className = "health-priority-panel__action";
+    trainingAction.textContent = "Открыть тренировки →";
+    trainingAction.addEventListener("click", onOpenTraining);
+    trainingPanel.appendChild(trainingAction);
 
     page.append(
         ...(showPresentationHeader ? [intro] : []),
@@ -545,44 +549,6 @@ async function renderHealth(container, healthApplication, options = {}) {
             renderHealthData(container, healthApplication, () => renderHealth(container, healthApplication));
         });
 
-        renderTrainingOverview(trainingPanel);
-        if (trainingOverviewApplication && typeof trainingOverviewApplication.execute === "function") {
-            renderTrainingOverviewStatus(trainingPanel, "Загружаем тренировочную программу…");
-            try {
-                const overview = await trainingOverviewApplication.execute();
-                if (!trainingPanel.isConnected) return;
-                renderTrainingOverview(trainingPanel, {
-                    program: overview?.program ?? null,
-                    previousWorkout: overview?.previousWorkout ?? null,
-                    onStartWorkout: trainingSessionApplication && typeof trainingSessionApplication.startWorkout === "function"
-                        ? async (workout) => {
-                            renderTrainingOverviewStatus(trainingPanel, "Запускаем тренировку…");
-                            try {
-                                const sessionResult = await trainingSessionApplication.startWorkout({ workout });
-                                if (!trainingPanel.isConnected) return;
-                                renderTrainingSession(trainingPanel, {
-                                    sessionResult,
-                                    workout,
-                                    application: trainingSessionApplication,
-                                    onFinished: refresh
-                                });
-                            } catch (error) {
-                                if (!trainingPanel.isConnected) return;
-                                renderTrainingOverviewStatus(
-                                    trainingPanel,
-                                    error?.code === "TRAINING_SESSION_CONFLICT"
-                                        ? "Данные тренировки изменились. Обнови экран и попробуй снова."
-                                        : "Не удалось запустить тренировку. Проверь соединение и повтори попытку."
-                                );
-                            }
-                        }
-                        : null
-                });
-            } catch {
-                if (!trainingPanel.isConnected) return;
-                renderTrainingOverviewStatus(trainingPanel, "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже.");
-            }
-        }
     };
 
     await refresh();

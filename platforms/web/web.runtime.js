@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.18
+// platforms/web/web.runtime.js — Version 5.19
 
 import {
     trace,
@@ -26,6 +26,7 @@ export async function startWeb() {
             login: "../../source/presentation/auth/login.js",
             profile: "../../source/presentation/profile/profile.js",
             health: "../../source/presentation/health/health.js",
+            training: "../../source/presentation/training/training.js",
             development: "../../source/presentation/development/development.js"
         };
 
@@ -114,6 +115,7 @@ export async function startWeb() {
     function isApplicationModule(route) {
         return route === "finance" ||
             route === "health" ||
+            route === "training" ||
             route === "development" ||
             route === "profile" ||
             route === "auth";
@@ -341,8 +343,17 @@ export async function startWeb() {
             const { renderHealth } = await getPresentation("health");
             await renderHealth(moduleContent, healthApplication, {
                 showPresentationHeader: publicMode,
+                onOpenTraining: () => { window.location.hash = "training"; }
+            });
+            return;
+        }
+
+        if (moduleId === "training") {
+            const { renderTraining } = await getPresentation("training");
+            await renderTraining(moduleContent, {
                 trainingOverviewApplication,
-                trainingSessionApplication
+                trainingSessionApplication,
+                onBack: () => { window.location.hash = "health"; }
             });
             return;
         }
@@ -442,6 +453,11 @@ export async function startWeb() {
                 title: "Подготавливаем систему здоровья",
                 description: "Загружаем ваши данные активности и прогресса."
             },
+            training: {
+                label: "TRAINING",
+                title: "Подготавливаем тренировки",
+                description: "Загружаем тренировочную программу и историю занятий."
+            },
             development: {
                 label: "DEVELOPMENT",
                 title: "Подготавливаем систему развития",
@@ -520,7 +536,7 @@ export async function startWeb() {
             return;
         }
 
-        if (["finance", "health", "development"].includes(route)) {
+        if (["finance", "health", "training", "development"].includes(route)) {
             renderAuthenticatedLoadingState(route);
         }
 
@@ -536,6 +552,7 @@ export async function startWeb() {
                 financeApplication = await application.finance.createApplicationForUser(activeUserId);
             } else if (route === "health") {
                 healthApplication = await application.health.createApplicationForUser(activeUserId);
+            } else if (route === "training") {
                 trainingOverviewApplication = await application.trainingOverview.createApplicationForUser(activeUserId);
                 trainingSessionApplication = await application.trainingSessions.createApplicationForUser(activeUserId);
             } else if (route === "development") {
