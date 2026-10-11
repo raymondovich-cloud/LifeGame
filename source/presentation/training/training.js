@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 3.5
+// source/presentation/training/training.js — Version 3.6
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -435,9 +435,6 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     );
     const templatesContent = el("div", "training-saved-resources__workouts-content");
     templatesContent.id = "training-saved-workouts-content";
-    if (templates.length === 0) {
-        templatesContent.appendChild(el("p", "training-overview__description", "Пока нет сохранённых тренировок. Нажми «+», чтобы создать первую."));
-    }
     templatesToggle.addEventListener("click", () => {
         const expanded = templatesToggle.getAttribute("aria-expanded") === "true";
         templatesToggle.setAttribute("aria-expanded", String(!expanded));
