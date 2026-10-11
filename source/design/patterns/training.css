@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.15 */
+/* source/design/patterns/training.css — Version 3.16 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -309,7 +309,7 @@
 .training-saved-resources__create:active{transform:scale(.96)}
 .training-saved-resources__create:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px}
 .training-saved-resources__list{display:grid;gap:var(--space-3)}
-.training-saved-resources__item{display:grid;gap:var(--space-3);padding:var(--space-3);border:1px solid rgba(242,138,46,.22);border-radius:calc(var(--radius-sm) + 4px);background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015))}
+.training-saved-resources__item{position:relative;display:grid;gap:var(--space-3);padding:var(--space-3);border:1px solid rgba(242,138,46,.22);border-radius:calc(var(--radius-sm) + 4px);background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015))}
 .training-saved-resources__item-info{display:grid;gap:var(--space-2)}
 .training-saved-resources__item-info h4{margin:0}
 .training-saved-resources__title-button{display:block;width:fit-content;max-width:100%;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -356,7 +356,8 @@
 .training-saved-resources__workouts-toggle:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;border-radius:var(--radius-sm)}
 .training-saved-resources__workouts-content{display:grid;gap:var(--space-3)}
 .training-saved-resources__workouts-content[hidden]{display:none}
-.training-saved-resources__pinned{font-size:.58rem;padding:.15rem .35rem;gap:.22rem}
+.training-saved-resources__pinned{position:absolute;top:var(--space-3);right:var(--space-3);z-index:2;display:inline-flex;align-items:center;font-size:.58rem;padding:.15rem .35rem;gap:.22rem}
+.training-saved-resources__item.is-pinned .training-saved-resources__item-info{padding-top:1.25rem}
 .training-saved-resources__item.is-pinned{border-color:rgba(242,138,46,.38);background:linear-gradient(110deg,rgba(242,138,46,.07),rgba(255,255,255,.025))}
 .training-saved-resources__library-toggle .training-overview__eyebrow{flex:1;min-width:0}
 .training-saved-resources__library-toggle .training-overview__eyebrow{flex:1;min-width:0}
