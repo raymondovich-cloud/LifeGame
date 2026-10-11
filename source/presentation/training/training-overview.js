@@ -1,4 +1,4 @@
-// source/presentation/training/training-overview.js — Version 1.4
+// source/presentation/training/training-overview.js — Version 1.5
 // Responsibility: render the Training Overview from an explicit presentation model; never invent user progress.
 
 function createElement(tag, className = "", text = null) {
@@ -130,46 +130,10 @@ function renderProgram(section, program, onStartWorkout, onCreateWorkout) {
     section.appendChild(next);
 }
 
-function renderRecommendation(section, previousWorkout) {
-    section.appendChild(createElement("span", "training-overview__eyebrow", "РЕКОМЕНДАЦИЯ"));
-
-    const hasPreviousSet = previousWorkout &&
-        Number.isInteger(previousWorkout.sets) && previousWorkout.sets > 0 &&
-        Number.isInteger(previousWorkout.reps) && previousWorkout.reps > 0 &&
-        Number.isFinite(previousWorkout.weightKg) && previousWorkout.weightKg >= 0;
-
-    if (!hasPreviousSet) {
-        section.append(
-            createElement(
-                "p",
-                "training-overview__recommendation-copy",
-                "После сохранения первой тренировки здесь появится сравнение подходов и рабочего веса."
-            )
-        );
-        return;
-    }
-
-    const weight = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 })
-        .format(previousWorkout.weightKg);
-
-    section.append(
-        createElement(
-            "p",
-            "training-overview__recommendation-copy",
-            `В прошлой тренировке ты выполнил ${previousWorkout.sets} × ${previousWorkout.reps} с рабочим весом ${weight} кг.`
-        ),
-        createElement(
-            "p",
-            "training-overview__recommendation-copy",
-            "Сравни результат сегодня и оцени, насколько комфортно выполняется нагрузка."
-        )
-    );
-}
 
 function renderTrainingOverview(container, {
     program = null,
     hasSavedTemplates = false,
-    previousWorkout = null,
     onStartWorkout = null,
     onCreateWorkout = null
 } = {}) {
@@ -196,17 +160,24 @@ function renderTrainingOverview(container, {
         renderProgram(programSection, program, onStartWorkout, onCreateWorkout);
     }
 
-    const hasPreviousSet = previousWorkout &&
-        Number.isInteger(previousWorkout.sets) && previousWorkout.sets > 0 &&
-        Number.isInteger(previousWorkout.reps) && previousWorkout.reps > 0 &&
-        Number.isFinite(previousWorkout.weightKg) && previousWorkout.weightKg >= 0;
     screen.append(systemHeader, heading);
     if (programSection) screen.appendChild(programSection);
-    if (hasPreviousSet) {
-        const recommendation = createSection("Рекомендация", "training-overview__recommendation");
-        renderRecommendation(recommendation, previousWorkout);
-        screen.appendChild(recommendation);
-    }
+
+    const analytics = createSection("Аналитика тренировок", "training-overview__analytics");
+    analytics.append(
+        createElement("span", "training-overview__eyebrow", "АНАЛИТИКА ТРЕНИРОВОК"),
+        createElement("h4", "training-overview__analytics-title", "Твоя динамика — в одном месте"),
+        createElement(
+            "p",
+            "training-overview__analytics-copy",
+            "Здесь появится аналитика рабочих весов, объёма нагрузки и регулярности тренировок."
+        )
+    );
+    const comingSoon = createElement("span", "training-overview__analytics-status", "СКОРО");
+    comingSoon.setAttribute("aria-label", "Аналитика тренировок скоро появится");
+    analytics.appendChild(comingSoon);
+    screen.appendChild(analytics);
+
     container.appendChild(screen);
 }
 

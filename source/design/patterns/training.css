@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 1.7 */
+/* source/design/patterns/training.css — Version 1.8 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -40,7 +40,7 @@
 .training-overview__title,
 .training-overview__program,
 .training-overview__next,
-.training-overview__recommendation{position:relative;z-index:1}
+.training-overview__analytics{position:relative;z-index:1}
 .training-overview__system{
     display:flex;
     align-items:center;
@@ -155,20 +155,40 @@
     opacity:.42;
     box-shadow:none;
 }
-.training-overview__recommendation{
+.training-overview__analytics{
     display:grid;
+    justify-items:start;
     gap:var(--space-3);
-    padding-top:var(--space-4);
-    border-top:var(--border-subtle);
+    padding:var(--space-4);
+    border:1px solid rgba(242,138,46,.22);
+    border-radius:var(--radius-sm);
+    background:linear-gradient(135deg,rgba(242,138,46,.075),rgba(255,255,255,.012) 58%);
 }
-.training-overview__recommendation-copy{
+.training-overview__analytics-title{
     margin:0;
-    color:var(--color-white-soft);
+    color:var(--color-white);
+    font-size:var(--font-size-interface);
+    font-weight:var(--font-weight-medium);
+    line-height:var(--line-height-snug);
+}
+.training-overview__analytics-copy{
+    max-width:34rem;
+    margin:0;
+    color:var(--color-gray);
     font-size:var(--font-size-sm);
     line-height:1.55;
 }
-.training-overview__recommendation-copy + .training-overview__recommendation-copy{
-    color:var(--color-gray);
+.training-overview__analytics-status{
+    display:inline-flex;
+    align-items:center;
+    min-height:1.7rem;
+    padding:0 var(--space-3);
+    border:1px solid rgba(242,138,46,.36);
+    border-radius:999px;
+    color:var(--color-accent);
+    font-family:var(--font-family-mono);
+    font-size:.62rem;
+    letter-spacing:.12em;
 }
 @media (min-width:720px){
     .training-overview{padding:var(--space-5)}

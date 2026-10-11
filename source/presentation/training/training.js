@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 1.8
+// source/presentation/training/training.js — Version 1.9
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -334,7 +334,7 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
         try {
             const [overview, exercises, templates] = await Promise.all([trainingOverviewApplication.execute(), trainingWorkoutLibraryApplication.listExercises(), trainingWorkoutLibraryApplication.listTemplates()]);
             if (!content.isConnected) return;
-            renderTrainingOverview(content, { program: overview?.program ?? null, previousWorkout: overview?.previousWorkout ?? null, hasSavedTemplates: templates.length > 0, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout });
+            renderTrainingOverview(content, { program: overview?.program ?? null, hasSavedTemplates: templates.length > 0, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout });
             if (templates.length > 0) {
                 renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout,
                     onEditTemplate: (template) => renderBuilder(exercises, template),
