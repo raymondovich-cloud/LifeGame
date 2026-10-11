@@ -1,6 +1,7 @@
-// section.analytics.js — Version 1.12
+// section.analytics.js — Version 1.13
 
 import { attachEntryEdit } from "./entry.edit.js";
+import { createPinIndicator } from "../shared/pin-indicator.js";
 
 function formatAmount(amount) {
     if (amount === null || amount === undefined || !Number.isFinite(Number(amount))) return "—";
@@ -278,13 +279,7 @@ function createAnalyticsRow(root, sectionId, entry, financeApplication, onWriteA
     const meta = document.createElement("div");
     meta.className = "assets-analytics-composition-meta";
 
-    const pin = document.createElement("span");
-    pin.className = "finance-entry-pin";
-    pin.setAttribute("aria-hidden", "true");
-    pin.innerHTML =
-        '<svg viewBox="0 0 16 16" focusable="false">' +
-            '<path d="M5.2 1.8h5.6l-.7 3.2 2.1 2.1v1.1H8.9v4.1l-.9 1.7-.9-1.7V8.2H3.8V7.1l2.1-2.1z"></path>' +
-        "</svg>";
+    const pin = createPinIndicator("ЗАКРЕПЛЕНО", "finance-entry-pin");
 
     meta.append(pin);
     main.append(label);

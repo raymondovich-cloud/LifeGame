@@ -1,6 +1,7 @@
-// source/presentation/training/training.js — Version 3.8
+// source/presentation/training/training.js — Version 3.9
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
+import { createPinIndicator } from "../shared/pin-indicator.js";
 import { renderTrainingSession } from "./training-session.js";
 function el(tag, cls = "", text = null) {
     const node = document.createElement(tag);
@@ -444,7 +445,7 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
         const list = el("div", "training-saved-resources__list");
         templates.forEach((template) => {
             const item = el("article", "training-saved-resources__item" + (template.isPinned ? " is-pinned" : "")), info = el("div", "training-saved-resources__item-info");
-            if (template.isPinned) info.appendChild(el("span", "training-saved-resources__pinned", "ЗАКРЕПЛЕНА"));
+            if (template.isPinned) info.appendChild(createPinIndicator("ЗАКРЕПЛЕНА", "training-saved-resources__pinned"));
             const start = el("button", "training-overview__workout-title training-saved-resources__title-button", template.title || "Моя тренировка");
             start.type = "button";
             start.setAttribute("aria-label", "Открыть тренировку «" + (template.title || "Моя тренировка") + "»");

@@ -1,6 +1,7 @@
-// finance.js — Version 7.42
+// finance.js — Version 7.43
 
 import { beginOperation, endOperation, trace } from "../../core/diagnostics/lifecycle.trace.js";
+import { createPinIndicator } from "../shared/pin-indicator.js";
 
 import { createAssetsAnalytics } from "../../application/finance/assets.analytics.js";
 import { createFinanceAnalytics } from "../../application/finance/finance.analytics.js";
@@ -384,19 +385,8 @@ function createCapitalBlock(financeApplication, assetsAnalytics, root, onWriteAt
     const context = document.createElement("p");
     context.className = "finance-capital-view-context";
 
-    const pinStatus = document.createElement("span");
-    pinStatus.className = "finance-capital-view-pin-status";
+    const pinStatus = createPinIndicator("ЗАКРЕПЛЕНО", "finance-capital-view-pin-status");
     pinStatus.setAttribute("aria-label", "Экран закреплён");
-    const pinLabel = document.createElement("span");
-    pinLabel.textContent = "ЗАКРЕПЛЕНО";
-    const pinIcon = document.createElement("span");
-    pinIcon.className = "finance-capital-view-pin-icon";
-    pinIcon.setAttribute("aria-hidden", "true");
-    pinIcon.innerHTML =
-        '<svg viewBox="0 0 16 16" focusable="false">' +
-            '<path d="M5.2 1.8h5.6l-.7 3.2 2.1 2.1v1.1H8.9v4.1l-.9 1.7-.9-1.7V8.2H3.8V7.1l2.1-2.1z"></path>' +
-        "</svg>";
-    pinStatus.append(pinLabel, pinIcon);
     pinStatus.hidden = true;
 
     const chart = document.createElement("div");
@@ -963,13 +953,7 @@ function createEntryRow(root, section, entry, onWriteAttempt, financeApplication
         ? "Долг " + formatAmount(entry.debt) + (entry.isCreditProduct ? " · Платёж " + formatAmount(entry.payment) + " · " + formatAmount(entry.interestRate) + "% годовых" : "")
         : formatAmount(entry.amount) + " ₽";
 
-    const pin = document.createElement("span");
-    pin.className = "finance-entry-pin";
-    pin.setAttribute("aria-hidden", "true");
-    pin.innerHTML =
-        '<svg viewBox="0 0 16 16" focusable="false">' +
-            '<path d="M5.2 1.8h5.6l-.7 3.2 2.1 2.1v1.1H8.9v4.1l-.9 1.7-.9-1.7V8.2H3.8V7.1l2.1-2.1z"></path>' +
-        "</svg>";
+    const pin = createPinIndicator("ЗАКРЕПЛЕНО", "finance-entry-pin");
 
     trailing.append(amount, pin);
     content.append(labelGroup, trailing);
