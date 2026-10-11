@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 2.8
+// source/presentation/training/training.js — Version 2.9
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -67,7 +67,7 @@ function openExerciseModal(container, onSave) {
     });
     input.focus();
 }
-function renderExerciseBuilder(container, { libraryApplication, libraryExercises, onStartWorkout, onSaved, onCancel, initialTemplate = null }) {
+function renderExerciseBuilder(container, { libraryApplication, libraryExercises, onSaved, onCancel, initialTemplate = null }) {
     const draft = initialTemplate ? initialTemplate.exercises.map(normalizeExercise) : []; container.replaceChildren();
     const builder = el("section", "training-workout-builder"); builder.setAttribute("aria-label", "Конструктор тренировки");
     const header = el("header", "training-workout-builder__header");
@@ -84,11 +84,10 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
     const empty = el("p", "training-workout-builder__empty", "Пока нет упражнений. Сначала добавь их в разделе «Библиотека упражнений», затем выбери здесь.");
     const status = el("p", "training-workout-builder__status"); status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
     const actions = el("div", "training-workout-builder__actions");
-    const saveTemplate = el("button", "training-workout-builder__add", initialTemplate ? "СОХРАНИТЬ ИЗМЕНЕНИЯ" : "СОХРАНИТЬ ШАБЛОН"); saveTemplate.type = "button";
-    const start = el("button", "training-overview__start", "НАЧАТЬ ТРЕНИРОВКУ"); start.type = "button"; start.disabled = true;
-    const cancel = el("button", "training-workout-builder__cancel", "← Назад"); cancel.type = "button"; cancel.addEventListener("click", onCancel);
+    const saveTemplate = el("button", "training-overview__start", initialTemplate ? "СОХРАНИТЬ ИЗМЕНЕНИЯ" : "СОХРАНИТЬ ТРЕНИРОВКУ"); saveTemplate.type = "button";
+        const cancel = el("button", "training-workout-builder__cancel", "← Назад"); cancel.type = "button"; cancel.addEventListener("click", onCancel);
     function renderList() {
-        list.replaceChildren(); empty.hidden = draft.length > 0; start.disabled = draft.length === 0; saveTemplate.disabled = draft.length === 0;
+        list.replaceChildren(); empty.hidden = draft.length > 0; saveTemplate.disabled = draft.length === 0;
         draft.forEach((exercise, index) => {
             const item = el("li", "training-workout-builder__item");
             const number = el("span", "training-workout-builder__number", String(index + 1).padStart(2, "0"));
@@ -119,13 +118,7 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
             status.textContent = initialTemplate ? "Изменения сохранены." : "Шаблон сохранён. Его можно будет запускать повторно."; await onSaved();
         } catch (error) { status.textContent = error?.message || "Не удалось сохранить шаблон. Попробуй ещё раз."; saveTemplate.disabled = draft.length === 0; }
     });
-    start.addEventListener("click", async () => {
-        if (!draft.length) return;
-        start.disabled = true; saveTemplate.disabled = true; status.textContent = "Запускаем твою тренировку…";
-        try { await onStartWorkout({ id: localId(), title: titleInput.value.trim() || "Моя тренировка", durationMinutes: null, exercises: draft.map((exercise) => ({ ...exercise })) }); }
-        finally { if (container.isConnected) { start.disabled = draft.length === 0; saveTemplate.disabled = draft.length === 0; } }
-    });
-    actions.append(saveTemplate, start); builder.append(header, titleLabel, libraryPanel, list, empty, status, actions, cancel); container.appendChild(builder); renderLibraryItems(); renderList();
+    actions.append(saveTemplate); builder.append(header, titleLabel, libraryPanel, list, empty, status, actions, cancel); container.appendChild(builder); renderLibraryItems(); renderList();
 }
 function openSavedWorkoutMenu(item, template, onEditTemplate, onDeleteTemplate) {
     const backdrop = el("div", "row-interaction-backdrop");
@@ -496,7 +489,7 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
         } catch (error) { if (content.isConnected) renderStatus(content, error?.message || "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже."); }
     };
     const renderBuilder = (exercises, initialTemplate = null) => renderExerciseBuilder(content, {
-        libraryApplication: trainingWorkoutLibraryApplication, libraryExercises: [...exercises], onStartWorkout: startWorkout,
+        libraryApplication: trainingWorkoutLibraryApplication, libraryExercises: [...exercises],
         initialTemplate, onSaved: async ({ refreshOnly = false } = {}) => { if (!refreshOnly) await loadOverview(); }, onCancel: loadOverview
     });
     const startWorkout = async (workout) => {
