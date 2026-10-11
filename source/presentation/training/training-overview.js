@@ -1,4 +1,4 @@
-// source/presentation/training/training-overview.js — Version 1.1
+// source/presentation/training/training-overview.js — Version 1.2
 // Responsibility: render the Training Overview from an explicit presentation model; never invent user progress.
 
 function createElement(tag, className = "", text = null) {
@@ -14,35 +14,21 @@ function createSection(label, className) {
     return section;
 }
 
-function renderProgram(section, program, onStartWorkout) {
+function renderProgram(section, program, onStartWorkout, onCreateWorkout) {
     section.appendChild(createElement("span", "training-overview__eyebrow", "ТВОЯ ПРОГРАММА"));
 
     if (!program) {
         section.append(
-            createElement("h4", "training-overview__empty-title", "Программа пока не подключена"),
-            createElement(
-                "p",
-                "training-overview__description",
-                "Можно начать тренировку без программы: сохранённые подходы попадут в твою историю."
-            )
+            createElement("h4", "training-overview__empty-title", "Собери свою первую тренировку"),
+            createElement("p", "training-overview__description", "Добавь упражнения, которые выполняешь сам. В тренировке не будет ничего лишнего.")
         );
-
-        if (typeof onStartWorkout === "function") {
-            const start = document.createElement("button");
-            start.type = "button";
-            start.className = "training-overview__start";
-            start.textContent = "НАЧАТЬ ПЕРВУЮ ТРЕНИРОВКУ";
-            start.addEventListener("click", () => onStartWorkout({
-                id: "quick-start",
-                title: "Первая тренировка",
-                durationMinutes: 45,
-                exercises: [
-                    { id: "barbell_bench_press", name: "Жим штанги лёжа", muscleGroups: ["chest", "shoulders", "triceps"], targetSets: 3, targetReps: 8 },
-                    { id: "lat_pulldown", name: "Тяга верхнего блока", muscleGroups: ["back", "biceps"], targetSets: 3, targetReps: 10 },
-                    { id: "barbell_back_squat", name: "Приседания со штангой", muscleGroups: ["core", "glutes", "hamstrings", "quadriceps"], targetSets: 3, targetReps: 8 }
-                ]
-            }));
-            section.appendChild(start);
+        if (typeof onCreateWorkout === "function") {
+            const create = document.createElement("button");
+            create.type = "button";
+            create.className = "training-overview__start";
+            create.textContent = "СОЗДАТЬ ПЕРВУЮ ТРЕНИРОВКУ";
+            create.addEventListener("click", onCreateWorkout);
+            section.appendChild(create);
         }
         return;
     }
@@ -183,7 +169,8 @@ function renderRecommendation(section, previousWorkout) {
 function renderTrainingOverview(container, {
     program = null,
     previousWorkout = null,
-    onStartWorkout = null
+    onStartWorkout = null,
+    onCreateWorkout = null
 } = {}) {
     if (!container || typeof container.replaceChildren !== "function") {
         throw new TypeError("Training Overview: a container element is required.");
@@ -202,7 +189,7 @@ function renderTrainingOverview(container, {
 
     const heading = createElement("h3", "training-overview__title", "ТРЕНИРОВКИ");
     const programSection = createSection("Твоя программа", "training-overview__program");
-    renderProgram(programSection, program, onStartWorkout);
+    renderProgram(programSection, program, onStartWorkout, onCreateWorkout);
 
     const recommendation = createSection("Рекомендация", "training-overview__recommendation");
     renderRecommendation(recommendation, previousWorkout);
