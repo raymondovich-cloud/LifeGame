@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 1.7
+# .github/workflows/preview-publish.yml — Version 1.8
 name: LifeGame Preview CI
 
 on:
@@ -72,8 +72,9 @@ jobs:
           node --experimental-default-type=module --check source/application/training/training-program-persistence-result.js
           node --experimental-default-type=module --check source/application/training/get-training-program.js
           node --experimental-default-type=module --check source/application/training/save-training-program.js
-          node --experimental-default-type=module --test source/domain/training/training-program.test.mjs source/application/training/training-program.test.mjs
-          echo "Health and Training modules parse; Training Program tests passed."
+          node --experimental-default-type=module --check source/application/training/training-overview.read-model.js
+          node --experimental-default-type=module --test source/domain/training/training-program.test.mjs source/application/training/training-program.test.mjs source/application/training/training-overview.read-model.test.mjs
+          echo "Health and Training modules parse; Training Program and Overview read-model tests passed."
 
       - name: Validate Finance presentation and carousel
         shell: bash
