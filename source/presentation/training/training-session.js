@@ -1,4 +1,4 @@
-// source/presentation/training/training-session.js — Version 2.3
+// source/presentation/training/training-session.js — Version 2.4
 // Responsibility: render the active workout interaction; delegate persistence and business rules to the application layer.
 function createElement(tag, className = "", text = null) {
     const element = document.createElement(tag);
@@ -69,6 +69,7 @@ function renderTrainingSession(container, { sessionResult, workout, application,
                 reps.value = String(savedSet?.reps ?? definition.targetReps ?? 8);
                 reps.disabled = Boolean(savedSet);
                 reps.setAttribute("aria-label", "Количество повторений, подход " + (index + 1));
+                const isCardio = definition.exerciseType === "cardio";
                 const resistance = document.createElement("input");
                 resistance.type = "number";
                 resistance.min = "0";
@@ -82,22 +83,27 @@ function renderTrainingSession(container, { sessionResult, workout, application,
                 resistance.setAttribute("aria-label", "Вес в килограммах, подход " + (index + 1));
                 const label = createElement("span", "training-session__set-unit", "ПОВТ.");
                 const weightLabel = createElement("span", "training-session__set-weight-unit", "КГ");
-                row.append(checkbox, number, reps, label, resistance, weightLabel);
+                if (isCardio) {
+                    row.classList.add("training-session__set-row--cardio");
+                    row.append(checkbox, number, reps, label);
+                } else {
+                    row.append(checkbox, number, reps, label, resistance, weightLabel);
+                }
                 if (savedSet) row.classList.add("is-complete");
                 checkbox.addEventListener("change", async () => {
                     const repetitions = Number(reps.value);
                     const weightText = resistance.value.trim();
                     const weight = weightText === "" ? null : Number(weightText);
                     if (!Number.isInteger(repetitions) || repetitions < 1 || repetitions > 100 ||
-                        (weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 1000))) {
+                        (!isCardio && weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 1000))) {
                         checkbox.checked = false;
                         if (!Number.isInteger(repetitions) || repetitions < 1 || repetitions > 100) reps.focus();
-                        else resistance.focus();
+                        else if (!isCardio) resistance.focus();
                         return;
                     }
                     checkbox.disabled = true;
                     try {
-                        const selectedResistance = weight === null
+                        const selectedResistance = isCardio || weight === null
                             ? { unit: "bodyweight", value: null }
                             : { unit: "kg", value: weight };
                         current = await application.recordSet({
