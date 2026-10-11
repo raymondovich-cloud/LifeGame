@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.7 */
+/* source/design/patterns/training.css — Version 3.8 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -346,7 +346,7 @@
     border:0;background:transparent;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent
 }
 .training-saved-resources__workouts-toggle{
-    padding:var(--space-3);border:1px solid rgba(242,138,46,.22);border-radius:var(--radius-sm);
+    padding:var(--space-3);border:1px solid rgba(242,138,46,.22);border-radius:calc(var(--radius-sm) + 4px);
     background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015))
 }
 .training-saved-resources__workouts-toggle .training-overview__eyebrow{flex:1;min-width:0}
