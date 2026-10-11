@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 1.9
+// source/presentation/training/training.js — Version 2.0
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -267,19 +267,29 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
             const start = el("button", "training-overview__workout-title training-saved-resources__title-button", template.title);
             start.type = "button";
             start.setAttribute("aria-label", "Начать тренировку «" + template.title + "»");
-            start.addEventListener("click", (event) => {
-                if (longPressWasTriggered) {
-                    longPressWasTriggered = false;
-                    if (longPressResetTimer !== null) window.clearTimeout(longPressResetTimer);
-                    longPressResetTimer = null;
-                    event.preventDefault();
-                    event.stopPropagation();
-                    return;
-                }
-                onStartWorkout({ id: template.id, title: template.title, durationMinutes: null, exercises: template.exercises.map(normalizeExercise) });
-            });
             let longPressWasTriggered = false;
             let longPressResetTimer = null;
+            const createWorkoutSession = () => ({
+                id: localId(),
+                title: template.title,
+                durationMinutes: null,
+                exercises: template.exercises.map(normalizeExercise)
+            });
+            const suppressLongPressClick = (event) => {
+                if (!longPressWasTriggered) return false;
+                longPressWasTriggered = false;
+                if (longPressResetTimer !== null) window.clearTimeout(longPressResetTimer);
+                longPressResetTimer = null;
+                event.preventDefault();
+                event.stopPropagation();
+                return true;
+            };
+            start.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (suppressLongPressClick(event)) return;
+                onStartWorkout(createWorkoutSession());
+            });
             const markLongPress = () => {
                 longPressWasTriggered = true;
                 if (longPressResetTimer !== null) window.clearTimeout(longPressResetTimer);
@@ -289,6 +299,11 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
                 }, 800);
             };
             attachSavedWorkoutInteractions(item, template, onEditTemplate, onDeleteTemplate, markLongPress);
+            item.addEventListener("click", (event) => {
+                if (event.target.closest("button")) return;
+                if (suppressLongPressClick(event)) return;
+                onStartWorkout(createWorkoutSession());
+            });
             info.append(start, el("p", "training-overview__description", template.exercises.length + " упражнений"));
             item.append(info); list.appendChild(item);
         });
