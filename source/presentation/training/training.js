@@ -193,6 +193,65 @@ function openSavedWorkoutMenu(item, template, onEditTemplate, onDeleteTemplate) 
     window.requestAnimationFrame(() => backdrop.classList.add("is-visible"));
 }
 
+
+function openExerciseMenu(item, exercise, onDeleteExercise, onStatisticsPlaceholder) {
+    const backdrop = el("div", "row-interaction-backdrop");
+    backdrop.setAttribute("role", "presentation");
+    const menu = el("div", "row-interaction-menu");
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", "Действия с упражнением «" + exercise.name + "»");
+    const remove = el("button", "row-interaction-menu__item", "Удалить");
+    remove.type = "button";
+    remove.setAttribute("role", "menuitem");
+    const statistics = el("button", "row-interaction-menu__item", "Статистика");
+    statistics.type = "button";
+    statistics.setAttribute("role", "menuitem");
+    menu.append(remove, statistics);
+    backdrop.appendChild(menu);
+    document.body.appendChild(backdrop);
+    let closing = false;
+    const cleanup = () => {
+        if (closing) return;
+        closing = true;
+        backdrop.classList.remove("is-visible");
+        window.setTimeout(() => { backdrop.remove(); item.classList.remove("is-editing-target"); }, 220);
+    };
+    remove.addEventListener("click", async (event) => {
+        event.preventDefault(); event.stopPropagation(); remove.disabled = true;
+        try { cleanup(); await onDeleteExercise(exercise.id); }
+        catch { remove.disabled = false; }
+    });
+    statistics.addEventListener("click", (event) => {
+        event.preventDefault(); event.stopPropagation(); cleanup();
+        if (typeof onStatisticsPlaceholder === "function") onStatisticsPlaceholder(exercise);
+    });
+    backdrop.addEventListener("click", (event) => { if (event.target === backdrop) cleanup(); });
+    menu.addEventListener("click", (event) => event.stopPropagation());
+    window.requestAnimationFrame(() => backdrop.classList.add("is-visible"));
+}
+function attachExerciseInteractions(item, exercise, onDeleteExercise, onStatisticsPlaceholder) {
+    let pressTimer = null, longPressTriggered = false, startX = 0, startY = 0, activePointerId = null;
+    const clearPressTimer = () => { if (pressTimer !== null) { window.clearTimeout(pressTimer); pressTimer = null; } };
+    const showMenu = () => { item.classList.add("is-editing-target"); openExerciseMenu(item, exercise, onDeleteExercise, onStatisticsPlaceholder); };
+    const cancelPress = () => { clearPressTimer(); item.classList.remove("is-long-pressing"); };
+    item.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        startX = event.clientX; startY = event.clientY; activePointerId = event.pointerId; longPressTriggered = false;
+        clearPressTimer(); item.classList.add("is-long-pressing");
+        pressTimer = window.setTimeout(() => { longPressTriggered = true; pressTimer = null; item.classList.remove("is-long-pressing"); showMenu(); }, 500);
+    });
+    item.addEventListener("pointermove", (event) => {
+        if (activePointerId !== event.pointerId) return;
+        if (Math.abs(event.clientX - startX) > 10 || Math.abs(event.clientY - startY) > 10) cancelPress();
+    });
+    item.addEventListener("pointerup", (event) => {
+        if (activePointerId !== event.pointerId) return;
+        clearPressTimer(); item.classList.remove("is-long-pressing"); activePointerId = null;
+        if (longPressTriggered) { event.preventDefault(); event.stopPropagation(); }
+    });
+    item.addEventListener("pointercancel", cancelPress);
+    item.addEventListener("contextmenu", (event) => { event.preventDefault(); clearPressTimer(); showMenu(); });
+}
 function attachSavedWorkoutInteractions(item, template, onEditTemplate, onDeleteTemplate, onLongPress) {
     let pressTimer = null;
     let longPressTriggered = false;
@@ -254,7 +313,7 @@ function attachSavedWorkoutInteractions(item, template, onEditTemplate, onDelete
     });
 }
 
-function renderSavedResources(container, { exercises, templates, onCreateWorkout, onStartWorkout, onEditTemplate, onDeleteTemplate, libraryApplication, onExerciseCreated }) {
+function renderSavedResources(container, { exercises, templates, onCreateWorkout, onStartWorkout, onEditTemplate, onDeleteTemplate, onDeleteExercise, libraryApplication, onExerciseCreated }) {
     const section = el("section", "training-saved-resources"); section.setAttribute("aria-label", "Мои тренировки");
     const heading = el("header", "training-saved-resources__header");
     const headingRow = el("div", "training-saved-resources__heading-row");
@@ -348,12 +407,21 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     const libraryContent = el("div", "training-saved-resources__library-content");
     libraryContent.id = "training-exercise-library-content";
     libraryContent.hidden = true;
-    if (!exercises.length) libraryContent.appendChild(el("p", "training-overview__description", "Пока нет сохранённых упражнений."));
-    else {
-        const list = el("div", "training-saved-resources__exercise-list");
-        exercises.forEach((exercise) => list.appendChild(el("span", "training-saved-resources__exercise", exercise.name)));
-        libraryContent.appendChild(list);
-    }
+    const exerciseStatus = el("p", "training-overview__description", "Пока нет сохранённых упражнений.");
+    exerciseStatus.setAttribute("role", "status");
+    exerciseStatus.hidden = exercises.length > 0;
+    libraryContent.appendChild(exerciseStatus);
+    const list = el("div", "training-saved-resources__exercise-list");
+    exercises.forEach((exercise) => {
+        const item = el("span", "training-saved-resources__exercise", exercise.name);
+        item.setAttribute("aria-label", exercise.name + ". Удерживай, чтобы открыть действия.");
+        attachExerciseInteractions(item, exercise, onDeleteExercise, () => {
+            exerciseStatus.textContent = "Статистика упражнений появится позже.";
+            exerciseStatus.hidden = false;
+        });
+        list.appendChild(item);
+    });
+    libraryContent.appendChild(list);
     libraryToggle.addEventListener("click", () => {
         const expanded = libraryToggle.getAttribute("aria-expanded") === "true";
         libraryToggle.setAttribute("aria-expanded", String(!expanded));
@@ -382,7 +450,12 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
                 renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout,
                     libraryApplication: trainingWorkoutLibraryApplication, onExerciseCreated: loadOverview,
                     onEditTemplate: (template) => renderBuilder(exercises, template),
-                    onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); } });
+                    onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); },
+                    onDeleteExercise: async (exerciseId) => {
+                        const deleted = await trainingWorkoutLibraryApplication.deleteExercise({ exerciseId });
+                        if (!deleted) throw new Error("Упражнение уже удалено или не найдено.");
+                        await loadOverview();
+                    } });
             }
         } catch (error) { if (content.isConnected) renderStatus(content, error?.message || "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже."); }
     };

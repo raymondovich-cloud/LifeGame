@@ -33,9 +33,11 @@ function createTrainingWorkoutLibraryApi({ client } = {}) {
     }
     async function deleteExercise(userId, exerciseId) {
         const owner = await assertOwner(userId);
-        const { error } = await client.from("training_exercises").delete().eq("user_id", owner).eq("id", exerciseId);
+        if (typeof exerciseId !== "string" || !exerciseId.trim()) throw new TypeError("Training Workout Library API: exercise id is required.");
+        const { data, error } = await client.rpc("delete_training_exercise_cascade", { p_exercise_id: exerciseId });
         if (error) throw error;
-        return true;
+        if (data !== true && data !== false) throw new TypeError("Training Workout Library API: exercise deletion response is invalid.");
+        return data;
     }
     async function listTemplates(userId) {
         const owner = await assertOwner(userId);

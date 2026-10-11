@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 2.0 */
+/* source/design/patterns/training.css — Version 2.1 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -315,6 +315,9 @@
 .training-saved-resources__item.is-editing-target{position:relative;z-index:1}
 .training-saved-resources__exercise-list{display:flex;flex-wrap:wrap;gap:var(--space-2)}
 .training-saved-resources__exercise{padding:var(--space-2) var(--space-3);border:var(--border-subtle);border-radius:999px;color:var(--color-white-soft);font-size:var(--font-size-xs)}
+.training-saved-resources__exercise{cursor:default;touch-action:pan-y;-webkit-tap-highlight-color:transparent;transition:opacity var(--motion-duration-fast),border-color var(--motion-duration-fast),background var(--motion-duration-fast)}
+.training-saved-resources__exercise.is-long-pressing{opacity:.65;border-color:rgba(242,138,46,.7);background:rgba(242,138,46,.1)}
+.training-saved-resources__exercise.is-editing-target{position:relative;z-index:1}
 .training-workout-builder__library{display:grid;gap:var(--space-3);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
 .training-workout-builder__library-header{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
 .training-workout-builder__library-header .training-overview__eyebrow{min-width:0}

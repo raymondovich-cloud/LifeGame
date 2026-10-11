@@ -34,3 +34,10 @@ test("persists a validated template with ordered exercise snapshots", async () =
     assert.equal(calls[0][2].title, "День A");
     assert.deepEqual(calls[0][2].exercises.map((item) => item.id), ["exercise-1", "exercise-2"]);
 });
+
+test("deletes an exercise through the user-scoped persistence API", async () => {
+    const { api, calls } = makeApi();
+    const app = createTrainingWorkoutLibraryApplication({ api, userContext: { userId: "user-3" } });
+    await app.deleteExercise({ exerciseId: "exercise-9" });
+    assert.deepEqual(calls[0], ["deleteExercise", "user-3", "exercise-9"]);
+});
