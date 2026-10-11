@@ -1,8 +1,8 @@
-<!-- docs/training-workout-diary-1.0.md — Version 1.8 -->
+<!-- docs/training-workout-diary-1.0.md — Version 1.9 -->
 
-# LifeGame — Дневник тренировок 1.8
+# LifeGame — Дневник тренировок 1.9
 
-**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; добавлен UI-каркас Training Overview и Domain/Application-модель программы, реализован отдельный server-side persistence boundary программ с шифрованием payload, но Training Overview UI-интеграция, запуск занятия и связь UI с сессиями ещё не подключены.  
+**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; добавлен UI-каркас Training Overview и Domain/Application-модель программы, реализован отдельный server-side persistence boundary программ с шифрованием payload, но запуск занятия и создание/изменение сессий из UI ещё не подключены.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
@@ -115,4 +115,12 @@ Domain не знает о UI, Memory, Infrastructure, пользователях
 
 ## 11. Статус защищённого хранения программы
 
-Добавлены отдельная таблица, server-side repository, Edge Function boundary и handler tests. Данные программы ещё не загружаются экраном Training Overview. Не заявляется, что production AWS KMS настроен или что миграция применена к удалённой базе. Следующий этап — проверить database test workflow, затем подключить Edge Function к Application/presentation без импорта server-only модулей в клиентский bundle.
+Добавлены отдельная таблица, server-side repository, Edge Function boundary и handler tests. Не заявляется, что production AWS KMS настроен или что миграция применена к удалённой базе.
+
+## 12. Подключение Training Overview к удалённым данным
+
+`source/infrastructure/supabase/training-overview.api.js` вызывает только authenticated Edge Functions через browser Supabase client; server-only repository/encryption modules не импортируются в клиентский bundle. `source/application/training/load-training-overview.js` параллельно загружает TrainingProgram и список сессий и передаёт фактические записи в read model. `training-sessions` handler и owner-scoped repository предоставляют `list` для текущей verified identity; список сортируется по дате и каждый payload расшифровывается на сервере.
+
+`platforms/web/composition/root.js` создаёт per-user Application wrapper, а Health Presentation отображает состояние загрузки, реальные прогресс и рекомендацию либо нейтральную ошибку. UI не создаёт фиктивные записи и кнопка «НАЧАТЬ» остаётся отключённой, пока lifecycle занятия не подключён к пользовательскому интерфейсу. Новые сценарии Application и handler list покрыты тестами, включёнными в Preview CI.
+
+Эта интеграция требует, чтобы обновлённая Edge Function `training-sessions` была развернута в целевом Supabase-проекте. Здесь remote Edge Function и миграции не развёртывались; до проверки deployment экран безопасно покажет ошибку загрузки, а не выдуманный прогресс.
