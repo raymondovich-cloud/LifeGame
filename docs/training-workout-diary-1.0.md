@@ -1,8 +1,8 @@
-<!-- docs/training-workout-diary-1.0.md — Version 1.7 -->
+<!-- docs/training-workout-diary-1.0.md — Version 1.8 -->
 
-# LifeGame — Дневник тренировок 1.7
+# LifeGame — Дневник тренировок 1.8
 
-**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; добавлен UI-каркас Training Overview и Domain/Application-модель программы, но реальные пользовательские программы, UI-интеграция, запуск занятия, связь UI с сессиями и защищённое удалённое хранение программ ещё не подключены.  
+**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; добавлен UI-каркас Training Overview и Domain/Application-модель программы, реализован отдельный server-side persistence boundary программ с шифрованием payload, но Training Overview UI-интеграция, запуск занятия и связь UI с сессиями ещё не подключены.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
@@ -62,6 +62,14 @@ source/application/training/manage-training-session.js предоставляе�
 
 Рекомендация показывает только завершённые подходы с одинаковыми повторениями и числовым сопротивлением в килограммах. Собственный вес и другие единицы не конвертируются и не подменяются числовым значением. Read model покрыт unit-тестами, но пока не подключён к удалённому репозиторию и Training Overview UI.
 
+## 5.3. Защищённое хранение TrainingProgram
+
+`source/infrastructure/supabase/training-program.repository.js` реализует `findForUser`, `insertForUser` и атомарное обновление через фильтр `user_id + id + revision`. Программа уникальна для пользователя на уровне схемы. В открытом виде остаются только UUID владельца/программы, дата начала, статус, revision и timestamps. Название, длительность и недельные шаблоны передаются только в AES-256-GCM ciphertext.
+
+`supabase/functions/training-programs/handler.js` проверяет bearer token через Supabase Auth до создания привилегированного клиента, получает user ID только из проверенной identity, не принимает клиентские persistence metadata и не раскрывает детали внутренних ошибок. `supabase/functions/training-programs/index.ts` композирует серверные зависимости; для локальной разработки предусмотрен software master-key provider с HKDF, а не реальный AWS KMS. Он не считается production KMS: до production необходим утверждённый managed-key adapter, ротация ключей и проверка секретов/прав доступа.
+
+Миграция `supabase/migrations/20261011150000_create_training_programs.sql` запрещает прямые SELECT/INSERT/UPDATE для anon/authenticated, оставляет RLS включённым, ограничивает доступ server_role и фиксирует identity/owner/revision на стороне БД. Remote migration и реальные secrets здесь не применялись и не настраивались.
+
 ## 6. Шифрование и открытые метаданные
 
 Целевой контракт для будущего persistence-адаптера:
@@ -103,3 +111,8 @@ Domain не знает о UI, Memory, Infrastructure, пользователях
 ## 10. Статус этапа read model
 
 Добавлен изолированный Application read model и тесты вычисления прогресса/рекомендации. Экран по-прежнему не подключён к данным пользователя. Следующий этап — защищённое серверное хранение `TrainingProgram` с отдельным криптографическим контекстом, затем загрузка программы и истории сессий через серверный API и подключение read model к Presentation. До этого UI не должен отображать примеры как реальные пользовательские данные.
+
+
+## 11. Статус защищённого хранения программы
+
+Добавлены отдельная таблица, server-side repository, Edge Function boundary и handler tests. Данные программы ещё не загружаются экраном Training Overview. Не заявляется, что production AWS KMS настроен или что миграция применена к удалённой базе. Следующий этап — проверить database test workflow, затем подключить Edge Function к Application/presentation без импорта server-only модулей в клиентский bundle.

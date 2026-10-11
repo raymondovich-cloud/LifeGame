@@ -1,4 +1,4 @@
-# supabase/config.toml — Version 1.1 | LifeGame 3.0 — local Supabase configuration
+# supabase/config.toml — Version 1.2 | LifeGame 3.0 — local Supabase configuration
 # Generated for local development and database testing only.
 # No production credentials or secrets belong in this file.
 
@@ -39,5 +39,9 @@ additional_redirect_urls = ["http://localhost:54321"]
 enabled = false
 
 [functions.training-sessions]
+# Require a valid Supabase JWT at the Edge gateway; handler verifies the user again.
+verify_jwt = true
+
+[functions.training-programs]
 # Require a valid Supabase JWT at the Edge gateway; handler verifies the user again.
 verify_jwt = true
