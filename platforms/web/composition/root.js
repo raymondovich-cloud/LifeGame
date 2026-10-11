@@ -10,6 +10,7 @@ import { createSupabaseIdentityAdapter } from "../../../source/infrastructure/id
 import { createAuthController } from "../../../source/presentation/auth/auth.controller.js";
 import { createUserContext } from "../../../source/application/user/user.context.js";
 import { createProfileApplication } from "../../../source/application/profile/profile.js";
+import { createTrainingOverviewApi } from "../../../source/infrastructure/supabase/training-overview.api.js";
 import { createSupabaseProfileAdapter } from "../../../source/infrastructure/supabase/profile.adapter.js";
 
 function getAuthenticationRedirectUrl() {
@@ -34,6 +35,9 @@ export function createWebApplication() {
     const healthApplicationByUser = new Map();
     const developmentApplicationByUser = new Map();
     const lifeSystemApplicationByUser = new Map();
+    const trainingOverviewApplicationByUser = new Map();
+    const trainingOverviewApi = createTrainingOverviewApi({ client: supabaseClient });
+    let trainingOverviewModulePromise = null;
 
     let financeModulePromise = null;
     let healthModulePromise = null;
@@ -77,6 +81,34 @@ export function createWebApplication() {
             createDevelopmentApplication: applicationModule.createDevelopmentApplication
         }));
         return developmentModulePromise;
+    }
+
+    async function loadTrainingOverviewModule() {
+        trainingOverviewModulePromise ??= Promise.all([
+            import("../../../source/application/training/load-training-overview.js"),
+            import("../../../source/application/training/training-overview.read-model.js")
+        ]).then(([applicationModule, readModelModule]) => ({
+            createLoadTrainingOverview: applicationModule.createLoadTrainingOverview,
+            createTrainingOverviewReadModel: readModelModule.createTrainingOverviewReadModel
+        }));
+        return trainingOverviewModulePromise;
+    }
+
+    async function createTrainingOverviewApplicationForUser(userId) {
+        const normalizedUserId = String(userId ?? "").trim();
+        if (!normalizedUserId) throw new Error("LifeGame Web: authenticated user id is required.");
+        if (!trainingOverviewApplicationByUser.has(normalizedUserId)) {
+            const { createLoadTrainingOverview, createTrainingOverviewReadModel } = await loadTrainingOverviewModule();
+            const userContext = createUserContext(normalizedUserId);
+            const loader = createLoadTrainingOverview({
+                api: trainingOverviewApi,
+                readModel: createTrainingOverviewReadModel()
+            });
+            trainingOverviewApplicationByUser.set(normalizedUserId, Object.freeze({
+                execute: () => loader.execute({ userContext })
+            }));
+        }
+        return trainingOverviewApplicationByUser.get(normalizedUserId);
     }
 
     async function loadLifeSystemModule() {
@@ -202,6 +234,12 @@ export function createWebApplication() {
             clearForUser(userId) {
                 const normalizedUserId = String(userId ?? "").trim();
                 developmentApplicationByUser.delete(normalizedUserId);
+            }
+        }),
+        trainingOverview: Object.freeze({
+            createApplicationForUser: createTrainingOverviewApplicationForUser,
+            clearForUser(userId) {
+                trainingOverviewApplicationByUser.delete(String(userId ?? "").trim());
             }
         }),
         lifeSystem: Object.freeze({
