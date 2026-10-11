@@ -1,4 +1,4 @@
-// source/domain/training/training-session-lifecycle.js — Version 1.0
+// source/domain/training/training-session-lifecycle.js — Version 1.1
 // Responsibility: enforce valid lifecycle transitions and controlled edits for immutable training sessions.
 import { createTrainingSession } from "./training-session.js";
 const EDITABLE_FIELDS = new Set(["date", "activityType", "intensity", "durationMinutes", "notes", "exercises"]);
