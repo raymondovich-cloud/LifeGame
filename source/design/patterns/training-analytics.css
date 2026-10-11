@@ -1,11 +1,9 @@
-/* source/design/patterns/training-analytics.css — Version 1.0 */
+/* source/design/patterns/training-analytics.css — Version 1.1 */
 .training-analytics-screen{display:grid;gap:var(--space-4);min-width:0;padding:var(--space-4);color:var(--color-white)}
 .training-analytics__back{justify-self:start;padding:.45rem 0;border:0;background:transparent;color:var(--color-gray);font-size:var(--font-size-sm);cursor:pointer}
 .training-analytics__header{display:grid;gap:var(--space-2);padding-bottom:var(--space-3);border-bottom:var(--border-subtle)}
 .training-analytics__title{margin:0;font-size:clamp(1.45rem,5vw,2.1rem);font-weight:var(--font-weight-semibold);letter-spacing:-.04em;line-height:1.08;background:var(--gradient-text-premium);-webkit-background-clip:text;background-clip:text;color:transparent}
 .training-analytics__content{display:grid;gap:var(--space-5);min-width:0}
-.training-analytics__total{display:grid;gap:var(--space-3);padding:var(--space-4);border:1px solid rgba(242,138,46,.26);border-radius:var(--radius-card);background:var(--gradient-card-premium)}
-.training-analytics__total-value{font-size:clamp(2.6rem,12vw,4rem);line-height:1;font-weight:var(--font-weight-semibold);letter-spacing:-.06em}
 .training-analytics__metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
 .training-analytics__metric,.training-analytics__duration{display:grid;align-content:start;gap:.35rem;min-width:0;padding:var(--space-3);border:var(--border-subtle);border-radius:var(--radius-md);background:rgba(255,255,255,.025)}
 .training-analytics__metric-label{color:var(--color-gray);font-size:var(--font-size-xs)}
