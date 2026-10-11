@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 2.6 */
+/* source/design/patterns/training.css — Version 2.7 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -404,3 +404,12 @@
 .training-session__footer{position:sticky;bottom:0;z-index:5;padding:var(--space-3) 0 max(var(--space-3),env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--color-background,#080808) 22%)}
 .training-session__complete{width:100%;min-height:3.5rem}
 @media (min-width:720px){.training-session__exercise-card{padding:var(--space-5)}}
+
+
+/* Per-set repetition and resistance fields — Version 1.0 */
+.training-session__set-row{grid-template-columns:1.25rem 1.25rem minmax(2.75rem,1fr) auto minmax(3.5rem,.8fr) auto}
+.training-session__set-weight{width:100%;min-width:0;min-height:3rem;padding:var(--space-2);border:1px solid rgba(255,255,255,.08);border-radius:1rem;background:rgba(255,255,255,.08);color:var(--color-white);font:inherit;font-size:var(--font-size-interface);font-weight:var(--font-weight-semibold);text-align:center}
+.training-session__set-weight::placeholder{color:var(--color-gray);opacity:.85}
+.training-session__set-weight:disabled{opacity:.65}
+.training-session__set-weight-unit{color:var(--color-white-soft);font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold)}
+@media(max-width:380px){.training-session__set-row{grid-template-columns:1rem 1rem minmax(2.25rem,1fr) auto minmax(2.75rem,.8fr) auto;gap:var(--space-2)}.training-session__set-reps,.training-session__set-weight{padding:var(--space-1);font-size:var(--font-size-sm)}.training-session__set-unit,.training-session__set-weight-unit{font-size:.65rem}}
