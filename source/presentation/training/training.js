@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 2.4
+// source/presentation/training/training.js — Version 2.5
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -264,7 +264,7 @@ function openExerciseMenu(item, exercise, onDeleteExercise, onStatisticsPlacehol
     };
     remove.addEventListener("click", async (event) => {
         event.preventDefault(); event.stopPropagation(); remove.disabled = true;
-        try { cleanup(); await onDeleteExercise(exercise.id); }
+        try { cleanup(); await onDeleteExercise(exercise); }
         catch { remove.disabled = false; }
     });
     statistics.addEventListener("click", (event) => {
