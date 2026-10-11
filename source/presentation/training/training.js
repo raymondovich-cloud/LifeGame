@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 1.5
+// source/presentation/training/training.js — Version 1.6
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -133,6 +133,119 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
     });
     actions.append(add, saveTemplate, start); builder.append(header, titleLabel, libraryPanel, list, empty, status, actions, cancel); container.appendChild(builder); renderLibraryItems(); renderList();
 }
+function openSavedWorkoutMenu(item, template, onStartWorkout, onDeleteTemplate) {
+    const backdrop = el("div", "row-interaction-backdrop");
+    backdrop.setAttribute("role", "presentation");
+    const menu = el("div", "row-interaction-menu");
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", "Действия с тренировкой «" + template.title + "»");
+
+    const start = el("button", "row-interaction-menu__item", "Начать тренировку");
+    start.type = "button";
+    start.setAttribute("role", "menuitem");
+    const remove = el("button", "row-interaction-menu__item", "Удалить шаблон");
+    remove.type = "button";
+    remove.setAttribute("role", "menuitem");
+
+    menu.append(start, remove);
+    backdrop.appendChild(menu);
+    document.body.appendChild(backdrop);
+
+    let closing = false;
+    const cleanup = () => {
+        if (closing) return;
+        closing = true;
+        backdrop.classList.remove("is-visible");
+        window.setTimeout(() => {
+            backdrop.remove();
+            item.classList.remove("is-editing-target");
+        }, 220);
+    };
+    start.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        cleanup();
+        onStartWorkout({ id: template.id, title: template.title, durationMinutes: null, exercises: template.exercises.map(normalizeExercise) });
+    });
+    remove.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        remove.disabled = true;
+        try {
+            cleanup();
+            await onDeleteTemplate(template.id);
+        } catch {
+            remove.disabled = false;
+        }
+    });
+    backdrop.addEventListener("click", (event) => {
+        if (event.target === backdrop) cleanup();
+    });
+    menu.addEventListener("click", (event) => event.stopPropagation());
+    window.requestAnimationFrame(() => backdrop.classList.add("is-visible"));
+}
+
+function attachSavedWorkoutInteractions(item, template, onStartWorkout, onDeleteTemplate, onLongPress) {
+    let pressTimer = null;
+    let longPressTriggered = false;
+    let startX = 0;
+    let startY = 0;
+    let activePointerId = null;
+
+    const clearPressTimer = () => {
+        if (pressTimer !== null) {
+            window.clearTimeout(pressTimer);
+            pressTimer = null;
+        }
+    };
+    const showMenu = () => {
+        item.classList.add("is-editing-target");
+        openSavedWorkoutMenu(item, template, onStartWorkout, onDeleteTemplate);
+    };
+    const cancelPress = () => {
+        clearPressTimer();
+        item.classList.remove("is-long-pressing");
+    };
+
+    item.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        startX = event.clientX;
+        startY = event.clientY;
+        activePointerId = event.pointerId;
+        longPressTriggered = false;
+        clearPressTimer();
+        item.classList.add("is-long-pressing");
+        pressTimer = window.setTimeout(() => {
+            longPressTriggered = true;
+            if (typeof onLongPress === "function") onLongPress();
+            pressTimer = null;
+            item.classList.remove("is-long-pressing");
+            showMenu();
+        }, 500);
+    });
+    item.addEventListener("pointermove", (event) => {
+        if (activePointerId !== event.pointerId) return;
+        if (Math.abs(event.clientX - startX) > 10 || Math.abs(event.clientY - startY) > 10) cancelPress();
+    });
+    item.addEventListener("pointerup", (event) => {
+        if (activePointerId !== event.pointerId) return;
+        clearPressTimer();
+        item.classList.remove("is-long-pressing");
+        activePointerId = null;
+        if (longPressTriggered) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    });
+    item.addEventListener("pointercancel", cancelPress);
+    item.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        clearPressTimer();
+        if (typeof onLongPress === "function") onLongPress();
+        showMenu();
+    });
+}
+
 function renderSavedResources(container, { exercises, templates, onCreateWorkout, onStartWorkout, onDeleteTemplate }) {
     const section = el("section", "training-saved-resources"); section.setAttribute("aria-label", "Мои тренировки");
     const heading = el("header", "training-saved-resources__header");
@@ -151,13 +264,33 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
         const list = el("div", "training-saved-resources__list");
         templates.forEach((template) => {
             const item = el("article", "training-saved-resources__item"), info = el("div", "training-saved-resources__item-info");
-            info.append(el("h4", "training-overview__workout-title", template.title), el("p", "training-overview__description", template.exercises.length + " упражнений"));
-            const actions = el("div", "training-saved-resources__item-actions");
-            const start = el("button", "training-overview__start", "НАЧАТЬ"); start.type = "button";
-            start.addEventListener("click", () => onStartWorkout({ id: template.id, title: template.title, durationMinutes: null, exercises: template.exercises.map(normalizeExercise) }));
-            const remove = el("button", "training-workout-builder__remove", "Удалить шаблон"); remove.type = "button";
-            remove.addEventListener("click", async () => { remove.disabled = true; try { await onDeleteTemplate(template.id); } catch { remove.disabled = false; } });
-            actions.append(start, remove); item.append(info, actions); list.appendChild(item);
+            const start = el("button", "training-overview__workout-title training-saved-resources__title-button", template.title);
+            start.type = "button";
+            start.setAttribute("aria-label", "Начать тренировку «" + template.title + "»");
+            start.addEventListener("click", (event) => {
+                if (longPressWasTriggered) {
+                    longPressWasTriggered = false;
+                    if (longPressResetTimer !== null) window.clearTimeout(longPressResetTimer);
+                    longPressResetTimer = null;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+                onStartWorkout({ id: template.id, title: template.title, durationMinutes: null, exercises: template.exercises.map(normalizeExercise) });
+            });
+            let longPressWasTriggered = false;
+            let longPressResetTimer = null;
+            const markLongPress = () => {
+                longPressWasTriggered = true;
+                if (longPressResetTimer !== null) window.clearTimeout(longPressResetTimer);
+                longPressResetTimer = window.setTimeout(() => {
+                    longPressWasTriggered = false;
+                    longPressResetTimer = null;
+                }, 800);
+            };
+            attachSavedWorkoutInteractions(item, template, onStartWorkout, onDeleteTemplate, markLongPress);
+            info.append(start, el("p", "training-overview__description", template.exercises.length + " упражнений"));
+            item.append(info); list.appendChild(item);
         });
         templatePanel.appendChild(list);
     }
