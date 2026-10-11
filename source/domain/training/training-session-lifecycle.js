@@ -22,7 +22,7 @@ function startTrainingSession(session, updatedAt) {
     if (session.status !== "planned") {
         throw new Error("Training session lifecycle: only a planned session can be started.");
     }
-    return transition(session, "in_progress", updatedAt);
+    return createTrainingSession({ ...session, status: "in_progress", startedAt: updatedAt, updatedAt });
 }
 function completeTrainingSession(session, updatedAt) {
     assertSession(session);
