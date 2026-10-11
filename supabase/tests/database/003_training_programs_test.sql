@@ -1,4 +1,4 @@
--- supabase/tests/database/003_training_programs_test.sql — Version 1.2
+-- supabase/tests/database/003_training_programs_test.sql — Version 1.3
 -- Verifies direct access denial, owner binding, immutable identity and revision CAS for programs.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -20,7 +20,7 @@ update public.training_programs set status='paused' where id='20000000-0000-4000
 select is((select revision from public.training_programs where id='20000000-0000-4000-8000-000000000001'),1::bigint,'stale expected revision leaves the stored revision unchanged');
 update public.training_programs set status='paused' where id='20000000-0000-4000-8000-000000000001' and user_id='10000000-0000-4000-8000-000000000001' and revision=1;
 select is((select revision from public.training_programs where id='20000000-0000-4000-8000-000000000001'),2::bigint,'successful compare-and-swap increments revision');
-select throws_ok($$update public.training_programs set user_id='10000000-0000-4000-8000-000000000002' where id='20000000-0000-4000-8000-000000000001' and revision=2$$,'42501','training program identity and ownership are immutable','program ownership cannot be changed');
+select throws_ok($$update public.training_programs set user_id='10000000-0000-4000-8000-000000000002' where id='20000000-0000-4000-8000-000000000001' and revision=2$$,'42501','program identity and ownership are immutable','program ownership cannot be changed');
 reset role;
 set local role authenticated;
 select throws_ok($$select id from public.training_programs$$,'42501','permission denied for table training_programs','authenticated client cannot read program table directly');
