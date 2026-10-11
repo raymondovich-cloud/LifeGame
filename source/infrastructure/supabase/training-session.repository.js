@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.js — Version 1.7
+// source/infrastructure/supabase/training-session.repository.js — Version 1.8
 // Responsibility: persist encrypted sessions through a server-only Supabase client; every operation is explicitly owner-scoped.
 // SERVER-ONLY: requires a trusted privileged Supabase client, a verified user context and a server-side encryption port. Never import into client bundles. Direct client table grants are intentionally revoked.
 
