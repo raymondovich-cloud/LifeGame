@@ -1,4 +1,4 @@
-/* design.css — Version 3.4 */
+/* design.css — Version 3.5 */
 
 /* Единая точка входа Design System. */
 
@@ -40,7 +40,7 @@
 @import "./patterns/development.css";
 @import "./patterns/forms.css?v=20261010-1600";
 @import "./patterns/preview.css";
-@import "./patterns/statistics.css";
+@import "./patterns/statistics.css?v=20261012-1435";
 
 @import "./themes/dark.css";
 @import "./themes/light.css";
