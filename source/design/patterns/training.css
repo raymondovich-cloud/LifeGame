@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 2.2 */
+/* source/design/patterns/training.css — Version 2.3 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -250,7 +250,8 @@
 .training-workout-builder__exercise-name{min-width:0;color:var(--color-white);font-size:var(--font-size-sm);overflow-wrap:anywhere}
 .training-workout-builder__empty,.training-workout-builder__status{margin:0;color:var(--color-gray);font-size:var(--font-size-sm);line-height:1.5}
 .training-workout-builder__empty[hidden]{display:none}
-.training-workout-builder__actions{display:grid;gap:var(--space-3)}
+.training-workout-builder__actions{display:grid;grid-template-columns:1fr;gap:var(--space-3)}
+.training-workout-builder__actions .training-overview__start{width:100%}
 .training-workout-builder__add,.training-workout-builder__cancel,.training-workout-builder__remove{
     min-height:2.9rem;padding:var(--space-3) var(--space-4);border:1px solid rgba(242,138,46,.4);
     border-radius:var(--radius-sm);background:rgba(242,138,46,.06);color:var(--color-white-soft);
@@ -284,7 +285,7 @@
 .training-exercise-modal__actions{display:grid;gap:var(--space-2)}
 @media (min-width:600px){
     .training-workout-builder{padding:var(--space-5)}
-    .training-workout-builder__actions{grid-template-columns:1fr 1fr}
+    .training-workout-builder__actions{grid-template-columns:1fr}
     .training-exercise-modal__actions{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){.training-exercise-modal{backdrop-filter:none;-webkit-backdrop-filter:none}}
