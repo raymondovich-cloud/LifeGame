@@ -119,6 +119,12 @@ export async function startWeb() {
         return window.location.hash.slice(1);
     }
 
+    function getTrainingStartedAt(session) {
+        if (Number.isFinite(session?.startedAt)) return session.startedAt;
+        if (session?.status === "in_progress" && Number.isFinite(session.updatedAt)) return session.updatedAt;
+        return Number.isFinite(session?.createdAt) ? session.createdAt : Date.now();
+    }
+
     function formatTrainingElapsed(startedAt) {
         const seconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
         const hours = Math.floor(seconds / 3600);
@@ -146,7 +152,7 @@ export async function startWeb() {
         host.replaceChildren();
         const session = activeTrainingWorkout?.sessionResult?.session;
         if (!session || session.status !== "in_progress" || (getRoute() === "training" && activeTrainingScreenVisible)) return;
-        const startedAt = Number.isFinite(session.createdAt) ? session.createdAt : Date.now();
+        const startedAt = getTrainingStartedAt(session);
         const button = document.createElement("button");
         button.type = "button";
         button.className = "active-training-banner";
@@ -182,7 +188,7 @@ export async function startWeb() {
         const host = activeTrainingBannerHost;
         const timer = host?.isConnected ? host.querySelector(".active-training-banner__timer") : null;
         if (timer) {
-            timer.textContent = formatTrainingElapsed(Number.isFinite(session.createdAt) ? session.createdAt : Date.now());
+            timer.textContent = formatTrainingElapsed(getTrainingStartedAt(session));
             return;
         }
         if (!(getRoute() === "training" && activeTrainingScreenVisible)) renderActiveTrainingBanner();
