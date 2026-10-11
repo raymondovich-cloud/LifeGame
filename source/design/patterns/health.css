@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 2.1 */
+/* source/design/patterns/health.css — Version 2.2 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -465,4 +465,24 @@
     .health-overview-metric{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--space-2)}
     .health-overview-metric__value{text-align:right}
     .health-overview-metric__note{grid-column:1/-1}
+}
+
+
+/* Prevent iOS Safari focus zoom across the complete Health and Training surfaces. */
+.health-workspace input:not([type="checkbox"]):not([type="radio"]),
+.health-workspace select,
+.health-workspace textarea,
+.health-data-screen input:not([type="checkbox"]):not([type="radio"]),
+.health-data-screen select,
+.health-data-screen textarea,
+.health-analytics-screen input:not([type="checkbox"]):not([type="radio"]),
+.health-analytics-screen select,
+.health-analytics-screen textarea,
+.training-workspace input:not([type="checkbox"]):not([type="radio"]),
+.training-workspace select,
+.training-workspace textarea,
+.training-exercise-modal input:not([type="checkbox"]):not([type="radio"]),
+.training-exercise-modal select,
+.training-exercise-modal textarea {
+    font-size:16px !important;
 }
