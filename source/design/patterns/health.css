@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 2.3 */
+/* source/design/patterns/health.css — Version 2.4 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -502,4 +502,24 @@
     border:1px solid rgba(242,138,46,.24);
     border-radius:var(--radius-card);
     box-shadow:none;
+}
+
+
+/* Health training entry: align the text action to the top-right, matching Finance data management. — Version 1.0 */
+.health-overview-section.health-training-entry{
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:start;
+}
+.health-training-entry__copy{
+    display:grid;
+    grid-column:1;
+    gap:var(--space-2);
+    min-width:0;
+}
+.health-training-entry__action{
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
+    align-self:start;
+    white-space:nowrap;
 }
