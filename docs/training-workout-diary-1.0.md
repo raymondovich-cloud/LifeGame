@@ -1,8 +1,8 @@
-<!-- docs/training-workout-diary-1.0.md — Version 1.4 -->
+<!-- docs/training-workout-diary-1.0.md — Version 1.5 -->
 
-# LifeGame — Дневник тренировок 1.4
+# LifeGame — Дневник тренировок 1.5
 
-**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; UI и remote persistence не подключены.  
+**Статус:** EXPERIMENTAL — доменная модель, каталог, lifecycle, Application orchestration, persistence schema/adapter и encryption port в репозитории; добавлен UI-каркас Training Overview, но программы, прогресс, запуск занятия, связь UI с сессиями и remote persistence ещё не подключены.  
 **Дата:** 10.10.2026
 
 ## 1. Цель и границы
@@ -71,7 +71,7 @@ source/application/training/manage-training-session.js предоставляе�
 
 Domain не знает о UI, Memory, Infrastructure, пользователях, БД, сети, Apple Health или криптографии. Application координирует сценарии через внедрённый репозиторий и часы; конкретная БД не подключена.
 
-Не изменялись текущий Health UI, общий Health Index и подготовка недельной силовой активности. Не реализованы постоянное хранение, Supabase-адаптер, миграция, прикладное шифрование, синхронизация web/Telegram/iOS, импорт Apple Health, программы тренировок, пользовательские упражнения и защита от конкурентных записей на уровне БД.
+Добавлен презентационный каркас `source/presentation/training/training-overview.js` и отдельные стили `source/design/patterns/training.css`. Компонент поддерживает отображение переданных данных программы и прошлой тренировки, но пока получает пустое состояние: Application-контракты программ, получение пользовательской программы, запуск занятия и подключение сохранённых TrainingSession ещё не связаны с UI. Health Index и NEXT BEST ACTION не изменялись. Также не реализованы синхронизация web/Telegram/iOS, импорт Apple Health, пользовательские упражнения и production-проверка remote persistence.
 
 ## 9. Обязательная проверка перед production
 

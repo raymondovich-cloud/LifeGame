@@ -1,0 +1,180 @@
+/* source/design/patterns/training.css — Version 1.0 */
+
+.health-training-overview-host{min-width:0}
+.training-overview{
+    position:relative;
+    display:grid;
+    gap:var(--space-4);
+    min-width:0;
+    padding:var(--space-4);
+    overflow:hidden;
+    background:var(--gradient-card-premium);
+    border:1px solid transparent;
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22);
+}
+.training-overview::before{
+    position:absolute;
+    top:0;
+    left:8%;
+    right:8%;
+    height:1px;
+    pointer-events:none;
+    content:"";
+    background:var(--gradient-accent-line);
+    opacity:.52;
+}
+.training-overview::after{
+    position:absolute;
+    inset:0;
+    padding:1px;
+    pointer-events:none;
+    content:"";
+    background:linear-gradient(135deg,rgba(242,138,46,.38),rgba(5,5,5,.9) 44%,rgba(242,138,46,.18));
+    border-radius:inherit;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+}
+.training-overview__system,
+.training-overview__title,
+.training-overview__program,
+.training-overview__next,
+.training-overview__recommendation{position:relative;z-index:1}
+.training-overview__system{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-3);
+}
+.training-overview__brand{
+    color:var(--color-white);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-semibold);
+    letter-spacing:.16em;
+}
+.training-overview__status{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    color:var(--color-gray);
+    font-family:var(--font-family-mono);
+    font-size:.62rem;
+    letter-spacing:.08em;
+    white-space:nowrap;
+}
+.training-overview__status-dot{
+    width:.38rem;
+    height:.38rem;
+    flex:0 0 auto;
+    border-radius:50%;
+    background:var(--color-accent);
+    box-shadow:0 0 12px rgba(242,138,46,.55);
+}
+.training-overview__title{
+    margin:0;
+    color:var(--color-white);
+    font-size:var(--font-size-section);
+    font-weight:var(--font-weight-semibold);
+    letter-spacing:-.035em;
+    line-height:var(--line-height-snug);
+}
+.training-overview__program{
+    display:grid;
+    gap:var(--space-3);
+    padding-top:var(--space-4);
+    border-top:var(--border-subtle);
+}
+.training-overview__eyebrow{
+    color:var(--color-gray);
+    font-size:var(--font-size-2xs);
+    font-weight:var(--font-weight-medium);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+}
+.training-overview__program-week,
+.training-overview__empty-title,
+.training-overview__workout-title{
+    margin:0;
+    color:var(--color-white);
+    font-size:var(--font-size-interface);
+    font-weight:var(--font-weight-medium);
+    line-height:var(--line-height-snug);
+}
+.training-overview__description,
+.training-overview__progress-copy,
+.training-overview__hint{
+    margin:0;
+    color:var(--color-gray);
+    font-size:var(--font-size-sm);
+    line-height:var(--line-height-normal);
+}
+.training-overview__progress{
+    display:grid;
+    gap:var(--space-2);
+}
+.training-overview__progress-track{
+    display:block;
+    width:100%;
+    height:.3rem;
+    overflow:hidden;
+    background:var(--color-surface-highlight);
+}
+.training-overview__progress-fill{
+    display:block;
+    height:100%;
+    background:var(--gradient-accent-line);
+    transition:width var(--motion-duration-normal) cubic-bezier(.22,1,.36,1);
+}
+.training-overview__progress-copy{color:var(--color-white-soft)}
+.training-overview__next{
+    display:grid;
+    gap:var(--space-3);
+    padding-top:var(--space-4);
+    border-top:var(--border-subtle);
+}
+.training-overview__start{
+    width:100%;
+    min-height:3.25rem;
+    margin-top:var(--space-1);
+    padding:var(--space-3) var(--space-4);
+    border:1px solid rgba(242,138,46,.65);
+    border-radius:var(--radius-sm);
+    background:linear-gradient(110deg,rgba(242,138,46,.96),rgba(205,91,24,.92));
+    color:#080808;
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-semibold);
+    letter-spacing:.14em;
+    box-shadow:0 8px 28px rgba(242,138,46,.12);
+    transition:opacity var(--motion-duration-fast),transform var(--motion-duration-fast);
+}
+.training-overview__start:not(:disabled){cursor:pointer}
+.training-overview__start:not(:disabled):active{transform:translateY(1px)}
+.training-overview__start:disabled{
+    cursor:not-allowed;
+    opacity:.42;
+    box-shadow:none;
+}
+.training-overview__recommendation{
+    display:grid;
+    gap:var(--space-3);
+    padding-top:var(--space-4);
+    border-top:var(--border-subtle);
+}
+.training-overview__recommendation-copy{
+    margin:0;
+    color:var(--color-white-soft);
+    font-size:var(--font-size-sm);
+    line-height:1.55;
+}
+.training-overview__recommendation-copy + .training-overview__recommendation-copy{
+    color:var(--color-gray);
+}
+@media (min-width:720px){
+    .training-overview{padding:var(--space-5)}
+    .training-overview__start{width:max-content;min-width:12rem}
+}
+@media (prefers-reduced-motion:reduce){
+    .training-overview__progress-fill,
+    .training-overview__start{transition:none}
+}

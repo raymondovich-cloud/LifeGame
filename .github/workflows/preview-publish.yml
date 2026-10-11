@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 1.5
+# .github/workflows/preview-publish.yml — Version 1.6
 name: LifeGame Preview CI
 
 on:
@@ -66,6 +66,7 @@ jobs:
         run: |
           set -euo pipefail
           node --experimental-default-type=module --check source/presentation/health/health.js
+          node --experimental-default-type=module --check source/presentation/training/training-overview.js
           node --experimental-default-type=module --check source/presentation/health/section.analytics.js
           echo "Health presentation modules parse successfully."
 
