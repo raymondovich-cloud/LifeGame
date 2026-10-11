@@ -1,4 +1,4 @@
-// supabase/functions/training-sessions/handler.js — Version 1.3
+// supabase/functions/training-sessions/handler.js — Version 1.4
 // Responsibility: authenticated HTTP boundary for the private training-session API.
 import { createSaveTrainingSession } from "../../../source/application/training/save-training-session.js";
 import { createManageTrainingSession } from "../../../source/application/training/manage-training-session.js";
@@ -31,7 +31,7 @@ function validate(body){
  if(["start","complete","revise"].includes(body.action)&&(!Number.isSafeInteger(body.expectedRevision)||body.expectedRevision<1))throw new RequestValidationError("Invalid revision.");
  if(body.action==="create"){
   if(!body.session||typeof body.session!=="object"||Array.isArray(body.session)||body.session.status!=="planned")throw new RequestValidationError("A planned session is required.");
-  if(["id","userId","user_id","createdAt","updatedAt","revision"].some(k=>Object.hasOwn(body.session,k)))throw new RequestValidationError("Persistence metadata is server controlled.");
+  if(["id","userId","user_id","createdAt","startedAt","updatedAt","revision"].some(k=>Object.hasOwn(body.session,k)))throw new RequestValidationError("Persistence metadata is server controlled.");
  }
  if(body.action==="revise"&&(!body.changes||typeof body.changes!=="object"||Array.isArray(body.changes)))throw new RequestValidationError("Changes are required.");
  return body;
