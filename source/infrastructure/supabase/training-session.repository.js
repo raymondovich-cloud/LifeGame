@@ -74,6 +74,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
             activityType: session.activityType,
             intensity: session.intensity,
             durationMinutes: session.durationMinutes,
+            startedAt: session.startedAt,
             notes: session.notes,
             exercises: session.exercises
         };
@@ -113,6 +114,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
             status: row.status,
             intensity: payload.intensity,
             durationMinutes: payload.durationMinutes,
+            startedAt: payload.startedAt ?? (row.status === "in_progress" ? dateTimestamp(row.updated_at, "updated_at") : null),
             notes: payload.notes,
             exercises: payload.exercises,
             createdAt: dateTimestamp(row.created_at, "created_at"),
