@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 2.9 */
+/* source/design/patterns/training.css — Version 3.0 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -428,3 +428,8 @@
 .training-session--active .training-session__title{min-width:0;margin:0;font-size:var(--font-size-sm);font-weight:var(--font-weight-medium);line-height:1.3;text-align:center;overflow-wrap:anywhere}
 .training-session--active .training-session__elapsed{grid-column:auto;margin:0;font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);line-height:1.2;text-align:right;white-space:nowrap}
 @media(max-width:360px){.training-session--active .training-session__header{gap:var(--space-1)}.training-session--active .training-session__back{font-size:var(--font-size-xs)}.training-session--active .training-session__title{font-size:var(--font-size-xs)}.training-session--active .training-session__elapsed{font-size:var(--font-size-xs)}}
+
+
+/* Respect the native hidden state when exercise panels use grid layout — Version 1.0 */
+.training-session__exercise-body[hidden],
+.training-session__add-set[hidden]{display:none!important}
