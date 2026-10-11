@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 2.8
+// source/presentation/health/health.js — Version 2.9
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -473,6 +473,7 @@ function renderHealthPriority(panel, index, onOpenData) {
 
 async function renderHealth(container, healthApplication, options = {}) {
     const showPresentationHeader = options.showPresentationHeader !== false;
+    const trainingOverviewApplication = options.trainingOverviewApplication || null;
 
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
@@ -536,6 +537,22 @@ async function renderHealth(container, healthApplication, options = {}) {
         });
 
         renderTrainingOverview(trainingPanel);
+        if (trainingOverviewApplication && typeof trainingOverviewApplication.execute === "function") {
+            trainingPanel.setAttribute("role", "status");
+            trainingPanel.setAttribute("aria-live", "polite");
+            trainingPanel.textContent = "Загружаем тренировочную программу…";
+            try {
+                const overview = await trainingOverviewApplication.execute();
+                if (!trainingPanel.isConnected) return;
+                renderTrainingOverview(trainingPanel, {
+                    program: overview?.program ?? null,
+                    previousWorkout: overview?.previousWorkout ?? null
+                });
+            } catch {
+                if (!trainingPanel.isConnected) return;
+                trainingPanel.textContent = "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже.";
+            }
+        }
     };
 
     await refresh();
