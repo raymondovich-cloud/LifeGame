@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 1.7
+// source/presentation/training/training.js — Version 1.8
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -67,14 +67,14 @@ function openExerciseModal(container, onSave) {
     });
     input.focus();
 }
-function renderExerciseBuilder(container, { libraryApplication, libraryExercises, onStartWorkout, onSaved, onCancel }) {
-    const draft = []; container.replaceChildren();
+function renderExerciseBuilder(container, { libraryApplication, libraryExercises, onStartWorkout, onSaved, onCancel, initialTemplate = null }) {
+    const draft = initialTemplate ? initialTemplate.exercises.map(normalizeExercise) : []; container.replaceChildren();
     const builder = el("section", "training-workout-builder"); builder.setAttribute("aria-label", "Конструктор тренировки");
     const header = el("header", "training-workout-builder__header");
     header.append(el("span", "training-overview__eyebrow", "ТВОЯ ТРЕНИРОВКА"), el("h3", "training-workout-builder__title", "Собери своё занятие"),
         el("p", "training-overview__description", "Добавляй упражнения из своей библиотеки или создавай новые. Сохрани шаблон, чтобы повторять тренировку позже."));
     const titleLabel = el("label", "training-exercise-modal__label", "Название тренировки");
-    const titleInput = document.createElement("input"); titleInput.type = "text"; titleInput.maxLength = 80; titleInput.value = "Моя тренировка"; titleInput.setAttribute("aria-label", "Название шаблона тренировки"); titleLabel.appendChild(titleInput);
+    const titleInput = document.createElement("input"); titleInput.type = "text"; titleInput.maxLength = 80; titleInput.value = initialTemplate?.title || "Моя тренировка"; titleInput.setAttribute("aria-label", "Название шаблона тренировки"); titleLabel.appendChild(titleInput);
     const libraryPanel = el("div", "training-workout-builder__library"); libraryPanel.appendChild(el("span", "training-overview__eyebrow", "МОЯ БИБЛИОТЕКА УПРАЖНЕНИЙ"));
     const libraryEmpty = el("p", "training-overview__description", "Библиотека пока пуста. Добавь упражнение — оно сохранится в аккаунте.");
     const libraryList = el("div", "training-workout-builder__library-list");
@@ -83,7 +83,7 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
     const status = el("p", "training-workout-builder__status"); status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
     const actions = el("div", "training-workout-builder__actions");
     const add = el("button", "training-workout-builder__add", "+ Создать упражнение"); add.type = "button";
-    const saveTemplate = el("button", "training-workout-builder__add", "СОХРАНИТЬ ШАБЛОН"); saveTemplate.type = "button";
+    const saveTemplate = el("button", "training-workout-builder__add", initialTemplate ? "СОХРАНИТЬ ИЗМЕНЕНИЯ" : "СОХРАНИТЬ ШАБЛОН"); saveTemplate.type = "button";
     const start = el("button", "training-overview__start", "НАЧАТЬ ТРЕНИРОВКУ"); start.type = "button"; start.disabled = true;
     const cancel = el("button", "training-workout-builder__cancel", "← Назад"); cancel.type = "button"; cancel.addEventListener("click", onCancel);
     function renderList() {
@@ -121,8 +121,8 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
         if (!draft.length) return;
         saveTemplate.disabled = true; add.disabled = true; status.textContent = "Сохраняем шаблон…";
         try {
-            await libraryApplication.saveTemplate({ title: titleInput.value.trim().replace(/\s+/g, " "), exercises: draft.map((item) => ({ ...item })) });
-            status.textContent = "Шаблон сохранён. Его можно будет запускать повторно."; await onSaved();
+            await libraryApplication.saveTemplate({ id: initialTemplate?.id ?? null, title: titleInput.value.trim().replace(/\s+/g, " "), exercises: draft.map((item) => ({ ...item })) });
+            status.textContent = initialTemplate ? "Изменения сохранены." : "Шаблон сохранён. Его можно будет запускать повторно."; await onSaved();
         } catch (error) { status.textContent = error?.message || "Не удалось сохранить шаблон. Попробуй ещё раз."; saveTemplate.disabled = draft.length === 0; add.disabled = false; }
     });
     start.addEventListener("click", async () => {
@@ -133,21 +133,21 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
     });
     actions.append(add, saveTemplate, start); builder.append(header, titleLabel, libraryPanel, list, empty, status, actions, cancel); container.appendChild(builder); renderLibraryItems(); renderList();
 }
-function openSavedWorkoutMenu(item, template, onStartWorkout, onDeleteTemplate) {
+function openSavedWorkoutMenu(item, template, onEditTemplate, onDeleteTemplate) {
     const backdrop = el("div", "row-interaction-backdrop");
     backdrop.setAttribute("role", "presentation");
     const menu = el("div", "row-interaction-menu");
     menu.setAttribute("role", "menu");
     menu.setAttribute("aria-label", "Действия с тренировкой «" + template.title + "»");
 
-    const start = el("button", "row-interaction-menu__item", "Начать тренировку");
-    start.type = "button";
-    start.setAttribute("role", "menuitem");
-    const remove = el("button", "row-interaction-menu__item", "Удалить шаблон");
+    const edit = el("button", "row-interaction-menu__item", "Изменить тренировку");
+    edit.type = "button";
+    edit.setAttribute("role", "menuitem");
+    const remove = el("button", "row-interaction-menu__item", "Удалить тренировку");
     remove.type = "button";
     remove.setAttribute("role", "menuitem");
 
-    menu.append(start, remove);
+    menu.append(edit, remove);
     backdrop.appendChild(menu);
     document.body.appendChild(backdrop);
 
@@ -161,11 +161,11 @@ function openSavedWorkoutMenu(item, template, onStartWorkout, onDeleteTemplate) 
             item.classList.remove("is-editing-target");
         }, 220);
     };
-    start.addEventListener("click", (event) => {
+    edit.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         cleanup();
-        onStartWorkout({ id: template.id, title: template.title, durationMinutes: null, exercises: template.exercises.map(normalizeExercise) });
+        onEditTemplate(template);
     });
     remove.addEventListener("click", async (event) => {
         event.preventDefault();
@@ -185,7 +185,7 @@ function openSavedWorkoutMenu(item, template, onStartWorkout, onDeleteTemplate) 
     window.requestAnimationFrame(() => backdrop.classList.add("is-visible"));
 }
 
-function attachSavedWorkoutInteractions(item, template, onStartWorkout, onDeleteTemplate, onLongPress) {
+function attachSavedWorkoutInteractions(item, template, onEditTemplate, onDeleteTemplate, onLongPress) {
     let pressTimer = null;
     let longPressTriggered = false;
     let startX = 0;
@@ -200,7 +200,7 @@ function attachSavedWorkoutInteractions(item, template, onStartWorkout, onDelete
     };
     const showMenu = () => {
         item.classList.add("is-editing-target");
-        openSavedWorkoutMenu(item, template, onStartWorkout, onDeleteTemplate);
+        openSavedWorkoutMenu(item, template, onEditTemplate, onDeleteTemplate);
     };
     const cancelPress = () => {
         clearPressTimer();
@@ -246,7 +246,7 @@ function attachSavedWorkoutInteractions(item, template, onStartWorkout, onDelete
     });
 }
 
-function renderSavedResources(container, { exercises, templates, onCreateWorkout, onStartWorkout, onDeleteTemplate }) {
+function renderSavedResources(container, { exercises, templates, onCreateWorkout, onStartWorkout, onEditTemplate, onDeleteTemplate }) {
     const section = el("section", "training-saved-resources"); section.setAttribute("aria-label", "Мои тренировки");
     const heading = el("header", "training-saved-resources__header");
     const headingRow = el("div", "training-saved-resources__heading-row");
@@ -288,7 +288,7 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
                     longPressResetTimer = null;
                 }, 800);
             };
-            attachSavedWorkoutInteractions(item, template, onStartWorkout, onDeleteTemplate, markLongPress);
+            attachSavedWorkoutInteractions(item, template, onEditTemplate, onDeleteTemplate, markLongPress);
             info.append(start, el("p", "training-overview__description", template.exercises.length + " упражнений"));
             item.append(info); list.appendChild(item);
         });
@@ -337,13 +337,14 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
             renderTrainingOverview(content, { program: overview?.program ?? null, previousWorkout: overview?.previousWorkout ?? null, hasSavedTemplates: templates.length > 0, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout });
             if (templates.length > 0) {
                 renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout,
+                    onEditTemplate: (template) => renderBuilder(exercises, template),
                     onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); } });
             }
         } catch (error) { if (content.isConnected) renderStatus(content, error?.message || "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже."); }
     };
-    const renderBuilder = (exercises) => renderExerciseBuilder(content, {
+    const renderBuilder = (exercises, initialTemplate = null) => renderExerciseBuilder(content, {
         libraryApplication: trainingWorkoutLibraryApplication, libraryExercises: [...exercises], onStartWorkout: startWorkout,
-        onSaved: async ({ refreshOnly = false } = {}) => { if (!refreshOnly) await loadOverview(); }, onCancel: loadOverview
+        initialTemplate, onSaved: async ({ refreshOnly = false } = {}) => { if (!refreshOnly) await loadOverview(); }, onCancel: loadOverview
     });
     const startWorkout = async (workout) => {
         if (!trainingSessionApplication || typeof trainingSessionApplication.startWorkout !== "function") { renderStatus(content, "Запуск тренировки пока недоступен. Попробуй позже."); return; }
