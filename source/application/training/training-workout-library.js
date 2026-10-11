@@ -1,4 +1,4 @@
-// source/application/training/training-workout-library.js — Version 1.0
+// source/application/training/training-workout-library.js — Version 1.1
 // Responsibility: validate exercise and workout-template commands before persistence.
 function requireOwner(userContext) {
     const userId = userContext?.userId;
@@ -27,7 +27,7 @@ function normalizeExercises(exercises) {
             const error = new Error("В тренировке не должно быть повторяющихся упражнений."); error.code = "TRAINING_WORKOUT_LIBRARY_DUPLICATE_EXERCISE"; throw error;
         }
         seen.add(key);
-        return { id: exercise.id, name, muscleGroups: Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : [], targetReps: Number.isInteger(exercise.targetReps) ? exercise.targetReps : 8 };
+        return { id: exercise.id, name, exerciseType: exercise.exerciseType === "cardio" ? "cardio" : "strength", muscleGroups: Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : [], targetReps: Number.isInteger(exercise.targetReps) ? exercise.targetReps : 8 };
     });
 }
 function createTrainingWorkoutLibraryApplication({ api, userContext } = {}) {
@@ -36,7 +36,10 @@ function createTrainingWorkoutLibraryApplication({ api, userContext } = {}) {
     const owner = requireOwner(userContext);
     return Object.freeze({
         listExercises: () => api.listExercises(owner),
-        createExercise: ({ name } = {}) => api.createExercise(owner, normalizeName(name, "exercise")),
+        createExercise: ({ name, exerciseType = "strength" } = {}) => {
+            if (!["cardio", "strength"].includes(exerciseType)) throw new TypeError("Training Workout Library: invalid exercise type.");
+            return api.createExercise(owner, normalizeName(name, "exercise"), exerciseType);
+        },
         deleteExercise: ({ exerciseId } = {}) => api.deleteExercise(owner, exerciseId),
         listTemplates: () => api.listTemplates(owner),
         saveTemplate: ({ title, exercises, id = null } = {}) => api.saveTemplate(owner, { title: normalizeName(title, "title"), exercises: normalizeExercises(exercises), id }),
