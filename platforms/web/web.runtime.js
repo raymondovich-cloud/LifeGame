@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.22
+// platforms/web/web.runtime.js — Version 5.23
 
 import {
     trace,
@@ -143,8 +143,6 @@ export async function startWeb() {
     function renderActiveTrainingBanner() {
         const host = ensureActiveTrainingBannerHost();
         if (!host) return;
-        if (activeTrainingBannerTimer !== null) window.clearInterval(activeTrainingBannerTimer);
-        activeTrainingBannerTimer = null;
         host.replaceChildren();
         const session = activeTrainingWorkout?.sessionResult?.session;
         if (!session || session.status !== "in_progress" || (getRoute() === "training" && activeTrainingScreenVisible)) return;
@@ -176,13 +174,23 @@ export async function startWeb() {
             else window.location.hash = "training";
         });
         host.appendChild(button);
-        activeTrainingBannerTimer = window.setInterval(() => {
-            if (timer.isConnected) timer.textContent = formatTrainingElapsed(startedAt);
-            else {
-                window.clearInterval(activeTrainingBannerTimer);
-                activeTrainingBannerTimer = null;
-            }
-        }, 1000);
+    }
+
+    function updateActiveTrainingBannerClock() {
+        const session = activeTrainingWorkout?.sessionResult?.session;
+        if (!session || session.status !== "in_progress") return;
+        const host = activeTrainingBannerHost;
+        const timer = host?.isConnected ? host.querySelector(".active-training-banner__timer") : null;
+        if (timer) {
+            timer.textContent = formatTrainingElapsed(Number.isFinite(session.createdAt) ? session.createdAt : Date.now());
+            return;
+        }
+        if (!(getRoute() === "training" && activeTrainingScreenVisible)) renderActiveTrainingBanner();
+    }
+
+    function startActiveTrainingBannerClock() {
+        if (activeTrainingBannerTimer !== null) return;
+        activeTrainingBannerTimer = window.setInterval(updateActiveTrainingBannerClock, 1000);
     }
 
     function setActiveTrainingWorkout(value) {
@@ -502,6 +510,7 @@ export async function startWeb() {
         navigation = createNavigation(appRoot);
         navigation.setAuthenticationState(false);
         ensureActiveTrainingBannerHost();
+        startActiveTrainingBannerClock();
         navigationInitialized = true;
 
         const navigationItems = [
