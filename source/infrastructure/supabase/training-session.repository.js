@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.js — Version 1.5
+// source/infrastructure/supabase/training-session.repository.js — Version 1.6
 // Responsibility: persist encrypted sessions through a server-only Supabase client; every operation is explicitly owner-scoped.
 // SERVER-ONLY: requires a trusted privileged Supabase client, a verified user context and a server-side encryption port. Never import into client bundles. Direct client table grants are intentionally revoked.
 
@@ -135,7 +135,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
             .eq("user_id", authenticatedUserId)
             .order("session_date", { ascending: false })
             .order("created_at", { ascending: false })
-            .limit(100);
+            .limit(20);
         if (error) throw error;
         if (!Array.isArray(data)) throw new TypeError("Training session repository: list query did not return an array.");
         const results = [];
