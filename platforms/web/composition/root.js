@@ -1,4 +1,4 @@
-// root.js — Version 3.0
+// root.js — Version 3.1
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 // Module-specific application dependencies are loaded lazily so one broken optional
