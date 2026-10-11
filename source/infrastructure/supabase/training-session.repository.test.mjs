@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.5
+// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.6
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "../../domain/training/training-session.js";
@@ -191,8 +191,8 @@ test("lists only the verified user's sessions with a bounded newest-first query"
     const results = await repository.listForUser(USER_ID);
     assert.equal(results.length, 1);
     assert.equal(results[0].session.id, SESSION_ID);
-    const query = client.calls.find((call) => call.maxRows === 100);
-    assert.ok(query, "history query must be bounded to 100 rows");
+    const query = client.calls.find((call) => call.maxRows === 20);
+    assert.ok(query, "history query must be bounded to 20 rows");
     assert.ok(query.filters.some(([field, value]) => field === "user_id" && value === USER_ID));
     assert.deepEqual(query.ordering.map(([field]) => field), ["session_date", "created_at"]);
 });
