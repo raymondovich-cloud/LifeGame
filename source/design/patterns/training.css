@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.12 */
+/* source/design/patterns/training.css — Version 3.13 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -297,10 +297,10 @@
 .training-saved-resources__heading-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
 .training-saved-resources__heading-row h3{min-width:0;margin:0}
 .training-saved-resources__create{
-    display:grid;place-items:center;flex:0 0 auto;width:2.25rem;height:2.25rem;padding:0;
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:1.5rem;height:1.5rem;padding:0;
     border:1px solid rgba(242,138,46,.62);border-radius:50%;
     background:linear-gradient(145deg,rgba(242,138,46,.16),rgba(242,138,46,.035));
-    color:var(--color-accent);font-size:1.5rem;font-weight:400;line-height:1;cursor:pointer;
+    color:var(--color-accent);font-size:1rem;font-weight:400;line-height:1;cursor:pointer;
     transition:background var(--motion-duration-fast),border-color var(--motion-duration-fast),transform var(--motion-duration-fast)
 }
 .training-saved-resources__create:hover,.training-saved-resources__create:focus-visible{
