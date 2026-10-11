@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.2 */
+/* source/design/patterns/training.css — Version 3.3 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -156,13 +156,12 @@
     box-shadow:none;
 }
 .training-overview__analytics{
+    position:relative;
+    z-index:1;
     display:grid;
     justify-items:start;
     gap:var(--space-3);
-    padding:var(--space-4);
-    border:1px solid rgba(242,138,46,.22);
-    border-radius:var(--radius-sm);
-    background:linear-gradient(135deg,rgba(242,138,46,.075),rgba(255,255,255,.012) 58%);
+    min-width:0;
 }
 .training-overview__analytics-title{
     margin:0;
