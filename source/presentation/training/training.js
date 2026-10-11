@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 2.6
+// source/presentation/training/training.js — Version 2.7
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -379,7 +379,7 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
             const item = el("article", "training-saved-resources__item"), info = el("div", "training-saved-resources__item-info");
             const start = el("button", "training-overview__workout-title training-saved-resources__title-button", template.title);
             start.type = "button";
-            start.setAttribute("aria-label", "Начать тренировку «" + template.title + "»");
+            start.setAttribute("aria-label", (template.exercises.length === 0 ? "Открыть пустую тренировку «" : "Начать тренировку «") + template.title + "»");
             let longPressWasTriggered = false;
             let longPressResetTimer = null;
             const createWorkoutSession = () => ({
@@ -401,7 +401,8 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
                 event.preventDefault();
                 event.stopPropagation();
                 if (suppressLongPressClick(event)) return;
-                onStartWorkout(createWorkoutSession());
+                if (template.exercises.length === 0) onEditTemplate(template);
+                else onStartWorkout(createWorkoutSession());
             });
             const markLongPress = () => {
                 longPressWasTriggered = true;
@@ -415,7 +416,8 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
             item.addEventListener("click", (event) => {
                 if (event.target.closest("button")) return;
                 if (suppressLongPressClick(event)) return;
-                onStartWorkout(createWorkoutSession());
+                if (template.exercises.length === 0) onEditTemplate(template);
+                else onStartWorkout(createWorkoutSession());
             });
             info.append(start, el("p", "training-overview__description", template.exercises.length + " упражнений"));
             item.append(info); list.appendChild(item);
