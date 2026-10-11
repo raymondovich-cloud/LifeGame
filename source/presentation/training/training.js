@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 3.3
+// source/presentation/training/training.js — Version 3.4
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -72,7 +72,7 @@ function openExerciseModal(container, onSave) {
     });
     input.focus();
 }
-function renderExerciseBuilder(container, { libraryApplication, libraryExercises, onSaved, onCancel, initialTemplate = null }) {
+function renderExerciseBuilder(container, { libraryApplication, libraryExercises, onSaved, onCancel, onGoToLibrary, initialTemplate = null }) {
     const draft = initialTemplate ? initialTemplate.exercises.map(normalizeExercise) : []; container.replaceChildren();
     const builder = el("section", "training-workout-builder"); builder.setAttribute("aria-label", "Конструктор тренировки");
     const header = el("header", "training-workout-builder__header");
@@ -86,7 +86,12 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
     const libraryEmpty = el("p", "training-overview__description", "Библиотека пока пуста. Добавь упражнение в отдельном разделе «Библиотека упражнений».");
     const libraryList = el("div", "training-workout-builder__library-list");
     const list = el("ol", "training-workout-builder__list");
-    const empty = el("p", "training-workout-builder__empty", "Пока нет упражнений. Сначала добавь их в разделе «Библиотека упражнений», затем выбери здесь.");
+    const empty = el("div", "training-workout-builder__empty");
+    empty.appendChild(el("p", "training-overview__description", "Пока нет упражнений. Сначала добавь их в разделе «Библиотека упражнений», затем выбери здесь."));
+    const goToLibrary = el("button", "training-overview__start", "ПЕРЕЙТИ В БИБЛИОТЕКУ УПРАЖНЕНИЙ");
+    goToLibrary.type = "button";
+    goToLibrary.addEventListener("click", () => { if (typeof onGoToLibrary === "function") onGoToLibrary(); });
+    empty.appendChild(goToLibrary);
     const status = el("p", "training-workout-builder__status"); status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
     const actions = el("div", "training-workout-builder__actions");
     const saveTemplate = el("button", "training-overview__start", initialTemplate ? "СОХРАНИТЬ ИЗМЕНЕНИЯ" : "СОХРАНИТЬ ТРЕНИРОВКУ"); saveTemplate.type = "button";
@@ -497,24 +502,34 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
             const [overview, exercises, templates] = await Promise.all([trainingOverviewApplication.execute(), trainingWorkoutLibraryApplication.listExercises(), trainingWorkoutLibraryApplication.listTemplates()]);
             if (!content.isConnected) return;
             renderTrainingOverview(content, { program: overview?.program ?? null, hasSavedTemplates: templates.length > 0, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout });
-            if (templates.length > 0) {
-                renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onViewTemplate: (template) => renderWorkoutDetails(content, template, loadOverview, startWorkout), onStartWorkout: startWorkout,
-                    libraryApplication: trainingWorkoutLibraryApplication, onExerciseCreated: loadOverview,
-                    onEditTemplate: (template) => renderBuilder(exercises, template),
-                    onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); },
-                    onDeleteExercise: async (exercise) => {
-                        const confirmed = await confirmExerciseDeletion(exercise, templates);
-                        if (!confirmed) return;
-                        const deleted = await trainingWorkoutLibraryApplication.deleteExercise({ exerciseId: exercise.id });
-                        if (!deleted) throw new Error("Упражнение уже удалено или не найдено.");
-                        await loadOverview();
-                    } });
-            }
+            renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onViewTemplate: (template) => renderWorkoutDetails(content, template, loadOverview, startWorkout), onStartWorkout: startWorkout,
+                libraryApplication: trainingWorkoutLibraryApplication, onExerciseCreated: loadOverview,
+                onEditTemplate: (template) => renderBuilder(exercises, template),
+                onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); },
+                onDeleteExercise: async (exercise) => {
+                    const confirmed = await confirmExerciseDeletion(exercise, templates);
+                    if (!confirmed) return;
+                    const deleted = await trainingWorkoutLibraryApplication.deleteExercise({ exerciseId: exercise.id });
+                    if (!deleted) throw new Error("Упражнение уже удалено или не найдено.");
+                    await loadOverview();
+                } });
         } catch (error) { if (content.isConnected) renderStatus(content, error?.message || "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже."); }
     };
     const renderBuilder = (exercises, initialTemplate = null) => renderExerciseBuilder(content, {
         libraryApplication: trainingWorkoutLibraryApplication, libraryExercises: [...exercises],
-        initialTemplate, onSaved: async ({ refreshOnly = false } = {}) => { if (!refreshOnly) await loadOverview(); }, onCancel: loadOverview
+        initialTemplate, onSaved: async ({ refreshOnly = false } = {}) => { if (!refreshOnly) await loadOverview(); }, onCancel: loadOverview,
+        onGoToLibrary: async () => {
+            await loadOverview();
+            const library = content.querySelector(".training-exercise-library");
+            const toggle = library?.querySelector(".training-saved-resources__library-toggle");
+            const libraryContent = library?.querySelector(".training-saved-resources__library-content");
+            if (toggle && libraryContent) {
+                toggle.setAttribute("aria-expanded", "true");
+                toggle.classList.add("is-expanded");
+                libraryContent.hidden = false;
+                library.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        }
     });
     const startWorkout = async (workout) => {
         if (!trainingSessionApplication || typeof trainingSessionApplication.startWorkout !== "function") { renderStatus(content, "Запуск тренировки пока недоступен. Попробуй позже."); return; }
