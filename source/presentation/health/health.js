@@ -1,11 +1,10 @@
-// source/presentation/health/health.js — Version 2.6
+// source/presentation/health/health.js — Version 2.7
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
 import { renderHealthAnalyticsScreen } from "./section.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
-import { animateBarWidth } from "../shared/bar.animation.js";
 
 const FACTOR_LABELS = Object.freeze({
     recovery: "Восстановление",
@@ -21,47 +20,6 @@ function createElement(tag, className = "", text = null) {
     if (className) element.className = className;
     if (text !== null) element.textContent = text;
     return element;
-}
-
-function scoreText(score) {
-    if (score === null || score === undefined || score === "") return "—";
-    return Number.isFinite(Number(score)) ? Number(score).toFixed(1) : "—";
-}
-
-function renderFactor(factor, data) {
-    const row = createElement("div", "health-factor");
-    const header = createElement("div", "health-factor__header");
-
-    const label = createElement(
-        "span",
-        "health-factor__label",
-        FACTOR_LABELS[factor] || factor
-    );
-
-    const hasNumericScore = data?.score !== null &&
-        data?.score !== undefined &&
-        data?.score !== "" &&
-        Number.isFinite(Number(data.score));
-    const score = createElement(
-        "strong",
-        "health-factor__score",
-        scoreText(data?.score) + (hasNumericScore ? "/100" : "")
-    );
-
-    header.append(label, score);
-
-    const track = createElement("div", "health-factor__track");
-    const fill = createElement("span", "health-factor__fill");
-    const numericScore = hasNumericScore ? Number(data.score) : NaN;
-
-    animateBarWidth(
-        fill,
-        Number.isFinite(numericScore) ? Math.max(0, Math.min(100, numericScore)) : 0
-    );
-
-    track.appendChild(fill);
-    row.append(header, track);
-    return row;
 }
 
 const HEALTH_DATA_SECTIONS = Object.freeze([
@@ -419,31 +377,6 @@ function renderDiagnostics(panel, index) {
     });
 }
 
-function createFactorsBlock(index) {
-    const section = createElement("section", "finance-capital health-factors-block");
-    section.setAttribute("aria-label", "Health factors");
-
-    const heading = createElement("div", "finance-block-heading");
-    heading.appendChild(
-        createElement("span", "finance-section-meta", "HEALTH FACTORS")
-    );
-
-    const description = createElement(
-        "p",
-        "finance-capital-caption",
-        "Шесть факторов, из которых формируется итоговая оценка состояния системы."
-    );
-
-    const list = createElement("div", "health-factors-list");
-
-    Object.keys(FACTOR_LABELS).forEach((factor) => {
-        list.appendChild(renderFactor(factor, index.factors?.[factor]));
-    });
-
-    section.append(heading, description, list);
-    return section;
-}
-
 function renderHealthData(container, healthApplication, onBack, options = {}) {
     const showPresentationHeader = options.showPresentationHeader !== false;
     if (!healthApplication) {
@@ -570,26 +503,6 @@ function createHealthMetric(label, value, note = "") {
     return item;
 }
 
-async function renderDailyActivity(panel, healthApplication) {
-    const [activityFacts, recoveryFacts] = await Promise.all([
-        healthApplication.listFacts("activity"),
-        healthApplication.listFacts("recovery")
-    ]);
-
-    const steps = latestField(activityFacts, "stepsPerDay");
-    const activeMinutes = latestField(activityFacts, "activeMinutesPerWeek");
-    const sleep = latestField(recoveryFacts, "sleepDurationHours");
-
-    panel.querySelector(".health-overview-metrics")?.remove();
-    const metrics = createElement("div", "health-overview-metrics");
-    metrics.append(
-        createHealthMetric("Шаги в день", formatMetric(steps?.stepsPerDay, "шагов"), steps ? "Ручной ввод" : "Добавь первое значение"),
-        createHealthMetric("Активность за неделю", formatMetric(activeMinutes?.activeMinutesPerWeek, "мин"), activeMinutes ? "Ручной ввод" : "Добавь первое значение"),
-        createHealthMetric("Сон", formatMetric(sleep?.sleepDurationHours, "ч"), sleep ? "Последнее наблюдение" : "Добавь первое значение")
-    );
-    panel.appendChild(metrics);
-}
-
 async function renderTrainingSummary(panel, healthApplication) {
     const activityFacts = await healthApplication.listFacts("activity");
     const now = Date.now();
@@ -636,58 +549,24 @@ async function renderHealth(container, healthApplication, options = {}) {
         createElement(
             "p",
             "",
-            "Единая система физического состояния, повседневной активности и развития — без медицинских диагнозов."
+            "Отслеживай своё состояние, выбирай полезные действия и фиксируй тренировочный прогресс — без медицинских диагнозов."
         )
     );
 
     const healthIndex = createHealthIndexBlock(healthApplication);
     const priorityPanel = createHealthPriorityBlock();
-    const activityPanel = createHealthMetricsBlock(
-        "health-overview-section health-daily-activity",
-        "DAILY ACTIVITY",
-        "Повседневная активность",
-        "Только сохранённые наблюдения. Интеграция с Apple Health будет подключена отдельно."
-    );
     const trainingPanel = createHealthMetricsBlock(
         "health-overview-section health-training-summary",
         "TRAINING",
         "Тренировки",
         "Краткая сводка тренировочной регулярности."
     );
-    const factorsContainer = createElement("div", "health-factors-container");
 
-    const dataEntry = createElement("section", "finance-data-entry");
-
-    const copy = createElement("div", "finance-data-entry-copy");
-    copy.append(
-        createElement("strong", "", "Управление данными здоровья"),
-        createElement(
-            "p",
-            "",
-            "Добавление и обновление показателей для расчёта Health Index."
-        )
-    );
-
-    const action = document.createElement("button");
-    action.type = "button";
-    action.className = "finance-text-action";
-    action.textContent = "Открыть →";
-
-    action.addEventListener("click", () => {
-        renderHealthData(container, healthApplication, () => {
-            renderHealth(container, healthApplication);
-        });
-    });
-
-    dataEntry.append(copy, action);
     page.append(
         ...(showPresentationHeader ? [intro] : []),
         healthIndex.section,
         priorityPanel,
-        activityPanel,
-        trainingPanel,
-        factorsContainer,
-        dataEntry
+        trainingPanel
     );
     container.appendChild(page);
 
@@ -719,14 +598,7 @@ async function renderHealth(container, healthApplication, options = {}) {
             renderHealthData(container, healthApplication, () => renderHealth(container, healthApplication));
         });
 
-        await Promise.all([
-            renderDailyActivity(activityPanel, healthApplication),
-            renderTrainingSummary(trainingPanel, healthApplication)
-        ]);
-
-        factorsContainer.replaceChildren(
-            createFactorsBlock(index)
-        );
+        await renderTrainingSummary(trainingPanel, healthApplication);
     };
 
     await refresh();
