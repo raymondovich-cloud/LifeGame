@@ -1,10 +1,10 @@
-// source/application/training/training-workout-library.test.mjs — Version 1.2
+// source/application/training/training-workout-library.test.mjs — Version 1.3
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingWorkoutLibraryApplication } from "./training-workout-library.js";
 function makeApi() {
     const calls = [];
-    const api = Object.fromEntries(["listExercises", "createExercise", "deleteExercise", "listTemplates", "saveTemplate", "deleteTemplate"].map((name) => [
+    const api = Object.fromEntries(["listExercises", "createExercise", "deleteExercise", "listTemplates", "saveTemplate", "setTemplatePinned", "deleteTemplate"].map((name) => [
         name, async (...args) => { calls.push([name, ...args]); return name === "createExercise" ? { id: "exercise-1", name: args[1] } : name === "saveTemplate" ? { id: "template-1", ...args[1] } : []; }
     ]));
     return { api, calls };
@@ -40,4 +40,13 @@ test("deletes an exercise through the user-scoped persistence API", async () => 
     const app = createTrainingWorkoutLibraryApplication({ api, userContext: { userId: "user-3" } });
     await app.deleteExercise({ exerciseId: "exercise-9" });
     assert.deepEqual(calls[0], ["deleteExercise", "user-3", "exercise-9"]);
+});
+
+test("pins a saved workout through the user-scoped API and validates the command", async () => {
+    const { api, calls } = makeApi();
+    const app = createTrainingWorkoutLibraryApplication({ api, userContext: { userId: "user-4" } });
+    await app.setTemplatePinned({ templateId: "template-7", isPinned: true });
+    assert.deepEqual(calls[0], ["setTemplatePinned", "user-4", "template-7", true]);
+    assert.throws(() => app.setTemplatePinned({ templateId: "template-7", isPinned: "yes" }), /pinned state must be boolean/);
+    assert.equal(calls.length, 1);
 });

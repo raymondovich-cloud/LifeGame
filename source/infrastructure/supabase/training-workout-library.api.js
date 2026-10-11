@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-workout-library.api.js — Version 1.1
+// source/infrastructure/supabase/training-workout-library.api.js — Version 1.2
 // Responsibility: persist exercise library and workout templates through the authenticated Supabase client.
 // Payload-level encryption is deferred to the planned unified application encryption standard; ownership is enforced by auth checks and database RLS.
 function createTrainingWorkoutLibraryApi({ client } = {}) {
@@ -41,12 +41,12 @@ function createTrainingWorkoutLibraryApi({ client } = {}) {
     }
     async function listTemplates(userId) {
         const owner = await assertOwner(userId);
-        const { data, error } = await client.from("training_workout_templates").select("id,title,exercises,created_at,updated_at").eq("user_id", owner).order("updated_at", { ascending: false });
+        const { data, error } = await client.from("training_workout_templates").select("id,title,exercises,is_pinned,created_at,updated_at").eq("user_id", owner).order("is_pinned", { ascending: false }).order("updated_at", { ascending: false });
         if (error) throw error;
         if (!Array.isArray(data)) throw new TypeError("Training Workout Library API: template list is invalid.");
         return data.map((item) => {
             if (typeof item.id !== "string" || typeof item.title !== "string" || !Array.isArray(item.exercises)) throw new TypeError("Training Workout Library API: stored template is invalid.");
-            return Object.freeze({ id: item.id, title: item.title, exercises: item.exercises, createdAt: item.created_at, updatedAt: item.updated_at });
+            return Object.freeze({ id: item.id, title: item.title, exercises: item.exercises, isPinned: item.is_pinned === true, createdAt: item.created_at, updatedAt: item.updated_at });
         });
     }
     async function saveTemplate(userId, { title, exercises, id = null } = {}) {
@@ -58,12 +58,24 @@ function createTrainingWorkoutLibraryApi({ client } = {}) {
         if (!data?.id || !Array.isArray(data.exercises)) throw new TypeError("Training Workout Library API: saved template response is invalid.");
         return Object.freeze({ id: data.id, title: data.title, exercises: data.exercises, createdAt: data.created_at, updatedAt: data.updated_at });
     }
+    async function setTemplatePinned(userId, templateId, isPinned) {
+        const owner = await assertOwner(userId);
+        if (typeof templateId !== "string" || !templateId.trim()) throw new TypeError("Training Workout Library API: template id is required.");
+        if (typeof isPinned !== "boolean") throw new TypeError("Training Workout Library API: pinned state must be boolean.");
+        const { data, error } = await client.from("training_workout_templates")
+            .update({ is_pinned: isPinned, updated_at: new Date().toISOString() })
+            .eq("user_id", owner).eq("id", templateId)
+            .select("id,title,exercises,is_pinned,created_at,updated_at").maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error("Тренировка не найдена или уже удалена.");
+        return Object.freeze({ id: data.id, title: data.title, exercises: data.exercises, isPinned: data.is_pinned === true, createdAt: data.created_at, updatedAt: data.updated_at });
+    }
     async function deleteTemplate(userId, templateId) {
         const owner = await assertOwner(userId);
         const { error } = await client.from("training_workout_templates").delete().eq("user_id", owner).eq("id", templateId);
         if (error) throw error;
         return true;
     }
-    return Object.freeze({ listExercises, createExercise, deleteExercise, listTemplates, saveTemplate, deleteTemplate });
+    return Object.freeze({ listExercises, createExercise, deleteExercise, listTemplates, saveTemplate, setTemplatePinned, deleteTemplate });
 }
 export { createTrainingWorkoutLibraryApi };

@@ -1,4 +1,4 @@
-// source/application/training/training-workout-library.js — Version 1.1
+// source/application/training/training-workout-library.js — Version 1.2
 // Responsibility: validate exercise and workout-template commands before persistence.
 function requireOwner(userContext) {
     const userId = userContext?.userId;
@@ -31,7 +31,7 @@ function normalizeExercises(exercises) {
     });
 }
 function createTrainingWorkoutLibraryApplication({ api, userContext } = {}) {
-    const methods = ["listExercises", "createExercise", "deleteExercise", "listTemplates", "saveTemplate", "deleteTemplate"];
+    const methods = ["listExercises", "createExercise", "deleteExercise", "listTemplates", "saveTemplate", "setTemplatePinned", "deleteTemplate"];
     if (!api || !methods.every((method) => typeof api[method] === "function")) throw new TypeError("Training Workout Library: complete persistence API is required.");
     const owner = requireOwner(userContext);
     return Object.freeze({
@@ -43,6 +43,11 @@ function createTrainingWorkoutLibraryApplication({ api, userContext } = {}) {
         deleteExercise: ({ exerciseId } = {}) => api.deleteExercise(owner, exerciseId),
         listTemplates: () => api.listTemplates(owner),
         saveTemplate: ({ title, exercises, id = null } = {}) => api.saveTemplate(owner, { title: normalizeName(title, "title"), exercises: normalizeExercises(exercises), id }),
+        setTemplatePinned: ({ templateId, isPinned } = {}) => {
+            if (typeof templateId !== "string" || !templateId.trim()) throw new TypeError("Training Workout Library: template id is required.");
+            if (typeof isPinned !== "boolean") throw new TypeError("Training Workout Library: pinned state must be boolean.");
+            return api.setTemplatePinned(owner, templateId, isPinned);
+        },
         deleteTemplate: ({ templateId } = {}) => api.deleteTemplate(owner, templateId)
     });
 }
