@@ -1,4 +1,4 @@
-// source/domain/training/training-session.js — Version 1.2
+// source/domain/training/training-session.js — Version 1.3
 // Responsibility: validate and create an immutable training-session domain value.
 const TYPES=Object.freeze(["strength","cardio","mobility","other"]);
 const STATUSES=Object.freeze(["planned","in_progress","completed"]);
