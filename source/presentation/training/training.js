@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 2.7
+// source/presentation/training/training.js — Version 2.8
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -72,20 +72,16 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
     const builder = el("section", "training-workout-builder"); builder.setAttribute("aria-label", "Конструктор тренировки");
     const header = el("header", "training-workout-builder__header");
     header.append(el("span", "training-overview__eyebrow", "ТВОЯ ТРЕНИРОВКА"), el("h3", "training-workout-builder__title", "Собери своё занятие"),
-        el("p", "training-overview__description", "Добавляй упражнения из своей библиотеки или создавай новые. Сохрани шаблон, чтобы повторять тренировку позже."));
+        el("p", "training-overview__description", "Собери занятие из упражнений своей библиотеки. Новые упражнения можно добавить в отдельном разделе «Библиотека упражнений». Сохрани шаблон, чтобы повторять тренировку позже."));
     const titleLabel = el("label", "training-exercise-modal__label", "Название тренировки");
     const titleInput = document.createElement("input"); titleInput.type = "text"; titleInput.maxLength = 80; titleInput.value = initialTemplate?.title || "Моя тренировка"; titleInput.setAttribute("aria-label", "Название шаблона тренировки"); titleLabel.appendChild(titleInput);
     const libraryPanel = el("div", "training-workout-builder__library");
     const libraryHeader = el("div", "training-workout-builder__library-header");
     libraryHeader.appendChild(el("span", "training-overview__eyebrow", "МОЯ БИБЛИОТЕКА УПРАЖНЕНИЙ"));
-    const createLibraryExercise = el("button", "training-saved-resources__create", "+");
-    createLibraryExercise.type = "button";
-    createLibraryExercise.setAttribute("aria-label", "Создать упражнение");
-    createLibraryExercise.setAttribute("title", "Создать упражнение");
-    const libraryEmpty = el("p", "training-overview__description", "Библиотека пока пуста. Добавь упражнение — оно сохранится в аккаунте.");
+    const libraryEmpty = el("p", "training-overview__description", "Библиотека пока пуста. Добавь упражнение в отдельном разделе «Библиотека упражнений».");
     const libraryList = el("div", "training-workout-builder__library-list");
     const list = el("ol", "training-workout-builder__list");
-    const empty = el("p", "training-workout-builder__empty", "Пока нет упражнений. Выбери упражнение из библиотеки или создай новое.");
+    const empty = el("p", "training-workout-builder__empty", "Пока нет упражнений. Сначала добавь их в разделе «Библиотека упражнений», затем выбери здесь.");
     const status = el("p", "training-workout-builder__status"); status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");
     const actions = el("div", "training-workout-builder__actions");
     const saveTemplate = el("button", "training-workout-builder__add", initialTemplate ? "СОХРАНИТЬ ИЗМЕНЕНИЯ" : "СОХРАНИТЬ ШАБЛОН"); saveTemplate.type = "button";
@@ -114,16 +110,6 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
         });
         libraryEmpty.hidden = libraryExercises.length > 0; libraryList.hidden = libraryExercises.length === 0;
     }
-    createLibraryExercise.addEventListener("click", () => openExerciseModal(container, async (name) => {
-        const saved = await libraryApplication.createExercise({ name });
-        if (!draft.some((item) => item.id === saved.id)) draft.push(normalizeExercise(saved));
-        if (!libraryExercises.some((item) => item.id === saved.id)) libraryExercises.push(saved);
-        libraryExercises.sort((a, b) => a.name.localeCompare(b.name, "ru"));
-        renderLibraryItems(); renderList();
-        status.textContent = "Упражнение сохранено в библиотеке: " + saved.name;
-        await onSaved({ refreshOnly: true });
-    }));
-    libraryHeader.appendChild(createLibraryExercise);
     libraryPanel.append(libraryHeader, libraryEmpty, libraryList);
     saveTemplate.addEventListener("click", async () => {
         if (!draft.length) return;
