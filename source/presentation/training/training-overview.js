@@ -1,4 +1,4 @@
-// source/presentation/training/training-overview.js — Version 1.2
+// source/presentation/training/training-overview.js — Version 1.3
 // Responsibility: render the Training Overview from an explicit presentation model; never invent user progress.
 
 function createElement(tag, className = "", text = null) {
@@ -191,10 +191,16 @@ function renderTrainingOverview(container, {
     const programSection = createSection("Твоя программа", "training-overview__program");
     renderProgram(programSection, program, onStartWorkout, onCreateWorkout);
 
-    const recommendation = createSection("Рекомендация", "training-overview__recommendation");
-    renderRecommendation(recommendation, previousWorkout);
-
-    screen.append(systemHeader, heading, programSection, recommendation);
+    const hasPreviousSet = previousWorkout &&
+        Number.isInteger(previousWorkout.sets) && previousWorkout.sets > 0 &&
+        Number.isInteger(previousWorkout.reps) && previousWorkout.reps > 0 &&
+        Number.isFinite(previousWorkout.weightKg) && previousWorkout.weightKg >= 0;
+    screen.append(systemHeader, heading, programSection);
+    if (hasPreviousSet) {
+        const recommendation = createSection("Рекомендация", "training-overview__recommendation");
+        renderRecommendation(recommendation, previousWorkout);
+        screen.appendChild(recommendation);
+    }
     container.appendChild(screen);
 }
 

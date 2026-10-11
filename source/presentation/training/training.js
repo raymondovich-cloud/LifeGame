@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 1.2
+// source/presentation/training/training.js — Version 1.3
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -134,14 +134,13 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
     actions.append(add, saveTemplate, start); builder.append(header, titleLabel, libraryPanel, list, empty, status, actions, cancel); container.appendChild(builder); renderLibraryItems(); renderList();
 }
 function renderSavedResources(container, { exercises, templates, onCreateWorkout, onStartWorkout, onDeleteTemplate }) {
-    const section = el("section", "training-saved-resources"); section.setAttribute("aria-label", "Мои упражнения и шаблоны");
+    const section = el("section", "training-saved-resources"); section.setAttribute("aria-label", "Мои тренировки");
     const heading = el("header", "training-saved-resources__header");
-    heading.append(el("span", "training-overview__eyebrow", "ТВОИ ДАННЫЕ"), el("h3", "training-workout-builder__title", "Библиотека тренировок"),
-        el("p", "training-overview__description", "Упражнения и шаблоны сохраняются в аккаунте и доступны после повторного входа."));
-    const create = el("button", "training-overview__start", "СОБРАТЬ ТРЕНИРОВКУ"); create.type = "button"; create.addEventListener("click", onCreateWorkout);
-    const templatePanel = el("div", "training-saved-resources__panel"); templatePanel.appendChild(el("span", "training-overview__eyebrow", "СОХРАНЁННЫЕ ШАБЛОНЫ"));
-    if (!templates.length) templatePanel.appendChild(el("p", "training-overview__description", "После сохранения первой тренировки её шаблон появится здесь."));
-    else {
+    heading.append(el("h3", "training-workout-builder__title", "Мои тренировки"),
+        el("p", "training-overview__description", "Сохранённые тренировки доступны здесь и готовы к повторному запуску."));
+    const create = el("button", "training-overview__start", "СОБРАТЬ ЕЩЁ ОДНУ ТРЕНИРОВКУ"); create.type = "button"; create.addEventListener("click", onCreateWorkout);
+    const templatePanel = el("div", "training-saved-resources__panel"); templatePanel.appendChild(el("span", "training-overview__eyebrow", "СОХРАНЁННЫЕ ТРЕНИРОВКИ"));
+    {
         const list = el("div", "training-saved-resources__list");
         templates.forEach((template) => {
             const item = el("article", "training-saved-resources__item"), info = el("div", "training-saved-resources__item-info");
@@ -173,8 +172,10 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
             const [overview, exercises, templates] = await Promise.all([trainingOverviewApplication.execute(), trainingWorkoutLibraryApplication.listExercises(), trainingWorkoutLibraryApplication.listTemplates()]);
             if (!content.isConnected) return;
             renderTrainingOverview(content, { program: overview?.program ?? null, previousWorkout: overview?.previousWorkout ?? null, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout });
-            renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout,
-                onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); } });
+            if (templates.length > 0) {
+                renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout,
+                    onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); } });
+            }
         } catch (error) { if (content.isConnected) renderStatus(content, error?.message || "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже."); }
     };
     const renderBuilder = (exercises) => renderExerciseBuilder(content, {
