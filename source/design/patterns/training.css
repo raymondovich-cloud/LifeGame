@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.16 */
+/* source/design/patterns/training.css — Version 3.17 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -357,7 +357,8 @@
 .training-saved-resources__workouts-content{display:grid;gap:var(--space-3)}
 .training-saved-resources__workouts-content[hidden]{display:none}
 .training-saved-resources__pinned{position:absolute;top:var(--space-3);right:var(--space-3);z-index:2;display:inline-flex;align-items:center;font-size:.58rem;padding:.15rem .35rem;gap:.22rem}
-.training-saved-resources__item.is-pinned .training-saved-resources__item-info{padding-top:1.25rem}
+.training-saved-resources__item.is-pinned .training-saved-resources__item-info{padding-top:0}
+.training-saved-resources__item.is-pinned .training-saved-resources__item-info h4{padding-right:5rem}
 .training-saved-resources__item.is-pinned{border-color:rgba(242,138,46,.38);background:linear-gradient(110deg,rgba(242,138,46,.07),rgba(255,255,255,.025))}
 .training-saved-resources__library-toggle .training-overview__eyebrow{flex:1;min-width:0}
 .training-saved-resources__library-toggle .training-overview__eyebrow{flex:1;min-width:0}
