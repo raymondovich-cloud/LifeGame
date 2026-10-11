@@ -1,4 +1,4 @@
-/* source/design/patterns/health.css — Version 2.2 */
+/* source/design/patterns/health.css — Version 2.3 */
 
 .health-workspace{gap:var(--space-4)}
 .health-index-block,.health-factors-block{
@@ -485,4 +485,21 @@
 .training-exercise-modal select,
 .training-exercise-modal textarea {
     font-size:16px !important;
+}
+
+
+/* Shared premium frame parity with the saved training resources panel — Version 1.0 */
+.health-index-block::before,
+.health-priority-panel::before,
+.health-priority-panel::after,
+.health-overview-section.health-training-entry::before,
+.health-overview-section.health-training-entry::after{
+    display:none;
+}
+.health-priority-panel,
+.health-overview-section.health-training-entry{
+    background:var(--gradient-card-premium);
+    border:1px solid rgba(242,138,46,.24);
+    border-radius:var(--radius-card);
+    box-shadow:none;
 }

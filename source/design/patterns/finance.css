@@ -1,4 +1,4 @@
-/* finance.css — Version 3.20 */
+/* finance.css — Version 3.21 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -566,3 +566,20 @@
 .finance-loading-state p{margin:0;max-width:32rem;color:var(--color-gray);font-size:var(--font-size-xs);line-height:1.5}
 @keyframes finance-loading-letter-in{to{opacity:1;transform:translateY(0)}}
 @media (prefers-reduced-motion:reduce){.finance-loading-brand-letter{opacity:1;transform:none;animation:none}}
+
+
+/* Shared premium frame parity with the saved training resources panel — Version 1.0 */
+.finance-health,
+.finance-capital,
+.finance-data-entry{
+    background:var(--gradient-card-premium);
+    border:1px solid rgba(242,138,46,.24);
+    border-radius:var(--radius-card);
+    box-shadow:none;
+}
+.finance-health::before,
+.finance-health::after,
+.finance-capital::before,
+.finance-capital::after{
+    display:none;
+}

@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.13 */
+/* source/design/patterns/training.css — Version 3.14 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -709,4 +709,17 @@
     .training-session__set-row--cardio{
         grid-template-columns:1rem 1rem minmax(2rem,1fr) auto;
     }
+}
+
+
+/* Shared premium frame parity with the saved training resources panel — Version 1.0 */
+.training-overview{
+    background:var(--gradient-card-premium);
+    border:1px solid rgba(242,138,46,.24);
+    border-radius:var(--radius-card);
+    box-shadow:none;
+}
+.training-overview::before,
+.training-overview::after{
+    display:none;
 }
