@@ -1,4 +1,4 @@
-// source/domain/training/training-session-lifecycle.js — Version 1.1
+// source/domain/training/training-session-lifecycle.js — Version 1.2
 // Responsibility: enforce valid lifecycle transitions and controlled edits for immutable training sessions.
 import { createTrainingSession } from "./training-session.js";
 const EDITABLE_FIELDS = new Set(["date", "activityType", "intensity", "durationMinutes", "notes", "exercises"]);
@@ -19,6 +19,7 @@ function transition(session, status, updatedAt) {
 }
 function startTrainingSession(session, updatedAt) {
     assertSession(session);
+    assertTimestamp(session, updatedAt);
     if (session.status !== "planned") {
         throw new Error("Training session lifecycle: only a planned session can be started.");
     }
