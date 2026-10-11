@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 1.9
+# .github/workflows/preview-publish.yml — Version 2.0
 name: LifeGame Preview CI
 
 on:
@@ -73,10 +73,14 @@ jobs:
           node --experimental-default-type=module --check source/application/training/get-training-program.js
           node --experimental-default-type=module --check source/application/training/save-training-program.js
           node --experimental-default-type=module --check source/application/training/training-overview.read-model.js
+          node --experimental-default-type=module --check source/application/training/load-training-overview.js
+          node --experimental-default-type=module --check source/infrastructure/supabase/training-overview.api.js
+          node --experimental-default-type=module --check source/infrastructure/supabase/training-session.repository.js
+          node --experimental-default-type=module --check supabase/functions/training-sessions/handler.js
           node --experimental-default-type=module --check source/infrastructure/supabase/training-program.repository.js
           node --experimental-default-type=module --check source/infrastructure/security/training-program-payload-encryption.js
           node --experimental-default-type=module --check supabase/functions/training-programs/handler.js
-          node --experimental-default-type=module --test source/domain/training/training-program.test.mjs source/application/training/training-program.test.mjs source/application/training/training-overview.read-model.test.mjs supabase/functions/training-programs/handler.test.mjs
+          node --experimental-default-type=module --test source/domain/training/training-program.test.mjs source/application/training/training-program.test.mjs source/application/training/training-overview.read-model.test.mjs source/application/training/load-training-overview.test.mjs supabase/functions/training-programs/handler.test.mjs supabase/functions/training-sessions/handler.test.mjs
           echo "Training Program persistence boundary and Application tests passed."
 
       - name: Validate Finance presentation and carousel
