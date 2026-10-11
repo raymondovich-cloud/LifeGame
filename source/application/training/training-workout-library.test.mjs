@@ -1,4 +1,4 @@
-// source/application/training/training-workout-library.test.mjs — Version 1.1
+// source/application/training/training-workout-library.test.mjs — Version 1.2
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingWorkoutLibraryApplication } from "./training-workout-library.js";
@@ -17,7 +17,7 @@ test("normalizes exercise names and scopes every call to the user", async () => 
     const { api, calls } = makeApi();
     const app = createTrainingWorkoutLibraryApplication({ api, userContext: { userId: "user-1" } });
     await app.createExercise({ name: "  Жим   лёжа " });
-    assert.deepEqual(calls[0], ["createExercise", "user-1", "Жим лёжа"]);
+    assert.deepEqual(calls[0], ["createExercise", "user-1", "Жим лёжа", "strength"]);
 });
 test("rejects empty names and duplicate exercises before persistence", () => {
     const { api, calls } = makeApi();
