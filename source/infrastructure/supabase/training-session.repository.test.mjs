@@ -146,9 +146,9 @@ test("inserts encrypted fields and reads back a validated domain session", async
 
 test("persists the canonical start timestamp in the encrypted payload", async () => {
     const { repository } = setup();
-    const started = makeSession({ status: "in_progress", startedAt: Date.parse("2026-10-10T10:00:30.000Z"), updatedAt: Date.parse("2026-10-10T10:00:30.000Z") });
+    const started = makeSession({ status: "in_progress", startedAt: Date.parse("2026-10-10T10:00:00.000Z"), updatedAt: Date.parse("2026-10-10T10:00:00.000Z") });
     const inserted = await repository.insertForUser(USER_ID, started);
-    assert.equal(inserted.session.startedAt, Date.parse("2026-10-10T10:00:30.000Z"));
+    assert.equal(inserted.session.startedAt, Date.parse("2026-10-10T10:00:00.000Z"));
     const found = await repository.findForUser(USER_ID, SESSION_ID);
     assert.equal(found.session.startedAt, inserted.session.startedAt);
 });
