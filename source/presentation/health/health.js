@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 2.9
+// source/presentation/health/health.js — Version 3.0
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -310,6 +310,13 @@ function createFactForm(application, onSaved, container, onAnalyticsBack) {
     return wrapper;
 }
 
+function renderTrainingOverviewStatus(container, message) {
+    const status = createElement("p", "training-overview__description", message);
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    container.replaceChildren(status);
+}
+
 function createHealthIndexBlock(healthApplication) {
     const section = createElement("section", "finance-health health-index-block");
     section.setAttribute("aria-label", "Health Index");
@@ -538,9 +545,7 @@ async function renderHealth(container, healthApplication, options = {}) {
 
         renderTrainingOverview(trainingPanel);
         if (trainingOverviewApplication && typeof trainingOverviewApplication.execute === "function") {
-            trainingPanel.setAttribute("role", "status");
-            trainingPanel.setAttribute("aria-live", "polite");
-            trainingPanel.textContent = "Загружаем тренировочную программу…";
+            renderTrainingOverviewStatus(trainingPanel, "Загружаем тренировочную программу…");
             try {
                 const overview = await trainingOverviewApplication.execute();
                 if (!trainingPanel.isConnected) return;
@@ -550,7 +555,7 @@ async function renderHealth(container, healthApplication, options = {}) {
                 });
             } catch {
                 if (!trainingPanel.isConnected) return;
-                trainingPanel.textContent = "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже.";
+                renderTrainingOverviewStatus(trainingPanel, "Не удалось загрузить тренировочные данные. Попробуй обновить экран позже.");
             }
         }
     };
