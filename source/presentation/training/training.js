@@ -491,7 +491,6 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     libraryToggle.append(
         el("span", "training-overview__eyebrow", "УПРАЖНЕНИЯ"),
         el("span", "training-saved-resources__library-meta", String(exercises.length)),
-        el("span", "training-saved-resources__library-chevron", "⌄")
     );
     const libraryContent = el("div", "training-saved-resources__library-content");
     libraryContent.id = "training-exercise-library-content";
