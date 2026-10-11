@@ -324,10 +324,11 @@
 @media (min-width:600px){.training-saved-resources{padding:var(--space-5)}.training-saved-resources__item{grid-template-columns:minmax(0,1fr) auto;align-items:center}.training-saved-resources__item-actions{grid-template-columns:auto auto}.training-workout-builder__library-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 
-/* Standalone exercise library card — Version 1.1 */
+/* Standalone exercise library card — Version 1.2 */
 .training-exercise-library{display:grid;gap:var(--space-4);margin-top:var(--space-4);padding:var(--space-4);background:var(--gradient-card-premium);border:1px solid rgba(242,138,46,.24);border-radius:var(--radius-card)}
 .training-exercise-library__header{display:grid;gap:var(--space-2);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
-.training-exercise-library__header h3{margin:0}
+.training-exercise-library__heading-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
+.training-exercise-library__heading-row h3{min-width:0;margin:0}
 .training-exercise-library__panel{display:grid;gap:var(--space-3)}
 .training-exercise-library .training-saved-resources__library-toggle{padding:var(--space-2) 0}
 @media (min-width:600px){.training-exercise-library{padding:var(--space-5)}}
