@@ -1,4 +1,4 @@
-// source/application/training/training-analytics.test.mjs — Version 1.0
+// source/application/training/training-analytics.test.mjs — Version 1.1
 import test from "node:test";import assert from "node:assert/strict";import {createTrainingAnalyticsApplication} from "./training-analytics.js";
 test("loads every history page before calculating analytics",async()=>{const calls=[],items=Array.from({length:101},(_,i)=>({session:{id:String(i),status:"completed",date:"2026-10-12",startedAt:1000,updatedAt:61000,exercises:[]},revision:1}));const app=createTrainingAnalyticsApplication({api:{async listSessions({offset,limit}){calls.push({offset,limit});return items.slice(offset,offset+limit);}}});const r=await app.execute({today:"2026-10-12"});assert.deepEqual(calls,[{offset:0,limit:100},{offset:100,limit:100}]);assert.equal(r.totalWorkouts,101);assert.equal(r.totalMinutes,101);});
 test("rejects malformed session envelopes",async()=>{const app=createTrainingAnalyticsApplication({api:{async listSessions(){return [{}];}}});await assert.rejects(app.execute({today:"2026-10-12"}),/invalid session envelope/);});

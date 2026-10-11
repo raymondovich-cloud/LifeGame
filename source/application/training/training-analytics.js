@@ -1,7 +1,37 @@
-// source/application/training/training-analytics.js — Version 1.0
+// source/application/training/training-analytics.js — Version 1.1
 // Responsibility: load a user's paginated session history and return the training analytics read model.
-import {createTrainingAnalytics} from "../../domain/training/training-analytics.js";
-const PAGE_SIZE=100;
-function localDate(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-function createTrainingAnalyticsApplication({api}={}){if(!api||typeof api.listSessions!=="function")throw new TypeError("Training analytics: a training sessions API is required.");async function execute({today=localDate()}={}){const sessions=[];let offset=0;while(true){const page=await api.listSessions({offset,limit:PAGE_SIZE});if(!Array.isArray(page))throw new TypeError("Training analytics: API page must be an array.");for(const item of page){if(!item?.session||typeof item.session!=="object")throw new TypeError("Training analytics: API returned an invalid session envelope.");sessions.push(item.session);}if(page.length<PAGE_SIZE)break;offset+=page.length;}const model=createTrainingAnalytics(sessions,{today});return Object.freeze({totalWorkouts:model.totalWorkouts,totalMinutes:model.totalMinutes,totalWeightKg:model.totalWeightKg,sessionsWithoutDuration:model.sessionsWithoutDuration,todayMinutes:model.todayMinutes,weeklyAverageMinutes:model.weeklyAverageMinutes,calendar:model.calendar,series:period=>model.buildSeries(period)});}return Object.freeze({execute});}
-export {createTrainingAnalyticsApplication};
+import { createTrainingAnalytics } from "../../domain/training/training-analytics.js";
+const PAGE_SIZE = 100;
+function localDate() {
+    const date = new Date();
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+}
+function localTimeZone() {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+function createTrainingAnalyticsApplication({ api } = {}) {
+    if (!api || typeof api.listSessions !== "function") throw new TypeError("Training analytics: a training sessions API is required.");
+    async function execute({ today = localDate(), timeZone = localTimeZone() } = {}) {
+        const sessions = [];
+        let offset = 0;
+        while (true) {
+            const page = await api.listSessions({ offset, limit: PAGE_SIZE });
+            if (!Array.isArray(page)) throw new TypeError("Training analytics: API page must be an array.");
+            for (const item of page) {
+                if (!item?.session || typeof item.session !== "object") throw new TypeError("Training analytics: API returned an invalid session envelope.");
+                sessions.push(item.session);
+            }
+            if (page.length < PAGE_SIZE) break;
+            offset += page.length;
+        }
+        const model = createTrainingAnalytics(sessions, { today, timeZone });
+        return Object.freeze({
+            totalWorkouts: model.totalWorkouts, totalMinutes: model.totalMinutes,
+            totalWeightKg: model.totalWeightKg, sessionsWithoutDuration: model.sessionsWithoutDuration,
+            todayMinutes: model.todayMinutes, weeklyAverageMinutes: model.weeklyAverageMinutes,
+            calendar: model.calendar, series: (period) => model.buildSeries(period)
+        });
+    }
+    return Object.freeze({ execute });
+}
+export { createTrainingAnalyticsApplication };

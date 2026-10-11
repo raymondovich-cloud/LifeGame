@@ -1,14 +1,109 @@
-// source/domain/training/training-analytics.js — Version 1.0
+// source/domain/training/training-analytics.js — Version 1.1
 // Responsibility: calculate training analytics from session values without infrastructure or presentation dependencies.
-const MINUTE_MS=60000,LB_TO_KG=0.45359237;
-function isoDate(d){return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0");}
-function parseDate(v){if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v))throw new TypeError("Training analytics: today must be an ISO calendar date.");const d=new Date(v+"T00:00:00.000Z");if(Number.isNaN(d.getTime())||isoDate(d)!==v)throw new TypeError("Training analytics: today must be a valid calendar date.");return d;}
-function shift(d,n){const r=new Date(d.getTime());r.setUTCDate(r.getUTCDate()+n);return r;}
-function completed(list){if(!Array.isArray(list))throw new TypeError("Training analytics: sessions must be an array.");return list.filter(s=>s&&s.status==="completed"&&typeof s.date==="string");}
-function durationMinutes(s){if(!Number.isFinite(s.startedAt)||!Number.isFinite(s.updatedAt)||s.updatedAt<s.startedAt)return null;return Math.floor((s.updatedAt-s.startedAt)/MINUTE_MS);}
-function sessionVolumeKg(s){let total=0;for(const e of Array.isArray(s.exercises)?s.exercises:[])for(const set of Array.isArray(e?.sets)?e.sets:[]){if(set?.completed!==true||!Number.isInteger(set.reps)||set.reps<1)continue;const r=set.resistance;if(!r||!Number.isFinite(r.value)||r.value<=0)continue;if(r.unit==="kg")total+=r.value*set.reps;else if(r.unit==="lb")total+=r.value*LB_TO_KG*set.reps;}return total;}
-function sumMinutes(list){return list.reduce((sum,s)=>sum+(durationMinutes(s)??0),0);}
-function daySeries(list,dates){return dates.map(date=>{const group=list.filter(s=>s.date===date);return Object.freeze({date,workouts:group.length,minutes:sumMinutes(group)});});}
-function buildSeries(list,today,period){if(!["week","month","year"].includes(period))throw new TypeError("Training analytics: period is invalid.");if(period==="year"){const y=today.getUTCFullYear(),names=["ЯНВ","ФЕВ","МАР","АПР","МАЙ","ИЮН","ИЮЛ","АВГ","СЕН","ОКТ","НОЯ","ДЕК"];return names.map((label,i)=>{const date=y+"-"+String(i+1).padStart(2,"0"),group=list.filter(s=>s.date.startsWith(date));return Object.freeze({date,label,workouts:group.length,minutes:sumMinutes(group)});});}if(period==="month"){const first=new Date(Date.UTC(today.getUTCFullYear(),today.getUTCMonth(),1)),count=new Date(Date.UTC(today.getUTCFullYear(),today.getUTCMonth()+1,0)).getUTCDate();return daySeries(list,Array.from({length:count},(_,i)=>isoDate(shift(first,i)))).map(s=>Object.freeze({...s,label:String(Number(s.date.slice(-2)))}));}const monday=shift(today,-((today.getUTCDay()+6)%7)),labels=["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"];return daySeries(list,Array.from({length:7},(_,i)=>isoDate(shift(monday,i)))).map((s,i)=>Object.freeze({...s,label:labels[i]}));}
-function createTrainingAnalytics(sessions,{today}={}){const date=parseDate(today),list=completed(sessions),known=list.filter(s=>durationMinutes(s)!==null).length,key=isoDate(date),monday=shift(date,-((date.getUTCDay()+6)%7)),days=Array.from({length:7},(_,i)=>isoDate(shift(monday,i))),week=list.filter(s=>days.includes(s.date)),todayList=list.filter(s=>s.date===key),calendar=days.map((date,i)=>Object.freeze({date,label:["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"][i],day:Number(date.slice(-2)),hasWorkout:list.some(s=>s.date===date),isToday:date===key})),weight=list.reduce((sum,s)=>sum+sessionVolumeKg(s),0);return Object.freeze({totalWorkouts:list.length,totalMinutes:sumMinutes(list),totalWeightKg:Math.round(weight*100)/100,sessionsWithoutDuration:list.length-known,todayMinutes:sumMinutes(todayList),weeklyAverageMinutes:Math.round(sumMinutes(week)/7),calendar:Object.freeze(calendar),buildSeries:period=>Object.freeze(buildSeries(list,date,period))});}
-export {createTrainingAnalytics,durationMinutes,sessionVolumeKg};
+const MINUTE_MS = 60_000;
+const LB_TO_KG = 0.45359237;
+const WEEKDAY_LABELS = Object.freeze(["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"]);
+const MONTH_LABELS = Object.freeze(["ЯНВ", "ФЕВ", "МАР", "АПР", "МАЙ", "ИЮН", "ИЮЛ", "АВГ", "СЕН", "ОКТ", "НОЯ", "ДЕК"]);
+
+function isoDate(date) {
+    return date.getUTCFullYear() + "-" + String(date.getUTCMonth() + 1).padStart(2, "0") + "-" + String(date.getUTCDate()).padStart(2, "0");
+}
+function parseDate(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new TypeError("Training analytics: today must be an ISO calendar date.");
+    const date = new Date(value + "T00:00:00.000Z");
+    if (Number.isNaN(date.getTime()) || isoDate(date) !== value) throw new TypeError("Training analytics: today must be a valid calendar date.");
+    return date;
+}
+function shiftDate(date, days) {
+    const result = new Date(date.getTime());
+    result.setUTCDate(result.getUTCDate() + days);
+    return result;
+}
+function completedSessions(sessions) {
+    if (!Array.isArray(sessions)) throw new TypeError("Training analytics: sessions must be an array.");
+    return sessions.filter((session) => session && session.status === "completed" && typeof session.date === "string");
+}
+function sessionDate(session, timeZone) {
+    if (!Number.isFinite(session.startedAt)) return session.date;
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone, year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(new Date(session.startedAt));
+    const part = (type) => parts.find((item) => item.type === type)?.value;
+    const year = part("year"), month = part("month"), day = part("day");
+    return year && month && day ? year + "-" + month + "-" + day : session.date;
+}
+function durationMinutes(session) {
+    if (!Number.isFinite(session.startedAt) || !Number.isFinite(session.updatedAt) || session.updatedAt < session.startedAt) return null;
+    return Math.floor((session.updatedAt - session.startedAt) / MINUTE_MS);
+}
+function sessionVolumeKg(session) {
+    let total = 0;
+    for (const exercise of Array.isArray(session.exercises) ? session.exercises : []) {
+        for (const set of Array.isArray(exercise?.sets) ? exercise.sets : []) {
+            if (set?.completed !== true || !Number.isInteger(set.reps) || set.reps < 1) continue;
+            const resistance = set.resistance;
+            if (!resistance || !Number.isFinite(resistance.value) || resistance.value <= 0) continue;
+            if (resistance.unit === "kg") total += resistance.value * set.reps;
+            else if (resistance.unit === "lb") total += resistance.value * LB_TO_KG * set.reps;
+        }
+    }
+    return total;
+}
+function sumMinutes(sessions) {
+    return sessions.reduce((sum, session) => sum + (durationMinutes(session) ?? 0), 0);
+}
+function daySeries(sessions, dates, timeZone) {
+    return dates.map((date) => {
+        const group = sessions.filter((session) => sessionDate(session, timeZone) === date);
+        return Object.freeze({ date, workouts: group.length, minutes: sumMinutes(group) });
+    });
+}
+function buildSeries(sessions, today, period, timeZone) {
+    if (!["week", "month", "year"].includes(period)) throw new TypeError("Training analytics: period is invalid.");
+    if (period === "year") {
+        const year = today.getUTCFullYear();
+        return MONTH_LABELS.map((label, index) => {
+            const key = year + "-" + String(index + 1).padStart(2, "0");
+            const group = sessions.filter((session) => sessionDate(session, timeZone).startsWith(key));
+            return Object.freeze({ date: key, label, workouts: group.length, minutes: sumMinutes(group) });
+        });
+    }
+    if (period === "month") {
+        const first = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+        const count = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0)).getUTCDate();
+        const dates = Array.from({ length: count }, (_, index) => isoDate(shiftDate(first, index)));
+        return daySeries(sessions, dates, timeZone).map((item) => Object.freeze({ ...item, label: String(Number(item.date.slice(-2))) }));
+    }
+    const monday = shiftDate(today, -((today.getUTCDay() + 6) % 7));
+    return daySeries(sessions, Array.from({ length: 7 }, (_, index) => isoDate(shiftDate(monday, index))), timeZone)
+        .map((item, index) => Object.freeze({ ...item, label: WEEKDAY_LABELS[index] }));
+}
+function createTrainingAnalytics(sessions, { today, timeZone = "UTC" } = {}) {
+    const currentDate = parseDate(today);
+    try { new Intl.DateTimeFormat("en-US", { timeZone }).format(new Date(0)); }
+    catch { throw new TypeError("Training analytics: timeZone must be a valid IANA time zone."); }
+    const completed = completedSessions(sessions);
+    const knownDurationCount = completed.filter((session) => durationMinutes(session) !== null).length;
+    const todayKey = isoDate(currentDate);
+    const monday = shiftDate(currentDate, -((currentDate.getUTCDay() + 6) % 7));
+    const weekDates = Array.from({ length: 7 }, (_, index) => isoDate(shiftDate(monday, index)));
+    const weekSessions = completed.filter((session) => weekDates.includes(sessionDate(session, timeZone)));
+    const todaySessions = completed.filter((session) => sessionDate(session, timeZone) === todayKey);
+    const calendar = weekDates.map((date, index) => Object.freeze({
+        date, label: WEEKDAY_LABELS[index], day: Number(date.slice(-2)),
+        hasWorkout: completed.some((session) => sessionDate(session, timeZone) === date),
+        isToday: date === todayKey
+    }));
+    const totalWeightKg = completed.reduce((sum, session) => sum + sessionVolumeKg(session), 0);
+    return Object.freeze({
+        totalWorkouts: completed.length,
+        totalMinutes: sumMinutes(completed),
+        totalWeightKg: Math.round(totalWeightKg * 100) / 100,
+        sessionsWithoutDuration: completed.length - knownDurationCount,
+        todayMinutes: sumMinutes(todaySessions),
+        weeklyAverageMinutes: Math.round(sumMinutes(weekSessions) / 7),
+        calendar: Object.freeze(calendar),
+        buildSeries: (period) => Object.freeze(buildSeries(completed, currentDate, period, timeZone))
+    });
+}
+export { createTrainingAnalytics, durationMinutes, sessionVolumeKg };
