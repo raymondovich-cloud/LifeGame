@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 3.6
+// source/presentation/training/training.js — Version 3.7
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -431,7 +431,6 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     templatesToggle.append(
         el("span", "training-overview__eyebrow", "СОХРАНЁННЫЕ ТРЕНИРОВКИ"),
         el("span", "training-saved-resources__library-meta", String(templates.length)),
-        el("span", "training-saved-resources__library-chevron", "⌄")
     );
     const templatesContent = el("div", "training-saved-resources__workouts-content");
     templatesContent.id = "training-saved-workouts-content";
