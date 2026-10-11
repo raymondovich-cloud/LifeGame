@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.9 */
+/* source/design/patterns/training.css — Version 3.10 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -338,7 +338,10 @@
 .training-exercise-library__heading-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
 .training-exercise-library__heading-row h3{min-width:0;margin:0}
 .training-exercise-library__panel{display:grid;gap:var(--space-3)}
-.training-exercise-library .training-saved-resources__library-toggle{padding:var(--space-2) 0}
+.training-exercise-library .training-saved-resources__library-toggle{
+    padding:var(--space-3);border:1px solid rgba(242,138,46,.22);border-radius:calc(var(--radius-sm) + 4px);
+    background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015))
+}
 @media (min-width:600px){.training-exercise-library{padding:var(--space-5)}}
 .training-saved-resources__library-toggle,
 .training-saved-resources__workouts-toggle{
