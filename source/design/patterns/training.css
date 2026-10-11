@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 2.1 */
+/* source/design/patterns/training.css — Version 2.2 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -269,6 +269,9 @@
     border-radius:var(--radius-card);box-shadow:0 24px 80px rgba(0,0,0,.55)
 }
 .training-exercise-modal__title{margin:0;color:var(--color-white);font-size:var(--font-size-interface)}
+.training-exercise-modal__dialog .training-overview__description{margin:0;line-height:1.6;overflow-wrap:anywhere}
+.training-exercise-modal__actions .training-overview__start{width:100%;border-color:rgba(242,138,46,.72)}
+.training-exercise-modal__actions .training-workout-builder__cancel{justify-self:stretch;min-height:2.9rem;border:var(--border-subtle);border-radius:var(--radius-sm);text-align:center}
 .training-exercise-modal__form{display:grid;gap:var(--space-3)}
 .training-exercise-modal__label{display:grid;gap:var(--space-2);color:var(--color-gray);font-size:var(--font-size-sm)}
 .training-exercise-modal__label input{

@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 2.3
+// source/presentation/training/training.js — Version 2.4
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -193,6 +193,52 @@ function openSavedWorkoutMenu(item, template, onEditTemplate, onDeleteTemplate) 
     window.requestAnimationFrame(() => backdrop.classList.add("is-visible"));
 }
 
+
+
+function confirmExerciseDeletion(exercise, templates) {
+    const usages = (Array.isArray(templates) ? templates : []).filter((template) =>
+        Array.isArray(template.exercises) && template.exercises.some((item) => item?.id === exercise.id)
+    );
+    if (!usages.length) return Promise.resolve(true);
+    return new Promise((resolve) => {
+        const previousFocus = document.activeElement;
+        const overlay = el("div", "training-exercise-modal");
+        overlay.setAttribute("role", "presentation");
+        const dialog = el("section", "training-exercise-modal__dialog");
+        dialog.setAttribute("role", "alertdialog");
+        dialog.setAttribute("aria-modal", "true");
+        const title = el("h3", "training-exercise-modal__title", "Подтвердить удаление");
+        const description = el("p", "training-overview__description");
+        const workoutNames = usages.map((template) => "«" + template.title + "»");
+        description.textContent = usages.length === 1
+            ? "Упражнение «" + exercise.name + "» используется в тренировке " + workoutNames[0] + ". Если продолжить, оно будет удалено из библиотеки и этой тренировки."
+            : "Упражнение «" + exercise.name + "» используется в " + usages.length + " тренировках: " + workoutNames.join(", ") + ". Если продолжить, оно будет удалено из библиотеки и этих тренировок.";
+        const actions = el("div", "training-exercise-modal__actions");
+        const confirm = el("button", "training-overview__start", "УДАЛИТЬ УПРАЖНЕНИЕ");
+        confirm.type = "button";
+        const cancel = el("button", "training-workout-builder__cancel", "Отмена");
+        cancel.type = "button";
+        actions.append(confirm, cancel);
+        dialog.append(title, description, actions);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+        let closed = false;
+        const close = (approved) => {
+            if (closed) return;
+            closed = true;
+            document.removeEventListener("keydown", onKeydown);
+            overlay.remove();
+            if (previousFocus?.isConnected) previousFocus.focus();
+            resolve(approved);
+        };
+        const onKeydown = (event) => { if (event.key === "Escape") close(false); };
+        document.addEventListener("keydown", onKeydown);
+        cancel.addEventListener("click", () => close(false));
+        confirm.addEventListener("click", () => close(true));
+        overlay.addEventListener("click", (event) => { if (event.target === overlay) close(false); });
+        confirm.focus();
+    });
+}
 
 function openExerciseMenu(item, exercise, onDeleteExercise, onStatisticsPlaceholder) {
     const backdrop = el("div", "row-interaction-backdrop");
@@ -451,8 +497,10 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
                     libraryApplication: trainingWorkoutLibraryApplication, onExerciseCreated: loadOverview,
                     onEditTemplate: (template) => renderBuilder(exercises, template),
                     onDeleteTemplate: async (templateId) => { await trainingWorkoutLibraryApplication.deleteTemplate({ templateId }); await loadOverview(); },
-                    onDeleteExercise: async (exerciseId) => {
-                        const deleted = await trainingWorkoutLibraryApplication.deleteExercise({ exerciseId });
+                    onDeleteExercise: async (exercise) => {
+                        const confirmed = await confirmExerciseDeletion(exercise, templates);
+                        if (!confirmed) return;
+                        const deleted = await trainingWorkoutLibraryApplication.deleteExercise({ exerciseId: exercise.id });
                         if (!deleted) throw new Error("Упражнение уже удалено или не найдено.");
                         await loadOverview();
                     } });
