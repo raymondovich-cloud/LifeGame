@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 3.2
+// source/presentation/health/health.js — Version 3.3
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -508,8 +508,8 @@ async function renderHealth(container, healthApplication, options = {}) {
     );
     const trainingAction = document.createElement("button");
     trainingAction.type = "button";
-    trainingAction.className = "health-priority-panel__action";
-    trainingAction.textContent = "Открыть тренировки →";
+    trainingAction.className = "finance-text-action";
+    trainingAction.textContent = "Открыть →";
     trainingAction.addEventListener("click", onOpenTraining);
     trainingPanel.appendChild(trainingAction);
 
