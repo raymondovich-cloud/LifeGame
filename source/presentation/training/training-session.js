@@ -1,4 +1,4 @@
-// source/presentation/training/training-session.js — Version 2.4
+// source/presentation/training/training-session.js — Version 2.5
 // Responsibility: render the active workout interaction; delegate persistence and business rules to the application layer.
 function createElement(tag, className = "", text = null) {
     const element = document.createElement(tag);
@@ -18,6 +18,7 @@ function renderTrainingSession(container, { sessionResult, workout, application,
     let current = sessionResult;
     const startedAt = Date.now();
     let timerId = null;
+    const expandedExerciseIds = new Set();
 
     function render() {
         container.replaceChildren();
@@ -42,7 +43,9 @@ function renderTrainingSession(container, { sessionResult, workout, application,
             const toggle = createElement("button", "training-session__collapse", "⌄");
             toggle.type = "button";
             toggle.setAttribute("aria-label", "Свернуть или развернуть упражнение " + exercise.name);
-            toggle.setAttribute("aria-expanded", "false");
+            const isExpanded = expandedExerciseIds.has(exercise.id);
+            toggle.setAttribute("aria-expanded", String(isExpanded));
+            toggle.textContent = isExpanded ? "⌃" : "⌄";
             const heading = createElement("div", "training-session__exercise-heading");
             heading.append(
                 createElement("h4", "training-session__exercise-title", exercise.name),
@@ -50,7 +53,7 @@ function renderTrainingSession(container, { sessionResult, workout, application,
             );
             top.append(toggle, heading);
             const body = createElement("div", "training-session__exercise-body");
-            body.hidden = true;
+            body.hidden = !isExpanded;
             const targetSets = Math.max(4, Number.isInteger(definition.targetSets) ? definition.targetSets : 4);
             const rowsCount = Math.max(targetSets, exercise.sets.length);
             for (let index = 0; index < rowsCount; index += 1) {
@@ -125,18 +128,20 @@ function renderTrainingSession(container, { sessionResult, workout, application,
                 body.appendChild(row);
             }
             const addSet = createElement("button", "training-session__add-set", "+ Добавить подход");
-            addSet.hidden = true;
+            addSet.hidden = !isExpanded;
             addSet.type = "button";
             addSet.addEventListener("click", () => {
                 definition.targetSets = rowsCount + 1;
                 render();
             });
             toggle.addEventListener("click", () => {
-                const collapsed = !body.hidden;
-                body.hidden = collapsed;
-                addSet.hidden = collapsed;
-                toggle.textContent = collapsed ? "⌄" : "⌃";
-                toggle.setAttribute("aria-expanded", String(!collapsed));
+                const nextExpanded = body.hidden;
+                if (nextExpanded) expandedExerciseIds.add(exercise.id);
+                else expandedExerciseIds.delete(exercise.id);
+                body.hidden = !nextExpanded;
+                addSet.hidden = !nextExpanded;
+                toggle.textContent = nextExpanded ? "⌃" : "⌄";
+                toggle.setAttribute("aria-expanded", String(nextExpanded));
             });
             section.append(top, body, addSet);
             exerciseHost.appendChild(section);
