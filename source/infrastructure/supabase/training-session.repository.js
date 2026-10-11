@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.js — Version 1.8
+// source/infrastructure/supabase/training-session.repository.js — Version 1.9
 // Responsibility: persist encrypted sessions through a server-only Supabase client; every operation is explicitly owner-scoped.
 // SERVER-ONLY: requires a trusted privileged Supabase client, a verified user context and a server-side encryption port. Never import into client bundles. Direct client table grants are intentionally revoked.
 
@@ -133,13 +133,14 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
         return mapRow(data, id, authenticatedUserId);
     }
 
-    async function listForUser(userId) {
+    async function listForUser(userId, { offset = 0, limit = 20 } = {}) {
         assertUserScope(userId);
+        if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100 || offset > Number.MAX_SAFE_INTEGER - limit) throw new TypeError("Training session repository: pagination is invalid.");
         const { data, error } = await client.from(TABLE).select(COLUMNS)
             .eq("user_id", authenticatedUserId)
             .order("session_date", { ascending: false })
             .order("created_at", { ascending: false })
-            .limit(20);
+            .range(offset, offset + limit - 1);
         if (error) throw error;
         if (!Array.isArray(data)) throw new TypeError("Training session repository: list query did not return an array.");
         const results = [];

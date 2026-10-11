@@ -1,4 +1,4 @@
-// root.js — Version 3.4
+// root.js — Version 3.5
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 // Module-specific application dependencies are loaded lazily so one broken optional
@@ -40,6 +40,7 @@ export function createWebApplication() {
     const developmentApplicationByUser = new Map();
     const lifeSystemApplicationByUser = new Map();
     const trainingOverviewApplicationByUser = new Map();
+    const trainingAnalyticsApplicationByUser = new Map();
     const trainingWorkoutLibraryApplicationByUser = new Map();
     const trainingOverviewApi = createTrainingOverviewApi({ client: supabaseClient });
     const trainingWorkoutLibraryApi = createTrainingWorkoutLibraryApi({ client: supabaseClient });
@@ -133,6 +134,16 @@ export function createWebApplication() {
             }));
         }
         return trainingOverviewApplicationByUser.get(normalizedUserId);
+    }
+
+    async function createTrainingAnalyticsApplicationForUser(userId) {
+        const normalizedUserId = String(userId ?? "").trim();
+        if (!normalizedUserId) throw new Error("LifeGame Web: authenticated user id is required.");
+        if (!trainingAnalyticsApplicationByUser.has(normalizedUserId)) {
+            const { createTrainingAnalyticsApplication } = await import("../../../source/application/training/training-analytics.js");
+            trainingAnalyticsApplicationByUser.set(normalizedUserId, createTrainingAnalyticsApplication({ api: trainingSessionApi }));
+        }
+        return trainingAnalyticsApplicationByUser.get(normalizedUserId);
     }
 
     async function createTrainingWorkoutLibraryApplicationForUser(userId) {
@@ -281,6 +292,12 @@ export function createWebApplication() {
             createApplicationForUser: createTrainingOverviewApplicationForUser,
             clearForUser(userId) {
                 trainingOverviewApplicationByUser.delete(String(userId ?? "").trim());
+            }
+        }),
+        trainingAnalytics: Object.freeze({
+            createApplicationForUser: createTrainingAnalyticsApplicationForUser,
+            clearForUser(userId) {
+                trainingAnalyticsApplicationByUser.delete(String(userId ?? "").trim());
             }
         }),
         trainingWorkoutLibrary: Object.freeze({

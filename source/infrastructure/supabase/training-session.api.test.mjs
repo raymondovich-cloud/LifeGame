@@ -1,4 +1,4 @@
-// training-session.api.test.mjs — Version 1.0
+// training-session.api.test.mjs — Version 1.1
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSessionApi } from "./training-session.api.js";
@@ -21,6 +21,7 @@ test("sends lifecycle commands only through the authenticated Edge Function", as
         if (body.action === "create") return envelope("planned", 1);
         if (body.action === "start") return envelope("in_progress", 2);
         if (body.action === "revise") return envelope("in_progress", 3);
+        if (body.action === "list") return { data: { data: [{ session: { id: SESSION_ID, status: "completed" }, revision: 4 }] }, error: null };
         return envelope("completed", 4);
     });
     const api = createTrainingSessionApi({ client });
@@ -30,6 +31,9 @@ test("sends lifecycle commands only through the authenticated Edge Function", as
     const completed = await api.completeSession({ sessionId: SESSION_ID, expectedRevision: revised.revision });
     assert.deepEqual(client.calls.map(call => call.body.action), ["create", "start", "revise", "complete"]);
     assert.equal(completed.session.status, "completed");
+    const page = await api.listSessions({ offset: 100, limit: 100 });
+    assert.equal(page.length, 1);
+    assert.deepEqual(client.calls.at(-1).body, { action: "list", offset: 100, limit: 100 });
 });
 
 test("maps optimistic concurrency conflicts without leaking transport details", async () => {

@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.18 */
+/* source/design/patterns/training.css — Version 3.19 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -743,3 +743,6 @@
 .active-training-banner:active{transform:translateY(1px)}
 @media (min-width:720px){.active-training-banner-host{margin-top:var(--space-5)}.active-training-banner{padding:var(--space-3) var(--space-5)}}
 @media (prefers-reduced-motion:reduce){.active-training-banner{transition:none}}
+
+.training-overview__analytics-status{display:inline-flex;align-items:center;justify-content:center;width:fit-content;min-height:2.7rem;padding:.7rem 1rem;border:1px solid rgba(242,138,46,.48);border-radius:var(--radius-sm);background:rgba(242,138,46,.09);color:var(--color-white);font-size:var(--font-size-2xs);font-weight:var(--font-weight-semibold);letter-spacing:.1em;cursor:pointer}
+.training-overview__analytics-status:active{transform:translateY(1px)}

@@ -1,4 +1,4 @@
-// source/presentation/training/training-overview.js — Version 1.6
+// source/presentation/training/training-overview.js — Version 1.7
 // Responsibility: render the Training Overview from an explicit presentation model; never invent user progress.
 
 function createElement(tag, className = "", text = null) {
@@ -14,7 +14,7 @@ function createSection(label, className) {
     return section;
 }
 
-function renderTrainingOverview(container) {
+function renderTrainingOverview(container, { onOpenAnalytics = null } = {}) {
     if (!container || typeof container.replaceChildren !== "function") {
         throw new TypeError("Training Overview: a container element is required.");
     }
@@ -34,9 +34,11 @@ function renderTrainingOverview(container) {
             "Здесь появится аналитика рабочих весов, объёма нагрузки и регулярности тренировок."
         )
     );
-    const comingSoon = createElement("span", "training-overview__analytics-status", "СКОРО");
-    comingSoon.setAttribute("aria-label", "Аналитика тренировок скоро появится");
-    analytics.appendChild(comingSoon);
+    const openAnalytics = createElement("button", "training-overview__analytics-status", "ОТКРЫТЬ АНАЛИТИКУ ↗");
+    openAnalytics.type = "button";
+    openAnalytics.setAttribute("aria-label", "Открыть отдельный экран аналитики тренировок");
+    openAnalytics.addEventListener("click", () => { if (typeof onOpenAnalytics === "function") onOpenAnalytics(); });
+    analytics.appendChild(openAnalytics);
     screen.appendChild(analytics);
 
     container.appendChild(screen);

@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 4.0
+// source/presentation/training/training.js — Version 4.1
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { createPinIndicator } from "../shared/pin-indicator.js";
@@ -522,7 +522,7 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     section.append(heading, templatePanel);
     container.append(section, exerciseSection);
 }
-async function renderTraining(container, { trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null, onBack = null, activeWorkout = null, onActiveWorkoutChange = null, onActiveWorkoutScreenChange = null } = {}) {
+async function renderTraining(container, { trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null, onBack = null, onOpenAnalytics = null, activeWorkout = null, onActiveWorkoutChange = null, onActiveWorkoutScreenChange = null } = {}) {
     if (!container || typeof container.replaceChildren !== "function") throw new TypeError("LifeGame Training: a container element is required.");
     const content = renderTrainingShell(container, onBack);
     if (!trainingOverviewApplication || typeof trainingOverviewApplication.execute !== "function" ||
@@ -534,7 +534,7 @@ async function renderTraining(container, { trainingOverviewApplication = null, t
         try {
             const [overview, exercises, templates] = await Promise.all([trainingOverviewApplication.execute(), trainingWorkoutLibraryApplication.listExercises(), trainingWorkoutLibraryApplication.listTemplates()]);
             if (!content.isConnected) return;
-            renderTrainingOverview(content, { program: overview?.program ?? null, hasSavedTemplates: templates.length > 0, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout });
+            renderTrainingOverview(content, { program: overview?.program ?? null, hasSavedTemplates: templates.length > 0, onOpenAnalytics, onCreateWorkout: () => renderBuilder(exercises), onStartWorkout: startWorkout });
             renderSavedResources(content, { exercises, templates, onCreateWorkout: () => renderBuilder(exercises), onViewTemplate: (template) => renderWorkoutDetails(content, template, loadOverview, startWorkout), onStartWorkout: startWorkout,
                 libraryApplication: trainingWorkoutLibraryApplication, onExerciseCreated: loadOverview,
                 onEditTemplate: (template) => renderBuilder(exercises, template),

@@ -1,4 +1,4 @@
-// training-session.api.js — Version 1.1
+// training-session.api.js — Version 1.2
 // Responsibility: expose authenticated training-session commands through the browser Supabase Functions client.
 function createTrainingSessionApi({ client } = {}) {
     if (!client?.functions || typeof client.functions.invoke !== "function") {
@@ -48,8 +48,9 @@ function createTrainingSessionApi({ client } = {}) {
     async function completeSession({ sessionId, expectedRevision } = {}) {
         return envelope(await invoke({ action: "complete", sessionId, expectedRevision }), "completed");
     }
-    async function listSessions() {
-        const result = await invoke({ action: "list" });
+    async function listSessions({ offset = 0, limit = 20 } = {}) {
+        if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100 || offset > Number.MAX_SAFE_INTEGER - limit) throw new TypeError("Training Session API: pagination is invalid.");
+        const result = await invoke({ action: "list", offset, limit });
         if (!Array.isArray(result)) {
             const failure = new Error("Training Session API: invalid session list.");
             failure.code = "TRAINING_SESSION_API_INVALID_RESPONSE";

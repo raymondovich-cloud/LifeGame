@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.24
+// platforms/web/web.runtime.js — Version 5.25
 
 import {
     trace,
@@ -27,6 +27,7 @@ export async function startWeb() {
             profile: "../../source/presentation/profile/profile.js",
             health: "../../source/presentation/health/health.js",
             training: "../../source/presentation/training/training.js",
+            "training-analytics": "../../source/presentation/training/training-analytics.js",
             development: "../../source/presentation/development/development.js"
         };
 
@@ -229,6 +230,7 @@ export async function startWeb() {
         return route === "finance" ||
             route === "health" ||
             route === "training" ||
+            route === "training-analytics" ||
             route === "development" ||
             route === "profile" ||
             route === "auth";
@@ -417,6 +419,7 @@ export async function startWeb() {
         activeTrainingHydratedUserId = null;
         activeTrainingHydrationPromise = null;
         application.trainingOverview.clearForUser(activeUserId);
+        application.trainingAnalytics.clearForUser(activeUserId);
         application.trainingWorkoutLibrary.clearForUser(activeUserId);
         application.development.clearForUser(activeUserId);
         activeUserId = null;
@@ -433,7 +436,7 @@ export async function startWeb() {
         await renderRoute();
     }
 
-    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null, trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null) {
+    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null, trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null, trainingAnalyticsApplication = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
             openLoginModal();
@@ -467,6 +470,12 @@ export async function startWeb() {
             return;
         }
 
+        if (moduleId === "training-analytics") {
+            const { renderTrainingAnalytics } = await getPresentation("training-analytics");
+            await renderTrainingAnalytics(moduleContent, { application: trainingAnalyticsApplication, onBack: () => { window.location.hash = "training"; } });
+            return;
+        }
+
         if (moduleId === "training") {
             const { renderTraining } = await getPresentation("training");
             presentationCleanup = await renderTraining(moduleContent, {
@@ -474,6 +483,7 @@ export async function startWeb() {
                 trainingSessionApplication,
                 trainingWorkoutLibraryApplication,
                 activeWorkout: activeTrainingWorkout,
+                onOpenAnalytics: () => { window.location.hash = "training-analytics"; },
                 onActiveWorkoutChange: setActiveTrainingWorkout,
                 onActiveWorkoutScreenChange: (visible) => {
                     activeTrainingScreenVisible = Boolean(visible);
@@ -586,6 +596,7 @@ export async function startWeb() {
                 title: "Подготавливаем тренировки",
                 description: "Загружаем тренировочную программу и историю занятий."
             },
+            "training-analytics": { label: "TRAINING ANALYTICS", title: "Подготавливаем аналитику тренировок", description: "Собираем статистику по завершённым тренировкам." },
             development: {
                 label: "DEVELOPMENT",
                 title: "Подготавливаем систему развития",
@@ -637,7 +648,7 @@ export async function startWeb() {
         if (navigation) {
             navigation.setAuthenticationState(!isPublic);
             // Training is a subroute of Health: keep #training while highlighting Health.
-            navigation.render(route, false);
+            navigation.render(route === "training-analytics" ? "training" : route, false);
         }
 
         if (!isPublic && session?.user?.id) {
@@ -671,7 +682,7 @@ export async function startWeb() {
             return;
         }
 
-        if (["finance", "health", "training", "development"].includes(route)) {
+        if (["finance", "health", "training", "training-analytics", "development"].includes(route)) {
             renderAuthenticatedLoadingState(route);
         }
 
@@ -683,11 +694,14 @@ export async function startWeb() {
             let trainingOverviewApplication = null;
             let trainingSessionApplication = null;
             let trainingWorkoutLibraryApplication = null;
+            let trainingAnalyticsApplication = null;
 
             if (route === "finance") {
                 financeApplication = await application.finance.createApplicationForUser(activeUserId);
             } else if (route === "health") {
                 healthApplication = await application.health.createApplicationForUser(activeUserId);
+            } else if (route === "training-analytics") {
+                trainingAnalyticsApplication = await application.trainingAnalytics.createApplicationForUser(activeUserId);
             } else if (route === "training") {
                 trainingOverviewApplication = await application.trainingOverview.createApplicationForUser(activeUserId);
                 trainingSessionApplication = await application.trainingSessions.createApplicationForUser(activeUserId);
@@ -711,7 +725,8 @@ export async function startWeb() {
                 lifeSystemApplication,
                 trainingOverviewApplication,
                 trainingSessionApplication,
-                trainingWorkoutLibraryApplication
+                trainingWorkoutLibraryApplication,
+                trainingAnalyticsApplication
             );
             if (route !== "training") void hydrateActiveTraining(activeUserId);
         } catch (error) {

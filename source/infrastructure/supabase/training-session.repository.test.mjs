@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.8
+// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.9
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "../../domain/training/training-session.js";
@@ -30,13 +30,15 @@ function createFakeClient() {
                 eq(field, value) { query.filters.push([field, value]); return builder; },
                 order(field, options) { query.ordering.push([field, options]); return builder; },
                 limit(value) { query.maxRows = value; return builder; },
+                range(start, end) { query.range = [start, end]; return builder; },
                 then(resolve, reject) {
-                    calls.push({ action: query.action, filters: [...query.filters], ordering: [...query.ordering], maxRows: query.maxRows });
+                    calls.push({ action: query.action, filters: [...query.filters], ordering: [...query.ordering], maxRows: query.maxRows, range: query.range });
                     const matches = (row) => query.filters.every(([field, value]) => String(row[field]) === String(value));
                     let selected = [...rows.values()].filter(matches);
                     for (const [field, options] of [...query.ordering].reverse()) {
                         selected.sort((a, b) => String(a[field]).localeCompare(String(b[field])) * (options?.ascending === false ? -1 : 1));
                     }
+                    if (query.range) selected = selected.slice(query.range[0], query.range[1] + 1);
                     if (query.maxRows !== null) selected = selected.slice(0, query.maxRows);
                     return Promise.resolve({ data: selected.map((row) => ({ ...row })), error: null }).then(resolve, reject);
                 },
