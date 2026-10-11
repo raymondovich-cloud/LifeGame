@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.7
+// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.8
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "../../domain/training/training-session.js";
@@ -131,6 +131,7 @@ test("inserts encrypted fields and reads back a validated domain session", async
     assert.equal(inserted.session.exercises[0].targetSets, 3);
     assert.equal(inserted.session.notes, "first note");
     assert.equal(inserted.session.createdAt, Date.parse("2026-10-10T10:00:00.000Z"));
+    assert.equal(inserted.session.startedAt, null);
     const row = client.rows.get(SESSION_ID);
     assert.equal(typeof row.payload_ciphertext, "string");
     assert.match(row.payload_ciphertext, /^\\x[0-9a-f]+$/i);
@@ -141,6 +142,15 @@ test("inserts encrypted fields and reads back a validated domain session", async
 
     const found = await repository.findForUser(USER_ID, SESSION_ID);
     assert.deepEqual(found, inserted);
+});
+
+test("persists the canonical start timestamp in the encrypted payload", async () => {
+    const { repository } = setup();
+    const started = makeSession({ status: "in_progress", startedAt: Date.parse("2026-10-10T10:00:30.000Z"), updatedAt: Date.parse("2026-10-10T10:00:30.000Z") });
+    const inserted = await repository.insertForUser(USER_ID, started);
+    assert.equal(inserted.session.startedAt, Date.parse("2026-10-10T10:00:30.000Z"));
+    const found = await repository.findForUser(USER_ID, SESSION_ID);
+    assert.equal(found.session.startedAt, inserted.session.startedAt);
 });
 
 test("uses an atomic expected-revision filter and returns the next revision", async () => {
