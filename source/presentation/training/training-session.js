@@ -1,4 +1,4 @@
-// source/presentation/training/training-session.js — Version 2.0
+// source/presentation/training/training-session.js — Version 2.1
 // Responsibility: render the active workout interaction; delegate persistence and business rules to the application layer.
 function createElement(tag, className = "", text = null) {
     const element = document.createElement(tag);
@@ -67,24 +67,42 @@ function renderTrainingSession(container, { sessionResult, workout, application,
                 reps.value = String(savedSet?.reps ?? definition.targetReps ?? 8);
                 reps.disabled = Boolean(savedSet);
                 reps.setAttribute("aria-label", "Количество повторений, подход " + (index + 1));
-                const label = createElement("span", "training-session__set-unit", "ПОВТОР.");
-                row.append(checkbox, number, reps, label);
+                const resistance = document.createElement("input");
+                resistance.type = "number";
+                resistance.min = "0";
+                resistance.max = "1000";
+                resistance.step = "0.5";
+                resistance.inputMode = "decimal";
+                resistance.className = "training-session__set-weight";
+                resistance.placeholder = "0";
+                resistance.value = String(savedSet?.resistance?.value ?? definition.targetResistance?.value ?? "");
+                resistance.disabled = Boolean(savedSet);
+                resistance.setAttribute("aria-label", "Вес в килограммах, подход " + (index + 1));
+                const label = createElement("span", "training-session__set-unit", "ПОВТ.");
+                const weightLabel = createElement("span", "training-session__set-weight-unit", "КГ");
+                row.append(checkbox, number, reps, label, resistance, weightLabel);
                 if (savedSet) row.classList.add("is-complete");
                 checkbox.addEventListener("change", async () => {
                     const repetitions = Number(reps.value);
-                    if (!Number.isInteger(repetitions) || repetitions < 1 || repetitions > 100) {
+                    const weightText = resistance.value.trim();
+                    const weight = weightText === "" ? null : Number(weightText);
+                    if (!Number.isInteger(repetitions) || repetitions < 1 || repetitions > 100 ||
+                        (weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 1000))) {
                         checkbox.checked = false;
-                        reps.focus();
+                        if (!Number.isInteger(repetitions) || repetitions < 1 || repetitions > 100) reps.focus();
+                        else resistance.focus();
                         return;
                     }
                     checkbox.disabled = true;
                     try {
-                        const targetResistance = definition.targetResistance || { unit: "bodyweight", value: null };
+                        const selectedResistance = weight === null
+                            ? { unit: "bodyweight", value: null }
+                            : { unit: "kg", value: weight };
                         current = await application.recordSet({
                             sessionResult: current,
                             exercise: definition,
                             reps: repetitions,
-                            resistance: targetResistance
+                            resistance: selectedResistance
                         });
                         render();
                     } catch (error) {
