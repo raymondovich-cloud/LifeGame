@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.20
+// platforms/web/web.runtime.js — Version 5.21
 
 import {
     trace,
@@ -510,6 +510,8 @@ export async function startWeb() {
 
         if (navigation) {
             navigation.setAuthenticationState(!isPublic);
+            // Training is a subroute of Health: keep #training while highlighting Health.
+            navigation.render(route, false);
         }
 
         if (!isPublic && session?.user?.id) {
