@@ -1,4 +1,4 @@
-// platforms/web/web.js — Version 5.7
+// platforms/web/web.js — Version 5.8
 // Responsibility: start the browser runtime without rendering temporary module previews.
 
 const APP_ROOT_ID="app";
@@ -23,7 +23,7 @@ function boot(){
  shell.hidden=false;
  appRoot.dataset.access="public";
 
- import("./web.runtime.js?v=20261008-2140")
+ import("./web.runtime.js?v=20261011-1715")
   .then(({startWeb})=>startWeb())
   .catch(error=>{
    console.error("LifeGame Web runtime failed to load.",error);

@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.17
+// platforms/web/web.runtime.js — Version 5.18
 
 import {
     trace,
@@ -312,7 +312,7 @@ export async function startWeb() {
         await renderRoute();
     }
 
-    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null, trainingOverviewApplication = null) {
+    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null, trainingOverviewApplication = null, trainingSessionApplication = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
             openLoginModal();
@@ -341,7 +341,8 @@ export async function startWeb() {
             const { renderHealth } = await getPresentation("health");
             await renderHealth(moduleContent, healthApplication, {
                 showPresentationHeader: publicMode,
-                trainingOverviewApplication
+                trainingOverviewApplication,
+                trainingSessionApplication
             });
             return;
         }
@@ -529,13 +530,14 @@ export async function startWeb() {
             let developmentApplication = null;
             let lifeSystemApplication = null;
             let trainingOverviewApplication = null;
+            let trainingSessionApplication = null;
 
             if (route === "finance") {
                 financeApplication = await application.finance.createApplicationForUser(activeUserId);
             } else if (route === "health") {
                 healthApplication = await application.health.createApplicationForUser(activeUserId);
-            } else if (route === "health") {
                 trainingOverviewApplication = await application.trainingOverview.createApplicationForUser(activeUserId);
+                trainingSessionApplication = await application.trainingSessions.createApplicationForUser(activeUserId);
             } else if (route === "development") {
                 developmentApplication = await application.development.createApplicationForUser(activeUserId);
                 lifeSystemApplication = await application.lifeSystem.createApplicationForUser(activeUserId);
@@ -552,7 +554,8 @@ export async function startWeb() {
                 healthApplication,
                 developmentApplication,
                 lifeSystemApplication,
-                trainingOverviewApplication
+                trainingOverviewApplication,
+                trainingSessionApplication
             );
         } catch (error) {
             trace("web-shell", "module.hydration.error", {

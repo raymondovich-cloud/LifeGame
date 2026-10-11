@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 1.0 */
+/* source/design/patterns/training.css — Version 1.1 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -178,3 +178,39 @@
     .training-overview__progress-fill,
     .training-overview__start{transition:none}
 }
+
+
+/* Active workout lifecycle */
+.training-session{
+    position:relative;
+    display:grid;
+    gap:var(--space-4);
+    min-width:0;
+    padding:var(--space-4);
+    overflow:hidden;
+    background:var(--gradient-card-premium);
+    border:1px solid rgba(242,138,46,.28);
+    border-radius:var(--radius-card);
+    box-shadow:var(--shadow-soft),0 18px 50px rgba(0,0,0,.22);
+}
+.training-session__header,
+.training-session__exercise,
+.training-session__set-form{display:grid;gap:var(--space-3);position:relative;z-index:1}
+.training-session__header{padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
+.training-session__eyebrow{color:var(--color-gray);font-size:var(--font-size-2xs);letter-spacing:.12em;text-transform:uppercase}
+.training-session__title{margin:0;color:var(--color-white);font-size:var(--font-size-section);line-height:var(--line-height-snug)}
+.training-session__copy,.training-session__status,.training-session__set-copy{margin:0;color:var(--color-gray);font-size:var(--font-size-sm);line-height:1.5}
+.training-session__exercise{padding:var(--space-4) 0;border-bottom:var(--border-subtle)}
+.training-session__exercise-title{margin:0;color:var(--color-white);font-size:var(--font-size-interface);font-weight:var(--font-weight-medium)}
+.training-session__set-list{display:grid;gap:var(--space-2);margin:0;padding:0;list-style:none}
+.training-session__set{display:flex;justify-content:space-between;gap:var(--space-3);padding:var(--space-3);border:var(--border-subtle);border-radius:var(--radius-sm);color:var(--color-white-soft);font-size:var(--font-size-sm)}
+.training-session__set-form{grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
+.training-session__field{display:grid;gap:var(--space-1);color:var(--color-gray);font-size:var(--font-size-xs)}
+.training-session__field input,.training-session__field select{width:100%;min-height:2.8rem;padding:var(--space-2);border:var(--border-subtle);border-radius:var(--radius-sm);background:rgba(255,255,255,.04);color:var(--color-white)}
+.training-session__field select option{background:#111;color:#fff}
+.training-session__save-set{grid-column:1/-1;width:100%;min-height:2.8rem;border:1px solid rgba(242,138,46,.48);border-radius:var(--radius-sm);background:rgba(242,138,46,.1);color:var(--color-white);font-size:var(--font-size-xs);font-weight:var(--font-weight-medium)}
+.training-session__footer{display:grid;gap:var(--space-3);position:relative;z-index:1}
+.training-session__complete{width:100%;min-height:3.25rem;border:1px solid rgba(242,138,46,.65);border-radius:var(--radius-sm);background:var(--gradient-accent-line);color:#080808;font-size:var(--font-size-xs);font-weight:var(--font-weight-semibold);letter-spacing:.12em}
+.training-session__complete:disabled,.training-session__save-set:disabled{opacity:.45;cursor:not-allowed}
+.training-session__back{justify-self:start;border:0;background:transparent;color:var(--color-gray);font-size:var(--font-size-sm)}
+@media (min-width:720px){.training-session{padding:var(--space-5)}.training-session__set-form{grid-template-columns:repeat(3,minmax(0,1fr))}.training-session__save-set{grid-column:auto}}

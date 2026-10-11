@@ -1,4 +1,4 @@
-// root.js — Version 3.1
+// root.js — Version 3.2
 // LifeGame 3.0 — Web Composition Root
 // Responsibility: compose concrete Infrastructure with Application and Presentation.
 // Module-specific application dependencies are loaded lazily so one broken optional
@@ -11,6 +11,8 @@ import { createAuthController } from "../../../source/presentation/auth/auth.con
 import { createUserContext } from "../../../source/application/user/user.context.js";
 import { createProfileApplication } from "../../../source/application/profile/profile.js";
 import { createTrainingOverviewApi } from "../../../source/infrastructure/supabase/training-overview.api.js";
+import { createTrainingSessionApi } from "../../../source/infrastructure/supabase/training-session.api.js";
+import { createTrainingSessionWorkflow } from "../../../source/application/training/training-session-workflow.js";
 import { createSupabaseProfileAdapter } from "../../../source/infrastructure/supabase/profile.adapter.js";
 
 function getAuthenticationRedirectUrl() {
@@ -37,6 +39,8 @@ export function createWebApplication() {
     const lifeSystemApplicationByUser = new Map();
     const trainingOverviewApplicationByUser = new Map();
     const trainingOverviewApi = createTrainingOverviewApi({ client: supabaseClient });
+    const trainingSessionApi = createTrainingSessionApi({ client: supabaseClient });
+    const trainingSessionApplicationByUser = new Map();
     let trainingOverviewModulePromise = null;
 
     let financeModulePromise = null;
@@ -92,6 +96,21 @@ export function createWebApplication() {
             createTrainingOverviewReadModel: readModelModule.createTrainingOverviewReadModel
         }));
         return trainingOverviewModulePromise;
+    }
+
+    async function createTrainingSessionApplicationForUser(userId) {
+        const normalizedUserId = String(userId ?? "").trim();
+        if (!normalizedUserId) throw new Error("LifeGame Web: authenticated user id is required.");
+        if (!trainingSessionApplicationByUser.has(normalizedUserId)) {
+            const userContext = createUserContext(normalizedUserId);
+            const workflow = createTrainingSessionWorkflow({ api: trainingSessionApi });
+            trainingSessionApplicationByUser.set(normalizedUserId, Object.freeze({
+                startWorkout: ({ workout } = {}) => workflow.startWorkout({ userContext, workout }),
+                recordSet: (input = {}) => workflow.recordSet({ ...input, userContext }),
+                completeWorkout: (input = {}) => workflow.completeWorkout({ ...input, userContext })
+            }));
+        }
+        return trainingSessionApplicationByUser.get(normalizedUserId);
     }
 
     async function createTrainingOverviewApplicationForUser(userId) {
@@ -234,6 +253,12 @@ export function createWebApplication() {
             clearForUser(userId) {
                 const normalizedUserId = String(userId ?? "").trim();
                 developmentApplicationByUser.delete(normalizedUserId);
+            }
+        }),
+        trainingSessions: Object.freeze({
+            createApplicationForUser: createTrainingSessionApplicationForUser,
+            clearForUser(userId) {
+                trainingSessionApplicationByUser.delete(String(userId ?? "").trim());
             }
         }),
         trainingOverview: Object.freeze({

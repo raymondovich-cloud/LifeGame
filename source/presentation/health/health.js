@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 3.0
+// source/presentation/health/health.js — Version 3.1
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -6,6 +6,7 @@ import { renderHealthAnalyticsScreen } from "./section.analytics.js";
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
 import { renderTrainingOverview } from "../training/training-overview.js";
+import { renderTrainingSession } from "../training/training-session.js";
 
 const FACTOR_LABELS = Object.freeze({
     recovery: "Восстановление",
@@ -481,6 +482,7 @@ function renderHealthPriority(panel, index, onOpenData) {
 async function renderHealth(container, healthApplication, options = {}) {
     const showPresentationHeader = options.showPresentationHeader !== false;
     const trainingOverviewApplication = options.trainingOverviewApplication || null;
+    const trainingSessionApplication = options.trainingSessionApplication || null;
 
     if (!healthApplication) {
         throw new Error("LifeGame Health: application is required.");
@@ -551,7 +553,30 @@ async function renderHealth(container, healthApplication, options = {}) {
                 if (!trainingPanel.isConnected) return;
                 renderTrainingOverview(trainingPanel, {
                     program: overview?.program ?? null,
-                    previousWorkout: overview?.previousWorkout ?? null
+                    previousWorkout: overview?.previousWorkout ?? null,
+                    onStartWorkout: trainingSessionApplication && typeof trainingSessionApplication.startWorkout === "function"
+                        ? async (workout) => {
+                            renderTrainingOverviewStatus(trainingPanel, "Запускаем тренировку…");
+                            try {
+                                const sessionResult = await trainingSessionApplication.startWorkout({ workout });
+                                if (!trainingPanel.isConnected) return;
+                                renderTrainingSession(trainingPanel, {
+                                    sessionResult,
+                                    workout,
+                                    application: trainingSessionApplication,
+                                    onFinished: refresh
+                                });
+                            } catch (error) {
+                                if (!trainingPanel.isConnected) return;
+                                renderTrainingOverviewStatus(
+                                    trainingPanel,
+                                    error?.code === "TRAINING_SESSION_CONFLICT"
+                                        ? "Данные тренировки изменились. Обнови экран и попробуй снова."
+                                        : "Не удалось запустить тренировку. Проверь соединение и повтори попытку."
+                                );
+                            }
+                        }
+                        : null
                 });
             } catch {
                 if (!trainingPanel.isConnected) return;
