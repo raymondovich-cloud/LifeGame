@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 2.5
+// source/presentation/training/training.js — Version 2.6
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
