@@ -206,7 +206,7 @@ test("lists only the verified user's sessions with a bounded newest-first query"
     const results = await repository.listForUser(USER_ID);
     assert.equal(results.length, 1);
     assert.equal(results[0].session.id, SESSION_ID);
-    const query = client.calls.find((call) => call.maxRows === 20);
+    const query = client.calls.find((call) => call.range?.[0] === 0 && call.range?.[1] === 19);
     assert.ok(query, "history query must be bounded to 20 rows");
     assert.ok(query.filters.some(([field, value]) => field === "user_id" && value === USER_ID));
     assert.deepEqual(query.ordering.map(([field]) => field), ["session_date", "created_at"]);
