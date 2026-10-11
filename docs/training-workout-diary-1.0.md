@@ -119,7 +119,7 @@ Domain не знает о UI, Memory, Infrastructure, пользователях
 
 ## 12. Подключение Training Overview к удалённым данным
 
-`source/infrastructure/supabase/training-overview.api.js` вызывает только authenticated Edge Functions через browser Supabase client; server-only repository/encryption modules не импортируются в клиентский bundle. `source/application/training/load-training-overview.js` параллельно загружает TrainingProgram и список сессий и передаёт фактические записи в read model. `training-sessions` handler и owner-scoped repository предоставляют `list` для текущей verified identity; список сортируется по дате, ограничен последними 100 записями и каждый payload расшифровывается на сервере.
+`source/infrastructure/supabase/training-overview.api.js` вызывает только authenticated Edge Functions через browser Supabase client; server-only repository/encryption modules не импортируются в клиентский bundle. `source/application/training/load-training-overview.js` параллельно загружает TrainingProgram и список сессий и передаёт фактические записи в read model. `training-sessions` handler и owner-scoped repository предоставляют `list` для текущей verified identity; список сортируется по дате, ограничен последними 20 записями и каждый payload расшифровывается на сервере.
 
 `platforms/web/composition/root.js` создаёт per-user Application wrapper, а Health Presentation отображает состояние загрузки, реальные прогресс и рекомендацию либо нейтральную ошибку. UI не создаёт фиктивные записи и кнопка «НАЧАТЬ» остаётся отключённой, пока lifecycle занятия не подключён к пользовательскому интерфейсу. Новые сценарии Application и handler list покрыты тестами, включёнными в Preview CI.
 
