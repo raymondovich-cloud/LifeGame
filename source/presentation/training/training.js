@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 2.9
+// source/presentation/training/training.js — Version 3.0
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -74,7 +74,7 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
     header.append(el("span", "training-overview__eyebrow", "ТВОЯ ТРЕНИРОВКА"), el("h3", "training-workout-builder__title", "Собери своё занятие"),
         el("p", "training-overview__description", "Собери занятие из упражнений своей библиотеки. Новые упражнения можно добавить в отдельном разделе «Библиотека упражнений». Сохрани шаблон, чтобы повторять тренировку позже."));
     const titleLabel = el("label", "training-exercise-modal__label", "Название тренировки");
-    const titleInput = document.createElement("input"); titleInput.type = "text"; titleInput.maxLength = 80; titleInput.value = initialTemplate?.title || "Моя тренировка"; titleInput.setAttribute("aria-label", "Название шаблона тренировки"); titleLabel.appendChild(titleInput);
+    const titleInput = document.createElement("input"); titleInput.type = "text"; titleInput.maxLength = 80; titleInput.value = initialTemplate?.title || ""; titleInput.placeholder = "Моя тренировка"; titleInput.setAttribute("aria-label", "Название тренировки"); titleLabel.appendChild(titleInput);
     const libraryPanel = el("div", "training-workout-builder__library");
     const libraryHeader = el("div", "training-workout-builder__library-header");
     libraryHeader.appendChild(el("span", "training-overview__eyebrow", "МОЯ БИБЛИОТЕКА УПРАЖНЕНИЙ"));
@@ -114,7 +114,7 @@ function renderExerciseBuilder(container, { libraryApplication, libraryExercises
         if (!draft.length) return;
         saveTemplate.disabled = true; status.textContent = "Сохраняем шаблон…";
         try {
-            await libraryApplication.saveTemplate({ id: initialTemplate?.id ?? null, title: titleInput.value.trim().replace(/\s+/g, " "), exercises: draft.map((item) => ({ ...item })) });
+            await libraryApplication.saveTemplate({ id: initialTemplate?.id ?? null, title: titleInput.value.trim().replace(/\s+/g, " ") || "Моя тренировка", exercises: draft.map((item) => ({ ...item })) });
             status.textContent = initialTemplate ? "Изменения сохранены." : "Шаблон сохранён. Его можно будет запускать повторно."; await onSaved();
         } catch (error) { status.textContent = error?.message || "Не удалось сохранить шаблон. Попробуй ещё раз."; saveTemplate.disabled = draft.length === 0; }
     });
