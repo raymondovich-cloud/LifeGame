@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 3.7
+// source/presentation/training/training.js — Version 3.6
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -425,7 +425,8 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     const templatePanel = el("div", "training-saved-resources__panel");
     const templatesToggle = el("button", "training-saved-resources__workouts-toggle");
     templatesToggle.type = "button";
-    templatesToggle.setAttribute("aria-expanded", "false");
+    templatesToggle.setAttribute("aria-expanded", "true");
+    templatesToggle.classList.add("is-expanded");
     templatesToggle.setAttribute("aria-controls", "training-saved-workouts-content");
     templatesToggle.append(
         el("span", "training-overview__eyebrow", "СОХРАНЁННЫЕ ТРЕНИРОВКИ"),
@@ -434,7 +435,6 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
     );
     const templatesContent = el("div", "training-saved-resources__workouts-content");
     templatesContent.id = "training-saved-workouts-content";
-    templatesContent.hidden = true;
     templatesToggle.addEventListener("click", () => {
         const expanded = templatesToggle.getAttribute("aria-expanded") === "true";
         templatesToggle.setAttribute("aria-expanded", String(!expanded));
