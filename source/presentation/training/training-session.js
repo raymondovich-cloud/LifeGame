@@ -1,4 +1,4 @@
-// source/presentation/training/training-session.js — Version 2.6
+// source/presentation/training/training-session.js — Version 2.7
 // Responsibility: render the active workout interaction; delegate persistence and business rules to the application layer.
 function createElement(tag, className = "", text = null) {
     const element = document.createElement(tag);
