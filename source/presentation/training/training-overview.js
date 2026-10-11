@@ -1,4 +1,4 @@
-// source/presentation/training/training-overview.js — Version 1.0
+// source/presentation/training/training-overview.js — Version 1.1
 // Responsibility: render the Training Overview from an explicit presentation model; never invent user progress.
 
 function createElement(tag, className = "", text = null) {
@@ -23,9 +23,27 @@ function renderProgram(section, program, onStartWorkout) {
             createElement(
                 "p",
                 "training-overview__description",
-                "Здесь появятся текущая неделя, выполненные тренировки и твой следующий шаг."
+                "Можно начать тренировку без программы: сохранённые подходы попадут в твою историю."
             )
         );
+
+        if (typeof onStartWorkout === "function") {
+            const start = document.createElement("button");
+            start.type = "button";
+            start.className = "training-overview__start";
+            start.textContent = "НАЧАТЬ ПЕРВУЮ ТРЕНИРОВКУ";
+            start.addEventListener("click", () => onStartWorkout({
+                id: "quick-start",
+                title: "Первая тренировка",
+                durationMinutes: 45,
+                exercises: [
+                    { id: "barbell_bench_press", name: "Жим штанги лёжа", muscleGroups: ["chest", "shoulders", "triceps"], targetSets: 3, targetReps: 8 },
+                    { id: "lat_pulldown", name: "Тяга верхнего блока", muscleGroups: ["back", "biceps"], targetSets: 3, targetReps: 10 },
+                    { id: "barbell_back_squat", name: "Приседания со штангой", muscleGroups: ["core", "glutes", "hamstrings", "quadriceps"], targetSets: 3, targetReps: 8 }
+                ]
+            }));
+            section.appendChild(start);
+        }
         return;
     }
 
