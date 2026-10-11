@@ -1,4 +1,4 @@
-// source/presentation/training/training.js — Version 1.6
+// source/presentation/training/training.js — Version 1.7
 // Responsibility: render the Training workspace and coordinate user actions through Application callbacks only.
 import { renderTrainingOverview } from "./training-overview.js";
 import { renderTrainingSession } from "./training-session.js";
@@ -294,9 +294,32 @@ function renderSavedResources(container, { exercises, templates, onCreateWorkout
         });
         templatePanel.appendChild(list);
     }
-    const exercisePanel = el("div", "training-saved-resources__panel"); exercisePanel.appendChild(el("span", "training-overview__eyebrow", "БИБЛИОТЕКА УПРАЖНЕНИЙ"));
-    if (!exercises.length) exercisePanel.appendChild(el("p", "training-overview__description", "Пока нет сохранённых упражнений."));
-    else { const list = el("div", "training-saved-resources__exercise-list"); exercises.forEach((exercise) => list.appendChild(el("span", "training-saved-resources__exercise", exercise.name))); exercisePanel.appendChild(list); }
+    const exercisePanel = el("div", "training-saved-resources__panel training-saved-resources__library");
+    const libraryToggle = el("button", "training-saved-resources__library-toggle");
+    libraryToggle.type = "button";
+    libraryToggle.setAttribute("aria-expanded", "false");
+    libraryToggle.setAttribute("aria-controls", "training-exercise-library-content");
+    libraryToggle.append(
+        el("span", "training-overview__eyebrow", "БИБЛИОТЕКА УПРАЖНЕНИЙ"),
+        el("span", "training-saved-resources__library-meta", String(exercises.length)),
+        el("span", "training-saved-resources__library-chevron", "⌄")
+    );
+    const libraryContent = el("div", "training-saved-resources__library-content");
+    libraryContent.id = "training-exercise-library-content";
+    libraryContent.hidden = true;
+    if (!exercises.length) libraryContent.appendChild(el("p", "training-overview__description", "Пока нет сохранённых упражнений."));
+    else {
+        const list = el("div", "training-saved-resources__exercise-list");
+        exercises.forEach((exercise) => list.appendChild(el("span", "training-saved-resources__exercise", exercise.name)));
+        libraryContent.appendChild(list);
+    }
+    libraryToggle.addEventListener("click", () => {
+        const expanded = libraryToggle.getAttribute("aria-expanded") === "true";
+        libraryToggle.setAttribute("aria-expanded", String(!expanded));
+        libraryContent.hidden = expanded;
+        libraryToggle.classList.toggle("is-expanded", !expanded);
+    });
+    exercisePanel.append(libraryToggle, libraryContent);
     section.append(heading, templatePanel, exercisePanel); container.appendChild(section);
 }
 async function renderTraining(container, { trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null, onBack = null } = {}) {
