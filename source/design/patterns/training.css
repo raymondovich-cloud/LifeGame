@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 2.4 */
+/* source/design/patterns/training.css — Version 2.5 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -373,3 +373,7 @@
 .training-workout-details__exercise-name{min-width:0;color:var(--color-white);font-size:var(--font-size-sm);overflow-wrap:anywhere}
 .training-workout-details__empty{padding:var(--space-3);color:var(--color-gray);font-size:var(--font-size-sm)}
 @media (min-width:600px){.training-workout-details{padding:var(--space-5)}}
+
+
+/* Start action on saved workout details — Version 1.0 */
+.training-workout-details__start{width:100%;margin-top:var(--space-2)}
