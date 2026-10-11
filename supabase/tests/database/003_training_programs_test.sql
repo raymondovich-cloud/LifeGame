@@ -1,4 +1,4 @@
--- supabase/tests/database/003_training_programs_test.sql — Version 1.1
+-- supabase/tests/database/003_training_programs_test.sql — Version 1.2
 -- Verifies direct access denial, owner binding, immutable identity and revision CAS for programs.
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -7,7 +7,7 @@ insert into auth.users (id,instance_id,aud,role,email,encrypted_password,email_c
 ('10000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','program-test-a@example.invalid','not-a-real-password-hash',now(),now(),now(),'{}'::jsonb),
 ('10000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','program-test-b@example.invalid','not-a-real-password-hash',now(),now(),now(),'{}'::jsonb);
 select ok((select relrowsecurity from pg_class where oid='public.training_programs'::regclass),'training_programs has RLS enabled');
-select results_eq($$select count(*)::bigint from pg_policies where schemaname='public' and tablename='training_programs'$$,$$values(0::bigint)$$,'no direct client RLS policies are granted');
+select is((select count(*)::bigint from pg_policies where schemaname='public' and tablename='training_programs'),0::bigint,'no direct client RLS policies are granted');
 select ok(not has_table_privilege('authenticated','public.training_programs','SELECT'),'authenticated cannot directly select programs');
 select ok(not has_table_privilege('authenticated','public.training_programs','INSERT'),'authenticated cannot directly insert programs');
 select ok(not has_table_privilege('authenticated','public.training_programs','UPDATE'),'authenticated cannot directly update programs');
