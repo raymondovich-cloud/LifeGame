@@ -1,4 +1,4 @@
-// finance.memory.supabase.integration.test.mjs — Version 1.8
+// finance.memory.supabase.integration.test.mjs — Version 1.9
 // Responsibility: verify real Finance persistence, hydration, user isolation, and RLS through local Supabase.
 
 import test from "node:test";
@@ -28,7 +28,16 @@ async function createTestSession(label) {
     const email = "lifegame-" + label + "-" + Date.now() + "-" + Math.random().toString(36).slice(2) + "@example.test";
     const password = "LifeGameTest-12345";
 
-    const { data, error } = await client.auth.signUp({ email, password });
+    const { data, error } = await client.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                birth_date: "1997-04-27",
+                gender: label === "a" ? "male" : "female"
+            }
+        }
+    });
 
     if (error) throw error;
     if (!data.user || !data.session) {

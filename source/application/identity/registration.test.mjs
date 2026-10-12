@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Identity Registration Tests
-// Version: 1.1
+// Version: 1.2
 // Responsibility: verify the registration boundary before provider integration.
 //
 // These tests deliberately use a fake IdentityPort.
@@ -37,7 +37,8 @@ test('registration trims email but preserves password exactly', () => {
         email: '  user@example.com  ',
         password: ' Valid Password 123! ',
         displayName: ' Bogdan ',
-        birthDate: '1997-04-12'
+        birthDate: '1997-04-12',
+        gender: 'male'
     });
 
     assert.equal(result.email, 'user@example.com');
@@ -49,7 +50,8 @@ test('registration does not mutate caller input', () => {
         email: '  user@example.com  ',
         password: 'ValidPassword123!',
         displayName: 'Bogdan',
-        birthDate: '1997-04-12'
+        birthDate: '1997-04-12',
+        gender: 'male'
     };
 
     const original = { ...input };
@@ -75,14 +77,16 @@ test('registration use case delegates only validated registration data to the po
         email: '  user@example.com  ',
         password: 'ValidPassword123!',
         displayName: 'Bogdan',
-        birthDate: '1997-04-12'
+        birthDate: '1997-04-12',
+        gender: 'male'
     });
 
     assert.deepEqual(received, {
         email: 'user@example.com',
         password: 'ValidPassword123!',
         displayName: 'Bogdan',
-        birthDate: '1997-04-12'
+        birthDate: '1997-04-12',
+        gender: 'male'
     });
     assert.deepEqual(result, { accepted: true });
 });
@@ -113,4 +117,41 @@ test('registration use case does not call the port when validation fails', async
 test('registration policy and use case contain no provider-specific dependency', () => {
     assert.equal(typeof validateRegistrationInput, 'function');
     assert.equal(typeof createRegistrationUseCase, 'function');
+});
+
+test('registration rejects a missing gender', () => {
+    assert.throws(
+        () => validateRegistrationInput({
+            email: 'user@example.com',
+            password: 'ValidPassword123!',
+            displayName: 'Bogdan',
+            birthDate: '1997-04-12'
+        }),
+        /Registration gender is required/
+    );
+});
+
+test('registration rejects a gender outside the supported values', () => {
+    assert.throws(
+        () => validateRegistrationInput({
+            email: 'user@example.com',
+            password: 'ValidPassword123!',
+            displayName: 'Bogdan',
+            birthDate: '1997-04-12',
+            gender: 'other'
+        }),
+        /Registration gender is invalid/
+    );
+});
+
+test('registration accepts the supported gender values', () => {
+    for (const gender of ['male', 'female']) {
+        assert.equal(validateRegistrationInput({
+            email: 'user@example.com',
+            password: 'ValidPassword123!',
+            displayName: 'Bogdan',
+            birthDate: '1997-04-12',
+            gender
+        }).gender, gender);
+    }
 });

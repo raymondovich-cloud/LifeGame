@@ -1,0 +1,23 @@
+<!-- watermark-health.svg — Version 4.2 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" fill="none" role="img" aria-label="LifeGame health watermark: man flexing both biceps">
+  <g stroke="#B9C0C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M145 47c0-13 6-22 15-22s15 9 15 22l-3 13c-2 7-7 11-12 11s-10-4-12-11z" fill="#7B838C" fill-opacity=".12"/>
+    <path d="M148 47h9m-9 7h9"/>
+    <!-- Left arm: fist raised above a flexed biceps and elbow pointing outward -->
+    <path d="M132 93 116 83 101 72 88 64 80 68 76 78 81 88 96 96 108 108 119 126 133 120 123 103 110 92 99 84 91 79 92 64 95 51 91 42 83 37 76 43 78 53 75 65 72 76 77 85 89 94 104 105 117 116 130 107Z" fill="#7B838C" fill-opacity=".1"/>
+    <path d="M80 44 84 40 90 44 89 52" stroke="#F28A2E" stroke-opacity=".85"/>
+    <!-- Right arm mirrors the left; exactly two arms -->
+    <path d="M188 93 204 83 219 72 232 64 240 68 244 78 239 88 224 96 212 108 201 126 187 120 197 103 210 92 221 84 229 79 228 64 225 51 229 42 237 37 244 43 242 53 245 65 248 76 243 85 231 94 216 105 203 116 190 107Z" fill="#7B838C" fill-opacity=".1"/>
+    <path d="M240 44 236 40 230 44 231 52" stroke="#F28A2E" stroke-opacity=".85"/>
+    <!-- Single connected torso -->
+    <path d="M132 91 143 82 160 89 177 82 188 91 202 107 197 132 191 151 196 179 188 211 180 237 160 250 140 237 132 211 124 179 129 151 123 132 118 107Z" fill="#7B838C" fill-opacity=".12"/>
+    <path d="M132 108c-9 6-13 16-11 27 2 11 10 18 21 18 8 0 14-5 16-12l2-12-11-15Z"/>
+    <path d="M188 108c9 6 13 16 11 27-2 11-10 18-21 18-8 0-14-5-16-12l-2-12 11-15Z"/>
+    <path d="M160 121v27" stroke="#F28A2E" stroke-opacity=".8"/>
+    <path d="M128 160 144 155 160 160 160 181 143 188 128 180Z"/>
+    <path d="M192 160 176 155 160 160 160 181 177 188 192 180Z"/>
+    <path d="M130 192 145 198 160 194 175 198 190 192M136 211 148 215 160 212 172 215 184 211M145 229 160 225 175 229" stroke-opacity=".85"/>
+  </g>
+  <path d="M105 276h110" stroke="#F28A2E" stroke-width="1.5" stroke-opacity=".72"/>
+  <text x="160" y="307" fill="#C6CCD3" fill-opacity=".9" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="600" letter-spacing="4" text-anchor="middle">LIFE GAME</text>
+</svg>

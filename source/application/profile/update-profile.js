@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Profile Update Use Case
-// Version: 1.0
+// Version: 1.1
 // Responsibility: validate provider-independent profile mutation input.
 
 export function validateProfileUpdateInput(input) {
@@ -9,9 +9,14 @@ export function validateProfileUpdateInput(input) {
 
     const displayName = String(input.displayName ?? "").trim();
     const birthDate = String(input.birthDate ?? "").trim();
+    const gender = input.gender === undefined ? undefined : String(input.gender).trim();
 
     if (!displayName) {
         throw new Error("Profile display name is required.");
+    }
+
+    if (gender !== undefined && !["male", "female"].includes(gender)) {
+        throw new Error("Profile gender must be male or female.");
     }
 
     if (birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
@@ -20,6 +25,7 @@ export function validateProfileUpdateInput(input) {
 
     return Object.freeze({
         displayName,
-        birthDate
+        birthDate,
+        ...(gender !== undefined ? { gender } : {})
     });
 }

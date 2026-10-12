@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Registration Presentation
-// Version: 1.6
+// Version: 1.8
 // Responsibility: render the registration interaction and call Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -84,6 +84,49 @@ export function renderRegistration(
 
     birthDateField.append(birthDateLabel, birthDateInput);
 
+    const genderField = document.createElement("div");
+    genderField.className = "form-field registration-gender-field";
+
+    const genderLabel = document.createElement("span");
+    genderLabel.className = "form-label";
+    genderLabel.id = "registration-gender-label";
+    genderLabel.textContent = "Пол";
+
+    const genderState = document.createElement("span");
+    genderState.className = "liquidity-switch-state";
+    genderState.id = "registration-gender-state";
+
+    const genderSwitch = document.createElement("button");
+    genderSwitch.type = "button";
+    genderSwitch.className = "liquidity-switch";
+    genderSwitch.id = "registration-gender-switch";
+    genderSwitch.setAttribute("role", "switch");
+    genderSwitch.setAttribute(
+        "aria-labelledby",
+        "registration-gender-label registration-gender-state"
+    );
+
+    const genderInput = document.createElement("input");
+    genderInput.type = "hidden";
+    genderInput.id = "registration-gender";
+    genderInput.name = "gender";
+    genderInput.value = "male";
+
+    const updateGenderSwitch = () => {
+        const isFemale = genderInput.value === "female";
+        genderState.textContent = isFemale ? "Женский" : "Мужской";
+        genderSwitch.setAttribute("aria-checked", String(isFemale));
+        genderSwitch.classList.toggle("is-on", isFemale);
+    };
+
+    genderSwitch.addEventListener("click", () => {
+        genderInput.value = genderInput.value === "male" ? "female" : "male";
+        updateGenderSwitch();
+    });
+
+    genderField.append(genderLabel, genderState, genderSwitch, genderInput);
+    updateGenderSwitch();
+
     const emailField = document.createElement("div");
     emailField.className = "form-field";
 
@@ -163,6 +206,7 @@ export function renderRegistration(
     form.append(
         displayNameField,
         birthDateField,
+        genderField,
         emailField,
         passwordField,
         submit,
@@ -183,6 +227,7 @@ export function renderRegistration(
             const result = await authController.register({
                 displayName: displayNameInput.value,
                 birthDate: birthDateInput.value,
+                gender: genderInput.value,
                 email: emailInput.value,
                 password: passwordInput.value
             });

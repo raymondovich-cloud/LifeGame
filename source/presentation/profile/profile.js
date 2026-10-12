@@ -1,4 +1,4 @@
-// source/presentation/profile/profile.js — Version 1.7
+// source/presentation/profile/profile.js — Version 1.9
 // Responsibility: render the Profile Life Quality placeholder and profile settings.
 
 function createSettingsRow(label, value, action = null) {
@@ -53,9 +53,40 @@ function createEditRow(values, onSave, onCancel) {
     birthDate.autocomplete = "bday";
     birthDate.setAttribute("aria-label", "Дата рождения");
 
+    const genderField = document.createElement("div");
+    genderField.className = "form-field registration-gender-field";
+    const genderLabel = document.createElement("span");
+    genderLabel.className = "form-label";
+    genderLabel.id = "profile-gender-label";
+    genderLabel.textContent = "Пол";
+    const genderState = document.createElement("span");
+    genderState.className = "liquidity-switch-state";
+    genderState.id = "profile-gender-state";
+    const genderSwitch = document.createElement("button");
+    genderSwitch.type = "button";
+    genderSwitch.className = "liquidity-switch";
+    genderSwitch.setAttribute("role", "switch");
+    genderSwitch.setAttribute("aria-labelledby", "profile-gender-label profile-gender-state");
+    const genderInput = document.createElement("input");
+    genderInput.type = "hidden";
+    genderInput.name = "gender";
+    genderInput.value = values.gender === "female" ? "female" : "male";
+    const updateGenderSwitch = () => {
+        const isFemale = genderInput.value === "female";
+        genderState.textContent = isFemale ? "Женский" : "Мужской";
+        genderSwitch.setAttribute("aria-checked", String(isFemale));
+        genderSwitch.classList.toggle("is-on", isFemale);
+    };
+    genderSwitch.addEventListener("click", () => {
+        genderInput.value = genderInput.value === "male" ? "female" : "male";
+        updateGenderSwitch();
+    });
+    genderField.append(genderLabel, genderState, genderSwitch, genderInput);
+    updateGenderSwitch();
+
     const fields = document.createElement("div");
     fields.className = "profile-edit-fields";
-    fields.append(name, birthDate);
+    fields.append(name, birthDate, genderField);
 
     const message = document.createElement("p");
     message.className = "profile-edit-message";
@@ -91,7 +122,8 @@ function createEditRow(values, onSave, onCancel) {
         try {
             await onSave({
                 displayName: name.value,
-                birthDate: birthDate.value
+                birthDate: birthDate.value,
+                gender: genderInput.value
             });
         } catch (error) {
             save.disabled = false;
@@ -197,7 +229,8 @@ function createSettingsModal(profile, email, userRole, profileApplication, userI
 
     let currentProfile = {
         displayName: profile.displayName || "",
-        birthDate: profile.birthDate || ""
+        birthDate: profile.birthDate || "",
+        gender: profile.gender || ""
     };
 
     function renderRows() {
@@ -210,6 +243,12 @@ function createSettingsModal(profile, email, userRole, profileApplication, userI
         const dateRow = createSettingsRow(
             "Дата рождения",
             currentProfile.birthDate || "Не указана",
+            startEdit
+        );
+        const genderLabels = { male: "Мужской", female: "Женский" };
+        const genderRow = createSettingsRow(
+            "Пол",
+            genderLabels[currentProfile.gender] || "Не указан",
             startEdit
         );
 
@@ -229,7 +268,7 @@ function createSettingsModal(profile, email, userRole, profileApplication, userI
         );
         statusRow.classList.add("profile-settings-row--readonly");
 
-        rows.replaceChildren(nameRow, dateRow, emailRow, statusRow);
+        rows.replaceChildren(nameRow, dateRow, genderRow, emailRow, statusRow);
     }
 
     function startEdit() {
@@ -245,7 +284,8 @@ function createSettingsModal(profile, email, userRole, profileApplication, userI
 
                 currentProfile = {
                     displayName: updated.displayName,
-                    birthDate: updated.birthDate
+                    birthDate: updated.birthDate,
+                    gender: updated.gender
                 };
 
                 if (typeof onProfileUpdated === "function") {
@@ -384,7 +424,7 @@ async function renderProfile(root, session = null, options = {}) {
             }
         );
 
-        section.appendChild(settingsView.modal);
+        document.body.appendChild(settingsView.modal);
         settingsView.focusClose();
         settings.disabled = false;
     });

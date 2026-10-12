@@ -1,0 +1,21 @@
+<!-- watermark-finance.svg — Version 1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" fill="none" role="img" aria-label="LifeGame finance watermark">
+  <g stroke="#B9C0C8" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M55 91 218 58 275 85 111 120Z" fill="#7B838C" fill-opacity=".08"/>
+    <path d="M55 91v21l56 28 164-35V85"/>
+    <path d="M69 113 231 80l27 13-162 34Z" stroke="#F28A2E" stroke-opacity=".8"/>
+    <path d="M43 112 207 79l68 34-164 35Z" fill="#A9B1BA" fill-opacity=".08"/>
+    <path d="M43 112v22l68 34 164-35v-20"/>
+    <path d="m58 135 164-34 35 17-164 34Z" stroke-opacity=".65"/>
+    <path d="M31 137 195 103l80 40-164 36Z" fill="#A9B1BA" fill-opacity=".12"/>
+    <path d="M31 137v26l80 42 164-35v-27"/>
+    <path d="m49 164 164-34 44 22-164 35Z" stroke="#F28A2E" stroke-opacity=".8"/>
+    <path d="m71 142 13 7m-2-11 13 7m-2-11 13 7m-2-11 13 7" stroke-opacity=".55"/>
+    <path d="m125 179 127-27M125 188l127-27" stroke-opacity=".45"/>
+    <path d="M139 112c7-5 15-5 22 0s15 5 22 0" stroke-opacity=".65"/>
+    <circle cx="183" cy="111" r="12" stroke="#F28A2E" stroke-opacity=".85"/>
+    <path d="M177 111h12m-6-6v12" stroke="#F28A2E" stroke-opacity=".85"/>
+  </g>
+  <path d="M105 236h110" stroke="#F28A2E" stroke-width="1.5" stroke-opacity=".72"/>
+  <text x="160" y="272" fill="#C6CCD3" fill-opacity=".9" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="600" letter-spacing="4" text-anchor="middle">LIFE GAME</text>
+</svg>

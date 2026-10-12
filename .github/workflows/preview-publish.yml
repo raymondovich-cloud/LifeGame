@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 2.6
+# .github/workflows/preview-publish.yml — Version 2.8
 name: LifeGame Preview CI
 
 on:
@@ -113,6 +113,16 @@ jobs:
           set -euo pipefail
           node --experimental-default-type=module --test source/application/profile/profile.test.mjs source/infrastructure/supabase/profile.adapter.test.mjs
 
+      - name: Validate Identity registration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-default-type=module --check source/presentation/auth/register.js
+          node --experimental-default-type=module --check source/domain/identity/registration.policy.js
+          node --experimental-default-type=module --check source/infrastructure/identity/supabase.identity.adapter.js
+          node --experimental-default-type=module --test source/application/identity/registration.test.mjs source/infrastructure/identity/supabase.identity.adapter.test.mjs
+          echo "Identity registration validation and adapter tests passed."
+
       - name: Request preview deployment
         if: success()
         env:
@@ -122,7 +132,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$TEST_WEB_DISPATCH_TOKEN" ]; then
-            echo "::warning::TEST_WEB_DISPATCH_TOKEN is not configured. Test-web will pick up the latest source through its scheduled fallback."
+            echo "::warning::TEST_WEB_DISPATCH_TOKEN is not configured. Test-web-functional will pick up the latest source through its scheduled fallback."
             exit 0
           fi
 
@@ -131,6 +141,6 @@ jobs:
             --header "Accept: application/vnd.github+json" \
             --header "Authorization: Bearer $TEST_WEB_DISPATCH_TOKEN" \
             --header "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/raymondovich-cloud/Test-web/dispatches \
+            https://api.github.com/repos/raymondovich-cloud/Test-web-functional/dispatches \
             --data "{\"event_type\":\"lifegame-preview\",\"client_payload\":{\"source_commit\":\"$SOURCE_COMMIT\"}}"
-          echo "Test-web was asked to publish source commit $SOURCE_COMMIT."
+          echo "Test-web-functional was asked to publish source commit $SOURCE_COMMIT."

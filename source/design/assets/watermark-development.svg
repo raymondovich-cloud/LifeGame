@@ -1,0 +1,15 @@
+<!-- watermark-development.svg — Version 1.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" fill="none" role="img" aria-label="LifeGame development watermark">
+  <g stroke="#B9C0C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M160 51c-15-21-45-20-56 0-25-2-40 20-31 42-17 17-10 43 8 52-3 24 17 40 38 35 12 16 32 13 41-1V51Z" fill="#7B838C" fill-opacity=".08"/>
+    <path d="M160 51c15-21 45-20 56 0 25-2 40 20 31 42 17 17 10 43-8 52 3 24-17 40-38 35-12 16-32 13-41-1V51Z" fill="#7B838C" fill-opacity=".08"/>
+    <path d="M160 51v128"/>
+    <path d="M137 57c-13 4-18 15-13 27-14 4-17 19-7 29-9 11-4 23 8 25m-18-45c11-2 17 5 16 14m-3 29c9-3 14-10 12-20m-4-43c9 2 12 9 10 17"/>
+    <path d="M183 57c13 4 18 15 13 27 14 4 17 19 7 29 9 11 4 23-8 25m18-45c-11-2-17 5-16 14m3 29c-9-3-14-10-12-20m4-43c-9 2-12 9-10 17"/>
+    <path d="M91 84c8 1 14 7 14 15m-23 22c9-4 17-1 21 7m122-44c-8 1-14 7-14 15m23 22c-9-4-17-1-21 7" stroke="#F28A2E" stroke-opacity=".82"/>
+    <path d="M118 157c-4 12 3 22 14 24m70-24c4 12-3 22-14 24" stroke-opacity=".65"/>
+    <path d="M144 192h32m-24 8h16" stroke="#F28A2E" stroke-opacity=".75"/>
+  </g>
+  <path d="M105 231h110" stroke="#F28A2E" stroke-width="1.5" stroke-opacity=".72"/>
+  <text x="160" y="267" fill="#C6CCD3" fill-opacity=".9" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="600" letter-spacing="4" text-anchor="middle">LIFE GAME</text>
+</svg>

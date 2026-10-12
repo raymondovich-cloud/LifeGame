@@ -1,4 +1,4 @@
--- supabase/tests/database/002_training_sessions_test.sql — Version 1.3
+-- supabase/tests/database/002_training_sessions_test.sql — Version 1.4
 -- Confirms direct user-table access is denied and trusted server writes retain trigger invariants.
 
 begin;
@@ -7,8 +7,8 @@ create extension if not exists pgtap with schema extensions;
 select plan(18);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_user_meta_data) values
-('10000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','training-test-a@example.invalid','not-a-real-password-hash',now(),now(),now(),'{}'::jsonb),
-('10000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','training-test-b@example.invalid','not-a-real-password-hash',now(),now(),now(),'{}'::jsonb);
+('10000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','training-test-a@example.invalid','not-a-real-password-hash',now(),now(),now(),'{"display_name":"Training Test A","birth_date":"1997-04-27","gender":"male"}'::jsonb),
+('10000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','training-test-b@example.invalid','not-a-real-password-hash',now(),now(),now(),'{"display_name":"Training Test B","birth_date":"1998-08-15","gender":"female"}'::jsonb);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.training_sessions'::regclass), 'training_sessions has RLS enabled');
 select results_eq($$ select count(*)::bigint from pg_policies where schemaname='public' and tablename='training_sessions' $$, $$ values (3::bigint) $$, 'ownership RLS policies remain as defense in depth');
