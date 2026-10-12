@@ -1,0 +1,10 @@
+/* watermarks.css — Version 1.0 */
+/* Decorative module watermarks only; no application or domain behavior. */
+
+#module-content{position:relative;isolation:isolate}
+#module-content::after{position:absolute;right:0;bottom:var(--space-5);z-index:-1;width:min(56vw,14rem);aspect-ratio:8/9;pointer-events:none;content:"";background-repeat:no-repeat;background-position:center;background-size:contain;opacity:.2}
+#application-shell[data-module="finance"] #module-content::after{background-image:url("../assets/watermark-finance.svg")}
+#application-shell[data-module="health"] #module-content::after{background-image:url("../assets/watermark-health.svg")}
+#application-shell[data-module="development"] #module-content::after{background-image:url("../assets/watermark-development.svg")}
+@media (min-width:48rem){#module-content::after{right:var(--space-3);width:min(34vw,15rem);opacity:.18}}
+@media (prefers-reduced-transparency:reduce){#module-content::after{opacity:.1}}
