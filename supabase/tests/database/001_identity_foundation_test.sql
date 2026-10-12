@@ -76,13 +76,10 @@ values ('1997-04-27'::date)$$,
     'Registration metadata bootstraps User A birth date'
 );
 
-select results_eq(
-    $$
-    select gender from public.profiles
-    where id = '00000000-0000-0000-0000-000000000001'
-    $$,
-    $$
-values ('male'::text)$$,
+select is(
+    (select gender from public.profiles
+     where id = '00000000-0000-0000-0000-000000000001'),
+    'male'::text,
     'Registration metadata bootstraps User A gender'
 );
 
