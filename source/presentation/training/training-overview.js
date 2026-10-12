@@ -1,4 +1,4 @@
-// source/presentation/training/training-overview.js — Version 1.7
+// source/presentation/training/training-overview.js — Version 1.8
 // Responsibility: render the Training Overview from an explicit presentation model; never invent user progress.
 
 function createElement(tag, className = "", text = null) {
@@ -25,7 +25,8 @@ function renderTrainingOverview(container, { onOpenAnalytics = null } = {}) {
     screen.setAttribute("aria-label", "Тренировки");
 
     const analytics = createSection("Аналитика тренировок", "training-overview__analytics");
-    analytics.append(
+    const analyticsCopy = createElement("div", "training-overview__analytics-copy-group");
+    analyticsCopy.append(
         createElement("span", "training-overview__eyebrow", "АНАЛИТИКА ТРЕНИРОВОК"),
         createElement("h4", "training-overview__analytics-title", "Твоя динамика — в одном месте"),
         createElement(
@@ -34,11 +35,11 @@ function renderTrainingOverview(container, { onOpenAnalytics = null } = {}) {
             "Здесь появится аналитика рабочих весов, объёма нагрузки и регулярности тренировок."
         )
     );
-    const openAnalytics = createElement("button", "training-overview__analytics-status", "ОТКРЫТЬ АНАЛИТИКУ ↗");
+    const openAnalytics = createElement("button", "finance-text-action training-overview__analytics-action", "Открыть →");
     openAnalytics.type = "button";
     openAnalytics.setAttribute("aria-label", "Открыть отдельный экран аналитики тренировок");
     openAnalytics.addEventListener("click", () => { if (typeof onOpenAnalytics === "function") onOpenAnalytics(); });
-    analytics.appendChild(openAnalytics);
+    analytics.append(analyticsCopy, openAnalytics);
     screen.appendChild(analytics);
 
     container.appendChild(screen);

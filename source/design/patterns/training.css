@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.19 */
+/* source/design/patterns/training.css — Version 3.20 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -746,3 +746,10 @@
 
 .training-overview__analytics-status{display:inline-flex;align-items:center;justify-content:center;width:fit-content;min-height:2.7rem;padding:.7rem 1rem;border:1px solid rgba(242,138,46,.48);border-radius:var(--radius-sm);background:rgba(242,138,46,.09);color:var(--color-white);font-size:var(--font-size-2xs);font-weight:var(--font-weight-semibold);letter-spacing:.1em;cursor:pointer}
 .training-overview__analytics-status:active{transform:translateY(1px)}
+
+
+/* Training analytics entry action aligned to the top-right — Version 1.0 */
+.training-overview__analytics{grid-template-columns:minmax(0,1fr) auto;align-items:start;justify-items:stretch}
+.training-overview__analytics-copy-group{grid-column:1;grid-row:1;display:grid;justify-items:start;gap:var(--space-3);min-width:0}
+.training-overview__analytics-action{grid-column:2;grid-row:1;justify-self:end;align-self:start;white-space:nowrap}
+@media(max-width:360px){.training-overview__analytics{column-gap:var(--space-2)}.training-overview__analytics-action{font-size:var(--font-size-xs)}}
