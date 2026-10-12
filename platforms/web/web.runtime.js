@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.16
+// platforms/web/web.runtime.js — Version 5.25
 
 import {
     trace,
@@ -26,6 +26,8 @@ export async function startWeb() {
             login: "../../source/presentation/auth/login.js",
             profile: "../../source/presentation/profile/profile.js",
             health: "../../source/presentation/health/health.js",
+            training: "../../source/presentation/training/training.js",
+            "training-analytics": "../../source/presentation/training/training-analytics.js",
             development: "../../source/presentation/development/development.js"
         };
 
@@ -106,14 +108,129 @@ export async function startWeb() {
     // asynchronous session check finishes. A stale render must never
     // overwrite the authenticated shell with public state.
     let routeRenderSequence = 0;
+    let activeTrainingWorkout = null;
+    let activeTrainingScreenVisible = false;
+    let activeTrainingHydratedUserId = null;
+    let activeTrainingHydrationPromise = null;
+    let activeTrainingBannerHost = null;
+    let activeTrainingBannerTimer = null;
+    let presentationCleanup = null;
 
     function getRoute() {
         return window.location.hash.slice(1);
     }
 
+    function getTrainingStartedAt(session) {
+        if (Number.isFinite(session?.startedAt)) return session.startedAt;
+        if (session?.status === "in_progress" && Number.isFinite(session.updatedAt)) return session.updatedAt;
+        return Number.isFinite(session?.createdAt) ? session.createdAt : Date.now();
+    }
+
+    function formatTrainingElapsed(startedAt) {
+        const seconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainder = seconds % 60;
+        return hours > 0
+            ? String(hours).padStart(2, "0") + ":" + String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0")
+            : String(Math.floor(seconds / 60)).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
+    }
+
+    function ensureActiveTrainingBannerHost() {
+        if (activeTrainingBannerHost?.isConnected) return activeTrainingBannerHost;
+        const navigationBar = applicationShell.querySelector(".app-navigation");
+        if (!navigationBar) return null;
+        activeTrainingBannerHost = document.createElement("div");
+        activeTrainingBannerHost.className = "active-training-banner-host";
+        activeTrainingBannerHost.setAttribute("aria-live", "polite");
+        navigationBar.before(activeTrainingBannerHost);
+        return activeTrainingBannerHost;
+    }
+
+    function renderActiveTrainingBanner() {
+        const host = ensureActiveTrainingBannerHost();
+        if (!host) return;
+        host.replaceChildren();
+        const session = activeTrainingWorkout?.sessionResult?.session;
+        if (!session || session.status !== "in_progress" || (getRoute() === "training" && activeTrainingScreenVisible)) return;
+        const startedAt = getTrainingStartedAt(session);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "active-training-banner";
+        button.setAttribute("aria-label", "Продолжить тренировку «" + (session.title || activeTrainingWorkout.workout?.title || "Моя тренировка") + "»");
+        const copy = document.createElement("span");
+        copy.className = "active-training-banner__copy";
+        const eyebrow = document.createElement("span");
+        eyebrow.className = "active-training-banner__eyebrow";
+        eyebrow.textContent = "АКТИВНАЯ ТРЕНИРОВКА";
+        const title = document.createElement("span");
+        title.className = "active-training-banner__title";
+        title.textContent = session.title || activeTrainingWorkout.workout?.title || "Моя тренировка";
+        const timer = document.createElement("span");
+        timer.className = "active-training-banner__timer";
+        timer.textContent = formatTrainingElapsed(startedAt);
+        timer.setAttribute("aria-label", "Продолжительность тренировки");
+        const arrow = document.createElement("span");
+        arrow.className = "active-training-banner__arrow";
+        arrow.setAttribute("aria-hidden", "true");
+        arrow.textContent = "↗";
+        copy.append(eyebrow, title);
+        button.append(copy, timer, arrow);
+        button.addEventListener("click", () => {
+            if (getRoute() === "training") renderRoute();
+            else window.location.hash = "training";
+        });
+        host.appendChild(button);
+    }
+
+    function updateActiveTrainingBannerClock() {
+        const session = activeTrainingWorkout?.sessionResult?.session;
+        if (!session || session.status !== "in_progress") return;
+        const host = activeTrainingBannerHost;
+        const timer = host?.isConnected ? host.querySelector(".active-training-banner__timer") : null;
+        if (timer) {
+            timer.textContent = formatTrainingElapsed(getTrainingStartedAt(session));
+            return;
+        }
+        if (!(getRoute() === "training" && activeTrainingScreenVisible)) renderActiveTrainingBanner();
+    }
+
+    function startActiveTrainingBannerClock() {
+        if (activeTrainingBannerTimer !== null) return;
+        activeTrainingBannerTimer = window.setInterval(updateActiveTrainingBannerClock, 1000);
+    }
+
+    function setActiveTrainingWorkout(value) {
+        activeTrainingWorkout = value?.sessionResult?.session?.status === "in_progress" && value.workout ? value : null;
+        renderActiveTrainingBanner();
+    }
+
+    async function hydrateActiveTraining(userId, suppliedApplication = null) {
+        if (!userId || !application?.trainingSessions) return null;
+        if (activeTrainingHydratedUserId === userId && activeTrainingHydrationPromise) return activeTrainingHydrationPromise;
+        activeTrainingHydratedUserId = userId;
+        activeTrainingHydrationPromise = (async () => {
+            try {
+                const trainingApplication = suppliedApplication || await application.trainingSessions.createApplicationForUser(userId);
+                const active = await trainingApplication.getActiveWorkout();
+                if (activeUserId === userId) {
+                    activeTrainingWorkout = active;
+                    renderActiveTrainingBanner();
+                }
+                return active;
+            } catch (error) {
+                trace("web-shell", "training.active-session.restore.error", { error: error?.message || "unknown" });
+                return null;
+            }
+        })();
+        return activeTrainingHydrationPromise;
+    }
+
     function isApplicationModule(route) {
         return route === "finance" ||
             route === "health" ||
+            route === "training" ||
+            route === "training-analytics" ||
             route === "development" ||
             route === "profile" ||
             route === "auth";
@@ -297,8 +414,16 @@ export async function startWeb() {
         // finance view must never render the previous user's state.
         application.finance.clearForUser(activeUserId);
         application.health.clearForUser(activeUserId);
+        setActiveTrainingWorkout(null);
+        activeTrainingScreenVisible = false;
+        activeTrainingHydratedUserId = null;
+        activeTrainingHydrationPromise = null;
+        application.trainingOverview.clearForUser(activeUserId);
+        application.trainingAnalytics.clearForUser(activeUserId);
+        application.trainingWorkoutLibrary.clearForUser(activeUserId);
         application.development.clearForUser(activeUserId);
         activeUserId = null;
+        renderActiveTrainingBanner();
 
         trace("web-shell", "logout.completed", {
             authenticated: false
@@ -311,7 +436,7 @@ export async function startWeb() {
         await renderRoute();
     }
 
-    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null) {
+    async function renderModule(moduleId, session = null, financeApplication = null, healthApplication = null, developmentApplication = null, lifeSystemApplication = null, trainingOverviewApplication = null, trainingSessionApplication = null, trainingWorkoutLibraryApplication = null, trainingAnalyticsApplication = null) {
         if (moduleId === "auth") {
             moduleContent.replaceChildren();
             openLoginModal();
@@ -338,7 +463,34 @@ export async function startWeb() {
 
         if (moduleId === "health") {
             const { renderHealth } = await getPresentation("health");
-            await renderHealth(moduleContent, healthApplication, { showPresentationHeader: publicMode });
+            await renderHealth(moduleContent, healthApplication, {
+                showPresentationHeader: publicMode,
+                onOpenTraining: () => { window.location.hash = "training"; }
+            });
+            return;
+        }
+
+        if (moduleId === "training-analytics") {
+            const { renderTrainingAnalytics } = await getPresentation("training-analytics");
+            await renderTrainingAnalytics(moduleContent, { application: trainingAnalyticsApplication, onBack: () => { window.location.hash = "training"; } });
+            return;
+        }
+
+        if (moduleId === "training") {
+            const { renderTraining } = await getPresentation("training");
+            presentationCleanup = await renderTraining(moduleContent, {
+                trainingOverviewApplication,
+                trainingSessionApplication,
+                trainingWorkoutLibraryApplication,
+                activeWorkout: activeTrainingWorkout,
+                onOpenAnalytics: () => { window.location.hash = "training-analytics"; },
+                onActiveWorkoutChange: setActiveTrainingWorkout,
+                onActiveWorkoutScreenChange: (visible) => {
+                    activeTrainingScreenVisible = Boolean(visible);
+                    renderActiveTrainingBanner();
+                },
+                onBack: () => { window.location.hash = "health"; }
+            });
             return;
         }
 
@@ -373,6 +525,8 @@ export async function startWeb() {
 
         navigation = createNavigation(appRoot);
         navigation.setAuthenticationState(false);
+        ensureActiveTrainingBannerHost();
+        startActiveTrainingBannerClock();
         navigationInitialized = true;
 
         const navigationItems = [
@@ -437,6 +591,12 @@ export async function startWeb() {
                 title: "Подготавливаем систему здоровья",
                 description: "Загружаем ваши данные активности и прогресса."
             },
+            training: {
+                label: "TRAINING",
+                title: "Подготавливаем тренировки",
+                description: "Загружаем тренировочную программу и историю занятий."
+            },
+            "training-analytics": { label: "TRAINING ANALYTICS", title: "Подготавливаем аналитику тренировок", description: "Собираем статистику по завершённым тренировкам." },
             development: {
                 label: "DEVELOPMENT",
                 title: "Подготавливаем систему развития",
@@ -487,6 +647,8 @@ export async function startWeb() {
 
         if (navigation) {
             navigation.setAuthenticationState(!isPublic);
+            // Training is a subroute of Health: keep #training while highlighting Health.
+            navigation.render(route === "training-analytics" ? "training" : route, false);
         }
 
         if (!isPublic && session?.user?.id) {
@@ -507,6 +669,11 @@ export async function startWeb() {
         applicationShell.hidden = false;
 
         if (isPublic) {
+            activeTrainingWorkout = null;
+            activeTrainingScreenVisible = false;
+            activeTrainingHydratedUserId = null;
+            activeTrainingHydrationPromise = null;
+            renderActiveTrainingBanner();
             await renderModule(route, session);
             return;
         }
@@ -515,7 +682,7 @@ export async function startWeb() {
             return;
         }
 
-        if (["finance", "health", "development"].includes(route)) {
+        if (["finance", "health", "training", "training-analytics", "development"].includes(route)) {
             renderAuthenticatedLoadingState(route);
         }
 
@@ -524,11 +691,22 @@ export async function startWeb() {
             let healthApplication = null;
             let developmentApplication = null;
             let lifeSystemApplication = null;
+            let trainingOverviewApplication = null;
+            let trainingSessionApplication = null;
+            let trainingWorkoutLibraryApplication = null;
+            let trainingAnalyticsApplication = null;
 
             if (route === "finance") {
                 financeApplication = await application.finance.createApplicationForUser(activeUserId);
             } else if (route === "health") {
                 healthApplication = await application.health.createApplicationForUser(activeUserId);
+            } else if (route === "training-analytics") {
+                trainingAnalyticsApplication = await application.trainingAnalytics.createApplicationForUser(activeUserId);
+            } else if (route === "training") {
+                trainingOverviewApplication = await application.trainingOverview.createApplicationForUser(activeUserId);
+                trainingSessionApplication = await application.trainingSessions.createApplicationForUser(activeUserId);
+                await hydrateActiveTraining(activeUserId, trainingSessionApplication);
+                trainingWorkoutLibraryApplication = await application.trainingWorkoutLibrary.createApplicationForUser(activeUserId);
             } else if (route === "development") {
                 developmentApplication = await application.development.createApplicationForUser(activeUserId);
                 lifeSystemApplication = await application.lifeSystem.createApplicationForUser(activeUserId);
@@ -544,8 +722,13 @@ export async function startWeb() {
                 financeApplication,
                 healthApplication,
                 developmentApplication,
-                lifeSystemApplication
+                lifeSystemApplication,
+                trainingOverviewApplication,
+                trainingSessionApplication,
+                trainingWorkoutLibraryApplication,
+                trainingAnalyticsApplication
             );
+            if (route !== "training") void hydrateActiveTraining(activeUserId);
         } catch (error) {
             trace("web-shell", "module.hydration.error", {
                 route,
@@ -558,6 +741,10 @@ export async function startWeb() {
     }
 
     async function renderRoute() {
+        if (typeof presentationCleanup === "function") presentationCleanup();
+        presentationCleanup = null;
+        activeTrainingScreenVisible = false;
+        renderActiveTrainingBanner();
         const renderId = ++routeRenderSequence;
         const requestedRoute = getRoute();
 

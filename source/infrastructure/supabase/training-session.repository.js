@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.js — Version 1.3
+// source/infrastructure/supabase/training-session.repository.js — Version 1.9
 // Responsibility: persist encrypted sessions through a server-only Supabase client; every operation is explicitly owner-scoped.
 // SERVER-ONLY: requires a trusted privileged Supabase client, a verified user context and a server-side encryption port. Never import into client bundles. Direct client table grants are intentionally revoked.
 
@@ -70,9 +70,11 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
     async function encryptFields(session, revision, userId) {
         const context = { userId, sessionId: session.id, sessionDate: session.date, status: session.status, revision };
         const payload = {
+            title: session.title,
             activityType: session.activityType,
             intensity: session.intensity,
             durationMinutes: session.durationMinutes,
+            startedAt: session.startedAt,
             notes: session.notes,
             exercises: session.exercises
         };
@@ -107,10 +109,12 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
         const session = createTrainingSession({
             id: row.id,
             date: row.session_date,
+            title: payload.title || "Моя тренировка",
             activityType: payload.activityType,
             status: row.status,
             intensity: payload.intensity,
             durationMinutes: payload.durationMinutes,
+            startedAt: payload.startedAt ?? (row.status === "in_progress" ? dateTimestamp(row.updated_at, "updated_at") : null),
             notes: payload.notes,
             exercises: payload.exercises,
             createdAt: dateTimestamp(row.created_at, "created_at"),
@@ -127,6 +131,24 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
         if (error) throw error;
         if (!data) return null;
         return mapRow(data, id, authenticatedUserId);
+    }
+
+    async function listForUser(userId, { offset = 0, limit = 20 } = {}) {
+        assertUserScope(userId);
+        if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100 || offset > Number.MAX_SAFE_INTEGER - limit) throw new TypeError("Training session repository: pagination is invalid.");
+        const { data, error } = await client.from(TABLE).select(COLUMNS)
+            .eq("user_id", authenticatedUserId)
+            .order("session_date", { ascending: false })
+            .order("created_at", { ascending: false })
+            .range(offset, offset + limit - 1);
+        if (error) throw error;
+        if (!Array.isArray(data)) throw new TypeError("Training session repository: list query did not return an array.");
+        const results = [];
+        for (const row of data) {
+            if (!row || typeof row.id !== "string") throw new TypeError("Training session repository: list contains an invalid row.");
+            results.push(await mapRow(row, row.id.toLowerCase(), authenticatedUserId));
+        }
+        return Object.freeze(results);
     }
 
     async function insertForUser(userId, sessionInput) {
@@ -177,7 +199,7 @@ function createSupabaseTrainingSessionRepository({ client, userContext, encrypti
         return saved;
     }
 
-    return Object.freeze({ findForUser, insertForUser, updateForUser });
+    return Object.freeze({ findForUser, listForUser, insertForUser, updateForUser });
 }
 
 export { createSupabaseTrainingSessionRepository };

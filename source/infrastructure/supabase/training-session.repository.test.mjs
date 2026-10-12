@@ -1,4 +1,4 @@
-// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.4
+// source/infrastructure/supabase/training-session.repository.test.mjs — Version 1.9
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "../../domain/training/training-session.js";
@@ -22,12 +22,26 @@ function createFakeClient() {
         calls,
         from(table) {
             assert.equal(table, "training_sessions");
-            const query = { action: "select", payload: null, filters: [] };
+            const query = { action: "select", payload: null, filters: [], ordering: [], maxRows: null };
             const builder = {
                 select() { if (query.action === "select") query.action = "select"; return builder; },
                 insert(payload) { query.action = "insert"; query.payload = payload; return builder; },
                 update(payload) { query.action = "update"; query.payload = payload; return builder; },
                 eq(field, value) { query.filters.push([field, value]); return builder; },
+                order(field, options) { query.ordering.push([field, options]); return builder; },
+                limit(value) { query.maxRows = value; return builder; },
+                range(start, end) { query.range = [start, end]; return builder; },
+                then(resolve, reject) {
+                    calls.push({ action: query.action, filters: [...query.filters], ordering: [...query.ordering], maxRows: query.maxRows, range: query.range });
+                    const matches = (row) => query.filters.every(([field, value]) => String(row[field]) === String(value));
+                    let selected = [...rows.values()].filter(matches);
+                    for (const [field, options] of [...query.ordering].reverse()) {
+                        selected.sort((a, b) => String(a[field]).localeCompare(String(b[field])) * (options?.ascending === false ? -1 : 1));
+                    }
+                    if (query.range) selected = selected.slice(query.range[0], query.range[1] + 1);
+                    if (query.maxRows !== null) selected = selected.slice(0, query.maxRows);
+                    return Promise.resolve({ data: selected.map((row) => ({ ...row })), error: null }).then(resolve, reject);
+                },
                 async maybeSingle() {
                     calls.push({ action: query.action, filters: [...query.filters] });
                     const matches = (row) => query.filters.every(([field, value]) => String(row[field]) === String(value));
@@ -91,8 +105,9 @@ function makeSession(overrides = {}) {
         status: "planned",
         intensity: "unknown",
         durationMinutes: 35,
+        title: "Верх тела",
         notes: "first note",
-        exercises: [{ id: "bench", name: "Bench press", muscleGroups: ["chest"], sets: [] }],
+        exercises: [{ id: "bench", name: "Bench press", exerciseType: "strength", targetSets: 3, targetReps: 8, targetResistance: { value: 40, unit: "kg" }, muscleGroups: ["chest"], sets: [] }],
         createdAt: 1000,
         updatedAt: 1000,
         ...overrides
@@ -114,8 +129,11 @@ test("inserts encrypted fields and reads back a validated domain session", async
     const inserted = await repository.insertForUser(USER_ID, makeSession());
     assert.equal(inserted.revision, 1);
     assert.equal(inserted.session.id, SESSION_ID);
+    assert.equal(inserted.session.title, "Верх тела");
+    assert.equal(inserted.session.exercises[0].targetSets, 3);
     assert.equal(inserted.session.notes, "first note");
     assert.equal(inserted.session.createdAt, Date.parse("2026-10-10T10:00:00.000Z"));
+    assert.equal(inserted.session.startedAt, null);
     const row = client.rows.get(SESSION_ID);
     assert.equal(typeof row.payload_ciphertext, "string");
     assert.match(row.payload_ciphertext, /^\\x[0-9a-f]+$/i);
@@ -126,6 +144,15 @@ test("inserts encrypted fields and reads back a validated domain session", async
 
     const found = await repository.findForUser(USER_ID, SESSION_ID);
     assert.deepEqual(found, inserted);
+});
+
+test("persists the canonical start timestamp in the encrypted payload", async () => {
+    const { repository } = setup();
+    const started = makeSession({ status: "in_progress", startedAt: Date.parse("2026-10-10T10:00:00.000Z"), updatedAt: Date.parse("2026-10-10T10:00:00.000Z") });
+    const inserted = await repository.insertForUser(USER_ID, started);
+    assert.equal(inserted.session.startedAt, Date.parse("2026-10-10T10:00:00.000Z"));
+    const found = await repository.findForUser(USER_ID, SESSION_ID);
+    assert.equal(found.session.startedAt, inserted.session.startedAt);
 });
 
 test("uses an atomic expected-revision filter and returns the next revision", async () => {
@@ -171,4 +198,21 @@ test("propagates persistence errors instead of returning an unsaved entity", asy
     };
     const repository = createSupabaseTrainingSessionRepository({ client, userContext: { userId: USER_ID }, encryption });
     await assert.rejects(repository.insertForUser(USER_ID, makeSession()), /database unavailable/);
+});
+
+test("lists only the verified user's sessions with a bounded newest-first query", async () => {
+    const { client, repository } = setup();
+    await repository.insertForUser(USER_ID, makeSession());
+    const results = await repository.listForUser(USER_ID);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].session.id, SESSION_ID);
+    const query = client.calls.find((call) => call.range?.[0] === 0 && call.range?.[1] === 19);
+    assert.ok(query, "history query must be bounded to 20 rows");
+    assert.ok(query.filters.some(([field, value]) => field === "user_id" && value === USER_ID));
+    assert.deepEqual(query.ordering.map(([field]) => field), ["session_date", "created_at"]);
+});
+test("rejects session history requests outside the verified owner scope", async () => {
+    const { client, repository } = setup();
+    await assert.rejects(repository.listForUser("44444444-4444-4444-8444-444444444444"), (error) => error.code === "TRAINING_SESSION_SCOPE_MISMATCH");
+    assert.equal(client.calls.length, 0);
 });

@@ -1,4 +1,4 @@
-// source/application/navigation/navigation.js — Version 1.5
+// source/application/navigation/navigation.js — Version 1.6
 
 const MODULES = Object.freeze({
     finance: Object.freeze({ id: "finance", number: "01", name: "Finance", localName: "Finance" }),
@@ -27,7 +27,9 @@ function createNavigation(appRoot) {
     }
 
     function resolveModule(moduleId) {
-        return MODULES[moduleId] || MODULES[DEFAULT_MODULE_ID];
+        // Training is a subroute within Health, not a separate bottom-navigation module.
+        const navigationModuleId = moduleId === "training" ? "health" : moduleId;
+        return MODULES[navigationModuleId] || MODULES[DEFAULT_MODULE_ID];
     }
 
     function render(moduleId, updateUrl = true) {

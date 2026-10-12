@@ -1,4 +1,4 @@
-/* finance.css — Version 3.20 */
+/* finance.css — Version 3.22 */
 
 .finance-workspace{display:grid;gap:var(--space-6)}
 .finance-workspace-header{display:grid;gap:var(--space-1);padding-bottom:var(--space-4);border-bottom:var(--border-subtle)}
@@ -514,45 +514,8 @@
     font-size:var(--font-size-2xs);
     line-height:1.45;
 }
-.finance-capital-view-pin-status{
-    position:absolute;
-    z-index:2;
-    top:var(--space-3);
-    right:var(--space-3);
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:.3rem;
-    padding:.2rem .45rem;
-    color:var(--color-white-soft);
-    background:rgba(12,12,12,.72);
-    border:1px solid rgba(255,173,19,.4);
-    border-radius:999px;
-    font-family:var(--font-family-mono);
-    font-size:var(--font-size-2xs);
-    letter-spacing:.06em;
-    line-height:1.35;
-    white-space:nowrap;
-}
-.finance-capital-view-pin-icon{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:12px;
-    height:12px;
-    flex:0 0 12px;
-    color:var(--color-accent);
-    letter-spacing:normal;
-}
-
-.finance-capital-view-pin-icon svg{
-    display:block;
-    width:12px;
-    height:12px;
-    fill:currentColor;
-    transform:rotate(-28deg);
-    transform-origin:center;
-}
+.finance-capital-view-pin-status{position:absolute;z-index:2;top:var(--space-3);right:var(--space-3);font-size:var(--font-size-2xs);}
+.finance-capital-view-pin-status .life-pin-indicator__icon{width:12px;height:12px;flex-basis:12px;}
 .finance-capital-view-pin-status[hidden]{display:none;}
 
 
@@ -566,3 +529,20 @@
 .finance-loading-state p{margin:0;max-width:32rem;color:var(--color-gray);font-size:var(--font-size-xs);line-height:1.5}
 @keyframes finance-loading-letter-in{to{opacity:1;transform:translateY(0)}}
 @media (prefers-reduced-motion:reduce){.finance-loading-brand-letter{opacity:1;transform:none;animation:none}}
+
+
+/* Shared premium frame parity with the saved training resources panel — Version 1.0 */
+.finance-health,
+.finance-capital,
+.finance-data-entry{
+    background:var(--gradient-card-premium);
+    border:1px solid rgba(242,138,46,.24);
+    border-radius:var(--radius-card);
+    box-shadow:none;
+}
+.finance-health::before,
+.finance-health::after,
+.finance-capital::before,
+.finance-capital::after{
+    display:none;
+}

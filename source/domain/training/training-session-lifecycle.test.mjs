@@ -1,4 +1,4 @@
-// source/domain/training/training-session-lifecycle.test.mjs — Version 1.1
+// source/domain/training/training-session-lifecycle.test.mjs — Version 1.2
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSession } from "./training-session.js";
@@ -12,12 +12,15 @@ test("starts only a planned session and preserves creation metadata", () => {
     const started = startTrainingSession(planned, 200);
     assert.equal(started.status, "in_progress");
     assert.equal(started.createdAt, 100);
+    assert.equal(started.startedAt, 200);
     assert.equal(started.updatedAt, 200);
     assert.throws(() => startTrainingSession(started, 300), /only a planned session/);
 });
 test("completes only an in-progress session", () => {
     const started = startTrainingSession(planned, 200);
-    assert.equal(completeTrainingSession(started, 300).status, "completed");
+    const completed = completeTrainingSession(started, 300);
+    assert.equal(completed.status, "completed");
+    assert.equal(completed.startedAt, 200);
     assert.throws(() => completeTrainingSession(planned, 300), /only an in-progress session/);
 });
 test("rejects backward timestamps", () => {

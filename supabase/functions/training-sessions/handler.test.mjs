@@ -1,4 +1,4 @@
-// supabase/functions/training-sessions/handler.test.mjs — Version 1.2
+// supabase/functions/training-sessions/handler.test.mjs — Version 1.3
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createTrainingSessionsHandler, MAX_BODY_BYTES } from "./handler.js";
@@ -81,4 +81,19 @@ test("does not create a privileged repository client before verifying the user",
  const res=await handler(req({action:"get",sessionId:ID}));
  assert.equal(res.status,401);
  assert.deepEqual(calls,["user-client","auth"]);
+});
+
+test("lists only authenticated user sessions",async()=>{
+ const calls=[];
+ const history=[{session,revision:3}];
+ const{handler}=setup({async listForUser(userId){calls.push(userId);return history;}});
+ const res=await handler(req({action:"list"}));
+ assert.equal(res.status,200);
+ assert.deepEqual((await res.json()).data,history);
+ assert.deepEqual(calls,[USER]);
+});
+test("rejects unknown list request fields",async()=>{
+ const{handler}=setup();
+ const res=await handler(req({action:"list",userId:USER}));
+ assert.equal(res.status,400);
 });

@@ -1,0 +1,36 @@
+// source/domain/training/training-analytics.test.mjs — Version 1.1
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createTrainingAnalytics, sessionVolumeKg } from "./training-analytics.js";
+const base = {
+ status:"completed", date:"2026-10-12",
+ startedAt:Date.parse("2026-10-12T10:00:00Z"),
+ updatedAt:Date.parse("2026-10-12T10:45:00Z"), exercises:[]
+};
+test("counts completed sessions and derives minutes from timestamps",()=>{
+ const r=createTrainingAnalytics([base,{...base,status:"in_progress"},{...base,date:"2026-10-11",startedAt:null}],{today:"2026-10-12"});
+ assert.equal(r.totalWorkouts,2);assert.equal(r.totalMinutes,45);assert.equal(r.sessionsWithoutDuration,1);
+ assert.equal(r.todayMinutes,45);assert.equal(r.weeklyAverageMinutes,6);
+});
+test("sums only completed numeric kg/lb resistance sets",()=>{
+ const s={...base,exercises:[{sets:[
+  {completed:true,reps:10,resistance:{value:50,unit:"kg"}},
+  {completed:true,reps:10,resistance:{value:10,unit:"lb"}},
+  {completed:false,reps:10,resistance:{value:100,unit:"kg"}},
+  {completed:true,reps:10,resistance:{value:20,unit:"bodyweight"}}
+ ]}]};
+ assert.ok(Math.abs(sessionVolumeKg(s)-(500+100*0.45359237))<0.0001);
+ assert.equal(createTrainingAnalytics([s],{today:"2026-10-12"}).totalWeightKg,Math.round((500+100*0.45359237)*100)/100);
+});
+test("builds week, month, year series and Monday-to-Sunday calendar",()=>{
+ const r=createTrainingAnalytics([base,{...base,date:"2026-10-11"}],{today:"2026-10-12"});
+ assert.equal(r.buildSeries("week").length,7);assert.equal(r.buildSeries("month").length,31);assert.equal(r.buildSeries("year").length,12);
+ assert.deepEqual(r.calendar.map(d=>d.label),["ПН","ВТ","СР","ЧТ","ПТ","СБ","ВС"]);
+ assert.equal(r.calendar[0].hasWorkout,true);assert.equal(r.calendar[0].isToday,true);
+});
+test("rejects invalid date",()=>assert.throws(()=>createTrainingAnalytics([],{today:"12.10.2026"}),/ISO calendar date/));
+test("groups sessions by the user's local time zone rather than stored UTC calendar date",()=>{
+ const session={...base,date:"2026-10-11",startedAt:Date.parse("2026-10-11T23:30:00Z"),updatedAt:Date.parse("2026-10-12T00:15:00Z")};
+ const r=createTrainingAnalytics([session],{today:"2026-10-12",timeZone:"Europe/Moscow"});
+ assert.equal(r.todayMinutes,45);assert.equal(r.calendar[0].hasWorkout,true);
+});
