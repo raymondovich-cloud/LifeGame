@@ -1,4 +1,4 @@
-/* source/design/patterns/training-analytics.css — Version 1.1 */
+/* source/design/patterns/training-analytics.css — Version 1.2 */
 .training-analytics-screen{display:grid;gap:var(--space-4);min-width:0;padding:var(--space-4);color:var(--color-white)}
 .training-analytics__back{justify-self:start;padding:.45rem 0;border:0;background:transparent;color:var(--color-gray);font-size:var(--font-size-sm);cursor:pointer}
 .training-analytics__header{display:grid;gap:var(--space-2);padding-bottom:var(--space-3);border-bottom:var(--border-subtle)}
@@ -11,7 +11,11 @@
 .training-analytics__metric-unit{color:var(--color-gray);font-size:var(--font-size-2xs)}
 .training-analytics__chart-section,.training-analytics__weekly{display:grid;gap:var(--space-3);min-width:0}
 .training-analytics__section-title{margin:0;font-size:var(--font-size-interface);font-weight:var(--font-weight-semibold);letter-spacing:-.02em}
-.training-analytics__controls,.training-analytics__metric-controls{display:flex;gap:.4rem;min-width:0}
+.training-analytics__chart-heading{display:flex;align-items:center;gap:var(--space-3);min-width:0}
+.training-analytics__chart-heading>.training-analytics__section-title{flex:1 1 auto;min-width:max-content}
+.training-analytics__controls,.training-analytics__metric-controls{display:flex;flex:0 0 auto;gap:.4rem;min-width:0}
+.training-analytics__metric-controls{order:1}
+.training-analytics__controls{order:2}
 .training-analytics__control,.training-analytics__metric-control{flex:1;min-width:0;min-height:2.5rem;padding:.5rem .4rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);color:var(--color-gray);font-size:var(--font-size-xs);cursor:pointer}
 .training-analytics__control.is-active,.training-analytics__metric-control.is-active{border-color:rgba(242,138,46,.7);background:rgba(242,138,46,.12);color:var(--color-white)}
 .training-analytics__bars{display:flex;align-items:stretch;gap:.25rem;min-width:0;min-height:12rem;padding:.7rem .25rem .15rem;border-bottom:1px solid var(--color-border);overflow-x:auto;overscroll-behavior-x:contain}
@@ -31,3 +35,10 @@
 .training-analytics__duration-value{font-size:clamp(1.6rem,7vw,2.3rem);line-height:1.05;letter-spacing:-.04em}
 .training-analytics__note,.training-analytics__status{margin:0;color:var(--color-gray);font-size:var(--font-size-xs);line-height:1.5}
 @media(min-width:700px){.training-analytics-screen{max-width:900px;margin-inline:auto;padding:var(--space-5)}.training-analytics__bars{min-height:16rem;gap:.5rem}.training-analytics__bar-label{font-size:.7rem}.training-analytics__bar-column{flex-basis:2rem}.training-analytics__metrics{gap:var(--space-3)}}
+
+@media(max-width:620px){
+.training-analytics__chart-heading{gap:.45rem;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:.15rem}
+.training-analytics__chart-heading>.training-analytics__section-title{flex:0 0 auto;font-size:var(--font-size-sm)}
+.training-analytics__controls,.training-analytics__metric-controls{gap:.2rem}
+.training-analytics__control,.training-analytics__metric-control{flex:0 0 auto;min-height:2.15rem;padding:.35rem .45rem;font-size:.62rem;white-space:nowrap}
+}
