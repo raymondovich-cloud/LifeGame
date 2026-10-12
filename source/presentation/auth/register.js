@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Registration Presentation
-// Version: 1.6
+// Version: 1.7
 // Responsibility: render the registration interaction and call Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -84,6 +84,37 @@ export function renderRegistration(
 
     birthDateField.append(birthDateLabel, birthDateInput);
 
+    const genderField = document.createElement("div");
+    genderField.className = "form-field";
+
+    const genderLabel = document.createElement("label");
+    genderLabel.className = "form-label";
+    genderLabel.htmlFor = "registration-gender";
+    genderLabel.textContent = "Пол";
+
+    const genderInput = document.createElement("select");
+    genderInput.className = "input-control";
+    genderInput.id = "registration-gender";
+    genderInput.name = "gender";
+    genderInput.required = true;
+
+    const genderPlaceholder = document.createElement("option");
+    genderPlaceholder.value = "";
+    genderPlaceholder.textContent = "Выберите пол";
+    genderPlaceholder.disabled = true;
+    genderPlaceholder.selected = true;
+
+    const maleOption = document.createElement("option");
+    maleOption.value = "male";
+    maleOption.textContent = "Мужской";
+
+    const femaleOption = document.createElement("option");
+    femaleOption.value = "female";
+    femaleOption.textContent = "Женский";
+
+    genderInput.append(genderPlaceholder, maleOption, femaleOption);
+    genderField.append(genderLabel, genderInput);
+
     const emailField = document.createElement("div");
     emailField.className = "form-field";
 
@@ -163,6 +194,7 @@ export function renderRegistration(
     form.append(
         displayNameField,
         birthDateField,
+        genderField,
         emailField,
         passwordField,
         submit,
@@ -183,6 +215,7 @@ export function renderRegistration(
             const result = await authController.register({
                 displayName: displayNameInput.value,
                 birthDate: birthDateInput.value,
+                gender: genderInput.value,
                 email: emailInput.value,
                 password: passwordInput.value
             });

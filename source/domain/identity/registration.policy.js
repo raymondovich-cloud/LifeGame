@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Identity Registration Policy
-// Version: 1.1
+// Version: 1.2
 // Responsibility: provider-independent registration input rules.
 //
 // Forbidden:
@@ -51,6 +51,16 @@ export function validateRegistrationInput(input) {
         throw new Error('Registration birth date is invalid.');
     }
 
+    if (typeof input.gender !== 'string' || input.gender.trim().length === 0) {
+        throw new Error('Registration gender is required.');
+    }
+
+    const gender = input.gender.trim();
+
+    if (gender !== 'male' && gender !== 'female') {
+        throw new Error('Registration gender is invalid.');
+    }
+
     const now = new Date();
     const today = new Date(
         Date.UTC(
@@ -68,6 +78,7 @@ export function validateRegistrationInput(input) {
         email: input.email.trim(),
         password: input.password,
         displayName: input.displayName.trim(),
-        birthDate: input.birthDate.trim()
+        birthDate: input.birthDate.trim(),
+        gender
     });
 }

@@ -1,4 +1,4 @@
-# .github/workflows/preview-publish.yml — Version 2.6
+# .github/workflows/preview-publish.yml — Version 2.7
 name: LifeGame Preview CI
 
 on:
@@ -112,6 +112,16 @@ jobs:
         run: |
           set -euo pipefail
           node --experimental-default-type=module --test source/application/profile/profile.test.mjs source/infrastructure/supabase/profile.adapter.test.mjs
+
+      - name: Validate Identity registration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-default-type=module --check source/presentation/auth/register.js
+          node --experimental-default-type=module --check source/domain/identity/registration.policy.js
+          node --experimental-default-type=module --check source/infrastructure/identity/supabase.identity.adapter.js
+          node --experimental-default-type=module --test source/application/identity/registration.test.mjs source/infrastructure/identity/supabase.identity.adapter.test.mjs
+          echo "Identity registration validation and adapter tests passed."
 
       - name: Request preview deployment
         if: success()

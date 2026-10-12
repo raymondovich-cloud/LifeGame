@@ -1,4 +1,4 @@
-<!-- docs/security/IDENTITY_DATABASE_SCHEMA.md — Version 1.1 -->
+<!-- docs/security/IDENTITY_DATABASE_SCHEMA.md — Version 1.2 -->
 
 # LifeGame 3.0 — Identity Database Schema
 
@@ -38,6 +38,7 @@ Authentication state остаётся в Supabase Auth.
 - `id uuid primary key`;
 - `display_name text`;
 - `birth_date date`;
+- `gender text` — `male` or `female`; existing profiles may remain NULL until updated;
 - `created_at timestamptz`;
 - `updated_at timestamptz`.
 
@@ -95,7 +96,8 @@ Ownership определяется через `auth.uid()`.
 1. `0001_identity_foundation.sql`;
 2. `0002_identity_profile_bootstrap.sql`;
 3. `0003_identity_profile_fields.sql`;
-4. `0004_identity_profile_birth_date_validation.sql`.
+4. `0004_identity_profile_birth_date_validation.sql`;
+5. `20261012145600_identity_profile_gender.sql` (timestamped deployment migration).
 
 Эти миграции формируют текущую Identity database foundation.
 

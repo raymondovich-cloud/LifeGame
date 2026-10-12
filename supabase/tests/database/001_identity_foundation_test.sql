@@ -1,4 +1,4 @@
--- Version 1.6
+-- Version 1.7
 -- LifeGame 3.0
 -- Identity Foundation — behavioral RLS tests
 --
@@ -10,7 +10,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+select plan(25);
 
 -- Fixed test identities. The transaction is rolled back at the end.
 insert into auth.users (
@@ -24,7 +24,7 @@ values
     'authenticated', 'authenticated',
     'lifegame-test-a@example.invalid',
     'not-a-real-password-hash', now(), now(), now(),
-    '{"display_name":"Test User A","birth_date":"1997-04-27"}'::jsonb
+    '{"display_name":"Test User A","birth_date":"1997-04-27","gender":"male"}'::jsonb
 ),
 (
     '00000000-0000-0000-0000-000000000002',
@@ -32,7 +32,7 @@ values
     'authenticated', 'authenticated',
     'lifegame-test-b@example.invalid',
     'not-a-real-password-hash', now(), now(), now(),
-    '{"display_name":"Test User B","birth_date":"1998-08-15"}'::jsonb
+    '{"display_name":"Test User B","birth_date":"1998-08-15","gender":"female"}'::jsonb
 );
 
 select results_eq(
@@ -70,10 +70,20 @@ select results_eq(
     $$
     select birth_date from public.profiles
     where id = '00000000-0000-0000-0000-000000000001'
-    $$,
-    $$
-values ('1997-04-27'::date)$$,
+    $q$,
+    $q$
+values ('1997-04-27'::date)$q$,
     'Registration metadata bootstraps User A birth date'
+);
+
+select results_eq(
+    $$
+    select gender from public.profiles
+    where id = '00000000-0000-0000-0000-000000000001'
+    $q$,
+    $q$
+values ('male'::text)$q$,
+    'Registration metadata bootstraps User A gender'
 );
 
 set local role postgres;
