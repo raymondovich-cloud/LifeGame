@@ -21,7 +21,6 @@
     <path d="M194 148c-10-6-21-7-31-3l-3 12 6 18 14 9 12-10 7-14Z"/>
     <path d="M160 158v48M137 184l20 4v13l-17 5-8-8Zm46 0-20 4v13l17 5 8-8Zm-44 27 18-4v12l-14 7-8-7Zm40 0-18-4v12l14 7 8-7Z"/>
     <path d="M131 211 124 235 138 248 160 254 182 248 196 235 189 211"/>
-    <path d="M112 131 102 143 94 133 87 117 77 110 70 116 74 135 87 154 102 163 117 154M208 131 218 143 226 133 233 117 243 110 250 116 246 135 233 154 218 163 203 154" stroke="#B9C0C8" stroke-opacity=".9"/>
   </g>
   <path d="M91 269h138" stroke="#F28A2E" stroke-width="1.5" stroke-opacity=".8"/>
   <text x="160" y="302" fill="#C6CCD3" fill-opacity=".94" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="600" letter-spacing="4" text-anchor="middle">LIFE GAME</text>
