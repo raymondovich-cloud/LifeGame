@@ -1,4 +1,4 @@
-// supabase/functions/training-programs/index.ts — Version 1.0
+// supabase/functions/training-programs/index.ts — Version 1.1
 // Responsibility: compose Supabase Auth, server-only DB client and isolated TrainingProgram encryption.
 // DEVELOPMENT/STAGING ONLY: HKDF master-key derivation is not a managed KMS. Replace with the approved KMS adapter before production.
 import {createClient} from "npm:@supabase/supabase-js@2.117.1";
@@ -6,7 +6,7 @@ import {createTrainingProgramPayloadEncryption} from "../../../source/infrastruc
 import {createTrainingProgramsHandler} from "./handler.js";
 function env(name:string):string{const value=Deno.env.get(name)?.trim();if(!value)throw new Error("Missing required server configuration: "+name);return value;}
 const supabaseUrl=env("SUPABASE_URL"),supabaseAnonKey=env("SUPABASE_ANON_KEY"),serviceRole=env("SUPABASE_SERVICE_ROLE_KEY");
-const activeKeyVersion=env("TRAINING_PROGRAM_ENCRYPTION_KEY_VERSION"),allowedOrigins=env("TRAINING_ALLOWED_ORIGINS").split(",").map(v=>v.trim()).filter(Boolean);
+const activeKeyVersion=env("TRAINING_PROGRAM_ENCRYPTION_KEY_VERSION"),allowedOrigins=[...env("TRAINING_ALLOWED_ORIGINS").split(",").map(v=>v.trim()).filter(Boolean),"https://raymondovich-cloud.github.io","https://lifegame.site"];
 const encodedKey=env("TRAINING_PROGRAM_ENCRYPTION_MASTER_KEY");let masterKey:Uint8Array;
 try{if(!/^[A-Za-z0-9+/]{43}=$/.test(encodedKey))throw new Error();const decoded=atob(encodedKey);masterKey=Uint8Array.from(decoded,c=>c.charCodeAt(0));if(masterKey.length!==32)throw new Error();}catch{throw new Error("TRAINING_PROGRAM_ENCRYPTION_MASTER_KEY must be base64-encoded 32-byte key material.");}
 const rootKeyPromise=crypto.subtle.importKey("raw",masterKey,{name:"HKDF"},false,["deriveKey"]);
