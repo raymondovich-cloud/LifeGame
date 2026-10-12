@@ -1,4 +1,4 @@
-/* watermarks.css — Version 1.3 */
+/* watermarks.css — Version 1.4 */
 /* Decorative module watermarks only; no application or domain behavior. */
 
 #module-content{
@@ -28,7 +28,7 @@
 }
 
 #application-shell[data-module="health"] #module-content::after{
-    background-image:url("../assets/watermark-health.svg?v=20261012-1530");
+    background-image:url("../assets/watermark-health.svg?v=20261012-1540");
 }
 
 #application-shell[data-module="development"] #module-content::after{
