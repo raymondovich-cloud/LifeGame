@@ -1,4 +1,4 @@
-// supabase/functions/training-sessions/index.ts — Version 1.2
+// supabase/functions/training-sessions/index.ts — Version 1.3
 // Responsibility: compose Supabase Auth, the server-only Supabase database client, AWS KMS, and the Training Sessions HTTP handler.
 import { createClient } from "npm:@supabase/supabase-js@2.117.1";
 import { createSoftwareMasterKeyTrainingPayloadEncryption } from "../../../source/infrastructure/security/software-master-key-training-payload-encryption.js";
@@ -10,7 +10,7 @@ const supabaseAnonKey=env("SUPABASE_ANON_KEY");
 const supabaseServiceRoleKey=env("SUPABASE_SERVICE_ROLE_KEY");
 const encodedMasterKey=env("TRAINING_ENCRYPTION_MASTER_KEY");
 const activeKeyVersion=env("TRAINING_ENCRYPTION_KEY_VERSION");
-const allowedOrigins=env("TRAINING_ALLOWED_ORIGINS").split(",").map(v=>v.trim()).filter(Boolean);
+const allowedOrigins=[...env("TRAINING_ALLOWED_ORIGINS").split(",").map(v=>v.trim()).filter(Boolean),"https://raymondovich-cloud.github.io","https://lifegame.site"];
 let masterKey:Uint8Array;
 try{
  if(!/^[A-Za-z0-9+/]{43}=$/.test(encodedMasterKey))throw new Error("invalid base64");
