@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Profile Adapter Tests
-// Version: 1.1
+// Version: 1.2
 // Responsibility: verify the Profile persistence boundary without contacting Supabase.
 
 import test from "node:test";
@@ -66,7 +66,7 @@ test("updateProfile updates only canonical profile fields and returns mapped dat
             }
         ],
         ["eq", "id", "user-1"],
-        ["select", "id, display_name, birth_date"],
+        ["select", "id, display_name, birth_date, gender"],
         ["maybeSingle"]
     ]);
 
@@ -220,6 +220,50 @@ test("getUserRole defaults missing profile roles to user", async () => {
 
     const adapter = createSupabaseProfileAdapter(supabaseClient);
     assert.equal(await adapter.getUserRole("user-1"), "user");
+});
+
+
+test("getProfile reads and maps the saved gender", async () => {
+    const supabaseClient = {
+        from() {
+            return { select() { return { eq() { return {
+                async maybeSingle() { return { data: {
+                    id: "user-1", display_name: "Alex",
+                    birth_date: "1997-04-12", gender: "female"
+                }, error: null }; }
+            }; } }; }
+        }
+    };
+    const adapter = createSupabaseProfileAdapter(supabaseClient);
+    assert.deepEqual(await adapter.getProfile("user-1"), {
+        id: "user-1", displayName: "Alex",
+        birthDate: "1997-04-12", gender: "female"
+    });
+});
+
+test("updateProfile persists a changed gender", async () => {
+    let updatedValues = null;
+    const supabaseClient = {
+        from() {
+            return { update(values) {
+                updatedValues = values;
+                return { eq() { return { select() { return {
+                    async maybeSingle() { return { data: {
+                        id: "user-1", display_name: "Alex",
+                        birth_date: null, gender: "female"
+                    }, error: null }; }
+                }; } }; } };
+            } };
+        }
+    };
+    const adapter = createSupabaseProfileAdapter(supabaseClient);
+    const result = await adapter.updateProfile("user-1", {
+        displayName: "Alex", birthDate: "", gender: "female"
+    });
+    assert.deepEqual(updatedValues, {
+        display_name: "Alex", birth_date: null, gender: "female"
+    });
+    assert.equal(result.gender, "female");
 });
 
 test("adapter requires a Supabase client", () => {

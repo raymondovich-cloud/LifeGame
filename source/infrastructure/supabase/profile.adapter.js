@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Supabase Profile Adapter
-// Version: 1.2
+// Version: 1.3
 // Responsibility: read and mutate user-scoped profile data in Supabase.
 //
 // RLS on public.profiles is the database authorization boundary.
@@ -9,7 +9,10 @@ function mapProfile(data) {
     return Object.freeze({
         id: data.id,
         displayName: data.display_name ?? "",
-        birthDate: data.birth_date ?? ""
+        birthDate: data.birth_date ?? "",
+        ...(Object.prototype.hasOwnProperty.call(data, "gender")
+            ? { gender: ["male", "female"].includes(data.gender) ? data.gender : "" }
+            : {})
     });
 }
 
@@ -41,7 +44,7 @@ export function createSupabaseProfileAdapter(supabaseClient) {
         async getProfile(userId) {
             const { data, error } = await supabaseClient
                 .from("profiles")
-                .select("id, display_name, birth_date")
+                .select("id, display_name, birth_date, gender")
                 .eq("id", userId)
                 .maybeSingle();
 
@@ -59,14 +62,19 @@ export function createSupabaseProfileAdapter(supabaseClient) {
         },
 
         async updateProfile(userId, input) {
+            const updateValues = {
+                display_name: input.displayName,
+                birth_date: input.birthDate || null
+            };
+            if (["male", "female"].includes(input.gender)) {
+                updateValues.gender = input.gender;
+            }
+
             const { data, error } = await supabaseClient
                 .from("profiles")
-                .update({
-                    display_name: input.displayName,
-                    birth_date: input.birthDate || null
-                })
+                .update(updateValues)
                 .eq("id", userId)
-                .select("id, display_name, birth_date")
+                .select("id, display_name, birth_date, gender")
                 .maybeSingle();
 
             if (error) {

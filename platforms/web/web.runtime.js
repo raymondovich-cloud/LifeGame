@@ -1,4 +1,4 @@
-// platforms/web/web.runtime.js — Version 5.25
+// platforms/web/web.runtime.js — Version 5.26
 
 import {
     trace,
@@ -24,7 +24,7 @@ export async function startWeb() {
             finance: "../../source/presentation/finance/finance.js",
             register: "../../source/presentation/auth/register.js",
             login: "../../source/presentation/auth/login.js",
-            profile: "../../source/presentation/profile/profile.js",
+            profile: "../../source/presentation/profile/profile.js?v=20261012-1824",
             health: "../../source/presentation/health/health.js",
             training: "../../source/presentation/training/training.js",
             "training-analytics": "../../source/presentation/training/training-analytics.js",

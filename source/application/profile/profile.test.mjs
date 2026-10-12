@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Profile Application Tests
-// Version: 1.1
+// Version: 1.2
 // Responsibility: verify the Profile read and mutation application boundary.
 
 import test from "node:test";
@@ -54,6 +54,24 @@ test("updateProfile validates and delegates normalized profile data", async () =
         displayName: "Bogdan",
         birthDate: "1997-04-12"
     });
+});
+
+test("updateProfile accepts only canonical gender values when supplied", async () => {
+    const application = createProfileApplication({
+        async getUserRole() { return "user"; },
+        async getProfile() { return null; },
+        async updateProfile(userId, input) { return { id: userId, ...input }; }
+    });
+    const updated = await application.updateProfile("user-1", {
+        displayName: "Alex", birthDate: "", gender: "female"
+    });
+    assert.equal(updated.gender, "female");
+    await assert.rejects(
+        () => application.updateProfile("user-1", {
+            displayName: "Alex", birthDate: "", gender: "unknown"
+        }),
+        /Profile gender must be male or female/
+    );
 });
 
 test("updateProfile rejects an empty display name before reaching the port", async () => {
