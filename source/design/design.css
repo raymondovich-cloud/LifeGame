@@ -1,4 +1,4 @@
-/* design.css — Version 4.0 */
+/* design.css — Version 4.1 */
 
 /* Единая точка входа Design System. */
 
@@ -39,7 +39,7 @@
 @import "./patterns/training.css?v=20261012-0102";
 @import "./patterns/training-analytics.css?v=20261012-0227";
 @import "./patterns/development.css";
-@import "./patterns/watermarks.css?v=20261012-1500";
+@import "./patterns/watermarks.css?v=20261012-1530";
 @import "./patterns/forms.css?v=20261010-1600";
 @import "./patterns/preview.css";
 @import "./patterns/statistics.css?v=20261012-1435";
