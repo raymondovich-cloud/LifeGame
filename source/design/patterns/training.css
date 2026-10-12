@@ -1,4 +1,4 @@
-/* source/design/patterns/training.css — Version 3.20 */
+/* source/design/patterns/training.css — Version 3.21 */
 
 .health-training-overview-host{min-width:0}
 .training-overview{
@@ -169,6 +169,15 @@
     font-size:var(--font-size-interface);
     font-weight:var(--font-weight-medium);
     line-height:var(--line-height-snug);
+}
+
+/* Analytics label uses the same premium text gradient as the Training section title. */
+.training-overview__analytics .training-overview__eyebrow{
+    width:fit-content;
+    background:var(--gradient-text-premium);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
 }
 .training-overview__analytics-copy{
     max-width:34rem;

@@ -1,4 +1,4 @@
-// source/presentation/training/training-overview.js — Version 1.9
+// source/presentation/training/training-overview.js — Version 2.0
 // Responsibility: render the Training Overview from an explicit presentation model; never invent user progress.
 
 function createElement(tag, className = "", text = null) {
@@ -28,7 +28,6 @@ function renderTrainingOverview(container, { onOpenAnalytics = null } = {}) {
     const analyticsCopy = createElement("div", "training-overview__analytics-copy-group");
     analyticsCopy.append(
         createElement("span", "training-overview__eyebrow", "АНАЛИТИКА ТРЕНИРОВОК"),
-        createElement("h4", "training-overview__analytics-title", "Становись сильнее с каждой тренировкой"),
         createElement(
             "p",
             "training-overview__analytics-copy",
