@@ -1,4 +1,4 @@
-/* forms.css — Version 1.4 */
+/* forms.css — Version 1.5 */
 
 .form {
     display:grid;
@@ -24,10 +24,15 @@
 
 
 .registration-gender-field {
+    box-sizing: border-box;
     grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
     gap: var(--space-3);
-    min-height: 44px;
+    min-height: 2.25rem;
+    padding: 0 var(--space-3);
+    background: var(--gradient-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-control);
 }
 
 @media (max-width: 420px) {
