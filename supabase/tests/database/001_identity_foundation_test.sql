@@ -1,4 +1,4 @@
--- Version 1.7
+-- Version 1.8
 -- LifeGame 3.0
 -- Identity Foundation — behavioral RLS tests
 --
@@ -70,9 +70,9 @@ select results_eq(
     $$
     select birth_date from public.profiles
     where id = '00000000-0000-0000-0000-000000000001'
-    $q$,
-    $q$
-values ('1997-04-27'::date)$q$,
+    $$,
+    $$
+values ('1997-04-27'::date)$$,
     'Registration metadata bootstraps User A birth date'
 );
 
@@ -80,9 +80,9 @@ select results_eq(
     $$
     select gender from public.profiles
     where id = '00000000-0000-0000-0000-000000000001'
-    $q$,
-    $q$
-values ('male'::text)$q$,
+    $$,
+    $$
+values ('male'::text)$$,
     'Registration metadata bootstraps User A gender'
 );
 
