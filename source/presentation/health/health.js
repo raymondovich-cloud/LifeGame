@@ -1,4 +1,4 @@
-// source/presentation/health/health.js — Version 3.4
+// source/presentation/health/health.js — Version 3.5
 // Responsibility: render the authenticated Health module and collect manual Health facts.
 
 import { createHealthAnalytics } from "../../application/health/health.analytics.js";
@@ -505,7 +505,7 @@ async function renderHealth(container, healthApplication, options = {}) {
     trainingCopy.append(
         createElement("span", "finance-section-meta", "TRAINING"),
         createElement("h3", "health-overview-section__title", "Тренировки"),
-        createElement("p", "health-overview-section__description", "Отдельное пространство для занятий, рабочих весов и истории прогресса.")
+        createElement("p", "health-overview-section__description", "Тренируйся в своём ритме, следи за результатами и становись сильнее с каждой тренировкой.")
     );
     const trainingAction = document.createElement("button");
     trainingAction.type = "button";
