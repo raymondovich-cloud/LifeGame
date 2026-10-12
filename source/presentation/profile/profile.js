@@ -1,4 +1,4 @@
-// source/presentation/profile/profile.js — Version 1.7
+// source/presentation/profile/profile.js — Version 1.8
 // Responsibility: render the Profile Life Quality placeholder and profile settings.
 
 function createSettingsRow(label, value, action = null) {
@@ -384,7 +384,7 @@ async function renderProfile(root, session = null, options = {}) {
             }
         );
 
-        section.appendChild(settingsView.modal);
+        document.body.appendChild(settingsView.modal);
         settingsView.focusClose();
         settings.disabled = false;
     });
