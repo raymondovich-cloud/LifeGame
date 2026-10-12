@@ -4,8 +4,8 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(12);
 insert into auth.users (id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at,raw_user_meta_data) values
-('10000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','program-test-a@example.invalid','not-a-real-password-hash',now(),now(),now(),'{"gender":"male"}'::jsonb),
-('10000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','program-test-b@example.invalid','not-a-real-password-hash',now(),now(),now(),'{"gender":"female"}'::jsonb);
+('10000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','program-test-a@example.invalid','not-a-real-password-hash',now(),now(),now(),'{"display_name":"Program Test A","birth_date":"1997-04-27","gender":"male"}'::jsonb),
+('10000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000000','authenticated','authenticated','program-test-b@example.invalid','not-a-real-password-hash',now(),now(),now(),'{"display_name":"Program Test B","birth_date":"1998-08-15","gender":"female"}'::jsonb);
 select ok((select relrowsecurity from pg_class where oid='public.training_programs'::regclass),'training_programs has RLS enabled');
 select is((select count(*)::bigint from pg_policies where schemaname='public' and tablename='training_programs'),0::bigint,'no direct client RLS policies are granted');
 select ok(not has_table_privilege('authenticated','public.training_programs','SELECT'),'authenticated cannot directly select programs');
