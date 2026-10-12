@@ -1,4 +1,4 @@
-// source/presentation/development/development.js — Version 1.7
+// source/presentation/development/development.js — Version 1.8
 
 import { createInfoTooltip } from "../shared/info.tooltip.js";
 import { animateCountUp } from "../shared/count-up.animation.js";
@@ -185,31 +185,12 @@ async function renderDevelopment(container,application,lifeSystemApplication=nul
  if(!application)throw new Error("LifeGame Development: application is required.");
  container.replaceChildren();
  const page=el("section","finance-workspace development-workspace");
- const showPresentationHeader=options.showPresentationHeader!==false;
- const intro=el("header","finance-workspace-header");
- intro.append(el("span","finance-section-meta","DEVELOPMENT"),el("h2","","Система развития"),el("p","","Одна система для направления, целей, роста, действий и устойчивого темпа."));
- if(showPresentationHeader)page.appendChild(intro);
  const result=await application.calculateFromMemory();
  const developmentHealth=createDevelopmentHealthBlock(result);
- const developmentDynamics=createDevelopmentDynamicsBlock(result);
  page.appendChild(developmentHealth.section);
- page.appendChild(developmentDynamics.section);
- page.appendChild(createDevelopmentDiagnosisBlock(result));
- const data=el("section","finance-data-entry");
- const copy=el("div","finance-data-entry-copy");
- copy.append(el("strong","","Управление данными развития"),el("p","","Добавление, редактирование и удаление показателей по пяти направлениям."));
- const action=document.createElement("button");action.type="button";action.className="finance-text-action";action.textContent="Открыть →";
- action.addEventListener("click",()=>createDataScreen(application,container,()=>renderDevelopment(container,application,lifeSystemApplication)));
- data.append(copy,action);page.appendChild(data);
- if(lifeSystemApplication){const system=await lifeSystemApplication.analyze();page.appendChild(createSystemContext(system));}
  container.appendChild(page);
  if(result.index.value!==null&&result.index.value!==undefined&&Number.isFinite(Number(result.index.value))){
   animateCountUp(developmentHealth.value,Number(result.index.value),{duration:1800,decimalPlaces:1});
-  animateCountUp(developmentDynamics.value,Number(result.index.value),{
-   duration:1800,
-   decimalPlaces:1,
-   formatter:value=>Number(value).toFixed(1)+"/100"
-  });
  }
 }
 
