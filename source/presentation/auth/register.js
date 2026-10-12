@@ -1,5 +1,5 @@
 // LifeGame 3.0 — Registration Presentation
-// Version: 1.7
+// Version: 1.8
 // Responsibility: render the registration interaction and call Auth Controller.
 //
 // This layer does not know Supabase, PostgreSQL, sessions, JWTs,
@@ -85,35 +85,47 @@ export function renderRegistration(
     birthDateField.append(birthDateLabel, birthDateInput);
 
     const genderField = document.createElement("div");
-    genderField.className = "form-field";
+    genderField.className = "form-field registration-gender-field";
 
-    const genderLabel = document.createElement("label");
+    const genderLabel = document.createElement("span");
     genderLabel.className = "form-label";
-    genderLabel.htmlFor = "registration-gender";
+    genderLabel.id = "registration-gender-label";
     genderLabel.textContent = "Пол";
 
-    const genderInput = document.createElement("select");
-    genderInput.className = "input-control";
+    const genderState = document.createElement("span");
+    genderState.className = "liquidity-switch-state";
+    genderState.id = "registration-gender-state";
+
+    const genderSwitch = document.createElement("button");
+    genderSwitch.type = "button";
+    genderSwitch.className = "liquidity-switch";
+    genderSwitch.id = "registration-gender-switch";
+    genderSwitch.setAttribute("role", "switch");
+    genderSwitch.setAttribute(
+        "aria-labelledby",
+        "registration-gender-label registration-gender-state"
+    );
+
+    const genderInput = document.createElement("input");
+    genderInput.type = "hidden";
     genderInput.id = "registration-gender";
     genderInput.name = "gender";
-    genderInput.required = true;
+    genderInput.value = "male";
 
-    const genderPlaceholder = document.createElement("option");
-    genderPlaceholder.value = "";
-    genderPlaceholder.textContent = "Выберите пол";
-    genderPlaceholder.disabled = true;
-    genderPlaceholder.selected = true;
+    const updateGenderSwitch = () => {
+        const isFemale = genderInput.value === "female";
+        genderState.textContent = isFemale ? "Женский" : "Мужской";
+        genderSwitch.setAttribute("aria-checked", String(isFemale));
+        genderSwitch.classList.toggle("is-on", isFemale);
+    };
 
-    const maleOption = document.createElement("option");
-    maleOption.value = "male";
-    maleOption.textContent = "Мужской";
+    genderSwitch.addEventListener("click", () => {
+        genderInput.value = genderInput.value === "male" ? "female" : "male";
+        updateGenderSwitch();
+    });
 
-    const femaleOption = document.createElement("option");
-    femaleOption.value = "female";
-    femaleOption.textContent = "Женский";
-
-    genderInput.append(genderPlaceholder, maleOption, femaleOption);
-    genderField.append(genderLabel, genderInput);
+    genderField.append(genderLabel, genderState, genderSwitch, genderInput);
+    updateGenderSwitch();
 
     const emailField = document.createElement("div");
     emailField.className = "form-field";
