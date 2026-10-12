@@ -1,4 +1,4 @@
-// source/presentation/training/training-session.js — Version 2.7
+// source/presentation/training/training-session.js — Version 2.8
 // Responsibility: render the active workout interaction; delegate persistence and business rules to the application layer.
 function createElement(tag, className = "", text = null) {
     const element = document.createElement(tag);
@@ -24,6 +24,22 @@ function renderTrainingSession(container, { sessionResult, workout, application,
     let timerId = null;
     const expandedExerciseIds = new Set();
 
+    function getPlannedSetCount(exercise) {
+        const definition = workout.exercises.find((item) => item.id === exercise.id) || exercise;
+        const targetSets = Math.max(4, Number.isInteger(definition.targetSets) ? definition.targetSets : 4);
+        return Math.max(targetSets, exercise.sets.length);
+    }
+
+    function getCompletedSetCount(exercise) {
+        return exercise.sets.filter((set) => set.completed === true).length;
+    }
+
+    const initialCurrentExercise = current.session.exercises.find(
+        (exercise) => getCompletedSetCount(exercise) < getPlannedSetCount(exercise)
+    );
+    let activeExerciseId = initialCurrentExercise?.id ?? null;
+    if (initialCurrentExercise) expandedExerciseIds.add(initialCurrentExercise.id);
+
     function render() {
         container.replaceChildren();
         const screen = createElement("section", "training-session training-session--active");
@@ -39,10 +55,52 @@ function renderTrainingSession(container, { sessionResult, workout, application,
         });
         header.append(back, title, elapsed);
 
+        const completedSets = current.session.exercises.reduce(
+            (total, exercise) => total + getCompletedSetCount(exercise),
+            0
+        );
+        const plannedSets = current.session.exercises.reduce(
+            (total, exercise) => total + getPlannedSetCount(exercise),
+            0
+        );
+        const currentExerciseIndex = current.session.exercises.findIndex(
+            (exercise) => getCompletedSetCount(exercise) < getPlannedSetCount(exercise)
+        );
+        const nextCurrentExercise = current.session.exercises[currentExerciseIndex];
+        if (nextCurrentExercise && nextCurrentExercise.id !== activeExerciseId) {
+            expandedExerciseIds.add(nextCurrentExercise.id);
+            activeExerciseId = nextCurrentExercise.id;
+        } else if (!nextCurrentExercise) {
+            activeExerciseId = null;
+        }
+
+        const progress = createElement("section", "training-session__progress");
+        progress.setAttribute("aria-label", "Прогресс тренировки");
+        const progressHeading = createElement("div", "training-session__progress-heading");
+        progressHeading.append(
+            createElement("span", "training-session__progress-label", "ПРОГРЕСС ТРЕНИРОВКИ"),
+            createElement("span", "training-session__progress-value", completedSets + " из " + plannedSets + " подходов")
+        );
+        const progressBar = document.createElement("progress");
+        progressBar.className = "training-session__progress-bar";
+        progressBar.max = Math.max(1, plannedSets);
+        progressBar.value = completedSets;
+        progressBar.setAttribute("aria-label", "Выполненные подходы");
+        progress.append(progressHeading, progressBar);
+
         const exerciseHost = createElement("div", "training-session__exercises");
-        current.session.exercises.forEach((exercise) => {
+        current.session.exercises.forEach((exercise, exerciseIndex) => {
             const definition = workout.exercises.find((item) => item.id === exercise.id) || exercise;
-            const section = createElement("section", "training-session__exercise-card");
+            const completedExercise = getCompletedSetCount(exercise) >= getPlannedSetCount(exercise);
+            const isCurrentExercise = exerciseIndex === currentExerciseIndex;
+            const section = createElement(
+                "section",
+                "training-session__exercise-card" +
+                    (completedExercise ? " training-session__exercise-card--complete" : "") +
+                    (isCurrentExercise ? " training-session__exercise-card--current" : "") +
+                    (!completedExercise && !isCurrentExercise ? " training-session__exercise-card--upcoming" : "")
+            );
+            if (isCurrentExercise) section.setAttribute("aria-current", "step");
             const top = createElement("div", "training-session__exercise-top");
             const toggle = createElement("button", "training-session__collapse", "⌄");
             toggle.type = "button";
@@ -51,9 +109,12 @@ function renderTrainingSession(container, { sessionResult, workout, application,
             toggle.setAttribute("aria-expanded", String(isExpanded));
             toggle.textContent = isExpanded ? "⌃" : "⌄";
             const heading = createElement("div", "training-session__exercise-heading");
+            if (isCurrentExercise) {
+                heading.appendChild(createElement("p", "training-session__exercise-kicker", "СЕЙЧАС"));
+            }
             heading.append(
                 createElement("h4", "training-session__exercise-title", exercise.name),
-                createElement("p", "training-session__exercise-progress", exercise.sets.filter((set) => set.completed === true).length + "/" + Math.max(4, exercise.sets.length) + " выполнено")
+                createElement("p", "training-session__exercise-progress", getCompletedSetCount(exercise) + "/" + getPlannedSetCount(exercise) + " подходов выполнено")
             );
             top.append(toggle, heading);
             const body = createElement("div", "training-session__exercise-body");
@@ -174,7 +235,7 @@ function renderTrainingSession(container, { sessionResult, workout, application,
             }
         });
         footer.append(status, complete);
-        screen.append(header, exerciseHost, footer);
+        screen.append(header, progress, exerciseHost, footer);
         container.appendChild(screen);
         const updateElapsed = () => {
             const seconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
